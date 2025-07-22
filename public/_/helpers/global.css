@@ -1,0 +1,64 @@
+/* https://gwfh.mranftl.com/fonts/Poppins?subsets=latin,latin-ext */
+/* Poppins-regular - latin_latin-ext */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 400;
+  src: url('/assets/fonts/poppins-v23-latin_latin-ext-regular.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* Poppins-500 - latin_latin-ext */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 500;
+  src: url('/assets/fonts/poppins-v23-latin_latin-ext-500.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+/* Poppins-700 - latin_latin-ext */
+@font-face {
+  font-display: swap; /* Check https://developer.mozilla.org/en-US/docs/Web/CSS/@font-face/font-display for other options. */
+  font-family: 'Poppins';
+  font-style: normal;
+  font-weight: 700;
+  src: url('/assets/fonts/poppins-v23-latin_latin-ext-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+#app {
+    margin-top: 82px;
+}
+
+footer {
+    margin-top: 32px;
+    margin-bottom: 32px;
+}
+
+.po{
+    cursor:pointer;
+}
+
+.loader{display:block;position:fixed;z-index:100;width:100%;top:0;text-align:center;vertical-align:middle;height:100%;opacity:.86;background:#fff}
+.loader .dots{top:35%;width:100px;height:100px;border-radius:100%;position:relative;margin:0 auto}
+.loader .dots span{display:inline-block;width:20px;height:20px;border-radius:100%;background-color:#1941df;margin:35px 5px;opacity:0}
+.loader .dots span:nth-child(1){animation:opacitychange 1s ease-in-out infinite}
+.loader .dots span:nth-child(2){animation:opacitychange 1s ease-in-out .33s infinite}
+.loader .dots span:nth-child(3){animation:opacitychange 1s ease-in-out .66s infinite}
+@keyframes opacitychange{0%,100%{opacity:0}60%{opacity:1}}
+
+.lang-holder{display:inline-block;vertical-align:middle;position:absolute;z-index:100000;background:rgba(0,0,0,.5);padding:65px 12px;position:fixed;align-items:center;justify-content:center;display:flex;top:0;left:0;bottom:0;right:0}.lang-holder .lang-opener{margin:-2px 12px 0 0;display:inline-block;vertical-align:top;position:relative;background:#fff;height:50px;padding:10px 40px 10px 40px;color:#818181;font-size:16px;line-height:28px;text-transform:capitalize;border:1px solid #e3e3e3;border-radius:40px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media (max-width: 500px){
+
+    .toast{ 
+        width: auto;
+    }
+}

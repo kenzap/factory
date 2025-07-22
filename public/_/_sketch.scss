@@ -1,0 +1,120 @@
+
+/* sketch */
+$base-color: #00F;
+$base-color2: #ff007d;
+.mws{max-width:700px;}
+
+#svg g path,
+#svg g polyline{stroke-width:3px;transition: stroke-width 0.3s;}
+#svg polygon{stroke-width:0px;stroke:$base-color;fill:$base-color;}
+#svg g[data-arrow="true"] rect[data-rect="end"]{opacity:0;}
+#svg g:hover polyline{stroke-width:5px!important;}
+#svg g:hover path{stroke-width:5px!important;}
+
+.svg-input{position:absolute;z-index:3;display: flex; align-items: center;} 
+.svg-input{transform: translate(-10px, -13px);}
+.svg-input.lable-line label{color:$base-color;}
+.svg-input.lable-angle label{color:$base-color2;}
+.svg-input:hover{z-index: 6;}
+.svg-input label{width:20px;height:26px;align-content:center;text-align: center; font-size: 16px; font-weight: bold; font-family: monospace; }
+.svg-input:hover input,.svg-input input:focus{opacity:1;}
+
+.images-sketch0,
+.sketch-upload-cont img{
+    object-fit: cover;
+}
+
+.sketch-upload-cont .remove{
+    display: inline-block;
+    position: absolute;
+    font-weight: bold;
+    float: right;
+    margin-left: -30px;
+    line-height: 1;
+    font-size: 16px;
+    padding: 4px;
+    color: #76838f;
+}
+
+.sketch-upload-cont .remove:hover{
+    color: #910F3D;
+}
+
+#file {
+    width: 100%;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+
+.cad_files_cont .remove{position:absolute;font-weight:bold;float:right;margin-left:0px;margin-top:-10px;line-height:1;font-size:24px;padding:1px;color:#76838f;}
+.cad_files_cont .remove:hover{color:#910F3D;}
+.cad_files_cont .remove.hd{display:none;}
+.cad_files_cont > div{width:90px;}
+.cad_files_cont .file-title{font-size: 12px; font-weight: bold; font-family: monospace; width:100%; margin:auto; text-align: center;} 
+
+.sketch .viewer-controls{
+    position: absolute;
+    // width: 200px;
+    left: 570px;
+    padding: 10px;
+    z-index: 5;
+}
+
+.sketch .controls{
+    position: absolute;
+    left: 520px;
+    width: 200px;
+}
+
+.sketch .viewer-controls .cnt,
+.sketch .controls .cnt{ 
+    position: absolute;
+    z-index: 8; 
+}
+
+.sketch .viewer-controls .cnt{
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+
+.sketch .viewer-controls .cnt:hover{
+    opacity: 1;
+}
+
+.sketch .sketch_loader{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: auto;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.sketch .camera-view{
+    position: absolute;
+    z-index: 8;
+    right:8px;
+    bottom:8px;
+    background: transparent;
+    border: 0;
+    font-family: monospace;
+    max-width: 130px;
+}
+
+// simulating hidden viewer otjerwise it does not render
+.sketch .d-none-viewer{
+    position: absolute;
+    opacity: 0;
+    z-index: -2;
+}
+
+.form-checkbox-sm,
+.form-switch-sm{
+    font-size: 0.875rem;
+}

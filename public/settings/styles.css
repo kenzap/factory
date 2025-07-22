@@ -1,0 +1,34 @@
+@import url("/_/helpers/global.css");
+  
+/* settings */
+.list-icon {
+  color: #9b9b9b;
+  font-size: 16px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.list-icon.remove-page::before {
+  color: #ff0079 !important;
+}
+
+.list-icon.set-home::before {
+  color: #9b9b9b !important;
+}
+
+.edit-page::before {
+  color: #9b9b9b !important;
+}
+
+.list-icon.chm::before {
+  color: #1941DF !important;
+}
+
+.timgc img {
+  border-radius: unset !important;
+  object-fit: fill;
+}
+
+.pr-parent {
+  font-size: 1rem;
+}

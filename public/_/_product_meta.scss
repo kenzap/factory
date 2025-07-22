@@ -1,0 +1,26 @@
+.richtext-input{min-height: 200px;}
+.richtext-input .ql-editor{min-height: 200px;}
+
+.form-keywords{font-size: 1em;}
+.form-linked{font-size: 0.7em;font-family: monospace;}
+
+.ql-table-temporary{display: none;}
+
+.icon-doc,
+.icon-pdf{
+    &::before {
+        content: "";
+        display: inline-block;
+        width: 24px;
+        height: 24px;
+        background-image: url('/assets/img/icons/pdf.svg');
+        background-size: contain;
+        background-repeat: no-repeat;
+        vertical-align: middle;
+        margin-right: 1rem;
+    }
+}
+
+.icon-doc::before {
+    background-image: url('/assets/img/icons/document.svg');
+}
