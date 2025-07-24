@@ -1,5 +1,5 @@
-import { Modal } from "./modal.js";
-import { H, __html, getAPI } from "/_/helpers/global.js";
+import { authLogout } from "/_/api/auth_logout.js";
+import { __html, hideLoader, onClick } from "/_/helpers/global.js";
 
 /**
  * Class representing the Header component.
@@ -16,12 +16,6 @@ export class Header {
 
         // check if header is already present
         this.init();
-
-        // init modal and toasts
-        new Modal();
-
-        // init authentication
-        // new Authenticate(response);
     }
 
     init = () => {
@@ -53,8 +47,8 @@ export class Header {
                     <div class="d-flex flex-column align-items-end" id="navbarCollapse">
                         <ul class="navbar-nav me-auto mb-0 mb-md-0">
                             <li class="nav-item dropdown">
-                                <a class="" href="https://account.kenzap.com/profile/" id="nav-account" data-bs-toggle="dropdown" aria-expanded="false"><img src="https://account.kenzap.com/images/default_avatar.jpg" style="height:40px;width:40px;border-radius:50%;" alt="profile"></a>
-                                <ul class="dropdown-menu dropdown-menu dropdown-menu-end pe-auto" data-popper-placement="left-start" aria-labelledby="nav-account" style="position: absolute;">
+                                <a id="nav-account" class="" href="https://account.kenzap.com/profile/" data-bs-toggle="dropdown" aria-expanded="false"><img src="https://account.kenzap.com/images/default_avatar.jpg" style="height:40px;width:40px;border-radius:50%;" alt="profile"></a>
+                                <ul class="dropdown-menu dropdown-menu-end pe-auto" data-popper-placement="left-start" aria-labelledby="nav-account" style="position: absolute;">
                                     <li><a class="dropdown-item" href="/home/">${__html('Dashboard')}</a></li>
                                     <li><a class="dropdown-item" href="/profile/">${__html('My profile')}</a></li>
                                     <li><a class="dropdown-item choose-lang" href="#">${__html('Language')}</a></li>
@@ -113,34 +107,16 @@ export class Header {
     listeners = () => {
 
         // sign out listener
-        document.querySelector('.sign-out').addEventListener('click', (e) => {
+        onClick('.sign-out', (e) => {
 
-            // do API query
-            fetch(getAPI(), {
-                method: 'post',
-                headers: H(),
-                body: JSON.stringify({
-                    query: {
-                        deauthenticate: {
-                            type: 'deauthenticate',
-                        }
-                    }
-                })
-            })
-                .then(response => response.json())
-                .then(response => {
+            authLogout(() => {
 
-                    console.log(response);
+                // hide UI loader
+                hideLoader();
 
-                    if (response.deauthenticate.success) {
-
-                        // reload page
-                        location.reload();
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
+                // reload page
+                location.reload();
+            });
         });
     }
 }

@@ -84,8 +84,6 @@ export const __ = (text, ...p) => {
     if (typeof window.i18n === 'undefined') return match(text, p);
     if (window.i18n.state.locale.values[text] === undefined) return match(text, p);
 
-
-
     return match(window.i18n.state.locale.values[text], p);
 }
 

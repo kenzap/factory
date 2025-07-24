@@ -1,6 +1,8 @@
 import { getOTP } from "/_/api/auth_get_otp.js";
 import { validateOTP } from "/_/api/auth_validate_otp.js";
 import { __html, onClick, validateEmail } from "/_/helpers/global.js";
+import { bus } from "/_/modules/bus.js";
+import { Login } from "/_/modules/login.js";
 import { Modal } from "/_/modules/modal.js";
 
 export class Auth {
@@ -16,7 +18,11 @@ export class Auth {
 
     init = () => {
 
-        this.view();
+        const self = this;
+
+        new Login();
+
+        self.view();
     }
 
     view = () => {
@@ -53,20 +59,17 @@ export class Auth {
 
         self.modal.querySelector('.modal-footer').innerHTML = `
             <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-primary btn-modal btn-get-otp">${__html('Get OTP')}</button>
+                <button type="button" class="btn btn-outline-branded btn-modal btn-get-otp">${__html('Get OTP')}</button>
                 <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">${__html('Cancel')}</button>
             </div>
         `;
 
         let modalHTML = `
         <form class="form-cont needs-validation" novalidate>
-        
             <div class="form-group row mb-3 mx-sm-3">
-
                 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
                     <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                 </svg>
-
                 <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address')}</label>
                 <div class="col-lg-12">
                     <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
@@ -80,7 +83,6 @@ export class Auth {
                     </div>
                 </div>
             </div>
-
         </div>`;
 
         self.modal.querySelector('.modal-body').innerHTML = modalHTML;
@@ -88,6 +90,11 @@ export class Auth {
         self.modalCont.show();
 
         self.modal.querySelector('#otp-email').focus();
+
+        bus.on('auth:login', () => {
+
+            self.view();
+        });
 
         // get OTP button
         onClick('.btn-get-otp', e => {
@@ -166,7 +173,7 @@ export class Auth {
         const email = self.email;
 
         self.modal.querySelector('.modal-footer').innerHTML = `
-                <button type="button" class="btn btn-primary btn-modal btn-validate-otp">${__html('Verify')}</button>
+                <button type="button" class="btn btn-branded btn-modal btn-validate-otp">${__html('Verify')}</button>
                 <button type="button" class="btn btn-secondary d-none" data-bs-dismiss="modal">${__html('Go back and resend (1/3)')}</button>
             `;
 
@@ -218,7 +225,7 @@ export class Auth {
 
         // start validation countdown timer
         let display = document.querySelector('.btn-validate-otp');
-        self.startTimer(60 * this.otpTimeout, display);
+        self.startTimer(60 * 5, display);
 
         // jump between otp input fields
         const inputs = document.querySelectorAll('#otp > *[id]');

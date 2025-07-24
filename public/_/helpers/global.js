@@ -268,17 +268,17 @@ export const formatStatus = (__, st) => {
     * Render price
     * @public
     */
-export const priceFormat = function (_this, price) {
+export const priceFormat = function (settings, price) {
 
     price = makeNumber(price);
 
     price = (Math.round(parseFloat(price) * 100) / 100).toFixed(2);
 
-    switch (_this.state.settings.currency_symb_loc) {
-        case 'left': price = _this.state.settings.currency_symb + price; break;
-        case 'right': price = price + _this.state.settings.currency_symb; break;
-        case 'left_space': price = _this.state.settings.currency_symb + ' ' + price; break;
-        case 'right_space': price = price + ' ' + _this.state.settings.currency_symb; break;
+    switch (settings.currency_symb_loc) {
+        case 'left': price = settings.currency_symb + price; break;
+        case 'right': price = price + settings.currency_symb; break;
+        case 'left_space': price = settings.currency_symb + ' ' + price; break;
+        case 'right_space': price = price + ' ' + settings.currency_symb; break;
     }
 
     return price;

@@ -26,6 +26,28 @@
   src: url('/assets/fonts/poppins-v23-latin_latin-ext-700.woff2') format('woff2'); /* Chrome 36+, Opera 23+, Firefox 39+, Safari 12+, iOS 10+ */
 }
 
+:root{
+    --base-color:#dc3545;
+    --base-color-light:#fcf0ef;
+    --base-color-darker:#bb2d3b;
+    --base-color-label:rgba(188, 70, 62, 0.5);
+    --base-color-shadow:rgba(225, 83, 97, .5);
+    --base-color-2:#c2c2c2;
+    --base-color-3:#B21A4F;
+    --base-color-4:#31B245;
+    --base-color-5:#a979f1;
+    --primary-color:#0d6ef8;
+    --gray-color:#495057;
+    --gray-color-light:#e9ecef;
+    --gray-color-highlight:#eaedf1;
+    --gray-color-highlight-hover:#dee2e6;
+    --cd-color-1: #212529;
+    --cd-color-2: hsl(204, 73%, 52%);
+    --cd-color-3: hsl(0, 0%, 100%);
+    --cd-color-4: hsl(192, 15%, 94%);
+    --link-color: #007bff;
+}
+
 body {
     font-family: 'Poppins', sans-serif;
     font-weight: 400;
@@ -35,6 +57,17 @@ body {
 
 #app {
     margin-top: 82px;
+}
+
+.entry-content {
+    position: relative;
+    max-width: 680px;
+    margin: auto;
+}
+
+
+.login-graphics img{
+    max-width: 100%;
 }
 
 footer {
@@ -61,4 +94,86 @@ footer {
     .toast{ 
         width: auto;
     }
+}
+
+/* themes */
+.text-branded {
+  color: var(--base-color);
+}
+
+.btn-branded{
+  background-color: var(--base-color);
+  color: white;
+  border-color: var(--base-color);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-branded:hover {
+  color: #fff;
+  background-color: var(--base-color-darker);
+  border-color: var(--base-color-darker);
+}
+
+.btn-check:focus+.btn-branded,.btn-branded:focus {
+  color: #fff;
+  background-color: var(--base-color-darker);
+  border-color: var(--base-color-darker);
+  box-shadow: 0 0 0 .25rem var(--base-color-shadow);
+}
+
+.btn-check:active+.btn-branded,.btn-check:checked+.btn-branded,.btn-branded.active,.btn-branded:active,.show>.btn-branded.dropdown-toggle {
+  color: #fff;
+  background-color: var(--base-color-darker);
+  border-color: var(--base-color-darker)
+}
+
+.btn-check:active+.btn-branded:focus,.btn-check:checked+.btn-branded:focus,.btn-branded.active:focus,.btn-branded:active:focus,.show>.btn-branded.dropdown-toggle:focus {
+  box-shadow: 0 0 0 .25rem var(--base-color-shadow);
+}
+
+.btn-branded.disabled,.btn-branded:disabled {
+  color: #fff;
+  background-color: var(--base-color);
+  border-color: var(--base-color)
+}
+
+.btn-outline-branded {
+  color: var(--base-color);
+  border-color: var(--base-color)
+}
+
+.btn-outline-branded:hover {
+  color: #fff;
+  background-color: var(--base-color);
+  border-color: var(--base-color);
+}
+
+.btn-check:focus+.btn-outline-branded,.btn-outline-branded:focus {
+  box-shadow: 0 0 0 .25rem var(--base-color-shadow)
+}
+
+.btn-check:active+.btn-outline-branded,.btn-check:checked+.btn-outline-branded,.btn-outline-branded.active,.btn-outline-branded.dropdown-toggle.show,.btn-outline-branded:active {
+  color: #fff;
+  background-color: var(--base-color);
+  border-color: var(--base-color)
+}
+
+.btn-check:active+.btn-outline-branded:focus,.btn-check:checked+.btn-outline-branded:focus,.btn-outline-branded.active:focus,.btn-outline-branded.dropdown-toggle.show:focus,.btn-outline-branded:active:focus {
+  box-shadow: 0 0 0 .25rem var(--base-color-shadow)
+}
+
+.btn-outline-branded.disabled,.btn-outline-branded:disabled {
+  color: var(--base-color);
+  background-color: transparent
+}
+
+/* loader color */
+.loader .dots span{
+  background-color: var(--base-color);
+}
+
+/* bootstrap */
+.badge.bg-danger {
+  background-color: var(--base-color) !important;
 }

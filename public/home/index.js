@@ -2,6 +2,7 @@ import { getHome } from "/_/api/get_home.js";
 import { __html, attr, hideLoader, html, initBreadcrumbs, link } from "/_/helpers/global.js";
 import { Footer } from "/_/modules/footer.js";
 import { Header } from "/_/modules/header.js";
+import { Modal } from "/_/modules/modal.js";
 import { Session } from "/_/modules/session.js";
 
 /**
@@ -37,16 +38,18 @@ class Home {
             {
                 id: 'orders',
                 title: __html('Orders'),
-                desc: __html('Manage bookings, check-in attendees, track event performance.'),
+                desc: __html('Manage and create new orders, generate order reports.'),
                 icon: '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="32" fill="currentColor" style="width: 38px;" class="bi bi-ticket me-3 mr-md-0 mr-lg-4 text-primary" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0"/><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v13.5a.5.5 0 0 1-.777.416L8 13.101l-5.223 2.815A.5.5 0 0 1 2 15.5zm2-1a1 1 0 0 0-1 1v12.566l4.723-2.482a.5.5 0 0 1 .554 0L13 14.566V2a1 1 0 0 0-1-1z"/></svg>',
                 links: [
                     {
                         text: __html('New'),
                         link: link('/new-order/'),
+                        target: '_blank',
                     },
                     {
                         text: __html('Orders'),
-                        link: link('/journal/orders/'),
+                        link: link('/orders/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -75,6 +78,7 @@ class Home {
                     {
                         text: __html('Clients'),
                         link: link('/journal/clients/'),
+                        target: '_blank',
                     },
                     {
                         text: __html('Reports'),
@@ -194,6 +198,8 @@ class Home {
 
     init = () => {
 
+        new Modal();
+
         getHome((response) => {
 
             // show UI loader
@@ -215,7 +221,7 @@ class Home {
             // no authenticated => stop here
             // if (!response.user) return;
 
-            console.log(response);
+            // console.log(response);
 
             // load page html 
             this.html();
@@ -229,68 +235,6 @@ class Home {
             console.log(response);
         });
     }
-
-    /**
-     * Get data from the cloud and authenticate the user.
-     * Load translation strings.
-     * Get any additional data by extending the query object.
-     * 
-     * @version 1.0
-     * @link https://developer.kenzap.cloud/
-     */
-    // data = () => {
-
-    //     showLoader();
-
-    //     // do API query
-    //     fetch(getAPI(), {
-    //         method: 'post',
-    //         headers: H(),
-    //         body: JSON.stringify({
-    //             query: {
-    //                 user: {
-    //                     type: 'authenticate',
-    //                 },
-    //                 locale: {
-    //                     type: 'locale',
-    //                     source: ['extension'],
-    //                     key: 'ecommerce',
-    //                 }
-    //             }
-    //         })
-    //     })
-    //         .then(response => response.json())
-    //         .then(response => {
-
-    //             // hide UI loader
-    //             hideLoader();
-
-    //             // API errors
-    //             if (!response.meta) { parseApiError(response); return; }
-
-    //             // init header
-    //             new Header(response);
-
-    //             console.log(response);
-
-    //             // no authenticated => stop here
-    //             if (!response.user) return;
-
-    //             console.log(response);
-
-    //             // load page html 
-    //             this.html();
-
-    //             // render page
-    //             this.render();
-
-    //             // init footer
-    //             new Footer(response);
-    //         })
-    //         .catch(error => {
-    //             parseApiError(error);
-    //         });
-    // }
 
     // load page
     html = () => {
@@ -313,7 +257,7 @@ class Home {
                                             <p class="card-description mt-1 mb-0">${__html(block.desc)}</p>
                                             <div class="link-group">
                                                 ${block.links.map((link) => {
-                return `<a class="mt-2 me-2 text-md-tight " href="${attr(link.link)}" data-ext="pages">${html(link.text)}</a>`
+                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${attr(link.target ? link.target : "_self")} data-ext="pages">${html(link.text)}</a>`
             }).join('')}
                                             </div>
                                         </div>

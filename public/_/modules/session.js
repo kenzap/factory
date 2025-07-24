@@ -30,6 +30,6 @@ export class Session {
                 console.log("Session refreshed:", response.accessToken);
             });
 
-        }, 1000 * 60 * 10); // every 10 minutes
+        }, 1000 * 60 * 1); // every 10 minutes
     }
 }
