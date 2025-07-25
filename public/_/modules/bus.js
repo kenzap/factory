@@ -10,6 +10,7 @@ class Bus {
      * @param {Function} cb - Callback function
      */
     on(event, cb) {
+
         if (!this.events[event]) {
             this.events[event] = [];
         }
@@ -32,7 +33,8 @@ class Bus {
      * @param {*} payload - Data to send to listeners
      */
     emit(event, payload) {
-        (this.events[event] || []).forEach(cb => cb(payload));
+        if (!this.events[event]) return;
+        this.events[event].forEach(cb => cb(payload));
     }
 
     /**

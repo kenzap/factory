@@ -18,6 +18,21 @@ export function getDbConnection() {
     });
 }
 
+export const makeId = () => {
+
+    let length_ = 40; // Default length
+
+    let chars = 'abcdefghiklmnopqrstuvwxyz1234567890'.split('');
+    if (typeof length_ !== "number") {
+        length_ = Math.floor(Math.random() * chars.length_);
+    }
+    let str = '';
+    for (let i = 0; i < length_; i++) {
+        str += chars[Math.floor(Math.random() * chars.length)];
+    }
+    return str;
+}
+
 // Helper function to get locale
 export async function getLocale(client, sid, lang) {
     // Implementation would depend on your locale storage structure

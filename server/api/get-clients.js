@@ -16,9 +16,18 @@ async function getClients() {
 
     let clients = {};
 
-    // Get orders
+    // Get clients 
+    // const query = `
+    //     SELECT DISTINCT COALESCE(js->'data'->>'name', '') as name
+    //     FROM data 
+    //     WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
+    //     ORDER BY name ASC
+    //     LIMIT 1000
+    //     `;
+
+    // Get clients 
     const query = `
-        SELECT DISTINCT COALESCE(js->'data'->>'name', '') as name
+        SELECT COALESCE(js->'data'->>'name', '') as name, _id
         FROM data 
         WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
         ORDER BY name ASC
@@ -29,16 +38,9 @@ async function getClients() {
 
         await client.connect();
 
-        const result = await client.query(query, ['ecommerce-order', sid]);
-
-        // for (const row of result.rows) {
-
-
-        // }
+        const result = await client.query(query, ['3dfactory-entity', sid]);
 
         clients = result.rows;
-
-        // return orders;
 
     } finally {
         await client.end();
@@ -52,8 +54,7 @@ function getClientsApi(app) {
 
     app.post('/api/get-clients/', authenticateToken, async (req, res) => {
         try {
-            // const lang = req.query.lang || process.env.LOCALE;
-            // const orders = await getOrders();
+
             const clients = await getClients();
 
             res.send({ success: true, clients, message: '' });

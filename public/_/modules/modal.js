@@ -42,7 +42,7 @@ export class Modal {
                     </div>
                 </div>
 
-                <div class="position-fixed bottom-0 p-2 m-4 start-0 align-items-center toast-cont">
+                <div class="position-fixed bottom-0 p-2 m-4 end-0 align-items-center toast-cont">
                     <div class="toast hide align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3000">
                         <div class="d-flex">
                             <div class="toast-body"></div>

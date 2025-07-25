@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Editor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    body {
+      height: 100vh;
+      overflow: hidden;
+    }
+    #left-pane {
+      width: 250px;
+      overflow-y: auto;
+      background-color: #f8f9fa;
+      padding: 1rem;
+    }
+    #right-pane {
+      overflow-y: auto;
+      padding: 1rem;
+      flex-grow: 1;
+    }
+    .input-group-buttons button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="d-flex h-100">
+    <!-- LEFT PANE -->
+    <div id="left-pane">
+      <h5>Order Panel</h5>
+      <div class="mb-2">
+        <label class="form-label">Order ID</label>
+        <input type="text" class="form-control" id="orderId" placeholder="Order ID">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Client</label>
+        <input type="text" class="form-control" id="clientSearch" placeholder="Search client">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Location</label>
+        <input type="text" class="form-control" id="locationInput" placeholder="Site address">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="notesInput" rows="2"></textarea>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Client Phone</label>
+        <div class="input-group">
+          <input type="tel" class="form-control" id="clientPhone" placeholder="+371...">
+          <a class="btn btn-outline-success" id="whatsappBtn" target="_blank">
+            <i class="bi bi-whatsapp"></i>
+          </a>
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Contact Person</label>
+        <input type="text" class="form-control" id="contactPerson">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Due Date</label>
+        <input type="datetime-local" class="form-control" id="dueDate">
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Documents</label>
+        <div class="d-grid gap-1 input-group-buttons">
+          <button class="btn btn-secondary btn-sm">Waybill</button>
+          <button class="btn btn-secondary btn-sm">Invoice</button>
+          <button class="btn btn-secondary btn-sm">Invoice EU</button>
+          <button class="btn btn-secondary btn-sm">Receipt</button>
+          <button class="btn btn-secondary btn-sm">Draft</button>
+          <button class="btn btn-secondary btn-sm">Bill</button>
+          <button class="btn btn-secondary btn-sm">P1</button>
+          <button class="btn btn-secondary btn-sm">P2</button>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Totals</label>
+        <ul class="list-group list-group-sm">
+          <li class="list-group-item d-flex justify-content-between">Total: <span id="totalAmount">€0.00</span></li>
+          <li class="list-group-item d-flex justify-content-between">Tax 21%: <span id="tax21">€0.00</span></li>
+          <li class="list-group-item d-flex justify-content-between">Tax 0%: <span id="tax0">€0.00</span></li>
+          <li class="list-group-item d-flex justify-content-between fw-bold">With Tax: <span id="totalWithTax">€0.00</span></li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary w-100">Save/Create Order</button>
+    </div>
+
+    <!-- RIGHT PANE -->
+    <div id="right-pane">
+      <h5>Client Details</h5>
+
+      <div class="mb-3">
+        <label class="form-label">Client Type</label>
+        <div class="btn-group" role="group">
+          <input type="radio" class="btn-check" name="clientType" id="fizANM" autocomplete="off">
+          <label class="btn btn-outline-primary btn-sm" for="fizANM">Fiziskā ANM</label>
+
+          <input type="radio" class="btn-check" name="clientType" id="fiz" autocomplete="off">
+          <label class="btn btn-outline-primary btn-sm" for="fiz">Fiziskā</label>
+
+          <input type="radio" class="btn-check" name="clientType" id="jurANM" autocomplete="off">
+          <label class="btn btn-outline-primary btn-sm" for="jurANM">Juridiskā ANM</label>
+
+          <input type="radio" class="btn-check" name="clientType" id="jur" autocomplete="off">
+          <label class="btn btn-outline-primary btn-sm" for="jur">Juridiskā</label>
+
+          <input type="radio" class="btn-check" name="clientType" id="foreign" autocomplete="off">
+          <label class="btn btn-outline-primary btn-sm" for="foreign">Juridiskā Ārzemes</label>
+        </div>
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Phone</label>
+          <input type="tel" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Bank Name & Account</label>
+        <input type="text" class="form-control">
+      </div>
+
+      <div class="row g-2 mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Reg. Number</label>
+          <input type="text" class="form-control">
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">VAT Number</label>
+          <input type="text" class="form-control">
+        </div>
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Reg. Address</label>
+        <input type="text" class="form-control">
+      </div>
+
+      <div class="mb-2">
+        <label class="form-label">Internal Note</label>
+        <textarea class="form-control" rows="2"></textarea>
+      </div>
+
+      <h6>Company Drivers</h6>
+      <div id="driversList" class="mb-3">
+        <!-- Dynamically populated driver rows -->
+      </div>
+      <button class="btn btn-outline-secondary btn-sm mb-3" onclick="addDriver()">+ Add Driver</button>
+
+      <h6>Construction Addresses</h6>
+      <div id="constructionAddresses" class="mb-3">
+        <!-- Dynamic construction address inputs -->
+      </div>
+      <button class="btn btn-outline-secondary btn-sm mb-4" onclick="addConstructionAddress()">+ Add Address</button>
+
+      <button class="btn btn-success">Save Client Info</button>
+    </div>
+  </div>
+
+  <script type="module">
+    document.getElementById('clientPhone').addEventListener('input', () => {
+      const phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
+      const link = `https://wa.me/${phone}`;
+      document.getElementById('whatsappBtn').href = phone ? link : '#';
+    });
+
+    // Add dynamic driver row
+    const addDriver = () => {
+      const div = document.createElement('div');
+      div.className = 'border p-2 mb-2 rounded';
+      div.innerHTML = `
+        <div class="row g-2 mb-1">
+          <div class="col-md-6"><input class="form-control" placeholder="Car Reg/Company Name"></div>
+          <div class="col-md-6"><input class="form-control" placeholder="Company Reg No."></div>
+        </div>
+        <div class="row g-2 mb-1">
+          <div class="col-md-4"><input class="form-control" placeholder="Driver Name"></div>
+          <div class="col-md-4"><input class="form-control" placeholder="Code"></div>
+          <div class="col-md-4"><input class="form-control" placeholder="Car Plates"></div>
+        </div>
+        <div class="mb-1">
+          <input type="text" class="form-control mb-1" placeholder="Car Model or Notes">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox">
+            <label class="form-check-label">Allowed to collect waybills</label>
+          </div>
+        </div>
+      `;
+      document.getElementById('driversList').appendChild(div);
+    };
+
+    const addConstructionAddress = () => {
+      const input = document.createElement('input');
+      input.className = 'form-control mb-2';
+      input.placeholder = 'Construction Address';
+      document.getElementById('constructionAddresses').appendChild(input);
+    };
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -9,7 +9,7 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-provi
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-provided-in-env';
 
 // JWT middleware
-export const authenticateToken = (req, res, next) => {
+export const authenticateToken = async (req, res, next) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
@@ -17,13 +17,23 @@ export const authenticateToken = (req, res, next) => {
         return res.status(401).json({ error: 'unauthorized', code: 401 });
     }
 
-    jwt.verify(token, JWT_SECRET, (err, user) => {
+    // Verify the token
+    jwt.verify(token, JWT_SECRET, async (err, user) => {
         if (err) {
             return res.status(403).json({ error: 'forbidden', code: 403 });
         }
         req.user = user;
+
+        // Verify the user session
+        let session = await getUserSessionById(req.user.id);
+        if (!session.id) {
+            return res.status(403).json({ code: 403, error: 'unauthorised' });
+        }
+
         next();
     });
+
+
 };
 
 // Email validation helper

@@ -347,6 +347,24 @@ export const validateEmail = (email) => {
     }
 }
 
+/**
+ * Validates a phone number using a simple regex pattern.
+ * Accepts phone numbers with optional country code prefix (+), digits, spaces, hyphens, and parentheses.
+ * 
+ * @param {string} phone - The phone number string to validate
+ * @returns {boolean} True if the phone number matches the validation pattern, false otherwise
+ * 
+ * @example
+ * validatePhone("+1 (555) 123-4567"); // returns true
+ * validatePhone("555-123-4567"); // returns true
+ * validatePhone("invalid phone"); // returns false
+ */
+export const validatePhone = (phone) => {
+    // simple phone validation
+    const phoneRegex = /^\+?[0-9\s\-\(\)]+$/;
+    return phoneRegex.test(phone);
+}
+
 // nums only validation
 export const numsOnly = (e, max) => {
 
@@ -1415,7 +1433,7 @@ export const slugify = (s, opt) => {
  * @description Triggers toast notification. Adds toast html to the page if missing.
  * @param {string} text - Toast notification.
  */
-export const toast = (text) => {
+export const toast = (text, type = 'success') => {
 
     // only add once
     if (!document.querySelector(".toast")) {
