@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, sid } from '../_/helpers/index.js';
 
 /**
  * Kenzap Factory Get Clients
@@ -20,18 +20,19 @@ async function getOrderDetails(id) {
     const query = `
         SELECT
             _id,
-            js->'data'->>'id' as id,
-            js->'data'->>'eid' as eid,
-            js->'data'->>'phone' as "phone",
-            js->'data'->>'email' as "email",
-            js->'data'->>'status' as "status",
-            js->'data'->>'clientName' as "clientName",
-            js->'data'->>'companyName' as "companyName",
-            js->'data'->>'contactPerson' as "contactPerson",
-            js->'data'->>'dueDate' as "dueDate",
-            js->'data'->>'notes' as "notes",
+            js->'data'->'id' as id,
+            js->'data'->'eid' as eid,
+            js->'data'->'phone' as "phone",
+            js->'data'->'draft' as "draft",
+            js->'data'->'email' as "email",
+            js->'data'->'status' as "status",
+            js->'data'->'clientName' as "clientName",
+            js->'data'->'companyName' as "companyName",
+            js->'data'->'contactPerson' as "contactPerson",
+            js->'data'->'dueDate' as "dueDate",
+            js->'data'->'notes' as "notes",
             js->'data'->'price' as "price",
-            js->'data'->>'operator' as "operator",
+            js->'data'->'operator' as "operator",
             js->'data'->'items' as "items"
         FROM data
         WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
@@ -45,6 +46,8 @@ async function getOrderDetails(id) {
         const result = await client.query(query, ['ecommerce-order', sid, id]);
         if (result.rows) data = result.rows[0] || {};
 
+        console.log('getOrderDetails result', result.rows);
+
     } finally {
         await client.end();
     }
@@ -57,7 +60,7 @@ function getOrderApi(app) {
 
     app.post('/api/get-order/', authenticateToken, async (_req, res) => {
 
-        res.json({ success: true, order: await getOrderDetails(_req.body.id), message: '/api/get-order/ loaded' });
+        res.json({ success: true, order: await getOrderDetails(_req.body.id), settings: await getSettings(), message: '/api/get-order/ loaded' });
     });
 }
 

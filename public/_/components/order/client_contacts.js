@@ -1,4 +1,4 @@
-import { __html, onChange, onClick, randomString } from "/_/helpers/global.js";
+import { __html, onChange, onClick, randomString } from "../../helpers/global.js";
 
 /**
  * ClientContacts component that manages the contacts associated with a client.
@@ -56,7 +56,7 @@ export class ClientContacts {
         this.client.contacts.forEach((contact, i) => {
 
             contactsList.insertAdjacentHTML('beforeend', /*html*/`
-                <div class="contact-item bg-light bg-gradient" id="${contact.id}">
+                <div class="contact-item bg-light bg-gradient p-3 mb-3 border-sm" id="${contact.id}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6><i class="bi bi-person me-2"></i>${__html('Contact #%1$', i + 1)}</h6>
                         <button class="btn btn-outline-danger btn-remove-contact btn-sm" data-id="${contact.id}">

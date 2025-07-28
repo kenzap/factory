@@ -1,7 +1,7 @@
 import { Auth } from "/_/modules/auth.js";
 
 export const CDN = "https://cdn.kenzap.cloud";
-export const API_KEY = "Qz3fOs8Ghi7rpaW8BOlNgUyo7ANWYoKbRoUa8UkYd2I4FlAgUYFqzPM33IxqoFYa";
+export const API_KEY = "";
 
 export const spaceID = () => {
 

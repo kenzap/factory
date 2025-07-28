@@ -1,9 +1,10 @@
-import { getOrder } from "/_/api/get_order.js";
-import { hideLoader } from "/_/helpers/global.js";
-import { Modal } from "/_/modules/modal.js";
-import { ClientPane } from "/_/modules/order/client_pane.js";
-import { LeftPane } from "/_/modules/order/left_pane.js";
-import { Session } from "/_/modules/session.js";
+import { getOrder } from "../_/api/get_order.js";
+import { hideLoader } from "../_/helpers/global.js";
+import { bus } from "../_/modules/bus.js";
+import { Modal } from "../_/modules/modal.js";
+import { ClientPane } from "../_/modules/order/client_pane.js";
+import { LeftPane } from "../_/modules/order/left_pane.js";
+import { Session } from "../_/modules/session.js";
 
 /**
  * Order Create/Edit Page
@@ -17,7 +18,10 @@ class OrderEdit {
 
         // get id from url parameter if present
         const urlParams = new URLSearchParams(window.location.search);
-        this.id = urlParams.get('id');
+
+        // initialize order and settings
+        this.settings = {};
+        this.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : null, eid: null };
 
         // connect to backend
         this.init();
@@ -27,7 +31,7 @@ class OrderEdit {
 
         new Modal();
 
-        getOrder(this.id, (response) => {
+        getOrder(this.order.id, (response) => {
 
             // show UI loader
             if (!response.success) return;
@@ -37,12 +41,10 @@ class OrderEdit {
 
             this.settings = response.settings;
             this.order = response.order;
-            this.order = { ...this.order, eid: this.id ? this.id : null };
 
             // session
             new Session();
-
-            new LeftPane();
+            new LeftPane(this.settings, this.order);
             new ClientPane(this.order.eid);
 
             // init header
@@ -64,7 +66,7 @@ class OrderEdit {
             // init footer
             // new Footer(response);
 
-            console.log(response);
+            // console.log(response);
         });
     }
 
@@ -87,7 +89,10 @@ class OrderEdit {
     // listeners
     listeners = () => {
 
+        bus.on('order:reload', (id) => {
 
+            this.init();
+        });
     }
 
     // save order

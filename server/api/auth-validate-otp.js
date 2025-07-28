@@ -50,9 +50,6 @@ function validateOtpApi(app) {
             // get user by email
             const user = await getUserByEmail(email);
 
-            // cache user session
-            await cacheUserSession(user);
-
             // if user not found
             if (!user) {
                 res.status(404).json({
@@ -62,6 +59,9 @@ function validateOtpApi(app) {
             }
 
             log(`User found`, user);
+
+            // cache user session
+            await cacheUserSession(user);
 
             // TODO: invalidate OTP and nonce
 

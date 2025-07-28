@@ -3,6 +3,7 @@ import pkg from 'pg';
 const { Client } = pkg;
 
 export const sid = 1002170; // Default space ID
+export const locale = "lv"; // Default locale
 
 // logging
 export function log(...args) {
@@ -31,6 +32,51 @@ export const makeId = () => {
         str += chars[Math.floor(Math.random() * chars.length)];
     }
     return str;
+}
+
+export const getSettings = async () => {
+
+    const client = getDbConnection();
+    await client.connect();
+
+    let settings = {};
+
+    try {
+
+        // Get ecommerce settings
+        const query = `
+            SELECT js->'data'->'currency' as currency, 
+                   js->'data'->'currency_symb' as currency_symb, 
+                   js->'data'->'currency_symb_loc' as currency_symb_loc, 
+                   js->'data'->'tax_calc' as tax_calc, 
+                   js->'data'->'tax_auto_rate' as tax_auto_rate, 
+                   js->'data'->'tax_rate' as tax_rate, 
+                   js->'data'->'tax_display' as tax_display,
+                   js->'data'->'price' as price 
+            FROM data 
+            WHERE ref = $1 AND sid = $2 
+            LIMIT 1
+        `;
+
+        const result = await client.query(query, ['3dfactory-settings', sid]);
+        if (result.rows.length > 0) {
+            const row = result.rows[0];
+            settings = {
+                currency: row.currency,
+                currency_symb: row.currency_symb,
+                currency_symb_loc: row.currency_symb_loc,
+                tax_auto_rate: row.tax_auto_rate,
+                tax_rate: row.tax_rate,
+                tax_display: row.tax_display,
+                price: row.price,
+            };
+        }
+
+    } finally {
+        await client.end();
+    }
+
+    return settings;
 }
 
 // Helper function to get locale

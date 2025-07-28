@@ -32,8 +32,6 @@ export const authenticateToken = async (req, res, next) => {
 
         next();
     });
-
-
 };
 
 // Email validation helper

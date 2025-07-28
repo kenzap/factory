@@ -1,11 +1,11 @@
-import { deleteClient } from "/_/api/delete_client.js";
-import { getClientDetails } from "/_/api/get_client_details.js";
-import { saveClient } from "/_/api/save_client.js";
-import { ClientAddresses } from "/_/components/order/client_addresses.js";
-import { ClientContacts } from "/_/components/order/client_contacts.js";
-import { ClientDrivers } from "/_/components/order/client_drivers.js";
-import { __html, onClick, toast, validateEmail, validatePhone } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { deleteClient } from "../../api/delete_client.js";
+import { getClientDetails } from "../../api/get_client_details.js";
+import { saveClient } from "../../api/save_client.js";
+import { ClientAddresses } from "../../components/order/client_addresses.js";
+import { ClientContacts } from "../../components/order/client_contacts.js";
+import { ClientDrivers } from "../../components/order/client_drivers.js";
+import { __html, onClick, toast, validateEmail, validatePhone } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
 
 export class ClientPane {
 
@@ -20,9 +20,13 @@ export class ClientPane {
     init = () => {
 
         this.view();
+
+        this.data();
     }
 
     data = () => {
+
+        console.log('Fetching client details for ID:', this.client);
 
         if (!this.client._id) return;
 
@@ -151,7 +155,7 @@ export class ClientPane {
         onClick('#saveClientBtn', this.save);
 
         // From the client side
-        bus.clear('client:search:refresh');
+        bus.clear('order');
         bus.on('client:search:refresh', (data) => {
 
             // console.log('client:search:refresh received:', data);

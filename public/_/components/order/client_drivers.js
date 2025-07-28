@@ -1,4 +1,4 @@
-import { __html, onChange, onClick, randomString } from "/_/helpers/global.js";
+import { __html, onChange, onClick, randomString } from "../../helpers/global.js";
 
 /**
  * ClientDrivers component that manages the drivers associated with a client.
@@ -56,7 +56,7 @@ export class ClientDrivers {
         this.client.drivers.forEach((driver, i) => {
 
             driversList.insertAdjacentHTML('beforeend', /*html*/`
-                <div class="driver-item bg-light bg-gradient" id="${driver.id}">
+                <div class="driver-item bg-light bg-gradient p-3 mb-3 border-sm" id="${driver.id}">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6><i class="bi bi-person-badge me-2"></i>${__html('Driver #%1$', i + 1)}</h6>
                         <button class="btn btn-outline-danger btn-remove-driver btn-sm" data-id="${driver.id}">

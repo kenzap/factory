@@ -1,4 +1,4 @@
-import { __html, onChange, onClick, randomString } from "/_/helpers/global.js";
+import { __html, onChange, onClick, randomString } from "../../helpers/global.js";
 
 /**
  * ClientAddresses component that manages the addresses associated with a client.

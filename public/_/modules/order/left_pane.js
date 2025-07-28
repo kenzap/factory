@@ -1,16 +1,17 @@
+import { saveOrder } from "../../api/save_order.js";
+import { ClientContactSearch } from "../../components/order/client_contact_search.js";
+import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { onClick } from "../../helpers/global";
-import { getOrder } from "/_/api/get_order.js";
-import { saveOrder } from "/_/api/save_order.js";
-import { ClientContactSearch } from '/_/components/order/client_contact_search.js';
-import { ClientOrderSearch } from '/_/components/order/client_order_search.js';
-import { __attr, __html, toast } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { __attr, __html, toast } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
+import { OrderPane } from "../../modules/order/order_pane.js";
 
 export class LeftPane {
 
-    constructor() {
+    constructor(settings, order) {
 
-        this.order = { _id: null, id: null, eid: null };
+        this.settings = settings;
+        this.order = order;
 
         // check if header is already present
         this.init();
@@ -23,31 +24,39 @@ export class LeftPane {
 
     data = () => {
 
-        getOrder(this.order.id, (response) => {
+        // getOrder(this.order.id, (response) => {
 
-            if (!response.success) return;
+        //     if (!response.success) return;
 
-            this.order = response.order;
+        //     this.order = response.order;
 
-            // refresh view
-            this.view();
+        //     // refresh view
+        //     this.view();
 
-            // console.log('client:search:refresh:', this.order);
+        //     // console.log('client:search:refresh:', this.order);
 
-            // refresh right pane
-            bus.emit('client:search:refresh', { _id: this.order.eid, name: this.order.clientName });
-        });
+        //     // refresh right pane
+        //     // bus.emit('client:search:refresh', { _id: this.order.eid, name: this.order.clientName });
+        // });
     }
 
     view = () => {
 
         document.querySelector('.left-pane').innerHTML = /*html*/`
         <!-- Left Pane -->
-        <div class="left-pane bg-light bg-gradient">
+        <div class="bg-light bg-gradient">
             <div class="top-content">
                 <!-- Order ID Section -->
                 <div class="form-section">
                     <h6><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="orderDraft" ${this.order.draft ? 'checked' : ''}>
+                            <label class="form-check-label" for="orderDraft">
+                                ${__html('Draft')}
+                            </label>
+                        </div>
+                    </div>
                     <div class="mb-2">
                         <input type="text" class="form-control form-control-sm" id="orderId" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}">
                     </div>
@@ -144,13 +153,19 @@ export class LeftPane {
 
     listeners = () => {
 
-        // Example: Add event listener for save button
-        document.getElementById('saveOrderBtn').addEventListener('click', () => {
+        // Save button
+        onClick('#saveOrderBtn', () => {
 
             // Handle save order logic here
             console.log('Save Order button clicked');
 
             this.save();
+        });
+
+        // Order list table button
+        onClick('#orderPane', () => {
+
+            new OrderPane(this.settings, this.order);
         });
 
         // Add event listener for order ID input
@@ -159,7 +174,10 @@ export class LeftPane {
                 event.preventDefault();
 
                 this.order.id = document.getElementById('orderId').value;
-                this.data();
+
+                bus.emit('order:reload', this.order.id);
+
+                // this.data();
             }
         });
 
@@ -182,6 +200,7 @@ export class LeftPane {
         const _id = document.getElementById('orderId').dataset._id || '';
         const id = document.getElementById('orderId').value;
         const eid = document.getElementById('clientFilter').dataset._id || ''; // entity id
+        const orderDraft = document.getElementById('orderDraft').checked; // draft
         const clientName = document.getElementById('clientFilter').value; // client entity name
         const contactPerson = document.getElementById('contactPerson').value;
         const contactPhone = document.getElementById('contactPhone').value;
@@ -190,11 +209,14 @@ export class LeftPane {
         const dueDate = document.getElementById('dueDate').value;
         const notes = document.getElementById('notes').value;
 
+        console.log(orderDraft)
+
         // Collect other necessary data and send it to the server
         const orderData = {
             _id,
             id,
             eid,
+            draft: orderDraft,
             clientName,
             address,
             contactPerson,
@@ -217,7 +239,9 @@ export class LeftPane {
 
             toast("Order saved", "success");
 
-            this.data();
+            bus.emit('order:reload', response.order.id);
+
+            // this.data();
         });
     }
 }

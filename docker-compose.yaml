@@ -1,8 +1,9 @@
-version: '3.8'
-
 services:
   postgres:
-    image: pgvector/pgvector:pg15
+    build:
+      context: .
+      dockerfile: Dockerfile-postgres
+    image: custom-postgres:pg17-pgvector
     container_name: local_postgres
     restart: unless-stopped
     environment:
@@ -38,23 +39,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-  # pgadmin:
-  #   image: dpage/pgadmin4:latest
-  #   container_name: pgadmin
-  #   restart: unless-stopped
-  #   environment:
-  #     PGADMIN_DEFAULT_EMAIL: admin@example.com
-  #     PGADMIN_DEFAULT_PASSWORD: admin123
-  #     PGADMIN_CONFIG_SERVER_MODE: 'False'
-  #   ports:
-  #     - "8080:80"
-  #   volumes:
-  #     - pgadmin_data:/var/lib/pgadmin
-  #   networks:
-  #     - postgres_network
-  #   depends_on:
-  #     - postgres
-
+      
   adminer:
     image: adminer:latest
     container_name: adminer

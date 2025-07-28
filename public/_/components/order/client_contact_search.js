@@ -120,8 +120,8 @@ export class ClientContactSearch {
         // Hide suggestions when clicking outside
         document.addEventListener('click', (e) => {
 
-            console.log('Suggestion clicked:', e.target);
             if (!clientInput.contains(e.target) && !suggestions.contains(e.target)) {
+                // console.log('Suggestion clicked:', e.target);
                 suggestions.classList.add('d-none');
             }
         });

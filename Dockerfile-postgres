@@ -1,0 +1,17 @@
+FROM postgres:17
+
+# Install build tools and Postgres dev files
+RUN apt-get update && apt-get install -y \
+    git \
+    make \
+    gcc \
+    postgresql-server-dev-17
+
+# Clone and build pgvector
+RUN git clone --branch v0.5.1 https://github.com/pgvector/pgvector.git \
+    && cd pgvector \
+    && make && make install \
+    && cd .. && rm -rf pgvector
+
+# Optional: Clean up to reduce image size
+RUN apt-get remove -y git make gcc && apt-get autoremove -y && apt-get clean
