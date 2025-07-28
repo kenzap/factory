@@ -25,6 +25,9 @@ class OrderEdit {
 
         // connect to backend
         this.init();
+
+        // listeners
+        this.listeners();
     }
 
     init = () => {
@@ -90,6 +93,8 @@ class OrderEdit {
     listeners = () => {
 
         bus.on('order:reload', (id) => {
+
+            this.order.id = id;
 
             this.init();
         });

@@ -51,23 +51,23 @@ export class LeftPane {
                     <h6><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="orderDraft" ${this.order.draft ? 'checked' : ''}>
+                            <input class="form-check-input" type="checkbox" id="orderDraft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
                             <label class="form-check-label" for="orderDraft">
                                 ${__html('Draft')}
                             </label>
                         </div>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="orderId" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}">
+                        <input type="text" class="form-control form-control-sm" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}">
                     </div>
                     <div class="mb-2">
                         <client-order-search></client-order-search>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="address" placeholder="Construction site address">
+                        <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address">
                     </div>
                     <div class="mb-2">
-                        <textarea class="form-control form-control-sm" id="notes" rows="2" placeholder="${__attr('Order notes...')}">${this.order.notes || ""}</textarea>
+                        <textarea class="form-control form-control-sm" id="notes" rows="2" autocomplete="nope" placeholder="${__attr('Order notes...')}">${this.order.notes || ""}</textarea>
                     </div>
                 </div>
                 
@@ -76,13 +76,13 @@ export class LeftPane {
                     <h6><i class="bi bi-telephone me-2"></i>${__html('Contact')}</h6>
                     <contact-order-search></contact-order-search>
                     <div class="input-group input-group-sm mb-2">
-                        <input type="tel" class="form-control" id="contactPhone" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}">
+                        <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}">
                         <button class="btn btn-outline-success whatsapp-btn po" type="button" id="whatsappBtn">
                             <i class="bi bi-whatsapp"></i>
                         </button>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="contactEmail" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}">
+                        <input id="contactEmail" type="text" class="form-control form-control-sm" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}">
                     </div>
                 </div>
                 
@@ -232,7 +232,7 @@ export class LeftPane {
 
         saveOrder(orderData, (response) => {
 
-            // console.log('Order saved successfully:', response);
+            console.log('Order saved successfully:', response.order);
 
             if (response.order.id) this.order.id = response.order.id;
             if (response.order._id) this.order._id = response.order._id;

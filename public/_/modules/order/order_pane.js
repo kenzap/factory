@@ -104,7 +104,7 @@ export class OrderPane {
                     field: "product",
                     editor: this.productEditor,
                     headerSort: false,
-                    width: 180
+                    width: 280
                 },
                 {
                     title: __html("W (mm)"),
@@ -432,18 +432,87 @@ export class OrderPane {
         imagePreview.style.borderRadius = "4px";
         imagePreview.style.display = "none";
 
-        const datalist = document.createElement("datalist");
-        datalist.id = "product-suggestions-" + Math.random().toString(36).substring(2, 11);
-        input.setAttribute("list", datalist.id);
-
-        // Initialize with current suggestions
-        this.updateProductDatalist(datalist, this.productSuggestions);
-        document.body.appendChild(datalist);
+        const dropdown = document.createElement("div");
+        dropdown.style.position = "absolute";
+        dropdown.style.top = "100%";
+        dropdown.style.left = "0";
+        dropdown.style.right = "0";
+        dropdown.style.backgroundColor = "white";
+        dropdown.style.border = "1px solid #ddd";
+        dropdown.style.borderRadius = "4px";
+        dropdown.style.maxHeight = "200px";
+        dropdown.style.overflowY = "auto";
+        dropdown.style.zIndex = "1000";
+        dropdown.style.display = "none";
 
         container.appendChild(input);
         container.appendChild(imagePreview);
+        container.appendChild(dropdown);
 
         let searchTimeout;
+        let selectedIndex = -1;
+        let options = [];
+
+        const updateSelectedOption = () => {
+            options.forEach((option, index) => {
+                if (index === selectedIndex) {
+                    option.style.backgroundColor = "#007bff";
+                    option.style.color = "white";
+                    option.scrollIntoView({ block: "nearest" });
+                } else {
+                    option.style.backgroundColor = "white";
+                    option.style.color = "black";
+                }
+            });
+        };
+
+        const updateDropdown = (suggestions) => {
+            dropdown.innerHTML = '';
+            options = [];
+            selectedIndex = -1;
+
+            if (suggestions.length > 0) {
+                suggestions.forEach((suggestion, index) => {
+                    const option = document.createElement("div");
+                    option.textContent = suggestion;
+                    option.style.padding = "8px 12px";
+                    option.style.cursor = "pointer";
+                    option.style.borderBottom = "1px solid #eee";
+                    option.style.backgroundColor = "white";
+
+                    option.addEventListener("mouseenter", (e) => {
+                        selectedIndex = index;
+                        updateSelectedOption();
+                    });
+
+                    option.addEventListener("mouseleave", (e) => {
+                        e.preventDefault();
+                        selectedIndex = -1;
+                        updateSelectedOption();
+                    });
+
+                    option.addEventListener("click", () => {
+                        console.log('Suggestion clicked:', suggestion);
+                        input.value = suggestion;
+                        dropdown.style.display = "none";
+
+                        // Immediately update the cell value before navigating
+                        success(suggestion);
+
+                        setTimeout(() => {
+                            this.navigateToNextCell(cell);
+                        }, 10);
+                    });
+
+                    dropdown.appendChild(option);
+                    options.push(option);
+                });
+                dropdown.style.display = "block";
+            } else {
+                dropdown.style.display = "none";
+            }
+        };
+
 
         input.addEventListener("input", (e) => {
             const searchTerm = e.target.value;
@@ -453,49 +522,73 @@ export class OrderPane {
 
             // Debounce search requests (300ms delay)
             searchTimeout = setTimeout(() => {
-                if (searchTerm.length >= 2) { // Only search if 2+ characters
+                if (searchTerm.length >= 1) {
                     this.searchProductSuggestionsFromBackend(searchTerm, cell, (suggestions) => {
-                        this.updateProductDatalist(datalist, suggestions);
+                        updateDropdown(suggestions);
                     });
                 } else {
-                    // Show default suggestions if search term is too short
-                    this.updateProductDatalist(datalist, this.productSuggestions);
+                    updateDropdown(this.productSuggestions);
                 }
             }, 300);
-
-            // Check if user selected from current suggestions
-            const currentOptions = Array.from(datalist.options).map(option => option.value);
-            if (currentOptions.includes(searchTerm)) {
-                setTimeout(() => {
-                    this.navigateToNextCell(cell);
-                }, 10);
-            }
         });
 
-        input.addEventListener("blur", () => {
-            clearTimeout(searchTimeout);
-            success(input.value);
-            if (datalist.parentNode) {
-                document.body.removeChild(datalist);
-            }
+        input.addEventListener("focus", () => {
+            updateDropdown(this.productSuggestions);
         });
 
+        input.addEventListener("blur", (e) => {
+            // Delay hiding dropdown to allow clicks on options
+            setTimeout(() => {
+                if (!dropdown.contains(e.relatedTarget)) {
+                    dropdown.style.display = "none";
+                    clearTimeout(searchTimeout);
+                    success(input.value);
+                }
+            }, 150);
+        });
         input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                clearTimeout(searchTimeout);
-                success(input.value);
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
+            if (e.key === "ArrowDown") {
+                e.preventDefault();
+                e.stopPropagation(); // Add this to prevent table navigation
+                if (dropdown.style.display === "block" && options.length > 0) {
+                    selectedIndex = selectedIndex < options.length - 1 ? selectedIndex + 1 : 0;
+                    updateSelectedOption();
                 }
-                setTimeout(() => {
-                    this.navigateToNextCell(cell);
-                }, 10);
+            } else if (e.key === "ArrowUp") {
+                e.preventDefault();
+                e.stopPropagation(); // Add this to prevent table navigation
+                if (dropdown.style.display === "block" && options.length > 0) {
+                    selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : options.length - 1;
+                    updateSelectedOption();
+                }
+            } else if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation(); // Add this to prevent table navigation
+                clearTimeout(searchTimeout);
+
+                if (selectedIndex >= 0 && selectedIndex < options.length) {
+                    // Select the highlighted option
+                    const selectedSuggestion = options[selectedIndex].textContent;
+                    input.value = selectedSuggestion;
+                    dropdown.style.display = "none";
+                    success(selectedSuggestion);
+                    setTimeout(() => {
+                        this.navigateToNextCell(cell);
+                    }, 10);
+                } else {
+                    // No option selected, just accept current input value
+                    dropdown.style.display = "none";
+                    success(input.value);
+                    setTimeout(() => {
+                        this.navigateToNextCell(cell);
+                    }, 10);
+                }
             } else if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation(); // Add this to prevent table navigation
                 clearTimeout(searchTimeout);
+                dropdown.style.display = "none";
                 cancel();
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
             }
         });
 
@@ -503,7 +596,7 @@ export class OrderPane {
             input.focus();
         });
 
-        return input;
+        return container;
     }
 
     // New method to search products from backend
@@ -528,10 +621,15 @@ export class OrderPane {
 
     // Helper method to update datalist options
     updateProductDatalist = (datalist, suggestions) => {
+
+        console.log('Updating product datalist with suggestions:', suggestions);
+
         datalist.innerHTML = '';
         suggestions.forEach(suggestion => {
             const option = document.createElement("option");
             option.value = suggestion;
+
+            // console.log('Adding suggestion to datalist:', suggestion);
             datalist.appendChild(option);
         });
     }
