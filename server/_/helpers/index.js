@@ -51,6 +51,7 @@ export const getSettings = async () => {
                    js->'data'->'tax_calc' as tax_calc, 
                    js->'data'->'tax_auto_rate' as tax_auto_rate, 
                    js->'data'->'tax_rate' as tax_rate, 
+                   js->'data'->'tax_percent' as tax_percent, 
                    js->'data'->'tax_display' as tax_display,
                    js->'data'->'price' as price 
             FROM data 
@@ -67,6 +68,7 @@ export const getSettings = async () => {
                 currency_symb_loc: row.currency_symb_loc,
                 tax_auto_rate: row.tax_auto_rate,
                 tax_rate: row.tax_rate,
+                tax_percent: row.tax_percent,
                 tax_display: row.tax_display,
                 price: row.price,
             };

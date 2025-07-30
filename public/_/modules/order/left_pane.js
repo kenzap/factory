@@ -1,8 +1,9 @@
 import { saveOrder } from "../../api/save_order.js";
+import { ClientAddressSearch } from "../../components/order/client_address_search.js";
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
-import { onClick } from "../../helpers/global";
-import { __attr, __html, toast } from "../../helpers/global.js";
+import { __attr, __html, onClick, priceFormat, toast } from "../../helpers/global.js";
+import { getTotals } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 
@@ -22,24 +23,6 @@ export class LeftPane {
         this.view();
     }
 
-    data = () => {
-
-        // getOrder(this.order.id, (response) => {
-
-        //     if (!response.success) return;
-
-        //     this.order = response.order;
-
-        //     // refresh view
-        //     this.view();
-
-        //     // console.log('client:search:refresh:', this.order);
-
-        //     // refresh right pane
-        //     // bus.emit('client:search:refresh', { _id: this.order.eid, name: this.order.clientName });
-        // });
-    }
-
     view = () => {
 
         document.querySelector('.left-pane').innerHTML = /*html*/`
@@ -51,8 +34,8 @@ export class LeftPane {
                     <h6><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="orderDraft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
-                            <label class="form-check-label" for="orderDraft">
+                            <input class="form-check-input" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
+                            <label class="form-check-label" for="draft">
                                 ${__html('Draft')}
                             </label>
                         </div>
@@ -64,7 +47,7 @@ export class LeftPane {
                         <client-order-search></client-order-search>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address">
+                        <client-address-search></client-address-search>
                     </div>
                     <div class="mb-2">
                         <textarea class="form-control form-control-sm" id="notes" rows="2" autocomplete="nope" placeholder="${__attr('Order notes...')}">${this.order.notes || ""}</textarea>
@@ -90,7 +73,7 @@ export class LeftPane {
                 <div class="form-section">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
                     <div class="input-group input-group-sm mb-2">
-                        <input type="datetime-local" class="form-control form-control-sm" id="dueDate" value="${this.order.dueDate || ''}">
+                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${this.order.due_date || ''}">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -116,22 +99,7 @@ export class LeftPane {
                 <!-- Totals Summary -->
                 <div class="form-section">
                     <h6><i class="bi bi-calculator me-2"></i>${__html('Summary')}</h6>
-                    <div class="summary-item">
-                        <span>Subtotal:</span>
-                        <span id="subtotal">€0.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>VAT 21%:</span>
-                        <span id="vat21">€0.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span>VAT 0%:</span>
-                        <span id="vat0">€0.00</span>
-                    </div>
-                    <div class="summary-item summary-total">
-                        <span>Total:</span>
-                        <span id="totalAmount">€0.00</span>
-                    </div>
+                    <order-summary class="mb-1"></order-summary>
                 </div>
                 
                 <!-- Save Button -->
@@ -144,6 +112,8 @@ export class LeftPane {
         </div>`;
 
         new ClientOrderSearch(this.order);
+
+        new ClientAddressSearch(this.order);
 
         new ClientContactSearch(this.order);
 
@@ -175,23 +145,70 @@ export class LeftPane {
 
                 this.order.id = document.getElementById('orderId').value;
 
-                bus.emit('order:reload', this.order.id);
-
-                // this.data();
+                bus.emit('order:updated', this.order.id);
             }
         });
 
-        // whatsapp button
+        // WhatsApp button
         onClick('#whatsappBtn', () => {
 
-            const phone = document.getElementById('contactPhone').value;
+            let phone = document.getElementById('contactPhone').value.trim();
             if (phone) {
-                const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}`;
+                // Remove all non-digit characters
+                let digits = phone.replace(/\D/g, '');
+                // If phone starts with '371' or '+371', use as is, else add +371
+                if (!digits.startsWith('371')) {
+                    digits = '371' + digits;
+                }
+                const whatsappUrl = `https://wa.me/${digits}`;
                 window.open(whatsappUrl, '_blank');
             } else {
                 toast(__html('Please enter a valid phone number'), 'warning');
             }
         });
+
+        // Refresh totals
+        bus.on('order:table:refreshed', () => {
+
+            this.summary();
+        });
+
+        // Update order summary when client is updated
+        bus.on('client:updated', () => {
+
+            this.summary();
+        });
+
+        this.summary();
+    }
+
+    summary = () => {
+
+        // Calculate totals based on the order items and settings
+        this.order.price = getTotals(this.settings, this.order);
+
+        console.log('Order summary updated:', this.order.price);
+
+        const order = this.order;
+
+        if (!order.price) {
+            order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
+        }
+
+        // Create the order summary HTML
+        document.querySelector('order-summary').innerHTML = /*html*/`
+            <div class="d-flex justify-content-between">
+                <span>${__html('Subtotal')}</span>
+                <span id="subtotal">${priceFormat(this.settings, order.price.total)}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>${this.settings.tax_display + " " + this.settings.tax_percent}%</span>
+                <span id="vat_rate">${priceFormat(this.settings, order.price.tax_total)}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>${__html('Total')}</span>
+                <span id="totalAmount">${priceFormat(this.settings, order.price.grand_total)}</span>
+            </div>`;
     }
 
     save = () => {
@@ -200,30 +217,34 @@ export class LeftPane {
         const _id = document.getElementById('orderId').dataset._id || '';
         const id = document.getElementById('orderId').value;
         const eid = document.getElementById('clientFilter').dataset._id || ''; // entity id
-        const orderDraft = document.getElementById('orderDraft').checked; // draft
-        const clientName = document.getElementById('clientFilter').value; // client entity name
+        const draft = document.getElementById('draft').checked; // draft
+        const name = document.getElementById('clientFilter').value; // client entity name
         const contactPerson = document.getElementById('contactPerson').value;
         const contactPhone = document.getElementById('contactPhone').value;
         const contactEmail = document.getElementById('contactEmail').value;
         const address = document.getElementById('address').value;
-        const dueDate = document.getElementById('dueDate').value;
+        const due_date = document.getElementById('due_date').value;
         const notes = document.getElementById('notes').value;
 
-        console.log(orderDraft)
+        // console.log(draft)
 
         // Collect other necessary data and send it to the server
         const orderData = {
             _id,
             id,
             eid,
-            draft: orderDraft,
-            clientName,
+            draft,
+            name,
             address,
-            contactPerson,
+            person: contactPerson,
             phone: contactPhone,
             email: contactEmail,
-            dueDate,
+            due_date,
             notes,
+            items: this.order.items || [], // Assuming items are stored in this.order.items
+            price: this.order.price || {},
+            vat_status: this.order.vat_status || '0',
+            entity: this.order.entity || 'company',
             // Add more fields as necessary
         };
 
@@ -239,7 +260,7 @@ export class LeftPane {
 
             toast("Order saved", "success");
 
-            bus.emit('order:reload', response.order.id);
+            bus.emit('order:updated', response.order.id);
 
             // this.data();
         });

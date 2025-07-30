@@ -1,7 +1,6 @@
-import { onClick } from "../../helpers/global";
-import { getClients } from "/_/api/get_clients.js";
-import { __html } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { getClientSuggestions } from "../../api/get_client_suggestions.js";
+import { __html, onClick } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
 
 /**
  * A client search component that provides autocomplete functionality for searching clients.
@@ -32,7 +31,7 @@ export class ClientOrderSearch {
         document.querySelector('client-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order.clientName || ''}" data-_id="${this.order.eid || ''}">
+                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order.name || ''}" data-_id="${this.order.eid || ''}">
                     <button class="btn btn-outline-primary edit-client-btn po" type="button" id="editClientBtn" >
                         <i class="bi bi-arrow-right"></i>
                     </button>
@@ -44,7 +43,7 @@ export class ClientOrderSearch {
 
     data = () => {
 
-        getClients((response) => {
+        getClientSuggestions((response) => {
 
             // console.log('Clients response:', response);
             if (response && response.clients) {
@@ -90,7 +89,7 @@ export class ClientOrderSearch {
                 clientInput.value = e.target.textContent;
                 clientInput.dataset._id = e.target.dataset._id;
                 suggestions.classList.add('d-none');
-                console.log('emit:client:search:refresh:4');
+                // console.log('emit:client:search:refresh:4');
                 bus.emit('client:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
                 bus.emit('contact:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
             }

@@ -1,4 +1,4 @@
-import { getClients } from "/_/api/get_clients.js";
+import { getClientSuggestions } from "/_/api/get_client_suggestions.js";
 import { __html } from "/_/helpers/global.js";
 import { bus } from "/_/modules/bus.js";
 
@@ -43,7 +43,7 @@ export class ClientSearch {
 
     data = () => {
 
-        getClients((response) => {
+        getClientSuggestions((response) => {
 
             console.log('Clients response:', response);
             if (response && response.clients) {

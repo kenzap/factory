@@ -48,63 +48,21 @@ class OrderEdit {
             // session
             new Session();
             new LeftPane(this.settings, this.order);
-            new ClientPane(this.order.eid);
-
-            // init header
-            // new Header(response);
+            new ClientPane(this.order);
 
             console.log(response);
-
-            // no authenticated => stop here
-            // if (!response.user) return;
-
-            // console.log(response);
-
-            // load page html 
-            this.html();
-
-            // render page
-            this.render();
-
-            // init footer
-            // new Footer(response);
-
-            // console.log(response);
         });
-    }
-
-    // load page
-    html = () => {
-
-    }
-
-    // render page
-    render = () => {
-
-        // initiate breadcrumbs
-        // initBreadcrumbs(
-        //     [
-        //         { text: __html('Home') },
-        //     ]
-        // );
     }
 
     // listeners
     listeners = () => {
 
-        bus.on('order:reload', (id) => {
+        bus.on('order:updated', (id) => {
 
             this.order.id = id;
 
             this.init();
         });
-    }
-
-    // save order
-    save = () => {
-
-        // save order logic here
-        // e.g., send updated order data to the server
     }
 }
 

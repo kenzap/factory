@@ -1,7 +1,7 @@
 import { getProductSuggestions } from "../../api/get_product_suggestions.js";
-import { saveClient } from "../../api/save_client.js";
-import { __html, onClick, toast } from "../../helpers/global.js";
+import { __html, FILES, onClick } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
+import { calculateItemTotal, getPrice } from "../../helpers/price.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { bus } from "../bus.js";
 
@@ -11,6 +11,7 @@ export class OrderPane {
 
         this.settings = settings;
         this.order = order;
+        this.order.items = this.order.items || [];
 
         // console.log('OrderPane initialized with settings:', this.settings, 'and order:', this.order);
 
@@ -21,9 +22,9 @@ export class OrderPane {
     init = () => {
 
         // Sample suggestions for different fields
-        this.clientMaterialSuggestions = ["Yes", "No"];
-        this.coatingTypeSuggestions = getCoatings(this.settings);
-        this.coatingColorSuggestions = getColors(this.settings);
+        this.cmSuggestions = [true, false];
+        this.coatingSuggestions = getCoatings(this.settings);
+        this.colorSuggestions = getColors(this.settings);
         this.discountSuggestions = [5, 7, 10, 15, 20, 25, 30, 50];
         this.productSuggestions = [];
 
@@ -69,11 +70,11 @@ export class OrderPane {
             //     "navLeft": false,
             //     "navRight": false,
             // },
-            data: [],
+            data: this.order.items,
             columns: [
                 {
                     title: __html("CM"),
-                    field: "clientMaterial",
+                    field: "cm",
                     editor: "tickCross",
                     headerSort: false,
                     formatter: "tickCross",
@@ -81,56 +82,59 @@ export class OrderPane {
                 },
                 {
                     title: __html("Color"),
-                    field: "coatingColor",
+                    field: "color",
                     editor: this.suggestionEditor,
                     headerSort: false,
                     editorParams: {
-                        suggestions: this.coatingColorSuggestions
+                        suggestions: this.colorSuggestions
                     },
                     width: 80
                 },
                 {
                     title: __html("Coating"),
-                    field: "coatingType",
+                    field: "coating",
                     editor: this.suggestionEditor,
                     headerSort: false,
                     editorParams: {
-                        suggestions: this.coatingTypeSuggestions
+                        suggestions: this.coatingSuggestions
                     },
                     width: 100
                 },
                 {
                     title: __html("Product"),
-                    field: "product",
+                    field: "title",
                     editor: this.productEditor,
                     headerSort: false,
-                    width: 280
+                    width: 360,
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("W (mm)"),
-                    field: "width",
+                    field: "formula_width_calc",
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 68,
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("L (mm)"),
-                    field: "length",
+                    field: "formula_length_calc",
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 68,
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("F (m²)"),
-                    field: "squareFootage",
+                    field: "area",
                     headerSort: false,
                     width: 68,
                     formatter: function (cell) {
@@ -139,40 +143,40 @@ export class OrderPane {
                 },
                 {
                     title: __html("Qty"),
-                    field: "quantity",
+                    field: "qty",
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 60,
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("Adj"),
-                    field: "priceAdjustment",
+                    field: "adj",
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { step: 0.01 },
                     width: 80,
                     formatter: "money",
                     formatterParams: { symbol: "€", precision: 2 },
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("Price"),
-                    field: "productPrice",
+                    field: "price",
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { min: 0, step: 0.01 },
-                    width: 120,
+                    width: 100,
                     formatter: "money",
                     formatterParams: { symbol: "€", precision: 2 },
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("Discount"),
@@ -188,17 +192,17 @@ export class OrderPane {
                     editorParams: {
                         suggestions: this.discountSuggestions
                     },
-                    cellEdited: (cell) => {
-                        this.updateCalculations(cell.getRow());
-                    }
+                    // cellEdited: (cell) => {
+                    //     this.updateCalculations(cell.getRow());
+                    // }
                 },
                 {
                     title: __html("Total"),
-                    field: "totalPrice",
+                    field: "total",
                     headerSort: false,
-                    width: 120,
+                    width: 100,
                     formatter: function (cell) {
-                        return '<span class="calculated-field">€' + (cell.getValue() || '0.00') + '</span>';
+                        return '<span class="calculated-field">€' + (cell.getValue().toFixed(2) || '0.00') + '</span>';
                     }
                 },
                 {
@@ -231,8 +235,96 @@ export class OrderPane {
             ]
         });
 
+        // Load existing order items into the table
+        if (this.order.items && this.order.items.length > 0) {
+
+            console.log('Loading existing order items into the table:', this.order.items);
+            // this.table.setData(this.order.items);
+        }
+
+        // Add event listener for row deletion
+        this.table.on("rowDeleted", (row) => {
+            this.syncItems();
+            bus.emit('order:table:refreshed');
+        });
+
+        // Add event listener to track any cell value changes
+        this.table.on("cellEdited", (cell) => {
+            const row = cell.getRow();
+            const field = cell.getField();
+            const newValue = cell.getValue();
+            const rowData = row.getData();
+
+            // console.log(`Cell ${field} changed to: ${newValue}`, rowData);
+
+            // this.refreshRowTotals(cell);
+
+            // You can perform specific actions based on the field or value
+            this.updateCalculations(cell);
+            this.syncItems();
+        });
 
         // this.addRow();
+    }
+
+    syncItems = () => {
+
+        // {
+        //     "_id": "c95858c9d98f1020557c33b4e778972ea7ea9b97",
+        //     "cid": "uUmEklwEOGxk",
+        //     "qty": "1",
+        //     "area": "",
+        //     "note": "",
+        //     "color": "RR887",
+        //     "price": "10.16",
+        //     "sdesc": "",
+        //     "title": "Teknes stūris, ārējais Ø125",
+        //     "total": 10.16,
+        //     "priced": 10.16,
+        //     "tax_id": "",
+        //     "coating": "Matt Pural",
+        //     "created": 1753734362,
+        //     "formula": "250*500",
+        //     "discount": 1,
+        //     "cad_files": [],
+        //     "discounts": [
+        //         {
+        //         "note": "",
+        //         "type": "manager",
+        //         "percent": "20",
+        //         "availability": "always"
+        //         }
+        //     ],
+        //     "var_price": [
+        //         {
+        //         "id": "ZN",
+        //         "unit": "pc",
+        //         "price": "8.83",
+        //         "title": "*",
+        //         "parent": "Zinc",
+        //         "public": true
+        //         },
+        //         ...
+        //     ],
+        //     "calc_price": "variable",
+        //     "variations": [],
+        //     "input_fields": [],
+        //     "formula_price": "",
+        //     "formula_width": "",
+        //     "formula_length": "",
+        //     "formula_width_calc": "0",
+        //     "formula_length_calc": "0",
+        //     "input_fields_values": []
+        // },
+
+        // Sync the order items with the table data
+        this.order.items = this.table.getData().map(item => {
+            return {
+                ...item,
+                // area: (parseFloat(item.width) * parseFloat(item.length) / 1000000).toFixed(3),
+                // total: getPrice(this.settings, item).total.toFixed(2)
+            };
+        });
     }
 
     listeners = () => {
@@ -244,19 +336,29 @@ export class OrderPane {
     }
 
     addRow = () => {
+
+        // Get coating and color from previous row if it exists
+        const rows = this.table.getRows();
+        let previousRowData = {};
+
+        if (rows.length > 0) {
+            const lastRow = rows[rows.length - 1];
+            previousRowData = lastRow.getData();
+        }
+
         this.table.addRow({
-            clientMaterial: "",
-            coatingType: "",
-            coatingColor: "",
-            product: "",
-            width: "",
-            length: "",
-            squareFootage: "0.000",
-            quantity: "",
-            priceAdjustment: 0,
-            productPrice: "",
+            cm: previousRowData.cm || "",
+            coating: previousRowData.coating || "",
+            color: previousRowData.color || "",
+            title: "",
+            formula_width_calc: "",
+            formula_length_calc: "",
+            area: 0,
+            qty: 1,
+            adj: 0,
+            price: 0,
             discount: 0,
-            totalPrice: "0.00"
+            total: 0
         });
 
         // start editing color cell of the new row
@@ -268,9 +370,10 @@ export class OrderPane {
 
     // Enhanced number editor with Enter key handling
     numberEditor = (cell, onRendered, success, cancel, editorParams) => {
+
         const input = document.createElement("input");
         input.type = "number";
-        input.value = cell.getValue() || "";
+        input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
         input.className = "form-control form-control-sm";
 
         // Apply editor params
@@ -279,13 +382,13 @@ export class OrderPane {
         if (editorParams.step !== undefined) input.step = editorParams.step;
 
         input.addEventListener("blur", () => {
-            success(input.value);
+            success(input.value ? parseFloat(input.value) : "");
         });
 
         input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
                 e.preventDefault();
-                success(input.value);
+                success(input.value ? parseFloat(input.value) : "");
                 // Navigate to next cell after a short delay
                 setTimeout(() => {
                     this.navigateToNextCell(cell);
@@ -293,7 +396,7 @@ export class OrderPane {
             } else if (e.key === "Escape") {
                 cancel();
             } else if (e.key === "Tab") {
-                success(input.value);
+                success(input.value ? parseFloat(input.value) : "");
             }
         });
 
@@ -310,7 +413,7 @@ export class OrderPane {
 
         const currentRow = currentCell.getRow();
         const currentColumn = currentCell.getColumn();
-        const columns = this.table.getColumns().filter(col => col.getField() !== 'actions' && col.getField() !== 'squareFootage' && col.getField() !== 'totalPrice');
+        const columns = this.table.getColumns().filter(col => col.getField() !== 'actions' && col.getField() !== 'area' && col.getField() !== 'total');
         const currentColumnIndex = columns.findIndex(col => col.getField() === currentColumn.getField());
 
         if (currentColumnIndex < columns.length - 1) {
@@ -326,7 +429,7 @@ export class OrderPane {
             if (currentRowIndex < rows.length - 1) {
                 // Move to next row
                 const nextRow = rows[currentRowIndex + 1];
-                const firstColumn = columns[0];
+                const firstColumn = columns[1];
                 const nextCell = nextRow.getCell(firstColumn.getField());
                 nextCell.edit();
             } else {
@@ -366,7 +469,10 @@ export class OrderPane {
             // This triggers when user selects from datalist
             const selectedValue = e.target.value;
             if (editorParams.suggestions.includes(selectedValue)) {
-                console.log('Suggestion selected:', selectedValue);
+
+                // this.productSelected(suggestion, cell);
+
+                // console.log('S:Suggestion selected:', selectedValue);
                 // Navigate to next cell after a short delay
                 setTimeout(() => {
                     this.navigateToNextCell(cell);
@@ -386,6 +492,7 @@ export class OrderPane {
 
         input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
+                // this.productSelected(suggestion, cell);
                 success(input.value);
                 if (datalist.parentNode) {
                     document.body.removeChild(datalist);
@@ -430,7 +537,8 @@ export class OrderPane {
         imagePreview.style.objectFit = "cover";
         imagePreview.style.border = "1px solid #ddd";
         imagePreview.style.borderRadius = "4px";
-        imagePreview.style.display = "none";
+        imagePreview.src = "https://cdn.skarda.design/8e0729adbf79275c11a83d69df75f0c09061780a-polyester-2h3-1500.webp"; // Set default image source if needed
+        imagePreview.style.display = "none"; // Initially hidden
 
         const dropdown = document.createElement("div");
         dropdown.style.position = "absolute";
@@ -438,9 +546,9 @@ export class OrderPane {
         dropdown.style.left = "0";
         dropdown.style.right = "0";
         dropdown.style.backgroundColor = "white";
-        dropdown.style.border = "1px solid #ddd";
+        dropdown.style.border = "1px solid var(--bs-border-color);";
         dropdown.style.borderRadius = "4px";
-        dropdown.style.maxHeight = "200px";
+        dropdown.style.maxHeight = "320px";
         dropdown.style.overflowY = "auto";
         dropdown.style.zIndex = "1000";
         dropdown.style.display = "none";
@@ -474,11 +582,44 @@ export class OrderPane {
             if (suggestions.length > 0) {
                 suggestions.forEach((suggestion, index) => {
                     const option = document.createElement("div");
-                    option.textContent = suggestion;
                     option.style.padding = "8px 12px";
                     option.style.cursor = "pointer";
                     option.style.borderBottom = "1px solid #eee";
                     option.style.backgroundColor = "white";
+                    option.style.display = "flex";
+                    option.style.alignItems = "center";
+                    option.style.gap = "8px";
+
+                    const optionImage = document.createElement("img");
+                    optionImage.style.width = "42px";
+                    optionImage.style.height = "42px";
+                    optionImage.style.objectFit = "cover";
+                    optionImage.style.objectPosition = "center";
+                    optionImage.style.borderRadius = "4px";
+                    optionImage.style.backgroundColor = "#f8f9fa";
+                    optionImage.style.transition = "transform 0.2s ease";
+                    optionImage.src = FILES + "/" + suggestion._id + "-250.webp";
+
+                    // Add hover effect to scale image
+                    optionImage.addEventListener("mouseenter", () => {
+                        optionImage.style.transform = "scale(1.2)";
+                    });
+
+                    optionImage.addEventListener("mouseleave", () => {
+                        optionImage.style.transform = "scale(1)";
+                    });
+
+                    // Handle image load errors
+                    optionImage.onerror = () => {
+                        optionImage.style.display = "none";
+                    };
+
+                    const optionText = document.createElement("span");
+                    optionText.textContent = suggestion.title + " " + suggestion.sdesc;
+                    optionText.style.flex = "1";
+
+                    option.appendChild(optionImage);
+                    option.appendChild(optionText);
 
                     option.addEventListener("mouseenter", (e) => {
                         selectedIndex = index;
@@ -492,12 +633,14 @@ export class OrderPane {
                     });
 
                     option.addEventListener("click", () => {
-                        console.log('Suggestion clicked:', suggestion);
-                        input.value = suggestion;
-                        dropdown.style.display = "none";
+                        // console.log('Suggestion clicked:', suggestion);
+                        this.productSelected(suggestion, cell);
+
+                        // input.value = suggestion.title + " " + suggestion.sdesc;
+                        // dropdown.style.display = "none";
 
                         // Immediately update the cell value before navigating
-                        success(suggestion);
+                        success(suggestion.title + " " + suggestion.sdesc);
 
                         setTimeout(() => {
                             this.navigateToNextCell(cell);
@@ -512,7 +655,6 @@ export class OrderPane {
                 dropdown.style.display = "none";
             }
         };
-
 
         input.addEventListener("input", (e) => {
             const searchTerm = e.target.value;
@@ -541,6 +683,7 @@ export class OrderPane {
             setTimeout(() => {
                 if (!dropdown.contains(e.relatedTarget)) {
                     dropdown.style.display = "none";
+                    // this.productSuggestions = [];
                     clearTimeout(searchTimeout);
                     success(input.value);
                 }
@@ -571,6 +714,8 @@ export class OrderPane {
                     const selectedSuggestion = options[selectedIndex].textContent;
                     input.value = selectedSuggestion;
                     dropdown.style.display = "none";
+                    const suggestion = this.productSuggestions[selectedIndex];
+                    this.productSelected(suggestion, cell);
                     success(selectedSuggestion);
                     setTimeout(() => {
                         this.navigateToNextCell(cell);
@@ -578,6 +723,7 @@ export class OrderPane {
                 } else {
                     // No option selected, just accept current input value
                     dropdown.style.display = "none";
+                    this.productSuggestions = [];
                     success(input.value);
                     setTimeout(() => {
                         this.navigateToNextCell(cell);
@@ -588,6 +734,7 @@ export class OrderPane {
                 e.stopPropagation(); // Add this to prevent table navigation
                 clearTimeout(searchTimeout);
                 dropdown.style.display = "none";
+                this.productSuggestions = [];
                 cancel();
             }
         });
@@ -599,23 +746,38 @@ export class OrderPane {
         return container;
     }
 
+    productSelected = (suggestion, cell) => {
+
+        // this.syncItems(suggestion, cell);
+
+        // Map suggestion values to current row
+        const rowData = cell.getRow().getData();
+        const updatedData = { ...rowData, ...suggestion };
+
+        // Update the row with all suggestion properties
+        cell.getRow().update(updatedData);
+
+        // Update calculations after mapping the suggestion data
+        this.updateCalculations(cell);
+    }
+
     // New method to search products from backend
     searchProductSuggestionsFromBackend = (s, cell, callback) => {
 
         // const columns = this.table.getColumns()
         const rowData = cell.getRow().getData();
-        const color = rowData.coatingColor;
-        const coating = rowData.coatingType;
+        const color = rowData.color;
+        const coating = rowData.coating;
 
         // console.log('Searching backend for products with term:', color, coating, s);
 
         getProductSuggestions({ s, color, coating }, (response) => {
 
-            this.productSuggestions = response.suggestions.map(suggestion => suggestion.title + " " + suggestion.sdesc);
+            this.productSuggestions = response.suggestions; // .map(suggestion => suggestion.title + " " + suggestion.sdesc);
 
             callback(this.productSuggestions);
 
-            console.log('Product suggestions from backend:', response.suggestions);
+            // console.log('Product suggestions from backend:', response.suggestions);
         });
     }
 
@@ -635,66 +797,80 @@ export class OrderPane {
     }
 
     // Function to calculate square footage
-    calculateSquareFootage = (width, length) => {
+    calculatearea = (width, length) => {
         if (width && length) {
             return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
         }
         return 0;
     }
 
-    // Function to calculate total price
-    calculateTotalPrice = (squareFootage, quantity, productPrice, priceAdjustment, discount) => {
-        const basePrice = (squareFootage || 0) * (quantity || 0) * (productPrice || 0);
-        const adjustedPrice = basePrice + (priceAdjustment || 0);
+    // // Function to calculate total price
+    // calculatetotal = (area, qty, price, adj, discount) => {
+    //     const basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
+    //     const adjustedPrice = basePrice + (adj || 0);
 
-        // Handle discount with % sign - extract numeric value
-        let discountValue = discount || 0;
-        if (typeof discountValue === 'string' && discountValue.includes('%')) {
-            discountValue = parseFloat(discountValue.replace('%', '')) || 0;
-        }
+    //     // Handle discount with % sign - extract numeric value
+    //     let discountValue = discount || 0;
+    //     if (typeof discountValue === 'string' && discountValue.includes('%')) {
+    //         discountValue = parseFloat(discountValue.replace('%', '')) || 0;
+    //     }
 
-        const discountAmount = adjustedPrice * (discountValue / 100);
-        const finalPrice = adjustedPrice - discountAmount;
-        return Math.max(0, finalPrice).toFixed(2);
-    }
+    //     // console.log('Calculating total with basePrice:', basePrice, 'qty:', qty, 'price:', price, 'adj:', adj, 'discount:', discountValue);
+
+    //     const discountAmount = adjustedPrice * (discountValue / 100);
+    //     const finalPrice = adjustedPrice - discountAmount;
+    //     return parseFloat(Math.max(0, finalPrice).toFixed(2));
+    // }
 
     // Function to update calculations for a row
-    updateCalculations = (row) => {
+    updateCalculations = (cell) => {
+
+        const row = cell.getRow();
         const data = row.getData();
+        const cellField = cell.getField();
+
+        let coating = data.coating || "";
+        let color = data.color || "";
+
+        let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
+
+        // update product price in the row
+        if (data._id) {
+
+            price = getPrice(this.settings, { ...data, coating: coating, color: color });
+
+            row.update({
+                price: price.price,
+            });
+        }
+
+        // calculate price based on the product's formula
+        if (cellField == "title" && data._id) {
+
+            row.update({
+                product: data.title,
+                width: price.formula_width_calc || "",
+                length: price.formula_length_calc || "",
+            });
+        }
 
         // Calculate square footage
-        const squareFootage = this.calculateSquareFootage(data.width, data.length);
-        row.update({ squareFootage: squareFootage });
+        const area = this.calculatearea(data.width, data.length);
+        row.update({ area: area });
 
         // Calculate total price
-        const totalPrice = this.calculateTotalPrice(
-            parseFloat(squareFootage),
-            data.quantity,
-            data.productPrice,
-            data.priceAdjustment,
+        const total = calculateItemTotal(
+            data.qty,
+            data.price,
+            data.adj,
             data.discount
         );
-        row.update({ totalPrice: totalPrice });
-    }
+        row.update({ total: total });
 
-    getValidatedClientData = () => {
+        this.syncItems();
 
+        bus.emit('order:table:refreshed');
 
-    }
-
-    save = () => {
-
-        const clientData = this.getValidatedClientData();
-
-        if (!clientData) return;
-
-        saveClient(clientData, (response) => {
-
-            // console.log('Saved successfully', response);
-
-            toast(__html('Client updated'), 'success');
-
-            bus.emit('client:updated', { _id: this.client._id });
-        });
+        console.log('Updating', row.getData());
     }
 }

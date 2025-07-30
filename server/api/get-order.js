@@ -26,12 +26,14 @@ async function getOrderDetails(id) {
             js->'data'->'draft' as "draft",
             js->'data'->'email' as "email",
             js->'data'->'status' as "status",
-            js->'data'->'clientName' as "clientName",
-            js->'data'->'companyName' as "companyName",
-            js->'data'->'contactPerson' as "contactPerson",
-            js->'data'->'dueDate' as "dueDate",
+            js->'data'->'name' as "name",
+            js->'data'->'legal_name' as "legal_name",
+            js->'data'->'person' as "person",
+            js->'data'->'due_date' as "due_date",
             js->'data'->'notes' as "notes",
             js->'data'->'price' as "price",
+            js->'data'->'vat_status' as "vat_status",
+            js->'data'->'entity' as "entity",
             js->'data'->'operator' as "operator",
             js->'data'->'items' as "items"
         FROM data

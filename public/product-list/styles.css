@@ -1,0 +1,9 @@
+@import url("/_/helpers/global.css");
+  
+
+/* product list */
+.table-p-list thead tr th:nth-child(1){width:44px;} 
+.table-p-list .search-cont{display:none;}
+.table-p-list .bi-search{cursor:pointer;}
+.timgc{width: 32px;height: 32px;max-width:50px;overflow:hidden; white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
+.timgc img{position:relative;min-height:28px;}

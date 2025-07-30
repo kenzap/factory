@@ -1,9 +1,9 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const getClients = (cb) => {
+export const getClientSuggestions = (cb) => {
 
     // do API query
-    fetch(API() + '/api/get-clients/', {
+    fetch(API() + '/api/get-client-suggestions/', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({

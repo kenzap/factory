@@ -1,14 +1,12 @@
-import { getContacts } from "/_/api/get_contacts.js";
-import { __html } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { getAddresses } from "/_/api/get_addresses.js";
 
 /**
- * A contact search component that provides autocomplete functionality for searching contacts.
+ * A contact search component that provides autocomplete functionality for searching addresses.
  * Example, in the orders journal.
  * 
- * @class ClientContactSearch
+ * @class ClientAddressSearch
  */
-export class ClientContactSearch {
+export class ClientAddressSearch {
 
     constructor(order) {
 
@@ -28,32 +26,26 @@ export class ClientContactSearch {
 
     view = () => {
 
-        document.querySelector('contact-order-search').innerHTML = `
+        document.querySelector('client-address-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="contactPerson" placeholder="${__html('Contact person')}" autocomplete="nope" value="${this.order.contactPerson || ''}" >
+                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address" value="${this.order.address || ''}" >
                 </div>
-                <div id="contactSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
+                <div id="addressSuggestion" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
             `;
     }
 
     data = () => {
 
-        // const contactInput = document.getElementById('clientFilter');
-
         this.eid = document.getElementById('clientFilter').dataset._id || this.eid;
 
-        // console.log('Contacts request:', this.eid);
+        getAddresses({ id: this.eid }, (response) => {
 
-        getContacts({ id: this.eid }, (response) => {
-
-            // console.log('Contacts response:', response.contacts);
-
-            if (response && response.contacts) {
-                this.contacts = response.contacts;
+            if (response && response.addresses) {
+                this.addresses = response.addresses;
             } else {
-                this.contacts = [];
+                this.addresses = [];
             }
         });
     }
@@ -62,21 +54,21 @@ export class ClientContactSearch {
 
         self = this;
 
-        const clientInput = document.getElementById('contactPerson');
-        const suggestions = document.getElementById('contactSuggestions');
+        const addressInput = document.getElementById('address');
+        const suggestions = document.getElementById('addressSuggestion');
 
         let loadSuggestions = (value) => {
 
-            const filtered = this.contacts.filter(contact =>
-                contact.name.toLowerCase().includes(value)
+            const filtered = this.addresses.filter(address =>
+                address.address.toLowerCase().includes(value)
             );
 
-            suggestions.innerHTML = filtered.map((contact, i) =>
-                `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-i="${i}" data-id="${contact.id}" style="cursor: pointer;"><div data-i="${i}" data-id="${contact.id}">${contact.name}</div><div class="form-text m-0" data-i="${i}" data-id="${contact.id}">${contact.phone} ${contact.email}</div></div>`
+            suggestions.innerHTML = filtered.map((address, i) =>
+                `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-i="${i}" data-id="${address.id}" style="cursor: pointer;"><div data-i="${i}" data-id="${address.id}">${address.address}</div></div>`
             ).join('');
         }
 
-        clientInput.addEventListener('focus', (e) => {
+        addressInput.addEventListener('focus', (e) => {
 
             const value = e.target.value.toLowerCase();
 
@@ -85,7 +77,7 @@ export class ClientContactSearch {
             suggestions.classList.remove('d-none');
         });
 
-        clientInput.addEventListener('input', (e) => {
+        addressInput.addEventListener('input', (e) => {
 
             const value = e.target.value.toLowerCase();
 
@@ -101,38 +93,28 @@ export class ClientContactSearch {
 
             const i = e.target.dataset.i;
 
-            console.log('Input contact search value:', i, this.contacts[i]);
+            // console.log('Input contact search value:', i, this.addresses[i]);
 
-            const contact = this.contacts.find(contact => contact.id === e.target.dataset.id);
+            const address = this.addresses.find(address => address.id === e.target.dataset.id);
 
-            console.log('Suggestion clicked:', e.target.dataset.id, contact);
+            console.log('Suggestion clicked:', e.target.dataset.id, address);
 
-            document.getElementById('contactPerson').value = contact.name;
-            document.getElementById('contactPhone').value = contact.phone;
-            document.getElementById('contactEmail').value = contact.email;
+            document.getElementById('address').value = address.address;
 
             suggestions.classList.add('d-none');
-
-            // if (e.target.classList.contains('autocomplete-item')) {
-            //     clientInput.value = e.target.textContent;
-            //     clientInput.dataset._id = e.target.dataset._id;
-            //     suggestions.classList.add('d-none');
-            //     // console.log('emit:client:search:refresh:4');
-            //     // bus.emit('client:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
-            // }
         });
 
         // Hide suggestions when clicking outside
         document.addEventListener('click', (e) => {
 
-            if (!clientInput.contains(e.target) && !suggestions.contains(e.target)) {
+            if (!addressInput.contains(e.target) && !suggestions.contains(e.target)) {
                 // console.log('Suggestion clicked:', e.target);
                 suggestions.classList.add('d-none');
             }
         });
 
         // Handle keyboard navigation
-        clientInput.addEventListener('keydown', (e) => {
+        addressInput.addEventListener('keydown', (e) => {
 
             // console.log('Key pressed:', e.key);
             const items = suggestions.querySelectorAll('.autocomplete-item');
@@ -162,18 +144,18 @@ export class ClientContactSearch {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (activeItem) {
-                    clientInput.value = activeItem.textContent;
-                    clientInput.dataset._id = activeItem.dataset._id;
+                    addressInput.value = activeItem.textContent;
+                    addressInput.dataset._id = activeItem.dataset._id;
                     suggestions.classList.add('d-none');
                     // console.log('emit:client:search:refresh:1');
-                    // bus.emit('contact:search:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
+                    // bus.emit('contact:search:refresh', { _id: activeItem.dataset._id, name: addressInput.value });
                 }
             } else if (e.key === 'Escape') {
                 suggestions.classList.add('d-none');
             } else if (e.key === 'Backspace' || e.key === 'Delete') {
                 // Check if input becomes empty after the key is processed
                 setTimeout(() => {
-                    if (clientInput.value.trim() === '') {
+                    if (addressInput.value.trim() === '') {
                         // console.log('emit:client:search:refresh:2');
                         // bus.emit('contact:search:refresh', { _id: '', name: '' });
                     }
@@ -181,32 +163,32 @@ export class ClientContactSearch {
             }
         });
 
-        bus.clear('client:removed');
-        bus.on('client:removed', (data) => {
+        // bus.clear('client:removed');
+        // bus.on('client:removed', (data) => {
 
-            this.eid = '';
+        //     this.eid = '';
 
-            console.log('contact removed received:', data);
-            this.data();
-        });
+        //     console.log('contact removed received:', data);
+        //     this.data();
+        // });
 
-        bus.clear('contact:search:refresh');
-        bus.on('contact:search:refresh', (data) => {
+        // bus.clear('contact:search:refresh');
+        // bus.on('contact:search:refresh', (data) => {
 
-            this.eid = data._id;
+        //     this.eid = data._id;
 
-            console.log('Client search received:', data);
-            this.data();
-        });
+        //     console.log('Client search received:', data);
+        //     this.data();
+        // });
 
-        bus.clear('client:updated');
-        bus.on('client:updated', (data) => {
+        // bus.clear('client:updated');
+        // bus.on('client:updated', (data) => {
 
-            this.eid = data._id;
+        //     this.eid = data._id;
 
-            console.log('Client update received:', data);
-            this.data();
-        });
+        //     console.log('Client update received:', data);
+        //     this.data();
+        // });
     }
 
     highlightItem = (items, index) => {

@@ -1,8 +1,8 @@
 // js dependencies
+import { getHtml } from "../_/modules/settings.js";
 import { getSettings } from "/_/api/get_settings.js";
 import { saveSettings } from "/_/api/save_settings.js";
 import { __html, escape, initBreadcrumbs, initFooter, initHeader, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
-import { getHtml } from "/_/ui/settings.js";
 
 /**
  * Settings page of the dashboard.
@@ -67,16 +67,12 @@ class Settings {
 
         // console.log(response);
 
-        if (this.state.firstLoad) {
-
-            // initiate breadcrumbs
-            initBreadcrumbs(
-                [
-                    { link: link('/home/'), text: __html('Home') },
-                    { text: __('Settings') }
-                ]
-            );
-        }
+        if (this.state.firstLoad) initBreadcrumbs(
+            [
+                { link: link('/home/'), text: __html('Home') },
+                { text: __('Settings') }
+            ]
+        );
 
         // setup coatings and prices
         let price = [];
@@ -166,13 +162,6 @@ class Settings {
     }
 
     listeners() {
-
-        // break here if listeners is called more than once
-        // if (!this.state.firstLoad) return;
-        onClick('body', e => {
-
-            console.log("Body click event triggered");
-        });
 
         // add product modal
         onClick('.btn-save', e => this.saveSettings(this, e));

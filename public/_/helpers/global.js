@@ -1,6 +1,7 @@
 import { Auth } from "/_/modules/auth.js";
 
 export const CDN = "https://cdn.kenzap.cloud";
+export const FILES = "https://render.factory.app.kenzap.cloud";
 export const API_KEY = "";
 
 export const spaceID = () => {
@@ -292,21 +293,10 @@ export const makeNumber = function (price) {
     return price;
 }
 
-export const formatTime = (__, timestamp) => {
+export const formatTime = (timestamp) => {
 
     const d = new Date(parseInt(timestamp) * 1000);
     return d.toLocaleDateString();
-
-    let a = new Date(timestamp * 1000);
-    let months = [__('Jan'), __('Feb'), __('Mar'), __('Apr'), __('May'), __('Jun'), __('Jul'), __('Aug'), __('Sep'), __('Oct'), __('Nov'), __('Dec')];
-    let year = a.getFullYear();
-    let month = months[a.getMonth()];
-    let date = a.getDate();
-    let hour = a.getHours();
-    let min = a.getMinutes();
-    let sec = a.getSeconds();
-    let time = date + ' ' + month + ' ' + year; // + ' ' + hour + ':' + min + ':' + sec ;
-    return time;
 }
 
 // numbers only with allowed exceptions
@@ -780,7 +770,7 @@ export const setCookie = (name, value, days) => {
  */
 export const API = () => {
 
-    return "http://localhost:3000";
+    return "";
 }
 
 /**

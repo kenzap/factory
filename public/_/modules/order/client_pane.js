@@ -1,6 +1,7 @@
 import { deleteClient } from "../../api/delete_client.js";
 import { getClientDetails } from "../../api/get_client_details.js";
 import { saveClient } from "../../api/save_client.js";
+import { verifyClient } from "../../api/verify_client.js";
 import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
@@ -9,9 +10,10 @@ import { bus } from "../../modules/bus.js";
 
 export class ClientPane {
 
-    constructor(eid) {
+    constructor(order) {
 
-        this.client = { _id: eid ? eid : null, drivers: [], addresses: [], contacts: [] };
+        this.order = order;
+        this.client = { _id: this.order.eid ? this.order.eid : null, drivers: [], addresses: [], contacts: [] };
 
         // check if header is already present
         this.init();
@@ -39,6 +41,11 @@ export class ClientPane {
                 this.client.drivers = this.client.drivers || [];
                 this.client.addresses = this.client.addresses || [];
                 this.client.contacts = this.client.contacts || [];
+
+                this.order.vat_status = this.client.vat_status || '0';
+                this.order.entity = this.client.entity || 'company';
+
+                // console.log('Client data after fetch:', this.order);
             }
 
             // Refresh the view with client data
@@ -60,19 +67,19 @@ export class ClientPane {
                 <div class="col-12">
                     <h6>${__html('Client Type')}</h6>
                     <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="entity" id="individual_anm" autocomplete="off" ${this.client.entity === 'individual_anm' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="individual_anm" data-entity="individual" data-vat_status="1" autocomplete="off" ${this.client.entity === 'individual' && this.client.vat_status === '1' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="individual_anm">${__html('Fiziskā ANM')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="individual" autocomplete="off" ${this.client.entity === 'individual' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="individual" data-entity="individual" data-vat_status="0" autocomplete="off" ${this.client.entity === 'individual' && this.client.vat_status === '0' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="individual">${__html('Fiziskā')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company_anm" autocomplete="off" ${this.client.entity === 'company_anm' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company_anm" data-entity="company" data-vat_status="1" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '1' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company_anm">${__html('Juridiskā ANM')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company" autocomplete="off" ${this.client.entity === 'company' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company" data-entity="company" data-vat_status="0" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '0' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company">${__html('Juridiskā')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company_export" autocomplete="off" ${this.client.entity === 'company_export' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company_export" data-entity="company" data-vat_status="2" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '2' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company_export">${__html('Juridiskā Ārzemes')}</label>
                     </div>
                 </div>
@@ -81,16 +88,16 @@ export class ClientPane {
             <!-- Client Details -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-3">
-                    <label for="regNumber" class="form-label">${__html('Registration Number')}</label>
-                    <input type="text" class="form-control" id="regNumber" value="${this.client.regNumber || this.client.reg_num || ''}">
+                    <label for="reg_number" class="form-label">${__html('Registration Number')} <span class="ms-2 po verify_company">⇄</span></label>
+                    <input type="text" class="form-control" id="reg_number" value="${this.client.reg_number || this.client.reg_num || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="vatNumber" class="form-label">${__html('VAT Number')}</label>
-                    <input type="text" class="form-control" id="vatNumber" value="${this.client.vatNumber || ''}">
+                    <label for="vat_number" class="form-label">${__html('VAT Number')}</label>
+                    <input type="text" class="form-control" id="vat_number" value="${this.client.vat_number || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="companyName" class="form-label">${__html('Company Name')}</label>
-                    <input type="text" class="form-control" id="companyName" value="${this.client.companyName || this.client.name || ''}">
+                    <label for="legal_name" class="form-label">${__html('Company Name')}</label>
+                    <input type="text" class="form-control" id="legal_name" value="${this.client.legal_name || this.client.name || ''}">
                 </div>
                 <div class="col-md-6 mb-3 d-none">
                     <label for="clientPhoneRight" class="form-label">${__html('Phone Number')}</label>
@@ -101,20 +108,20 @@ export class ClientPane {
                     <input type="email" class="form-control" id="email" value="${this.client.email || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="bankName" class="form-label">${__html('Bank Name')}</label>
-                    <input type="text" class="form-control" id="bankName" value="${this.client.bankName || ''}">
+                    <label for="bank_name" class="form-label">${__html('Bank Name')}</label>
+                    <input type="text" class="form-control" id="bank_name" value="${this.client.bank_name || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="bankAccount" class="form-label">${__html('Bank Account')}</label>
-                    <input type="text" class="form-control" id="bankAccount" value="${this.client.bankAccount || ''}">
+                    <label for="bank_acc" class="form-label">${__html('Bank Account')}</label>
+                    <input type="text" class="form-control" id="bank_acc" value="${this.client.bank_acc || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="regAddress" class="form-label">${__html('Registration Address')}</label>
-                    <input type="text" class="form-control" id="regAddress" value="${this.client.regAddress || ''}" >
+                    <label for="reg_address" class="form-label">${__html('Registration Address')}</label>
+                    <input type="text" class="form-control" id="reg_address" value="${this.client.reg_address || ''}" >
                 </div>
                 <div class="col-12 mb-3">
-                    <label for="internalNote" class="form-label">${__html('Internal Note')}</label>
-                    <textarea class="form-control" id="internalNote" rows="3" >${this.client.internalNote || ''}</textarea>
+                    <label for="client_notes" class="form-label">${__html('Internal Note')}</label>
+                    <textarea class="form-control" id="client_notes" rows="3" >${this.client.notes || ''}</textarea>
                 </div>
             </div>
             
@@ -190,19 +197,46 @@ export class ClientPane {
                 });
             }
         });
+
+        // Verify company details
+        onClick('.verify_company', () => {
+
+            verifyClient(document.getElementById('reg_number').value.trim(), (response) => {
+                if (response && response.success) {
+
+                    console.log('Client verification response:', response);
+
+                    // document.getElementById('reg_number').value = response.reg_number || '';
+                    document.getElementById('vat_number').value = response.client.pvncode || '';
+                    document.getElementById('legal_name').value = response.client.klients_new || '';
+                    document.getElementById('reg_address').value = response.client.adress_full || '';
+                    this.client.vat_status = response.client.pvnStatus || '';
+
+                    // // Update client data with the verified details
+                    // this.client = { ...this.client, ...response.data };
+
+                    // // Update the view with the new client data
+                    // this.view();
+
+                    toast(__html('Client details verified'), 'success');
+                } else {
+                    toast(__html('Failed to verify client details'), 'error');
+                }
+            });
+        });
     }
 
     getValidatedClientData = () => {
 
-        const regNumber = document.getElementById('regNumber').value.trim();
-        const vatNumber = document.getElementById('vatNumber').value.trim();
-        const companyName = document.getElementById('companyName').value.trim();
+        const reg_number = document.getElementById('reg_number').value.trim();
+        const vat_number = document.getElementById('vat_number').value.trim();
+        const legal_name = document.getElementById('legal_name').value.trim();
         const clientPhoneRight = document.getElementById('clientPhoneRight').value.trim();
         const email = document.getElementById('email').value.trim();
-        const bankName = document.getElementById('bankName').value.trim();
-        const bankAccount = document.getElementById('bankAccount').value.trim();
-        const regAddress = document.getElementById('regAddress').value.trim();
-        const internalNote = document.getElementById('internalNote').value.trim();
+        const bank_name = document.getElementById('bank_name').value.trim();
+        const bank_acc = document.getElementById('bank_acc').value.trim();
+        const reg_address = document.getElementById('reg_address').value.trim();
+        const notes = document.getElementById('client_notes').value.trim();
         const entity = document.querySelector('input[name="entity"]:checked');
 
         if (!entity) {
@@ -210,10 +244,8 @@ export class ClientPane {
             return false;
         }
 
-        const entityValue = entity.id;
-
         // Perform validation checks
-        if (!regNumber) {
+        if (!reg_number) {
             alert('Please fill in all required fields.');
             return false;
         }
@@ -230,17 +262,18 @@ export class ClientPane {
 
         const clientData = {
             _id: this.client._id || null,
-            regNumber,
-            vatNumber,
-            companyName,
-            name: companyName, // For compatibility with existing code
+            entity: entity.dataset.entity,
+            vat_status: entity.dataset.vat_status,
+            reg_number,
+            vat_number,
+            legal_name,
+            name: legal_name, // For compatibility with existing code
             phone: clientPhoneRight,
             email,
-            bankName,
-            bankAccount,
-            regAddress,
-            internalNote,
-            entity: entityValue,
+            bank_name,
+            bank_acc,
+            reg_address,
+            notes,
             drivers: this.client.drivers,
             addresses: this.client.addresses,
             contacts: this.client.contacts
@@ -260,6 +293,9 @@ export class ClientPane {
             // console.log('Saved successfully', response);
 
             toast(__html('Client updated'), 'success');
+
+            this.order.vat_status = clientData.vat_status;
+            this.order.entity = clientData.entity;
 
             bus.emit('client:updated', { _id: this.client._id });
         });

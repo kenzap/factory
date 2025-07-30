@@ -181,12 +181,12 @@ body {
 
 .tabulator-row .tabulator-cell{
     height: auto!important;
-    overflow: visible;
-        margin: 4px 0!important;
+    margin: 0px 0!important;
 }
 
 .tabulator-row .tabulator-cell.tabulator-editing{
     /* border-color: transparent!important; */
+    overflow: visible;
     border-radius:4px;
     color: var(--bs-body-color);
     background-color: var(--bs-body-bg);
@@ -195,7 +195,11 @@ body {
     box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
 }
 
-.tabulator-row .tabulator-cell.tabulator-editing[tabulator-field="clientMaterial"]{
+.tabulator-row .tabulator-cell[tabulator-field="actions"]{
+    overflow: visible;
+}
+
+.tabulator-row .tabulator-cell.tabulator-editing[tabulator-field="cm"]{
     border: 0;
 }
 
@@ -223,6 +227,10 @@ input[type="number"] {
     outline: none;
     border-color: #0d6efd;
     box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+.tabulator-row.tabulator-row-even {
+    background-color: #f8f9fa;
 }
 
 /* Style datalist options */
@@ -258,6 +266,6 @@ option:hover {
 }
 
 /* Combine multiple attributes for more specific targeting */
-.tabulator-cell.tabulator-editable[tabulator-field="clientMaterial"][aria-checked="false"] svg{
+.tabulator-cell.tabulator-editable[tabulator-field="cm"][aria-checked="false"] svg{
     display: none;
 }

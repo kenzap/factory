@@ -1,8 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, locale, log, sid } from '../_/helpers/index.js';
 
-
-
 /**
  * Get Product Suggestions.
  * Called from order edit page
@@ -13,17 +11,27 @@ import { getDbConnection, locale, log, sid } from '../_/helpers/index.js';
 */
 async function getProductSuggestions(filters) {
 
-    console.log('getProductSuggestions filters:', filters.s);
+    // console.log('getProductSuggestions filters:', filters.s);
 
     const client = getDbConnection();
 
     let records = {};
 
-    // Get records 
+    // Get records  '_id', 'id', 'img', 'status', 'cad_files', 'price', 'priority', 'title', 'sdesc', 'updated'
     let query = `
-            SELECT 
+            SELECT
+                _id,
                 js->'data'->'locales'->$3->>'title' as title,
-                js->'data'->'locales'->$3->>'sdesc' as sdesc
+                js->'data'->'locales'->$3->>'sdesc' as sdesc,
+                js->'data'->'formula_width' as formula_width,
+                js->'data'->'formula_length' as formula_length,
+                js->'data'->'formula_price' as formula_price,
+                js->'data'->'formula' as formula,
+                js->'data'->'var_price' as var_price,
+                js->'data'->'input_fields' as input_fields,
+                js->'data'->'calc_price' as calc_price,
+                js->'data'->'cad_files' as cad_files,
+                js->'data'->'tax_id' as tax_id
             FROM data 
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0'
         `;

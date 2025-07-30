@@ -10,7 +10,7 @@ import { getDbConnection, log, sid } from '../_/helpers/index.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Array of clients
 */
-async function getClientSuggestions() {
+async function getClients() {
 
     const client = getDbConnection();
 
@@ -52,10 +52,10 @@ async function getClientSuggestions() {
 // API route
 function getClientsApi(app) {
 
-    app.post('/api/get-client-suggestions/', authenticateToken, async (req, res) => {
+    app.post('/api/get-clients/', authenticateToken, async (req, res) => {
         try {
 
-            const clients = await getClientSuggestions();
+            const clients = await getClients();
 
             res.send({ success: true, clients, message: '' });
         } catch (err) {
