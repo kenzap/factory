@@ -791,7 +791,7 @@ export const getAPI = () => {
  */
 export const getStorage = () => {
 
-    return localStorage.getItem("STORAGE") ? localStorage.getItem("STORAGE") : "https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com";
+    return "https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com";
 }
 
 /**

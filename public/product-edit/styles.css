@@ -1,0 +1,169 @@
+@import url("/_/helpers/global.css");
+  
+/* product edit containers */
+.mw{max-width:560px;}
+.mww{max-width:700px;}
+@media (max-width:500px){
+    .btn-remove{display: none!important;}
+}
+
+/* product tags */
+.simple-tags{background-color:#fff;border:0px solid var(--primary-color);-webkit-border-radius:3px;border-radius:3px;-webkit-box-sizing:border-box;box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;font-size:14px}.simple-tags>ul{list-style:none;padding:0;margin:0;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap}.simple-tags ul li{margin:0.5em 0.2em;padding:0.5em;color:#fff;background-color:#0d6efd;-webkit-border-radius:3px;border-radius:3px}.simple-tags ul li a{margin:0.5em 0.2em;text-decoration:none;color:inherit;cursor:pointer}.simple-tags input{max-width:90px;padding:0.9em 0.5em;-webkit-box-sizing:border-box;box-sizing:border-box;-webkit-box-flex:1;-webkit-flex-grow:1;-ms-flex-positive:1;flex-grow:1;border:none;outline:none;font-size:inherit;font-family:inherit;color:inherit}
+.simple-tags input{transition: max-width 0.3s; text-overflow:ellipsis!important;}
+.simple-tags input:focus{max-width:200px;}
+
+/* right pane */
+#p-status0:focus{border-color: rgb(255, 193, 7); box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.30);}
+#p-status0:checked{background-color: #ffc107;border-color: rgb(255, 193, 7);}
+
+/* image gallery */
+.destt{ min-width: 350px; }
+.faq input,.faq .form-check{width:100%;}
+.faq i.remove{margin-left:8px;}
+.list-wrapper ul.faq li{border:0;}
+.p-img-cont{float: left; max-width: 120px;margin-right:4px;margin-bottom:4px;}
+.p-img-cont p{cursor:pointer;margin:0}
+.p-img-cont p img{object-fit:cover;}
+.p-img-cont p img:hover{opacity: 0.9;}
+.p-img-cont p .remove{position:absolute;font-weight:bold;float:right;margin-left:-24px;line-height:1;font-size:24px;padding:4px;color:#76838f;}
+.p-img-cont p .remove:hover{color:#910F3D;}
+.p-img-cont p .remove.hd{display:none;}
+
+/* file uploads */
+.file-img img{border:1px solid #f1f1f1;}
+
+/* editor */
+.richtext-input{min-height: 200px;}
+.richtext-input .ql-editor{min-height: 200px;}
+.form-keywords{font-size: 1em;}
+.form-linked{font-size: 0.7em;font-family: monospace;}
+.ql-table-temporary{display: none;}
+.icon-doc::before,
+.icon-pdf::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    background-image: url('/assets/img/icons/pdf.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    margin-right: 1rem;
+}
+.icon-doc::before {
+    background-image: url('/assets/img/icons/document.svg');
+}
+
+/* sketch */
+.mws{max-width:700px;}
+#svg g path,
+#svg g polyline{stroke-width:3px;transition: stroke-width 0.3s;}
+#svg polygon{stroke-width:0px;stroke:var(--primary-color);fill:var(--primary-color);}
+#svg g[data-arrow="true"] rect[data-rect="end"]{opacity:0;}
+#svg g:hover polyline{stroke-width:5px!important;}
+#svg g:hover path{stroke-width:5px!important;}
+
+.svg-input{position:absolute;z-index:3;display: flex; align-items: center;} 
+.svg-input{transform: translate(-10px, -13px);}
+.svg-input.lable-line label{color:var(--primary-color);}
+.svg-input.lable-angle label{color:var(--primary-color);}
+.svg-input:hover{z-index: 6;}
+.svg-input label{width:20px;height:26px;align-content:center;text-align: center; font-size: 16px; font-weight: bold; font-family: monospace; }
+.svg-input:hover input,.svg-input input:focus{opacity:1;}
+
+.images-sketch0,
+.sketch-upload-cont img{
+    object-fit: cover;
+}
+
+.sketch-upload-cont .remove{
+    display: inline-block;
+    position: absolute;
+    font-weight: bold;
+    margin-left: -30px;
+    line-height: 1;
+    font-size: 16px;
+    padding: 4px;
+    color: #76838f;
+}
+
+.sketch-upload-cont .remove:hover{
+    color: #910F3D;
+}
+
+#file {
+    width: 100%;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.cad_files_cont .remove{position:absolute;font-weight:bold;float:right;margin-left:0px;margin-top:-10px;line-height:1;font-size:24px;padding:1px;color:#76838f;}
+.cad_files_cont .remove:hover{color:#910F3D;}
+.cad_files_cont .remove.hd{display:none;}
+.cad_files_cont > div{width:90px;}
+.cad_files_cont .file-title{font-size: 12px; font-weight: bold; font-family: monospace; width:100%; margin:auto; text-align: center;} 
+
+.sketch .viewer-controls{
+    position: absolute;
+    /* width: 200px; */
+    left: 570px;
+    padding: 10px;
+    z-index: 5;
+}
+
+.sketch .controls{
+    position: absolute;
+    left: 520px;
+    width: 200px;
+}
+
+.sketch .viewer-controls .cnt,
+.sketch .controls .cnt{ 
+    position: absolute;
+    z-index: 8; 
+}
+
+.sketch .viewer-controls .cnt{
+    opacity: 0.5;
+    transition: all 0.3s;
+}
+
+.sketch .viewer-controls .cnt:hover{
+    opacity: 1;
+}
+
+.sketch .sketch_loader{
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    top: 0;
+    margin-right: auto;
+    margin-top: auto;
+    margin-bottom: auto;
+    margin-left: auto;
+    opacity: 0.7;
+    z-index: 10;
+}
+
+.sketch .camera-view{
+    position: absolute;
+    z-index: 8;
+    right:8px;
+    bottom:8px;
+    background: transparent;
+    border: 0;
+    font-family: monospace;
+    max-width: 130px;
+}
+
+.sketch .d-none-viewer{
+    position: absolute;
+    opacity: 0;
+    z-index: -2;
+}
+
+.form-checkbox-sm,
+.form-switch-sm{
+    font-size: 0.875rem;
+}

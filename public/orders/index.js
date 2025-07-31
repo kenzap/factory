@@ -1,5 +1,5 @@
 import { getOrders } from "/_/api/get_orders.js";
-import { ClientSearch } from "/_/components/client_search.js";
+import { ClientSearch } from "/_/components/entity/client_search.js";
 import { __html, hideLoader, priceFormat } from "/_/helpers/global.js";
 import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
 import { bus } from "/_/modules/bus.js";

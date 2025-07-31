@@ -34,6 +34,38 @@ export const makeId = () => {
     return str;
 }
 
+export const getLocales = async () => {
+
+    const client = getDbConnection();
+    await client.connect();
+
+    let locales = {};
+
+    try {
+
+        // Get locales
+        const query = `
+            SELECT 
+                js->'data'->'locale' as locale,
+                js->'data'->'language' as language
+            FROM data 
+            WHERE ref = $1 AND sid = $2 
+            LIMIT 50
+        `;
+
+        const result = await client.query(query, ['locale-ecommerce', sid]);
+        if (result.rows.length > 0) {
+
+            locales = result.rows;
+        }
+
+    } finally {
+        await client.end();
+    }
+
+    return locales;
+}
+
 export const getSettings = async () => {
 
     const client = getDbConnection();
@@ -53,7 +85,9 @@ export const getSettings = async () => {
                    js->'data'->'tax_rate' as tax_rate, 
                    js->'data'->'tax_percent' as tax_percent, 
                    js->'data'->'tax_display' as tax_display,
-                   js->'data'->'price' as price 
+                   js->'data'->'price' as price,
+                   js->'data'->'var_parent' as var_parent,
+                   js->'data'->'textures' as textures
             FROM data 
             WHERE ref = $1 AND sid = $2 
             LIMIT 1
@@ -71,6 +105,8 @@ export const getSettings = async () => {
                 tax_percent: row.tax_percent,
                 tax_display: row.tax_display,
                 price: row.price,
+                var_parent: row.var_parent,
+                textures: row.textures || []
             };
         }
 
