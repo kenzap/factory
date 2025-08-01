@@ -1,33 +1,22 @@
-import { H, getAPI, parseApiError } from "/_/helpers/global.js";
+import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const saveSettings = (cb) => {
+export const saveSettings = (data, cb) => {
 
-    // send data
-    fetch(getAPI(), {
+    // do API query
+    fetch(API() + '/api/save-settings/', {
         method: 'post',
         headers: H(),
-        body: JSON.stringify({
-            query: {
-                settings: {
-                    type: 'set',
-                    key: '3dfactory-settings',
-                    data: data
-                }
-            }
-        })
+        body: JSON.stringify(data)
     })
         .then(response => response.json())
         .then(response => {
 
-            if (response.success) {
+            // hide UI loader
+            hideLoader();
 
-                cb(response)
+            if (response.success) cb(response);
 
-            } else {
-
-                parseApiError(response);
-            }
-
+            if (!response.success) parseApiError(response);
         })
         .catch(error => { parseApiError(error); });
 }

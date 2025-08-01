@@ -1,30 +1,11 @@
-import { H, getAPI, getCookie, hideLoader, parseApiError } from "/_/helpers/global.js";
+import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
 export const getSettings = (cb) => {
 
     // do API query
-    fetch(getAPI(), {
+    fetch(API() + '/api/get-settings/', {
         method: 'post',
-        headers: H(),
-        body: JSON.stringify({
-            query: {
-                user: {
-                    type: 'authenticate',
-                    fields: ['avatar'],
-                    token: getCookie('kenzap_token')
-                },
-                locale: {
-                    type: 'locale',
-                    source: ['extension'],
-                    key: 'sk',
-                },
-                settings: {
-                    type: 'get',
-                    key: '3dfactory-settings',
-                    fields: '*',
-                }
-            }
-        })
+        headers: H()
     })
         .then(response => response.json())
         .then(response => {
@@ -32,14 +13,9 @@ export const getSettings = (cb) => {
             // hide UI loader
             hideLoader();
 
-            if (response.success) {
+            if (response.success) cb(response);
 
-                cb(response);
-
-            } else {
-
-                parseApiError(response);
-            }
+            if (!response.success) parseApiError(response);
         })
         .catch(error => { parseApiError(error); });
 }

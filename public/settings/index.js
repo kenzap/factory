@@ -1,8 +1,11 @@
-// js dependencies
+import { getSettings } from "../_/api/get_settings.js";
+import { saveSettings } from "../_/api/save_settings.js";
+import { Footer } from "../_/modules/footer.js";
+import { Header } from "../_/modules/header.js";
+import { Modal } from "../_/modules/modal.js";
+import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/settings.js";
-import { getSettings } from "/_/api/get_settings.js";
-import { saveSettings } from "/_/api/save_settings.js";
-import { __html, escape, initBreadcrumbs, initFooter, initHeader, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
+import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
 
 /**
  * Settings page of the dashboard.
@@ -16,7 +19,6 @@ class Settings {
     constructor() {
         this.state = {
             firstLoad: true,
-            response: null,
             settings: null,
             editors: {}
         }
@@ -26,12 +28,20 @@ class Settings {
 
     init() {
 
+        new Modal();
+
         getSettings(response => {
+
+            console.log(response);
 
             this.state.settings = response.settings;
 
-            // header
-            initHeader(response);
+            // initialize session
+            new Session();
+
+            // render header and footer
+            new Header(response);
+            new Footer();
 
             // html
             document.querySelector('#app').innerHTML = getHtml();
@@ -42,23 +52,9 @@ class Settings {
             // listeners
             this.listeners();
 
-            // footer
-            initFooter();
-
             // first load
             this.state.firstLoad = false;
         });
-    }
-
-    authUser(response) {
-
-        if (response.user) {
-
-            if (response.user.success == true) {
-
-
-            }
-        }
     }
 
     view() {
@@ -70,13 +66,13 @@ class Settings {
         if (this.state.firstLoad) initBreadcrumbs(
             [
                 { link: link('/home/'), text: __html('Home') },
-                { text: __('Settings') }
+                { text: __html('Settings') }
             ]
         );
 
         // setup coatings and prices
         let price = [];
-        let parent_options = '<option value="">' + __('None') + '</option>';
+        let parent_options = '<option value="">' + __html('None') + '</option>';
         if (this.state.settings.price) price = this.state.settings.price;
 
         // sort by 
@@ -189,7 +185,7 @@ class Settings {
 
         let prices = document.querySelector('#price').value;
 
-        console.log(prices);
+        // console.log(prices);
 
         if (prices) { prices = JSON.parse(prices); } else { prices = []; }
         if (Array.isArray(prices)) { prices.push(obj); } else { prices = []; }
@@ -218,7 +214,7 @@ class Settings {
 
         e.preventDefault();
 
-        let c = confirm(__('Remove this record?'));
+        let c = confirm(__html('Remove this record?'));
 
         if (!c) return;
 
@@ -304,6 +300,10 @@ class Settings {
 
             delete data.last_order_id;
         }
+
+        // log(data); return;
+
+        delete data[''];
 
         // save settings
         saveSettings(data, response => { toast('Changes applied'); });

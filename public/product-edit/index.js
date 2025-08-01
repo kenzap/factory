@@ -76,7 +76,7 @@ class ProductEdit {
             new Session();
 
             // render header and footer
-            new Header(this.settings);
+            new Header(response);
             new Footer();
 
             this.view();

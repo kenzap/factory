@@ -126,6 +126,7 @@ class ProductList extends Component {
             const response = await this.productService.getProducts(params);
 
             hideLoader();
+
             new Header(response);
 
             this.setState({
