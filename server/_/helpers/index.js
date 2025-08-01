@@ -34,6 +34,39 @@ export const makeId = () => {
     return str;
 }
 
+export const getLocale = async (locale) => {
+
+    if (!locale) locale = process.env.LOCALE || 'en'; // Default to 'en' if not set
+
+    const client = getDbConnection();
+    await client.connect();
+
+    let response = { values: {} };
+
+    try {
+
+        // Get locales
+        const query = `
+            SELECT 
+                js->'data'->'content' as locale
+            FROM data 
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'locale' = $3
+            LIMIT 1
+        `;
+
+        const result = await client.query(query, ['locale-ecommerce', sid, locale]);
+        if (result.rows.length > 0) {
+
+            response.values = result.rows[0].locale || {};
+        }
+
+    } finally {
+        await client.end();
+    }
+
+    return response;
+}
+
 export const getLocales = async () => {
 
     const client = getDbConnection();
@@ -118,10 +151,10 @@ export const getSettings = async () => {
 }
 
 // Helper function to get locale
-export async function getLocale(client, sid, lang) {
-    // Implementation would depend on your locale storage structure
-    return {};
-}
+// export async function getLocale(client, sid, lang) {
+//     // Implementation would depend on your locale storage structure
+//     return {};
+// }
 
 // Helper function to evaluate math expressions safely
 export function evalmath(equation) {

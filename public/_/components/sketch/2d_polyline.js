@@ -22,7 +22,7 @@ export class Polyline {
 
         this.style = {
             stroke_width: '3px',
-            stroke: '#00F',
+            stroke: 'var(--primary-color)',
             fill: 'rgba(255, 255, 255, 0)'
         }
 

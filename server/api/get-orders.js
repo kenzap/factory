@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
 
 async function getSettings() {
 
@@ -114,16 +114,18 @@ async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo:
     return orders;
 }
 
-// API route for product export
+// API route
 function getOrdersApi(app) {
 
     app.post('/api/get-orders/', authenticateToken, async (req, res) => {
         try {
+
+            const locale = await getLocale(req.headers.locale);
             const filters = req.body.filters || {};
             const orders = await getOrders(filters);
             const settings = await getSettings();
 
-            res.send({ success: true, settings, orders, message: '' });
+            res.send({ success: true, settings, orders, locale });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

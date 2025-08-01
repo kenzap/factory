@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getSettings, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
 
 /**
  * Kenzap Factory Get Clients
@@ -62,7 +62,9 @@ function getOrderApi(app) {
 
     app.post('/api/get-order/', authenticateToken, async (_req, res) => {
 
-        res.json({ success: true, order: await getOrderDetails(_req.body.id), settings: await getSettings(), message: '/api/get-order/ loaded' });
+        const locale = await getLocale(_req.headers.locale);
+
+        res.json({ success: true, order: await getOrderDetails(_req.body.id), settings: await getSettings(), locale });
     });
 }
 

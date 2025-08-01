@@ -1,5 +1,5 @@
-import { authLogout } from "/_/api/auth_logout.js";
-import { __html, hideLoader, onClick } from "/_/helpers/global.js";
+import { authLogout } from "../api/auth_logout.js";
+import { __html, hideLoader, onClick } from "../helpers/global.js";
 
 /**
  * Class representing the Header component.

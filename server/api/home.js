@@ -1,13 +1,14 @@
 import { authenticateToken } from '../_/helpers/auth.js';
+import { getLocale } from '../_/helpers/index.js';
 
-// Simple API route
+// API route
 function homeApi(app) {
 
     app.post('/api/home/', authenticateToken, async (_req, res) => {
 
-        // console.log('homeApi _req.body', _req.user);
+        const locale = await getLocale(_req.headers.locale);
 
-        res.json({ success: true, user: _req.user, message: '/api/home/ loaded' });
+        res.json({ success: true, user: _req.user, locale });
     });
 }
 
