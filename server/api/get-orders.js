@@ -1,48 +1,48 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
 
-async function getSettings() {
+// async function getSettings() {
 
-    const client = getDbConnection();
+//     const client = getDbConnection();
 
-    let settings = {};
+//     let settings = {};
 
-    // settings query
-    const query = `
-        SELECT js->'data'->>'currency' as currency, 
-                js->'data'->>'currency_symb' as currency_symb, 
-                js->'data'->>'currency_symb_loc' as currency_symb_loc, 
-                js->'data'->>'tax_calc' as tax_calc, 
-                js->'data'->>'tax_auto_rate' as tax_auto_rate, 
-                js->'data'->>'tax_rate' as tax_rate, 
-                js->'data'->>'tax_display' as tax_display 
-        FROM data 
-        WHERE ref = $1 AND sid = $2 
-        LIMIT 1
-    `;
+//     // settings query
+//     const query = `
+//         SELECT js->'data'->>'currency' as currency, 
+//                 js->'data'->>'currency_symb' as currency_symb, 
+//                 js->'data'->>'currency_symb_loc' as currency_symb_loc, 
+//                 js->'data'->>'tax_calc' as tax_calc, 
+//                 js->'data'->>'tax_auto_rate' as tax_auto_rate, 
+//                 js->'data'->>'tax_rate' as tax_rate, 
+//                 js->'data'->>'tax_display' as tax_display 
+//         FROM data 
+//         WHERE ref = $1 AND sid = $2 
+//         LIMIT 1
+//     `;
 
-    try {
+//     try {
 
-        await client.connect();
+//         await client.connect();
 
-        const result = await client.query(query, ['ecommerce-settings', sid]);
-        if (result.rows.length > 0) {
-            const row = result.rows[0];
-            settings = {
-                currency: row.currency,
-                currency_symb: row.currency_symb,
-                currency_symb_loc: row.currency_symb_loc,
-                tax_auto_rate: row.tax_auto_rate,
-                tax_rate: row.tax_rate,
-                tax_display: row.tax_display
-            };
-        }
-    } finally {
-        await client.end();
-    }
+//         const result = await client.query(query, ['ecommerce-settings', sid]);
+//         if (result.rows.length > 0) {
+//             const row = result.rows[0];
+//             settings = {
+//                 currency: row.currency,
+//                 currency_symb: row.currency_symb,
+//                 currency_symb_loc: row.currency_symb_loc,
+//                 tax_auto_rate: row.tax_auto_rate,
+//                 tax_rate: row.tax_rate,
+//                 tax_display: row.tax_display
+//             };
+//         }
+//     } finally {
+//         await client.end();
+//     }
 
-    return settings;
-}
+//     return settings;
+// }
 
 /**
  * Kenzap Factory Get Products
@@ -71,14 +71,16 @@ async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo:
                 COALESCE(js->'data'->>'due_date', '') as due_date,
                 COALESCE(js->'data'->>'mnf_date', '') as mnf_date,
                 COALESCE(js->'data'->>'dsp_date', '') as dsp_date,
+                COALESCE(js->'data'->>'isu_date', '') as isu_date,
                 COALESCE(js->'data'->>'inv_date', '') as inv_date,
                 COALESCE(js->'data'->>'invoice', '') as invoice,
                 COALESCE(js->'data'->>'pay_date', '') as pay_date,
                 COALESCE(js->'data'->>'wbl_date', '') as wbl_date,
                 COALESCE(js->'data'->>'waybill', '') as waybill,
                 COALESCE(js->'data'->>'created', '') as created
+                ${filters.items === true ? `, js->'data'->'items' as items` : ''}
         FROM data 
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' = 'new'`;
+        WHERE ref = $1 AND sid = $2 `;
 
     const params = ['ecommerce-order', sid];
 
@@ -95,6 +97,11 @@ async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo:
     if (filters.dateTo && filters.dateTo.trim() !== '') {
         query += ` AND js->'data'->>'created' <= $${params.length + 1}`;
         params.push(new Date(filters.dateTo.trim()).getTime());
+    }
+
+    if (typeof filters.draft === 'boolean') {
+        query += ` AND js->'data'->'draft' = $${params.length + 1}`;
+        params.push(filters.draft);
     }
 
     query += ` ORDER BY js->'data'->>'created' DESC LIMIT 1000`;

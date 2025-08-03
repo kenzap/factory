@@ -1,5 +1,5 @@
 import { createLocale } from "../../api/create_locale.js";
-import { __html, countries, languages, onClick, toast } from "../../helpers/global.js";
+import { __html, countries, languages, log, onClick, toast } from "../../helpers/global.js";
 
 export const addLocaleModal = (cb) => {
 
@@ -25,13 +25,21 @@ export const addLocaleModal = (cb) => {
             </select>
         </div>
         <div class="form-group mb-3">
-            <label for="p-sdesc" class="form-label">${__html('Location')}</label>
+            <label for="p-sdesc" class="form-label">${__html('Country')}</label>
             <select id="s-location" class="form-control" name="select-location">
                 <option value="">${__html('Universal')}</option>
                 <optgroup label="${__html('Available countries')}"> 
                     ${locationList}
                 </optgroup>
             </select>
+        </div>
+        <div class="form-group mb-3">
+            <label for="p-type" class="form-label">${__html('Type')}</label>
+            <select id="s-type" class="form-control" name="select-location">
+                <option value="dashboard">${__html('Dashboard')}</option>
+                <option value="ecommerce">${__html('E-commerce')}</option>
+            </select>
+			<div class="form-text">${__html('Select type of locale, for example, if you want to add a locale for the dashboard, select "Dashboard".')}</div>
         </div>
     </div>`;
 
@@ -50,12 +58,14 @@ export const addLocaleModal = (cb) => {
 		let data = {};
 		data.language = modal.querySelector("#s-language").value;
 		data.location = modal.querySelector("#s-location").value;
+		data.ext = modal.querySelector("#s-type").value;
 		data.locale = data.language + (data.location.length ? "_" + data.location : '');
-		data.ext = "ecommerce";
 		data.extension = {}; // user overriden translations from extension hardcoded texts
 		data.content = {};  // user added translations, ex. dynamic data localization
 
 		if (data.language.length < 2) { alert(__html('Please choose language first')); return; }
+
+		log(data);
 
 		// send data
 		createLocale(data, (response) => {

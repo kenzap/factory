@@ -118,6 +118,7 @@ class Localization {
             <tr>
                 <th>${__html("Locale")}</th>
                 <th>${__html("Code")}</th>
+                <th>${__html("Type")}</th>
                 <th>${__html("Updated")}</th>
                 <th>${__html("")}</th>
             </tr>`;
@@ -126,19 +127,29 @@ class Localization {
         let rows = "";
         this.locales.forEach((el, i) => {
 
-            // console.log(el);
-            let l = languages.filter((obj) => { return obj.code === el.locale });
-            // console.log(l);
-            let c = countries.filter((obj) => { return obj.code.toLocaleUpperCase() === el.locale });
+            let locale = { language: "", country: "" };
+
+            if (el.locale.indexOf('_') === -1) {
+                locale.language = el.locale;
+            } else {
+                locale.language = el.locale.split('_')[0];
+                locale.country = el.locale.split('_')[1];
+            }
+
+            let l = languages.filter((obj) => { return obj.code === locale.language });
+            let c = countries.filter((obj) => { return obj.code.toLocaleUpperCase() === locale.country });
             let localeTitle = __html(l[0].name) + (c[0] ? ' (' + __html(c[0].name) + ')' : '');
 
             rows += `
                 <tr>
                     <td class="py-3">
-                        <a href="#" class="edit-locale" data-title="${localeTitle}" data-language="${el.language}" data-id="${el._id}">${localeTitle}</a> ${el.location ? '<img class="ms-2 cc-flag" src="https://cdn.kenzap.com/flag/' + el.location.toLowerCase() + '.svg" alt="location footer flag">' : ''}
+                        <a href="#" class="edit-locale" data-title="${localeTitle}" data-language="${locale.language}" data-id="${el._id}">${localeTitle}</a> ${locale.country ? '<img class="ms-2 cc-flag" src="https://cdn.kenzap.com/flag/' + locale.country.toLowerCase() + '.svg" alt="location footer flag">' : ''}
                     </td>
                     <td class="py-3">
-                        ${el.locale}
+                        ${el.locale} 
+                    </td>
+                    <td class="py-3">
+                        <span class="badge bg-primary fw-normal">${el.ext === 'dashboard' ? __html('Dashboard') : __html('E-commerce')}</span>
                     </td>
                     <td class="py-3">
                         ${formatTime(el.updated)}

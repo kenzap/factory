@@ -2,7 +2,7 @@ import { saveOrder } from "../../api/save_order.js";
 import { ClientAddressSearch } from "../../components/order/client_address_search.js";
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
-import { __attr, __html, onClick, priceFormat, toast } from "../../helpers/global.js";
+import { __attr, __html, onClick, priceFormat, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotals } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
@@ -73,7 +73,7 @@ export class LeftPane {
                 <div class="form-section">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
                     <div class="input-group input-group-sm mb-2">
-                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${this.order.due_date || ''}">
+                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -116,6 +116,8 @@ export class LeftPane {
         new ClientAddressSearch(this.order);
 
         new ClientContactSearch(this.order);
+
+        this.formatDueDate(this.order.due_date);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -179,7 +181,23 @@ export class LeftPane {
             this.summary();
         });
 
+        // summary
         this.summary();
+    }
+
+    formatDueDate = (date) => {
+
+        if (date) return;
+
+        // log('Formatting due date:', date);
+
+        const now = new Date();
+        now.setDate(now.getDate() + 2); // two days ahead
+        const pad = n => n.toString().padStart(2, '0');
+        const dueDateInput = document.getElementById('due_date');
+        const formatted = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(12)}:${pad(0)}`; // now.getHours()
+        dueDateInput.value = formatted;
+        dueDateInput.dispatchEvent(new Event('input'));
     }
 
     summary = () => {
@@ -228,6 +246,13 @@ export class LeftPane {
 
         // console.log(draft)
 
+
+        // Validate required fields
+        const date = new Date(due_date);
+        const due_date_utc = date.toISOString();
+
+        console.log('Time Zone:', due_date_utc);
+
         // Collect other necessary data and send it to the server
         const orderData = {
             _id,
@@ -239,7 +264,7 @@ export class LeftPane {
             person: contactPerson,
             phone: contactPhone,
             email: contactEmail,
-            due_date,
+            due_date: due_date_utc,
             notes,
             items: this.order.items || [], // Assuming items are stored in this.order.items
             price: this.order.price || {},

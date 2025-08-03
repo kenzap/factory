@@ -36,6 +36,7 @@
     --base-color-3:#B21A4F;
     --base-color-4:#31B245;
     --base-color-5:#a979f1;
+    --base-color-6: #ff9800;
     --primary-color:#0d6ef8;
     --gray-color:#495057;
     --gray-color-light:#e9ecef;
@@ -170,6 +171,11 @@ footer {
 .btn-outline-branded.disabled,.btn-outline-branded:disabled {
   color: var(--base-color);
   background-color: transparent
+}
+
+/* navigation menu */
+.navbar-nav .dropdown-menu{
+  border-radius: 4px;
 }
 
 /* loader color */

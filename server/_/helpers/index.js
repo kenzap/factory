@@ -50,7 +50,7 @@ export const getLocale = async (locale) => {
             SELECT 
                 js->'data'->'content' as locale
             FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'locale' = $3
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'locale' = $3 AND js->'data'->>'ext' = 'dashboard'
             LIMIT 1
         `;
 
@@ -139,7 +139,8 @@ export const getSettings = async () => {
                 tax_display: row.tax_display,
                 price: row.price,
                 var_parent: row.var_parent,
-                textures: row.textures || []
+                textures: row.textures || [],
+                logo: process.env.LOGO || 'https://cdn.kenzap.com/logo.svg'
             };
         }
 

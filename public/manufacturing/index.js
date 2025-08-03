@@ -1,0 +1,934 @@
+import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
+import { getOrders } from "../_/api/get_orders.js";
+import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
+import { Header } from "../_/modules/header.js";
+import { getHtml } from "../_/modules/manufacturing.js";
+import { Modal } from "../_/modules/modal.js";
+import { Session } from "../_/modules/session.js";
+
+/**
+ * Manufacturing log.
+ * 
+ * @version 1.0
+ */
+class Manufacturing {
+
+    constructor() {
+        this.orders = [];
+        this.subItems = new Map();
+        this.autoUpdateInterval = null;
+        this.mouseTime = Date.now() / 1000;
+        this.filters = {
+            client: '',
+            dateFrom: '',
+            dateTo: '',
+            draft: false,
+            items: true,
+            type: '2' // Default to 'All'
+        };
+
+        this.stats = {
+            latest: [],
+            issued: []
+        }
+
+        this.init();
+    }
+
+    init() {
+
+        new Modal();
+
+        this.loadOrders();
+
+        hideLoader();
+    }
+
+    view() {
+
+        if (document.querySelector('.manufacturing-cont')) return;
+
+        document.querySelector('#app').innerHTML = getHtml();
+
+        this.setupEventListeners();
+        this.startAutoUpdate();
+
+        // Track mouse movement
+        document.addEventListener('mousemove', () => {
+            this.mouseTime = Date.now() / 1000;
+        });
+
+        this.listeners();
+    }
+
+    listeners() {
+
+        // Handle page unload
+        window.addEventListener('beforeunload', () => {
+            this.destroy();
+        });
+
+        // Check if narrow mode should be enabled
+        if (document.cookie.includes('mode=narrow')) {
+            document.getElementById('closeBtn').classList.remove('d-none');
+            // Adjust layout for narrow mode
+            document.querySelectorAll('.narrow').forEach(el => {
+                el.style.display = 'none';
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // F5 or Ctrl+R to refresh
+            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
+                e.preventDefault();
+                this.refreshOrders();
+            }
+
+            // Escape to clear search
+            if (e.key === 'Escape') {
+                document.getElementById('orderSearch').value = '';
+                document.getElementById('companySearch').value = '';
+                this.loadOrders();
+            }
+        });
+
+        // Focus on search input when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                document.getElementById('orderSearch').focus();
+            }, 1500);
+        });
+    }
+
+    setupEventListeners() {
+
+        const orderSearch = document.getElementById('orderSearch');
+        const companySearch = document.getElementById('companySearch');
+
+        orderSearch.addEventListener('input', (e) => {
+            if (e.target.value.length > 3) {
+                this.searchOrders(e.target.value, '');
+            } else if (e.target.value.length === 0) {
+                this.loadOrders();
+            }
+        });
+
+        companySearch.addEventListener('input', (e) => {
+            if (e.target.value.length > 0) {
+                orderSearch.value = '';
+                this.searchOrders('', e.target.value);
+            } else {
+                this.loadOrders();
+            }
+        });
+    }
+
+    async loadOrders(orderId = '', company = '') {
+
+        // get orders
+        getOrders(this.filters, (response) => {
+
+            console.log(response);
+
+            // show UI loader
+            if (!response.success) return;
+
+            // hide UI loader
+            hideLoader();
+
+            this.settings = response.settings;
+            this.orders = response.orders;
+
+            // session
+            new Session();
+            new Header(response);
+
+            this.view();
+
+            this.renderOrders();
+            this.renderStats();
+
+            document.getElementById('loadingIndicator').style.display = 'none';
+            document.getElementById('ordersContainer').style.display = 'block';
+
+            // console.log(response);
+        });
+    }
+
+    generateMockData() {
+
+        const companies = ['VILARDS SIA', 'AVLAND SIA', 'AVR Baltija SIA', 'BOGUS SIA', 'EROOF SIA', 'IA', 'Kārkls SIA', 'KG'];
+        const materials = ['Skārda nams SIA', 'Metāla konstrukcijas', 'Plastmasa'];
+        const operators = ['olesja', 'sk-design', 'admin'];
+
+        const orders = [];
+        for (let i = 0; i < 15; i++) {
+            const id = `1206${String(746 + i).padStart(3, '0')}`;
+            const date = new Date();
+            date.setDate(date.getDate() + Math.floor(Math.random() * 10) - 5);
+
+            orders.push({
+                id: id,
+                company: companies[Math.floor(Math.random() * companies.length)],
+                date: this.formatDate(date),
+                time: `${String(Math.floor(Math.random() * 12) + 8).padStart(2, '0')}:00:00`,
+                materials: materials[Math.floor(Math.random() * materials.length)],
+                operator: operators[Math.floor(Math.random() * operators.length)],
+                notes: Math.random() > 0.7 ? `Note ${Math.floor(Math.random() * 1000)}` : '',
+                status: this.getRandomStatus(),
+                issued: Math.random() > 0.8 ? this.formatDateTime(new Date()) : '',
+                priority: Math.floor(Math.random() * 5)
+            });
+        }
+
+        return {
+            orders: orders.sort((a, b) => a.priority - b.priority),
+            stats: {
+                latest: ['354', '260', '249', '308', '355'],
+                issued: ['825', '801', '848']
+            }
+        };
+    }
+
+    getRandomStatus() {
+        const statuses = ['urgent', 'new', 'today', 'ready', 'issued'];
+        return statuses[Math.floor(Math.random() * statuses.length)];
+    }
+
+    renderStats() {
+
+        // Find most recently issued orders by checking all order items' inventory.isu_date
+        const issuedOrders = [];
+        const manufacturedOrders = [];
+        this.orders.forEach(order => {
+            let mostRecentIsuDate = null;
+            let mostRecentMnfDate = null;
+            order.items.forEach(item => {
+                if (item.inventory && item.inventory.isu_date) {
+                    const isuDate = new Date(item.inventory.isu_date);
+                    if (!mostRecentIsuDate || isuDate > mostRecentIsuDate) {
+                        mostRecentIsuDate = isuDate;
+                    }
+                }
+                if (item.inventory && item.inventory.mnf_date) {
+                    const mnfDate = new Date(item.inventory.mnf_date);
+                    if (!mostRecentMnfDate || mnfDate > mostRecentMnfDate) {
+                        mostRecentMnfDate = mnfDate;
+                    }
+                }
+            });
+            if (mostRecentIsuDate) {
+                issuedOrders.push({ orderId: order.id, isuDate: mostRecentIsuDate });
+            }
+            if (mostRecentMnfDate) {
+                manufacturedOrders.push({ orderId: order.id, mnfDate: mostRecentMnfDate });
+            }
+        });
+
+        // Sort by most recent isu_date descending
+        manufacturedOrders.sort((a, b) => b.mnfDate - a.mnfDate);
+        issuedOrders.sort((a, b) => b.isuDate - a.isuDate);
+
+        // Take top 5 most recently issued orders
+        this.stats.latest = manufacturedOrders.slice(0, 5).map(o => o.orderId.substring(o.orderId.length - 4));
+        this.stats.issued = issuedOrders.slice(0, 5).map(o => o.orderId.substring(o.orderId.length - 4));
+
+        this.updateStats(this.stats);
+    }
+
+    renderOrders() {
+        const container = document.getElementById('ordersContainer');
+        container.innerHTML = '';
+
+        this.ordersSorted = { urgent: [], today: [], manufacturing: [], ready: [], issued: [] };
+
+        this.orders.forEach((order, index) => {
+
+            // Check if due_date is past the current time
+            const dueDate = new Date(order.due_date);
+            const now = new Date();
+            order.isOverdue = dueDate < now;
+            order.isReady = this.isOrderReady(order);// order.mnf_date.length;
+            order.isIssued = this.isOrderIssued(order);
+            order.isToday = dueDate.getDate() === now.getDate()
+
+            if (order.isOverdue && !order.isReady && !order.isIssued) { order.status = "urgent"; this.ordersSorted.urgent.push(order); }
+            if (order.isReady && !order.isIssued) { order.status = "ready"; this.ordersSorted.ready.push(order); }
+            if (order.isReady && order.isIssued) { order.status = "issued"; this.ordersSorted.issued.push(order); }
+            if (!order.isOverdue && !order.isReady && !order.isIssued && !order.isToday) { order.status = "manufacturing"; this.ordersSorted.manufacturing.push(order); }
+            if (!order.isOverdue && !order.isReady && !order.isIssued && order.isToday) { order.status = "today"; this.ordersSorted.today.push(order); }
+        });
+
+        // Output orders in the chronological sequence from this.ordersSorted
+        // const orderSequence = ['urgent', 'manufacturing', 'ready', 'issued'];
+        Object.keys(this.ordersSorted).forEach(status => {
+            this.ordersSorted[status].forEach((order, index) => {
+                const orderElement = this.createOrderRow(order, index);
+                container.appendChild(orderElement);
+
+                this.refreshButtons(order._id);
+            });
+        });
+    }
+
+    isOrderReady(order) {
+        let c = 0;
+
+        order.items.forEach(item => {
+
+            if (!item.inventory || !item.inventory.mnf_date) return false;
+            if (item.inventory.mnf_date) c++;
+        });
+
+        return c === order.items.length;
+    }
+
+    isOrderIssued(order) {
+        let c = 0;
+
+        order.items.forEach(item => {
+            if (!item.inventory || !item.inventory.isu_date) return false;
+            if (item.inventory.isu_date) c++;
+        });
+
+        return c === order.items.length;
+    }
+
+    createOrderRow(order, index) {
+        const div = document.createElement('div');
+
+        // order.status = 'new';
+        div.className = `order-card status-${order.status} fade-in`;
+        div.style.animationDelay = `${index * 0.05}s`;
+
+        const shortId = order.id.substring(0, order.id.length - 4);
+        const lastFour = order.id.substring(order.id.length - 4);
+
+        div.innerHTML = `
+            <div class="card-body d-flex flex-row justify-content-between align-items-center" data-order-id="${order.id}">
+                <div class="row flex-grow-1 align-items-center">
+                    <div class="col-md-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
+                        <div class="order-id ms-2 p-2 po">
+                            ${shortId} <strong>${lastFour}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-5 po px-0 py-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
+                        <div class="company-name">${this.formatCompanyName(order.name)}</div>
+                        <small class="text-muted elipsized">${order.notes}</small>
+                    </div>
+                    <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
+                        <small class="text-muted- text-dark text-nowrap">${toLocalUserDate(order.due_date)}</small>
+                    </div>
+                    <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
+                        <small class="text-muted- text-dark text-nowrap">${toLocalUserTime(order.due_date)}</small>
+                    </div>
+                    <div class="col-md-1">
+                        <small class="text-muted">${order.operator}</small>
+                    </div>
+                </div>
+                <div class="col-md-2 text-end action-col ms-auto" data-order-id="${order._id}">
+                   
+                </div>
+            </div>
+        `;
+
+        return div;
+    }
+
+    async loadOrderDetails(orderId) {
+        try {
+
+            let order = this.orders.find(order => order.id === orderId);
+
+            // check if sub-items already loaded for this order
+            if (document.querySelector('.sub-items-row[data-order-id="' + orderId + '"]')) {
+
+                document.querySelector('.sub-items-row[data-order-id="' + orderId + '"]').remove();
+                return;
+            }
+
+            // Remove any existing sub-items rows
+            document.querySelectorAll('.sub-items-row').forEach(row => row.remove());
+
+            // Find the order card element
+            const orderCards = document.querySelectorAll('.order-card');
+            let targetCard = null;
+            orderCards.forEach(card => {
+                if (card.querySelector('.order-id') && card.querySelector('.order-id').textContent.replace(/\s/g, '').includes(orderId)) {
+                    targetCard = card;
+                }
+            });
+
+            if (!targetCard) return;
+
+            // Create a new row for sub-items
+            const subRow = document.createElement('div');
+            subRow.className = `sub-items-row status-${order.status}`;
+            subRow.dataset.orderId = orderId;
+
+            // Render sub-items as a table
+            subRow.innerHTML = `
+                <div class="p-3">
+                    <div class="mb-2 d-none">
+                        <strong>Pozīcijas pasūtījumam:</strong> ${orderId}
+                        <button class="btn btn-sm btn-outline-secondary float-end" onclick="this.parentNode.parentNode.parentNode.remove()">Aizvērt</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered- mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="d-none">${__html('Nr.')}</th>
+                                    <th>${__html('Works')}</th>
+                                    <th>${__html('Product')}</th>
+                                    <th>${__html('Unit')}</th>
+                                    <th>${__html('Quantity')}</th>
+                                    <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
+                                    <th>${__html('Warehouse')}</th>
+                                    <th>${__html('Stock')}</th>
+                                    <th class="text-end">${__html('Action')}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${order.items.map((item, i) => `
+                                    <tr>
+                                        <td class="d-none">${i + 1}</td>
+                                        <td>
+                                            <div class="work-buttons">
+                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork(4, '${orderId}', '${item.id}')">M</button>
+                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork(1, '${orderId}', '${item.id}')">L</button>
+                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork(2, '${orderId}', '${item.id}')">K</button>
+                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork(3, '${orderId}', '${item.id}')">N</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div><strong>${i + 1}. ${item.title}</strong></div>
+                                            <small class="text-muted">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                                        </td>
+                                        <td>${item.unit || "gab"}</td>
+                                        <td>${item.qty}</td>
+                                        <td>
+                                            <div class="d-flex align-items-center action-ns">
+                                                <input type="checkbox" data-type="w" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                                <input type="checkbox" data-type="m" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                            </div >
+                                        </td >
+                                        <td>${item.operator || "&nbsp;"}</td>
+                                        <td>
+                                            <input type="number" class="form-control form-control-sm inv-amount" value="${item.taken}" style="width: 80px;">
+                                        </td>
+                                        <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
+                                            
+                                        </td>
+                                    </tr >
+                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            `;
+
+            // Insert after the target card
+            targetCard.parentNode.insertBefore(subRow, targetCard.nextSibling);
+
+            this.refreshButtons(order._id);
+
+        } catch (error) {
+            console.error('Error loading order details:', error);
+            toast('Error ' + error);
+        }
+    }
+
+    formatCompanyName(company) {
+        // Detect physical persons and abbreviate
+        if (company.toLowerCase().indexOf(' sia') === -1 &&
+            company.toLowerCase().indexOf(' bdr') === -1 &&
+            company.toLowerCase().indexOf(' as') === -1 &&
+            company.indexOf(' ') > 0) {
+            const parts = company.split(' ');
+            return parts[0].substring(0, 1) + parts[1].substring(0, 1);
+        }
+        return company;
+    }
+
+    refreshButtons(order_id) {
+
+        // Refresh action buttons for the order
+        let order = this.orders.find(o => o._id === order_id);
+
+        if (!order) return;
+
+        // reset action buttons
+        document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = ``;
+
+        // refresh row button state
+        let counter = { mnf: 0, isu: 0 };
+        this.orders = this.orders.map((o, i) => {
+            if (o._id === order._id) {
+                o.items.forEach((item, j) => {
+                    if (item.inventory?.mnf_date) counter.mnf++;
+                    if (item.inventory?.isu_date) counter.isu++;
+
+                    let sel = `.action-items-col[data-order-id="${o._id}"][data-item-i="${j}"]`;
+                    if (document.querySelector(sel)) document.querySelector(sel).innerHTML = this.getActionItemsButton(order._id, j);
+                });
+            }
+            return o;
+        });
+
+        // issue order button
+        if (counter.mnf == order.items.length && counter.isu != order.items.length) {
+            document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
+                    <button class="btn action-btn btn-outline-success text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', true)">
+                        <i class="bi bi-check-circle me-1"></i> ${__html('Issue')}
+                    </button>
+                `;
+        }
+
+        // cancel issue order button
+        if (counter.mnf == order.items.length && counter.isu == order.items.length) {
+
+            // Find the most recent issue date among all items
+            let mostRecentIssueDate = null;
+            order.items.forEach((item, i) => {
+                if (item.inventory?.isu_date) {
+                    item.issued = true;
+                    item.issuedDate = item.inventory.isu_date;
+                    const isuDate = new Date(item.inventory.isu_date);
+                    if (!mostRecentIssueDate || isuDate > mostRecentIssueDate) {
+                        mostRecentIssueDate = isuDate;
+                    }
+                }
+            });
+
+            document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
+                    <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
+                        </i> ${toLocalUserDate(mostRecentIssueDate)} ${toLocalUserTime(mostRecentIssueDate)}
+                    </button>
+                `;
+        }
+    }
+
+    getActionItemsButton(order_id, index) {
+
+        const item = this.orders.find(order => order._id === order_id)?.items[index];
+        if (!item) return '';
+
+        // console.log('getActionItemsButton inventory', item?.inventory);
+
+        return `
+        ${item?.inventory?.mnf_date ?
+                `
+                    <button class="btn btn-sm btn-outline-danger btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
+                    <button class="btn btn-sm btn-outline-success btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',true)" > ${__html('Issue')}</button>
+                `: ``
+            }
+        `;
+    }
+
+    // w: product item taken from warehouse
+    // m: product item manufactured
+    // c: product item action canceled
+    execOrderItemAction(e, _id) {
+
+        if (this.inQuery) return;
+
+        this.inQuery = true;
+
+        const order = this.orders.find(o => o._id === _id);
+
+        // console.log('execOrderItemAction order', order);
+
+        const checkbox = e.target;
+
+        let actions = {
+            inventory:
+            {
+                order_id: order._id,
+                origin: checkbox.dataset.type,
+                index: checkbox.dataset.i,
+                item_id: order.items[checkbox.dataset.i]._id,
+                amount: parseInt(checkbox.closest('tr').querySelector('.inv-amount').value) || 0,
+            }
+        };
+
+        if (checkbox.checked) {
+            // Handle item taken
+            actions.inventory.mnf_date = new Date().toISOString();
+            console.log(`Item ${checkbox.dataset.type} ${order._id} marked as taken`);
+        } else {
+            // Handle item not taken
+            actions.inventory.mnf_date = null;
+            actions.inventory.origin = 'c';
+            console.log(`Item ${order._id} marked as not taken`);
+        }
+
+        execOrderItemAction(actions, (response) => {
+
+            this.inQuery = false;
+
+            if (!response.success) {
+                toast(__html('Error updating item status'));
+                return;
+            }
+
+            order.items[checkbox.dataset.i].inventory = actions.inventory;
+
+            this.refreshButtons(order._id);
+
+            // Update UI or perform any other actions based on response
+            toast(__html('Record updated'));
+        });
+    }
+
+    async issueOrder(orderId, isIssue) {
+
+        if (this.inQuery) return;
+
+        if (confirm(__html('Issue order %1$?', orderId))) {
+
+            this.inQuery = true;
+
+            try {
+
+                let actions = {
+                    issue: []
+                };
+
+                // TODO: go through all order items
+                const order = this.orders.find(o => o.id === orderId);
+
+                order.items.forEach((item, i) => {
+
+                    // cancel issue
+                    if (!isIssue) {
+
+                        // update current state
+                        item.inventory.isu_date = null
+
+                        // action for db
+                        actions.issue.push({
+                            order_id: order._id,
+                            isu_date: item.inventory.isu_date,
+                            index: i,
+                            item_id: item._id
+                        });
+                    }
+
+                    // mark as issued if not already
+                    if (isIssue && item.inventory && item.inventory.mnf_date && !item.inventory.isu_date) {
+
+                        // update current state
+                        item.inventory.isu_date = new Date().toISOString();
+
+                        // action for db
+                        actions.issue.push({
+                            order_id: order._id,
+                            isu_date: item.inventory.isu_date,
+                            index: i,
+                            item_id: item._id
+                        });
+                    }
+                });
+
+                execOrderItemAction(actions, (response) => {
+
+                    this.inQuery = false;
+
+                    if (!response.success) {
+                        toast(__html('Error updating item status'));
+                        return;
+                    }
+
+                    // this.renderOrders();
+
+                    this.refreshButtons(order._id);
+
+                    // Update UI or perform any other actions based on response
+                    toast(__html('Record updated'));
+                });
+
+                // toast(__html('Order updated'));
+            } catch (error) {
+                console.error('Error issuing order:', error);
+                toast('Kļūda izsniegšanas procesā');
+            }
+        }
+    }
+
+    openWork(type, orderId, itemId) {
+        const workTypes = {
+            1: 'Lasīšana',
+            2: 'Komplektēšana',
+            3: 'Nosūtīšana',
+            4: 'Mērīšana'
+        };
+
+        const url = `/ ATS / darbs ? pid = ${orderId}& lid=${itemId}& dt=${type} `;
+        this.openWindow('darbs', url);
+    }
+
+    openWindow(name, url) {
+        const win = window.open(url, name, 'width=1200,height=800,location=yes,menubar=yes,status=no,toolbar=yes,scrollbars=yes,resizable=yes');
+        win.focus();
+    }
+
+    searchOrders(orderId, name) {
+        // Filter orders based on search criteria
+        let filtered = this.orders;
+
+        if (orderId) {
+            filtered = filtered.filter(order =>
+                order.id.toLowerCase().includes(orderId.toLowerCase())
+            );
+        }
+
+        if (name) {
+            filtered = filtered.filter(order =>
+                order.name.toLowerCase().includes(name.toLowerCase())
+            );
+        }
+
+        this.renderFilteredOrders(filtered);
+    }
+
+    renderFilteredOrders(orders) {
+        const container = document.getElementById('ordersContainer');
+        container.innerHTML = '';
+
+        orders.forEach((order, index) => {
+            const orderElement = this.createOrderRow(order, index);
+            container.appendChild(orderElement);
+
+            this.refreshButtons(order._id);
+        });
+    }
+
+    refreshOrders() {
+        document.getElementById('loadingIndicator').style.display = 'block';
+        document.getElementById('ordersContainer').style.display = 'none';
+        this.loadOrders();
+    }
+
+    startAutoUpdate() {
+        this.autoUpdateInterval = setInterval(() => {
+            this.autoUpdate();
+        }, 45000); // 45 seconds
+    }
+
+    async autoUpdate() {
+        try {
+            // Simulate checking for updates
+            const now = Date.now() / 1000;
+
+            // Only update if user hasn't been active for 30 seconds
+            if ((now - this.mouseTime) > 30) {
+                await this.loadOrders();
+            } else {
+                // Show update indicator
+                this.showUpdateIndicator();
+            }
+        } catch (error) {
+            console.error('Auto update failed:', error);
+        }
+    }
+
+    showUpdateIndicator() {
+        const refreshBtn = document.querySelector('.btn-outline-light');
+        refreshBtn.style.color = '#e74c3c';
+        setTimeout(() => {
+            refreshBtn.style.color = '';
+        }, 3000);
+    }
+
+    updateStats(stats) {
+        document.getElementById('latestOrders').textContent = stats.latest.join(', ');
+        document.getElementById('issuedOrders').textContent = stats.issued.join(', ');
+    }
+
+    formatDate(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}.${month}.${year} `;
+    }
+
+    formatDateTime(date) {
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()];
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        return `${day} ${month} ${hours}:${minutes} `;
+    }
+
+    delay(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Additional methods for item management
+    async issueItem(order_id, item_i, isIssue = true) {
+
+        if (this.inQuery) return;
+
+        this.inQuery = true;
+
+        try {
+
+            const order = this.orders.find(o => o._id === order_id);
+
+            let actions = {
+                issue: [
+                    {
+                        order_id: order._id,
+                        index: item_i,
+                        item_id: order.items[item_i]._id,
+                        isu_date: isIssue ? new Date().toISOString() : null
+                    }
+                ]
+            };
+
+            execOrderItemAction(actions, (response) => {
+
+                this.inQuery = false;
+
+                if (!response.success) {
+                    toast(__html('Error updating item status'));
+                    return;
+                }
+
+                // refresh button state
+                this.orders = this.orders.map(o => {
+                    if (o._id === order._id) {
+                        o.items[item_i].inventory.isu_date = actions.issue.isu_date;
+                    }
+                    return o;
+                });
+
+                this.refreshButtons(order._id);
+
+                // let aic = document.querySelector('.action-items-col[data-order-id="' + order_id + '"][data-item-i="' + item_i + '"]');
+
+                // if (isIssue) {
+                //     aic.querySelector('.btn-issue').classList.add('d-none');
+                //     aic.querySelector('.btn-cancel').classList.remove('d-none');
+                //     aic.querySelector('.btn-cancel').textContent = toLocalUserDate(actions.issue.isu_date) + ' ' + toLocalUserTime(actions.issue.isu_date);
+                // } else {
+                //     aic.querySelector('.btn-issue').classList.remove('d-none');
+                //     aic.querySelector('.btn-cancel').classList.add('d-none');
+                // }
+
+                // console.log('Issuing item', order_id, item_i);
+
+                toast(__html('Record updated'));
+            });
+
+        } catch (error) {
+            toast('Error ' + error);
+        }
+    }
+
+    async cancelItemIssue(itemId) {
+        if (confirm('Cancel?')) {
+            try {
+                await this.delay(300);
+                toast('Record updated');
+                // Update UI to reflect the change
+                const button = document.querySelector(`button[onclick *= "${itemId}"]`);
+                if (button && button.textContent === 'Atcelt') {
+                    button.className = 'btn btn-sm btn-success';
+                    button.textContent = 'Izsniegt';
+                    button.onclick = () => this.issueItem(itemId);
+                }
+            } catch (error) {
+                toast('Kļūda atcelšanas procesā');
+            }
+        }
+    }
+
+    // Autocomplete functionality
+    setupAutocomplete(inputElement, dataSource) {
+        let suggestions = [];
+
+        inputElement.addEventListener('input', async (e) => {
+            const value = e.target.value;
+            if (value.length < 2) {
+                this.hideAutocomplete();
+                return;
+            }
+
+            try {
+                // Simulate API call for suggestions
+                suggestions = await this.getSuggestions(dataSource, value);
+                this.showAutocomplete(inputElement, suggestions);
+            } catch (error) {
+                console.error('Error getting suggestions:', error);
+            }
+        });
+
+        inputElement.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideAutocomplete();
+            }
+        });
+    }
+
+    async getSuggestions(dataSource, query) {
+        // Mock suggestion data
+        const mockSuggestions = {
+            colors: ['Balts', 'Melns', 'Sarkans', 'Zils', 'Zaļš', 'Dzeltens'],
+            materials: ['Metāls', 'Plastmasa', 'Koks', 'Stikls', 'Betona'],
+            companies: ['VILARDS SIA', 'AVLAND SIA', 'AVR Baltija SIA', 'BOGUS SIA']
+        };
+
+        await this.delay(200);
+
+        const data = mockSuggestions[dataSource] || [];
+        return data.filter(item =>
+            item.toLowerCase().includes(query.toLowerCase())
+        );
+    }
+
+    showAutocomplete(inputElement, suggestions) {
+        this.hideAutocomplete();
+
+        if (suggestions.length === 0) return;
+
+        const container = document.createElement('div');
+        container.className = 'autocomplete-suggestions';
+        container.style.top = `${inputElement.offsetTop + inputElement.offsetHeight} px`;
+        container.style.left = `${inputElement.offsetLeft} px`;
+        container.style.width = `${inputElement.offsetWidth} px`;
+
+        suggestions.forEach(suggestion => {
+            const div = document.createElement('div');
+            div.className = 'autocomplete-suggestion';
+            div.textContent = suggestion;
+            div.addEventListener('click', () => {
+                inputElement.value = suggestion;
+                this.hideAutocomplete();
+                inputElement.dispatchEvent(new Event('input'));
+            });
+            container.appendChild(div);
+        });
+
+        inputElement.parentNode.style.position = 'relative';
+        inputElement.parentNode.appendChild(container);
+    }
+
+    hideAutocomplete() {
+        const existing = document.querySelector('.autocomplete-suggestions');
+        if (existing) {
+            existing.remove();
+        }
+    }
+
+    destroy() {
+        if (this.autoUpdateInterval) {
+            clearInterval(this.autoUpdateInterval);
+        }
+        this.hideAutocomplete();
+    }
+}
+
+window.manufacturing = new Manufacturing();

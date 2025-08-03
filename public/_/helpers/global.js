@@ -374,6 +374,47 @@ export const numsOnly = (e, max) => {
     return true;
 }
 
+export const toLocalUserDateTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+export const toLocalUserDate = (isoString) => {
+
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+    });
+}
+
+export const toLocalUserTime = (isoString) => {
+
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    return date.toLocaleTimeString(undefined, {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+// Convert ISO date string (e.g., "2025-08-04T12:00:00.000Z") to local datetime-local input value (e.g., "2025-08-04T15:00")
+export const toLocalDateTime = (isoString) => {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const pad = n => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 // time elapsed since creation 
 export const timeConverterAgo = (__, now, time) => {
 
@@ -932,7 +973,8 @@ export const link = (slug) => {
 
     let postfix = slug.indexOf('?') == -1 ? '?sid=' + sid : '&sid=' + sid;
 
-    return slug + postfix;
+    // return slug + postfix;
+    return slug;
 }
 
 /**

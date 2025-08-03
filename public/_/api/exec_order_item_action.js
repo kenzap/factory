@@ -1,14 +1,12 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const getHome = (cb) => {
+export const execOrderItemAction = (actions, cb) => {
 
     // do API query
-    fetch(API() + '/api/home/', {
+    fetch(API() + '/api/exec-order-item-action/', {
         method: 'post',
         headers: H(),
-        body: JSON.stringify({
-            query: {}
-        })
+        body: JSON.stringify(actions)
     })
         .then(response => response.json())
         .then(response => {

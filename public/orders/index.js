@@ -97,9 +97,9 @@ class Orders {
                                 <div class="col-md-2">
                                     <label class="form-label d-none">Type:</label>
                                     <select class="form-select" id="typeFilter">
-                                    <option value="2">All</option>
-                                    <option value="1">Processed</option>
-                                    <option value="0">Orders</option>
+                                        <option value="2">All</option>
+                                        <option value="1">Processed</option>
+                                        <option value="0">Orders</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3 d-flex justify-content-end">
@@ -177,7 +177,7 @@ class Orders {
                     width: 80,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<a href="order6.php?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
+                        return `<a href="/order-edit/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                     }
                 },
                 {

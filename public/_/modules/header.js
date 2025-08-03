@@ -40,8 +40,8 @@ export class Header {
             <nav id="header" class="navbar navbar-expand-md navbar-light fixed-top bg-white shadow-sm">
                 <div class="container">
                     <div class="d-flex align-items-center">
-                        <a class="navbar-brand nav-back d-flex align-items-center me-sm-2 me-1" href="https://dashboard.kenzap.cloud">
-                            <img style="max-height: 23px;" src="https://cdn.kenzap.com/logo.svg" alt="Events logo">
+                        <a class="navbar-brand nav-back d-flex align-items-center me-sm-2 me-1" href="/home/">
+                            <img style="max-height: 23px;" src="${this.response.settings ? this.response.settings.logo || "https://cdn.kenzap.com/logo.svg" : "https://cdn.kenzap.com/logo.svg"}" alt="Kenzap Factory Logo">
                         </a>
                     </div>
                     <div class="d-flex flex-column align-items-end" id="navbarCollapse">
