@@ -265,7 +265,10 @@ class Localization {
                     <nav class="bc" aria-label="breadcrumb"></nav>
                     <div class="">
                         <a style="margin-right:16px;" class="preview-link nounderline d-none" target="_blank" href="#">${__html('template')}<i class="mdi mdi-monitor"></i></a>
-                        <button class="btn btn-primary btn-add" type="button">${__html('Add locale')}</button>
+                        <button class="btn btn-primary btn-add mt-3 mb-1 mt-md-0 mb-md-0 d-flex align-items-center" type="button">
+                            <i class="bi bi-plus-circle me-1"></i>
+                            ${__html('Add locale')}
+                        </button>
                     </div>
                 </div>
                 <div class="row">

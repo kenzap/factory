@@ -51,7 +51,7 @@ async function getSettings() {
  * @param {Object} filter - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getProducts(filters = { limit: 50, s: '' }) {
+async function getProducts(filters = { limit: 50, s: '', cat: '' }) {
 
     const client = getDbConnection();
     let products = [], meta = {};
@@ -67,6 +67,7 @@ async function getProducts(filters = { limit: 50, s: '' }) {
             js->'data'->'formula_length' AS formula_length,
             js->'data'->'formula_price' AS formula_price,
             js->'data'->'formula' AS formula,
+            js->'data'->'cats' AS cats,
             js->'data'->'img' AS img,
             js->'data'->'status' AS status,
             js->'data'->'var_price' AS var_price,
@@ -87,6 +88,13 @@ async function getProducts(filters = { limit: 50, s: '' }) {
     if (filters.s && filters.s.trim() !== '') {
         query += ` AND unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4)`;
         params.push(`%${filters.s}%`);
+    }
+
+    // Add cat search matching filter if present
+    if (filters.cat && filters.cat.trim() !== '') {
+        query += ` AND js->'data'->'cats' @> $${params.length + 1}::jsonb`;
+        params.push(JSON.stringify([filters.cat]));
+        // params.push(`%${filters.cat}%`);
     }
 
     // Pagination

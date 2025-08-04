@@ -1,6 +1,71 @@
 
 import { sid } from './index.js';
 
+export const setProductStock = async (client, inventory, user_id) => {
+
+    console.log('setProductStock', inventory);
+
+    // validate inventory data
+    if (!inventory || !inventory._id || !inventory.amount || !inventory.coating || !inventory.color) {
+        return { success: false, error: 'invalid inventory data' };
+    }
+
+    // sanitize amount
+    inventory.amount = parseInt(inventory.amount, 10);
+    if (isNaN(inventory.amount) || inventory.amount.length > 10) {
+        return { success: false, error: 'invalid amount' };
+    }
+
+    // find the order item by id
+    const varQuery = `
+                SELECT js->'data'->'var_price' as var_price
+                FROM data 
+                WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
+            `;
+
+    const varResult = await client.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
+    let var_price = varResult.rows[0]?.var_price || {};
+
+    // find product by color and coating
+    var_price.forEach(v => {
+
+        if ((v.parent === inventory.coating || (v.parent == 'Painted' && inventory.coating == '-')) && v.title === inventory.color) {
+            v.stock = parseInt(inventory.amount);
+        }
+    });
+
+    // var_price is empty
+    if (var_price.length === 0) {
+        var_price.push({
+            parent: inventory.coating,
+            title: inventory.color,
+            public: false,
+            price: 0,
+            unit: 'pc',
+            stock: parseInt(inventory.amount)
+        });
+    }
+
+    console.log('Updated var_price:', var_price);
+
+    // update product stock
+    const updateQuery = `
+            UPDATE data 
+            SET js = jsonb_set(js, '{data,var_price}', $1)
+            WHERE _id = $2 AND ref = $3 AND sid = $4
+            RETURNING _id
+        `;
+
+    const updateParams = [JSON.stringify(var_price), inventory._id, 'ecommerce-product', sid];
+    const updateResult = await client.query(updateQuery, updateParams);
+
+    if (updateResult.rows.length === 0) {
+        throw new Error('Product not found or update failed');
+    }
+
+    return updateResult.rows[0];
+}
+
 export const updateProductStock = async (client, inventory, user_id) => {
 
     console.log('updateProductStock', inventory);

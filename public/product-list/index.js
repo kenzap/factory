@@ -48,7 +48,8 @@ class ProductList extends Component {
             <div class="container">
                 <div class="d-md-flex justify-content-between bd-highlight mb-3">
                     <nav class="bc" aria-label="breadcrumb"></nav>
-                    <button class="btn btn-primary btn-add-product mt-3 mb-1 mt-md-0 mb-md-0" type="button">
+                    <button class="btn btn-primary btn-add-product mt-3 mb-1 mt-md-0 mb-md-0 d-flex align-items-center" type="button">
+                        <i class="bi bi-plus-circle me-1"></i>
                         ${__html('Add product')}
                     </button>
                 </div>
