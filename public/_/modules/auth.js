@@ -1,6 +1,7 @@
+import { isEmail } from "../helpers/validation.js";
 import { getOTP } from "/_/api/auth_get_otp.js";
 import { validateOTP } from "/_/api/auth_validate_otp.js";
-import { __html, onClick, validateEmail } from "/_/helpers/global.js";
+import { __html, onClick } from "/_/helpers/global.js";
 import { bus } from "/_/modules/bus.js";
 import { Login } from "/_/modules/login.js";
 import { Modal } from "/_/modules/modal.js";
@@ -124,7 +125,7 @@ export class Auth {
 
         // validate email
         let email = self.modal.querySelector('#otp-email').value;
-        if (!validateEmail(email)) {
+        if (!isEmail(email)) {
 
             self.modal.querySelector('#otp-email').setCustomValidity('wrong email format');
             self.modal.querySelector('.otp-email-notice').innerHTML = __html('wrong email format');

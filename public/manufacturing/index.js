@@ -1,5 +1,6 @@
 import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrders } from "../_/api/get_orders.js";
+import { getProductStock } from "../_/api/get_product_stock.js";
 import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { getHtml } from "../_/modules/manufacturing.js";
@@ -79,6 +80,7 @@ class Manufacturing {
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
+
             // F5 or Ctrl+R to refresh
             if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
                 e.preventDefault();
@@ -154,46 +156,6 @@ class Manufacturing {
 
             // console.log(response);
         });
-    }
-
-    generateMockData() {
-
-        const companies = ['VILARDS SIA', 'AVLAND SIA', 'AVR Baltija SIA', 'BOGUS SIA', 'EROOF SIA', 'IA', 'Kārkls SIA', 'KG'];
-        const materials = ['Skārda nams SIA', 'Metāla konstrukcijas', 'Plastmasa'];
-        const operators = ['olesja', 'sk-design', 'admin'];
-
-        const orders = [];
-        for (let i = 0; i < 15; i++) {
-            const id = `1206${String(746 + i).padStart(3, '0')}`;
-            const date = new Date();
-            date.setDate(date.getDate() + Math.floor(Math.random() * 10) - 5);
-
-            orders.push({
-                id: id,
-                company: companies[Math.floor(Math.random() * companies.length)],
-                date: this.formatDate(date),
-                time: `${String(Math.floor(Math.random() * 12) + 8).padStart(2, '0')}:00:00`,
-                materials: materials[Math.floor(Math.random() * materials.length)],
-                operator: operators[Math.floor(Math.random() * operators.length)],
-                notes: Math.random() > 0.7 ? `Note ${Math.floor(Math.random() * 1000)}` : '',
-                status: this.getRandomStatus(),
-                issued: Math.random() > 0.8 ? this.formatDateTime(new Date()) : '',
-                priority: Math.floor(Math.random() * 5)
-            });
-        }
-
-        return {
-            orders: orders.sort((a, b) => a.priority - b.priority),
-            stats: {
-                latest: ['354', '260', '249', '308', '355'],
-                issued: ['825', '801', '848']
-            }
-        };
-    }
-
-    getRandomStatus() {
-        const statuses = ['urgent', 'new', 'today', 'ready', 'issued'];
-        return statuses[Math.floor(Math.random() * statuses.length)];
     }
 
     renderStats() {
@@ -384,8 +346,8 @@ class Manufacturing {
                                     <th>${__html('Unit')}</th>
                                     <th>${__html('Quantity')}</th>
                                     <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
-                                    <th>${__html('Warehouse')}</th>
                                     <th>${__html('Stock')}</th>
+                                    <th>${__html('Taken')}</th>
                                     <th class="text-end">${__html('Action')}</th>
                                 </tr>
                             </thead>
@@ -411,11 +373,11 @@ class Manufacturing {
                                             <div class="d-flex align-items-center action-ns">
                                                 <input type="checkbox" data-type="w" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                                 <input type="checkbox" data-type="m" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                            </div >
-                                        </td >
-                                        <td>${item.operator || "&nbsp;"}</td>
+                                            </div>
+                                        </td>
+                                        <td><div class="stock-${item.coating}-${item.color}-${item._id}"></div></td>
                                         <td>
-                                            <input type="number" class="form-control form-control-sm inv-amount" value="${item.taken}" style="width: 80px;">
+                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
                                             
@@ -433,6 +395,8 @@ class Manufacturing {
 
             this.refreshButtons(order._id);
 
+            this.getStock(order._id);
+
         } catch (error) {
             console.error('Error loading order details:', error);
             toast('Error ' + error);
@@ -440,6 +404,7 @@ class Manufacturing {
     }
 
     formatCompanyName(company) {
+
         // Detect physical persons and abbreviate
         if (company.toLowerCase().indexOf(' sia') === -1 &&
             company.toLowerCase().indexOf(' bdr') === -1 &&
@@ -449,6 +414,43 @@ class Manufacturing {
             return parts[0].substring(0, 1) + parts[1].substring(0, 1);
         }
         return company;
+    }
+
+    getStock(order_id) {
+
+        // Get stock for each item in the order
+        const order = this.orders.find(o => o._id === order_id);
+        if (!order) return;
+
+        let products = [];
+
+        order.items.forEach((item, i) => {
+
+            // todo: add bundled products
+            products.push({
+                _id: item._id,
+                hash: item.coating + item.color + item._id,
+                coating: item.coating || '',
+                color: item.color || ''
+            });
+        });
+
+        getProductStock(products, (response) => {
+
+            console.log('getProductStock response', response);
+
+            if (response.success && response.products && response.products.length > 0) {
+
+                response.products.forEach((item, i) => {
+
+                    let sel = `.stock-${item.coating}-${item.color}-${item._id}`;
+
+                    if (document.querySelector(sel)) document.querySelector(sel).innerHTML = `
+                        <span class="text-muted">${item.stock || 0}</span>
+                    `;
+                });
+            }
+        });
     }
 
     refreshButtons(order_id) {
@@ -507,6 +509,47 @@ class Manufacturing {
                     </button>
                 `;
         }
+
+        // checkboxes enable/disable
+        order.items.forEach((item, i) => {
+            let checkboxW = document.querySelector(`.action-ns input[data-type="w"][data-i="${i}"]`);
+            let checkboxM = document.querySelector(`.action-ns input[data-type="m"][data-i="${i}"]`);
+            let writeoffAmount = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
+
+            if (!checkboxW || !checkboxM) return;
+
+            checkboxW.disabled = item.inventory?.isu_date ? true : false;
+            if (checkboxM.checked) checkboxW.disabled = true; // Disable warehouse checkbox if manufactured is checked
+
+            checkboxM.disabled = item.inventory?.isu_date ? true : false;
+            if (checkboxW.checked) checkboxM.disabled = true; // Disable manufactured checkbox if warehouse is checked
+
+            if (checkboxM.checked || (!checkboxW.checked && !checkboxM.checked)) {
+
+                writeoffAmount.classList.add('d-none'); // Disable input if manufactured is checked
+            } else {
+                writeoffAmount.classList.remove('d-none'); // Enable input if warehouse is checked
+            }
+        });
+
+        // inventory amount
+        order.items.forEach((item, i) => {
+
+            let input = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
+            if (input) {
+
+                input.value = 0;
+                if (item?.inventory?.origin == 'w' && item?.inventory?.amount) input.value = item?.inventory?.amount || 0;
+
+                // Only add the event listener if it hasn't been attached yet
+                if (!input.dataset.listenerAttached) {
+                    input.addEventListener('change', (e) => {
+                        this.execOrderItemAction(e, order._id);
+                    });
+                    input.dataset.listenerAttached = "true";
+                }
+            }
+        });
     }
 
     getActionItemsButton(order_id, index) {
@@ -537,31 +580,50 @@ class Manufacturing {
 
         const order = this.orders.find(o => o._id === _id);
 
-        // console.log('execOrderItemAction order', order);
+        // const checkbox = e.target;
+        // const i = checkbox.dataset.i;
+        const i = e.target.dataset.i;
 
-        const checkbox = e.target;
+        let input = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
+        let amount = parseInt(input.value) || 0;
+
+        // If checkbox is unchecked, set input value to 0
+        let checkbox_m = document.querySelector(`.action-ns input[data-type="m"][data-i="${i}"]`);
+        let checkbox_w = document.querySelector(`.action-ns input[data-type="w"][data-i="${i}"]`);
+
+        if (!checkbox_m || !input || !checkbox_w) return;
+
+        if (checkbox_w.checked && amount == 0) input.value = order.items[i].qty || 0;
+
+        if (!checkbox_w.checked && amount > 0) input.value = 0;
+
+        this.inQuery = false;
+
+        // console.log('write off amount ', input.value);
+
+        // if (checkbox.checked && input && checkbox.dataset.type === 'w')
+        //     if (input.value == 0 || input.value == '')
+        //         input.value = order.items[i].qty || 0;
 
         let actions = {
             inventory:
             {
                 order_id: order._id,
-                origin: checkbox.dataset.type,
-                index: checkbox.dataset.i,
-                item_id: order.items[checkbox.dataset.i]._id,
-                amount: parseInt(checkbox.closest('tr').querySelector('.inv-amount').value) || 0,
+                // origin: checkbox_w.checked : 'c' + checkbox.dataset.type, // 'w' or 'm' or 'cw' or 'cm'
+                index: i,
+                item_id: order.items[i]._id,
+                amount: input.value,
+                mnf_date: checkbox_w.checked || checkbox_m.checked ? new Date().toISOString() : null,
+                color: order.items[i].color || '',
+                coating: order.items[i].coating || ''
             }
         };
 
-        if (checkbox.checked) {
-            // Handle item taken
-            actions.inventory.mnf_date = new Date().toISOString();
-            console.log(`Item ${checkbox.dataset.type} ${order._id} marked as taken`);
-        } else {
-            // Handle item not taken
-            actions.inventory.mnf_date = null;
-            actions.inventory.origin = 'c';
-            console.log(`Item ${order._id} marked as not taken`);
-        }
+        if (checkbox_w.checked) actions.inventory.origin = 'w';
+        if (checkbox_m.checked) actions.inventory.origin = 'm';
+        if (!checkbox_w.checked && !checkbox_m.checked) actions.inventory.origin = 'c';
+
+        console.log('execOrderItemAction actions', actions);
 
         execOrderItemAction(actions, (response) => {
 
@@ -572,12 +634,17 @@ class Manufacturing {
                 return;
             }
 
-            order.items[checkbox.dataset.i].inventory = actions.inventory;
+            order.items[i].inventory.amount = actions.inventory.amount;
+            order.items[i].inventory.mnf_date = actions.inventory.mnf_date;
+            order.items[i].inventory.origin = actions.inventory.origin;
+
+            // order.items[i].inventory = actions.inventory;
 
             this.refreshButtons(order._id);
 
-            // Update UI or perform any other actions based on response
-            toast(__html('Record updated'));
+            // Update stock for the item
+            this.getStock(order._id);
+
         });
     }
 
@@ -746,22 +813,6 @@ class Manufacturing {
         document.getElementById('issuedOrders').textContent = stats.issued.join(', ');
     }
 
-    formatDate(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const year = date.getFullYear();
-        return `${day}.${month}.${year} `;
-    }
-
-    formatDateTime(date) {
-        const day = String(date.getDate()).padStart(2, '0');
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth()];
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        return `${day} ${month} ${hours}:${minutes} `;
-    }
-
     delay(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -800,25 +851,12 @@ class Manufacturing {
                 // refresh button state
                 this.orders = this.orders.map(o => {
                     if (o._id === order._id) {
-                        o.items[item_i].inventory.isu_date = actions.issue.isu_date;
+                        o.items[item_i].inventory.isu_date = actions.issue[0].isu_date;
                     }
                     return o;
                 });
 
                 this.refreshButtons(order._id);
-
-                // let aic = document.querySelector('.action-items-col[data-order-id="' + order_id + '"][data-item-i="' + item_i + '"]');
-
-                // if (isIssue) {
-                //     aic.querySelector('.btn-issue').classList.add('d-none');
-                //     aic.querySelector('.btn-cancel').classList.remove('d-none');
-                //     aic.querySelector('.btn-cancel').textContent = toLocalUserDate(actions.issue.isu_date) + ' ' + toLocalUserTime(actions.issue.isu_date);
-                // } else {
-                //     aic.querySelector('.btn-issue').classList.remove('d-none');
-                //     aic.querySelector('.btn-cancel').classList.add('d-none');
-                // }
-
-                // console.log('Issuing item', order_id, item_i);
 
                 toast(__html('Record updated'));
             });

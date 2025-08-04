@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
 
 /**
  * Get Product
@@ -81,10 +81,11 @@ function getProductApi(app) {
         try {
 
             const records = await getProduct(req.body.id);
+            const locale = await getLocale();
             const locales = await getLocales();
             const settings = await getSettings();
 
-            res.send({ success: true, settings, locales, product: records });
+            res.send({ success: true, settings, locale, locales, product: records });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

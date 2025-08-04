@@ -83,7 +83,7 @@ export class ProductMeta {
                         <label class="banner-descshort-l form-label" for="p-ldesc${id}">${__html('Description')} ${language != "Default" ? " in " + language : ""}</label>
                         <div id="r-ldesc${id}" data-key="ldesc" data-type="richtext" data-locale="${locale.locale}" name="ldesc" class="richtext-input"> </div>
                         <textarea class="d-none form-control ${id.length == 0 ? "inp" : ""}" id="p-ldesc${id}" placeholder=" " maxlength="2000" rows="10"></textarea>
-                        <p class="form-text">${__html('The main description of the product.')}</p>
+                        <p class="form-text">${__html('Main description of the product.')}</p>
                     </div>
                 </div>`
         }).join('')}          
@@ -98,7 +98,7 @@ export class ProductMeta {
                     <div style="clear:both;margin-top:16px;"></div>
                     <label class="form-label" for="priority">${__html('Priority')}</label>
                     <input type="number" id="priority" class="form-control inp mw-" name="priority" rows="6" data-type="text"></textarea>
-                    <p class="form-text">${__html('Prioritizes products in the list.')}</p>
+                    <p class="form-text">${__html('Prioritize products in the list.')}</p>
                 </div>
             </div >
 
@@ -108,7 +108,7 @@ export class ProductMeta {
                 <h4 id="elan" class="card-title">${__html('Inventory')}</h4>
                 <div class="input-group">
                     <input id="stock_sku" type="text" style="width:100%;" class="form-control" placeholder="" maxlength="200">
-                    <p class="form-text">${__html('Product stock unit identification number or SKU.')}</p>
+                    <p class="form-text">${__html('Product stock unit identification number (SKU)')}</p>
                 </div>
             </div>
 
@@ -119,7 +119,7 @@ export class ProductMeta {
                         ${__html('Stock management')}
                     </label>
                 </div>
-                <p class="form-text">${__html('Enable stock management.')}</p>
+                <p class="form-text">${__html('Enable inventory management.')}</p>
             </div>
 
             <div class="mb-3 mw stock-cont">

@@ -161,8 +161,8 @@ body {
     height: 1.2em;
 }
 
-.sub-items-row .table{
-
+.action-items-col{
+    width: 150px;
 }
 
 .sub-items {

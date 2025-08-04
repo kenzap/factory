@@ -5,7 +5,8 @@ import { verifyClient } from "../../api/verify_client.js";
 import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
-import { __html, onClick, toast, validateEmail, validatePhone } from "../../helpers/global.js";
+import { __html, onClick, toast } from "../../helpers/global.js";
+import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 
 export class ClientPane {
@@ -250,12 +251,12 @@ export class ClientPane {
             return false;
         }
 
-        if (email) if (!validateEmail(email)) {
+        if (email) if (!isEmail(email)) {
             alert('Please enter a valid email address.');
             return false;
         }
 
-        if (clientPhoneRight) if (!validatePhone(clientPhoneRight)) {
+        if (clientPhoneRight) if (!isPhone(clientPhoneRight)) {
             alert('Please enter a valid phone number.');
             return false;
         }

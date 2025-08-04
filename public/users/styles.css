@@ -1,0 +1,55 @@
+@import url("/_/helpers/global.css");
+  
+/* settings */
+/* .list-icon {
+  color: #9b9b9b;
+  font-size: 16px;
+  margin-left: 8px;
+  cursor: pointer;
+}
+
+.list-icon.remove-page::before {
+  color: #ff0079 !important;
+}
+
+.list-icon.set-home::before {
+  color: #9b9b9b !important;
+}
+
+.edit-page::before {
+  color: #9b9b9b !important;
+}
+
+.list-icon.chm::before {
+  color: #1941DF !important;
+}
+
+.timgc img {
+  border-radius: unset !important;
+  object-fit: fill;
+}
+
+.pr-parent {
+  font-size: 1rem;
+} */
+
+
+.link{font-size: 0.875em;}
+
+/* product list */
+.table-p-list thead tr th:nth-child(1){width:44px;} 
+.table-p-list .search-cont{display:none;}
+.table-p-list .bi-search{cursor:pointer;}
+.table-p-list { overflow-y: visible !important; }
+
+.timgc{max-width:50px;overflow:hidden; white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
+.timgc img{position:relative;min-height:28px;}
+
+.modal-body-cont{max-width: 1200px;margin:auto;}
+.modal-body-cont .order-row > .form-control{width:auto;min-width:100px;}
+.modal-body-cont .gen-list-group{min-width: 100px;}
+.modal-body-cont .gen-list-name{min-width: 300px;}
+.modal-body-cont .gen-list-weight{min-width: 160px;}
+.modal-body-cont .gen-list-weight > select,
+.modal-body-cont .gen-list-weight > input{width: auto; max-width: 90px;}
+.modal-body h3{word-break: break-word;}

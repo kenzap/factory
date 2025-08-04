@@ -17,7 +17,7 @@ export class ProductPriceVariations {
 
         this.state.modal = document.querySelector(".modal");
         this.state.modalCont = new bootstrap.Modal(this.state.modal);
-        this.state.modal.querySelector(".modal-dialog").classList.add('modal-lg');
+        this.state.modal.querySelector(".modal-dialog").classList.add('modal-xl');
         this.state.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-primary btn-save-variations d-none">${__html('Save')}</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${__html('Close')}</button>
@@ -104,7 +104,7 @@ export class ProductPriceVariations {
                     <div class="table-responsive">
                         <table class="price-table order-form mb-3">
                             <theader>
-                                <tr><th><div class="me-1 me-sm-3">${__html('Site')}</div></th><th class="qty"><div class="me-1 me-sm-3">${__html('Code')}</div></th><th><div class="me-1 me-sm-3">${__html('Parent')}</div></th><th><div class="me-1 me-sm-3">${__html('Title')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Price')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Unit')}</div></th><th></th></tr>
+                                <tr><th><div class="me-1 me-sm-3">${__html('Portal')}</div></th><th class="qty"><div class="me-1 me-sm-3">${__html('Code')}</div></th><th><div class="me-1 me-sm-3">${__html('P1')}</div></th><th><div class="me-1 me-sm-3">${__html('P2')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Price')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Stock')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Unit')}</div></th><th></th></tr>
                                 <tr class="new-item-row">
                                     <td>
         
@@ -130,6 +130,11 @@ export class ProductPriceVariations {
                                     <td class="price">
                                         <div class="me-1 me-sm-3 mt-2">
                                             <input type="text" value="" autocomplete="off" class="form-control text-right price-price" style="max-width:80px;">
+                                        </div>
+                                    </td>
+                                    <td class="stock">
+                                        <div class="me-1 me-sm-3 mt-2">
+                                            <input type="text" value="" autocomplete="off" class="form-control text-right price-stock" style="max-width:80px;">
                                         </div>
                                     </td>
                                     <td class="price">
@@ -171,11 +176,12 @@ export class ProductPriceVariations {
 
         let obj = {}
 
-        obj.id = document.querySelector('.price-id').value; // document.querySelector('.price-id').value = '';
+        obj.id = document.querySelector('.price-id').value;
         obj.title = document.querySelector('.price-title').value.trim(); document.querySelector('.price-title').value = '';
-        obj.parent = document.querySelector('.price-parent').value.trim(); // document.querySelector('.price-parent').value = '';
-        obj.price = document.querySelector('.price-price').value.trim(); // document.querySelector('.price-price').value = '';
-        obj.unit = document.querySelector('.price-unit').value.trim(); // document.querySelector('.price-unit').value = '';
+        obj.parent = document.querySelector('.price-parent').value.trim();
+        obj.price = document.querySelector('.price-price').value.trim();
+        obj.stock = document.querySelector('.price-stock').value.trim();
+        obj.unit = document.querySelector('.price-unit').value.trim();
         obj.public = true;
 
         if (obj.title.length < 1 || obj.price.length < 1) return false;
@@ -201,6 +207,7 @@ export class ProductPriceVariations {
 
         // only nums for price
         onlyNumbers(".price-price", [8, 46]);
+        onlyNumbers(".price-stock", [8, 46]);
 
         // update price
         onChange('.price-price', e => { self.updatePrice(e); });
@@ -276,6 +283,23 @@ export class ProductPriceVariations {
         document.querySelector('#price').value = JSON.stringify(prices);
     }
 
+    updateStock(e) {
+
+        e.preventDefault();
+
+        let hash = (e.currentTarget.parentElement.parentElement.parentElement.dataset.hash);
+
+        log(hash);
+
+        if (!hash) return;
+
+        let prices = JSON.parse(document.querySelector('#price').value);
+
+        prices.forEach((obj, i) => { if (escape(obj.id + obj.title + obj.parent) == hash) { prices[i].stock = parseInt(e.currentTarget.value); } });
+
+        document.querySelector('#price').value = JSON.stringify(prices);
+    }
+
     publicPrice(e) {
 
         // let i = e.currentTarget.dataset.i;
@@ -306,6 +330,9 @@ export class ProductPriceVariations {
 
         // update price
         onKeyUp('.price-price', e => { self.updatePrice(e); });
+
+        // update price
+        onKeyUp('.price-stock', e => { self.updateStock(e); });
 
         // update unit
         onChange('.price-unit', e => { self.updateUnit(e); });
@@ -390,6 +417,11 @@ export class ProductPriceVariations {
                     <div class="me-1 me-sm-3 my-1" >
                         <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-price" style="max-width:80px;" data-i="${i}" value="${obj.price}">
                         <span class="d-none"> ${priceFormat(this, obj.price)} </span>
+                    </div>
+                </td>
+                <td class="price">
+                    <div class="me-1 me-sm-3 my-1" >
+                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-stock" style="max-width:80px;" data-i="${i}" value="${obj.stock ? obj.stock : 0}">
                     </div>
                 </td>
                 <td class="price">

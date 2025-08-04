@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
+import { updateProductStock } from '../_/helpers/product.js';
 
 /**
  * execOrderItemAction
@@ -42,7 +43,7 @@ async function execOrderItemAction(actions) {
             }
 
             // validate origin, m: manufacturing, w: warehouse, c: canceled
-            if (!['m', 'w', 'c'].includes(actions.inventory.origin)) {
+            if (!['m', 'w', 'c', 'cm', 'cw'].includes(actions.inventory.origin)) {
                 return { success: false, error: 'invalid inventory origin' };
             }
 
@@ -86,6 +87,24 @@ async function execOrderItemAction(actions) {
                 items[i].inventory = {};
             }
 
+            // get previous inventory data
+            if (items[i].inventory.amount > 0) {
+
+                // revert stock amount
+                await updateProductStock(client, { _id: actions.inventory.item_id, amount: -1 * items[i].inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
+
+                console.log('Previous inventory data:', items[i].inventory.amount);
+            }
+
+            if (inventory.amount > 0) {
+
+                // write off stock
+                await updateProductStock(client, { _id: actions.inventory.item_id, amount: inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
+
+                console.log('Current inventory data:', inventory.amount);
+            }
+
+            // let origin_prev = items[i].inventory.origin;
             items[i].inventory.origin = inventory.origin;
             items[i].inventory.amount = inventory.amount;
             items[i].inventory.mnf_date = inventory.mnf_date;
@@ -112,6 +131,12 @@ async function execOrderItemAction(actions) {
 
             const updateResult = await client.query(updateQuery, updateParams);
             response = updateResult.rows[0] || {};
+
+            // write off stock
+            // if (actions.inventory.origin === 'w') await updateProductStock(client, { _id: actions.inventory.item_id, amount: actions.inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
+
+            // cancel write off stock
+            // if (actions.inventory.origin === 'cw') await updateProductStock(client, { _id: actions.inventory.item_id, amount: -1 * actions.inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
         }
 
         if (Array.isArray(actions.issue)) {
@@ -188,8 +213,8 @@ function execOrderItemActionApi(app) {
 
     app.post('/api/exec-order-item-action/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/exec-order-item-action/', _req.body);
-        console.log('/api/exec-order-item-action/', _req.user);
+        // console.log('/api/exec-order-item-action/', _req.body);
+        // console.log('/api/exec-order-item-action/', _req.user);
 
         const data = _req.body;
         data.user_id = _req.user.id;
