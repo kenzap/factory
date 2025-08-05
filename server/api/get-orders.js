@@ -1,49 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
 
-// async function getSettings() {
-
-//     const client = getDbConnection();
-
-//     let settings = {};
-
-//     // settings query
-//     const query = `
-//         SELECT js->'data'->>'currency' as currency, 
-//                 js->'data'->>'currency_symb' as currency_symb, 
-//                 js->'data'->>'currency_symb_loc' as currency_symb_loc, 
-//                 js->'data'->>'tax_calc' as tax_calc, 
-//                 js->'data'->>'tax_auto_rate' as tax_auto_rate, 
-//                 js->'data'->>'tax_rate' as tax_rate, 
-//                 js->'data'->>'tax_display' as tax_display 
-//         FROM data 
-//         WHERE ref = $1 AND sid = $2 
-//         LIMIT 1
-//     `;
-
-//     try {
-
-//         await client.connect();
-
-//         const result = await client.query(query, ['ecommerce-settings', sid]);
-//         if (result.rows.length > 0) {
-//             const row = result.rows[0];
-//             settings = {
-//                 currency: row.currency,
-//                 currency_symb: row.currency_symb,
-//                 currency_symb_loc: row.currency_symb_loc,
-//                 tax_auto_rate: row.tax_auto_rate,
-//                 tax_rate: row.tax_rate,
-//                 tax_display: row.tax_display
-//             };
-//         }
-//     } finally {
-//         await client.end();
-//     }
-
-//     return settings;
-// }
-
 /**
  * Kenzap Factory Get Products
  *

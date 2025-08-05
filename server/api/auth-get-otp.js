@@ -31,6 +31,10 @@ function getOtpApi(app) {
 
             // You'll need to implement getRequestCount and incrementRequestCount
             // These could use Redis, database, or in-memory storage
+            // console.log(`Checking rate limit for ${email}...`);
+            // console.log(`Redis url: ${process.env.REDIS_URL}`);
+
+            // process.env.REDIS_URL = "redis://local_redis:6379"; // Ensure this is set correctly in your environment
             const requestCount = await getRequestCount(rateLimitKey);
 
             if (requestCount >= maxRequests) {

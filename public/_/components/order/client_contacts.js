@@ -12,6 +12,8 @@ export class ClientContacts {
 
         this.client = client;
 
+        this.client.contacts = this.client.contacts || [];
+
         this.init();
     }
 

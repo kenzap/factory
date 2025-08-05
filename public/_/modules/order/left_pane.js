@@ -2,6 +2,7 @@ import { saveOrder } from "../../api/save_order.js";
 import { ClientAddressSearch } from "../../components/order/client_address_search.js";
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
+import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, onClick, priceFormat, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotals } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
@@ -166,6 +167,22 @@ export class LeftPane {
                 window.open(whatsappUrl, '_blank');
             } else {
                 toast(__html('Please enter a valid phone number'), 'warning');
+            }
+        });
+
+        // Document type buttons
+        onClick('.document-btn', (event) => {
+
+            const type = event.target.dataset.type;
+
+            if (!type) return;
+
+            switch (type) {
+                case 'waybill':
+                    new PreviewDocument(type, this.order);
+                    break;
+                case 'invoice':
+                    break;
             }
         });
 

@@ -24,6 +24,30 @@ services:
       timeout: 10s
       retries: 5
 
+  node:
+    build:
+      context: .
+      dockerfile: Dockerfile-node
+    container_name: local_node
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server:/app/server
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
+      - node_modules:/app/node_modules
+    networks:
+      - postgres_network
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+
   redis:
     image: redis:7-alpine
     container_name: local_redis
@@ -44,14 +68,8 @@ services:
     image: adminer:latest
     container_name: adminer
     restart: unless-stopped
-    environment:
-      PGADMIN_DEFAULT_EMAIL: admin@example.com
-      PGADMIN_DEFAULT_PASSWORD: admin123
-      PGADMIN_CONFIG_SERVER_MODE: 'False'
     ports:
       - "8080:8080"
-    # volumes:
-    #   - pgadmin_data:/var/lib/pgadmin
     networks:
       - postgres_network
     depends_on:
@@ -63,6 +81,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  node_modules:
     driver: local
 
 networks:

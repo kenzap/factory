@@ -26,6 +26,7 @@ async function getOrderDetails(id) {
             js->'data'->'draft' as "draft",
             js->'data'->'email' as "email",
             js->'data'->'status' as "status",
+            js->'data'->'address' as "address",
             js->'data'->'name' as "name",
             js->'data'->'legal_name' as "legal_name",
             js->'data'->'person' as "person",

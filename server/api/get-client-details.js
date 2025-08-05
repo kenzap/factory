@@ -45,7 +45,6 @@ async function getClientDetails(id) {
 
         await client.connect();
 
-        // const result = await client.query(query, ['ecommerce-order', sid]);
         const result = await client.query(query, ['3dfactory-entity', sid, id]);
 
         if (result.rows) data = result.rows[0] || {};

@@ -270,7 +270,7 @@ export const getHtml = () => {
                           <div class="form-group row mb-3 mt-1">
                             <label class="col-sm-3 col-form-label">${__html('Waybill ID')}</label>
                             <div class="col-sm-9">
-                                <input id="last_waybill_id" type="text" class="form-control inp" name="last_waybill_id" data-type="text">
+                                <input id="waybill_last_number" type="text" class="form-control inp" name="waybill_last_number" data-type="text">
                                 <p class="form-text">${__html('Define next new waybill ID number.')}</p>
                             </div>
                           </div>
@@ -449,7 +449,20 @@ export const getHtml = () => {
                         </div>
                       </div>
                     </div>
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
+                          <label class="col-sm-3 col-form-label">${__html('Waybill template.')}</label>
+                          <div class="col-sm-9">
+                            <div id="waybill_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                            <textarea id="waybill_document_template-" type="text" class="form-control d-none" name="waybill_document_template" data-type="textarea" rows="20"></textarea>
+                            <p class="form-text">${__html('Waybill document template with dynamic fields.')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
+
                   <div class="tab-pane fade" id="nav-payout" role="tabpanel" aria-labelledby="nav-payout-link">
                     <div class="row">
                       <div class="col-lg-6">

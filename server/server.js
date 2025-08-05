@@ -21,7 +21,17 @@ const JS_DIR = path.join(PUBLIC_DIR);
 // LiveReload setup
 const liveReloadServer = livereload.createServer();
 liveReloadServer.watch(PUBLIC_DIR);
-app.use(connectLivereload());
+const livereloadMiddleware = connectLivereload();
+
+function conditionalLivereload(req, res, next) {
+    // Skip injection for PDF route or based on some flag
+    if (req.path.startsWith('/document/') || req.path.startsWith('/api/')) {
+        return next();
+    }
+    return livereloadMiddleware(req, res, next);
+}
+
+app.use(conditionalLivereload);
 
 // Static files (scripts, styles, assets)
 app.use(express.static(PUBLIC_DIR));
@@ -37,6 +47,7 @@ app.use(express.static('public'));
 
 // Dynamic API route loading
 const API_DIR = path.join(__dirname, 'api');
+const DOCUMENT_DIR = path.join(__dirname, 'document');
 
 // Load API routes dynamically (synchronously)
 if (fs.existsSync(API_DIR)) {
@@ -49,10 +60,28 @@ if (fs.existsSync(API_DIR)) {
             const handler = module.default || module;
             if (typeof handler === 'function') {
                 handler(app);
-                console.log(`Loaded API routes from: ${file}`);
+                // console.log(`Loaded API routes from: ${file}`);
             }
         } catch (err) {
             console.error(`Error loading API route ${file}:`, err);
+        }
+    }));
+}
+
+// Load document routes dynamically
+if (fs.existsSync(DOCUMENT_DIR)) {
+    const documentFiles = fs.readdirSync(DOCUMENT_DIR).filter(file => file.endsWith('.js'));
+
+    await Promise.all(documentFiles.map(async (file) => {
+        try {
+            const module = await import(path.join(DOCUMENT_DIR, file));
+            const handler = module.default || module;
+            if (typeof handler === 'function') {
+                handler(app);
+                // console.log(`Loaded document routes from: ${file}`);
+            }
+        } catch (err) {
+            console.error(`Error loading document route ${file}:`, err);
         }
     }));
 }

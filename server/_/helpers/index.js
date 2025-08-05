@@ -5,6 +5,18 @@ const { Client } = pkg;
 export const sid = 1002170; // Default space ID
 export const locale = "lv"; // Default locale
 
+export function __html(key) {
+    // This function should return the HTML for the given key
+    // For now, it just returns the key itself
+    return key;
+}
+
+export function attr(key) {
+    // This function should return the HTML for the given key
+    // For now, it just returns the key itself
+    return key;
+}
+
 // logging
 export function log(...args) {
     console.log(`[${new Date().toISOString()}]`, ...args);
@@ -179,28 +191,28 @@ export function makeNumber(price) {
     return Math.round(price * 100) / 100;
 }
 
-export function priceFormat(state, price) {
+export function priceFormat(settings, price) {
     price = makeNumber(price);
     price = parseFloat(price).toFixed(2);
 
     // Handle Swedish currency conversion
     if (process.env.LANG === 'sv') {
-        state.settings.currency_symb = 'kr';
+        settings.currency_symb = 'kr';
         price = (parseFloat(price) * 12).toFixed(2);
     }
 
-    switch (state.settings.currency_symb_loc) {
+    switch (settings.currency_symb_loc) {
         case 'left':
-            price = state.settings.currency_symb + price;
+            price = settings.currency_symb + price;
             break;
         case 'right':
-            price = price + state.settings.currency_symb;
+            price = price + settings.currency_symb;
             break;
         case 'left_space':
-            price = state.settings.currency_symb + ' ' + price;
+            price = settings.currency_symb + ' ' + price;
             break;
         case 'right_space':
-            price = price + ' ' + state.settings.currency_symb;
+            price = price + ' ' + settings.currency_symb;
             break;
     }
 
