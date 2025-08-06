@@ -31,7 +31,7 @@ export class ClientContactSearch {
         document.querySelector('contact-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="contactPerson" placeholder="${__html('Contact person')}" autocomplete="nope" value="${this.order.contactPerson || ''}" >
+                    <input type="text" class="form-control form-control-sm d-none-" id="contactPerson" placeholder="${__html('Contact person')}" autocomplete="nope" value="${this.order.contactPerson || ''}" tabindex="4">
                 </div>
                 <div id="contactSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
@@ -112,14 +112,13 @@ export class ClientContactSearch {
             document.getElementById('contactEmail').value = contact.email;
 
             suggestions.classList.add('d-none');
+        });
 
-            // if (e.target.classList.contains('autocomplete-item')) {
-            //     clientInput.value = e.target.textContent;
-            //     clientInput.dataset._id = e.target.dataset._id;
-            //     suggestions.classList.add('d-none');
-            //     // console.log('emit:client:search:refresh:4');
-            //     // bus.emit('client:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
-            // }
+        clientInput.addEventListener('blur', (e) => {
+
+            setTimeout(() => {
+                suggestions.classList.add('d-none');
+            }, 500);
         });
 
         // Hide suggestions when clicking outside

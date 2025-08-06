@@ -21,7 +21,7 @@ class OrderEdit {
 
         // initialize order and settings
         this.settings = {};
-        this.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : null, eid: null };
+        this.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : "", eid: null };
 
         // connect to backend
         this.init();
@@ -35,7 +35,7 @@ class OrderEdit {
         new Modal();
 
         getOrder(this.order.id, (response) => {
-
+            console.log(response);
             // show UI loader
             if (!response.success) return;
 
@@ -45,12 +45,14 @@ class OrderEdit {
             this.settings = response.settings;
             this.order = response.order;
 
+            if (!this.order.id) this.order.id = "";
+
             // session
             new Session();
             new LeftPane(this.settings, this.order);
             new ClientPane(this.order);
 
-            console.log(response);
+
         });
     }
 

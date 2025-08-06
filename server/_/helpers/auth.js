@@ -159,7 +159,7 @@ export const getUserByEmail = async (email) => {
             SELECT  _id, 
                     js->'data'->>'fname' as fname,
                     js->'data'->>'lname' as lname,
-                    js->'data'->>'roles' as roles,
+                    js->'data'->>'rights' as rights,
                     js->'data'->>'avatar' as avatar,
                     js->'data'->>'blocks' as blocks
             FROM data 
@@ -174,7 +174,7 @@ export const getUserByEmail = async (email) => {
                 id: row._id,
                 fname: row.fname,
                 lname: row.lname,
-                roles: row.roles ? JSON.parse(row.roles) : [],
+                rights: row.rights ? JSON.parse(row.rights) : [],
                 avatar: row.avatar ? JSON.parse(row.avatar) : null
             };
         }
@@ -201,7 +201,7 @@ export const getUserById = async (id) => {
             SELECT  _id, 
                     js->'data'->>'fname' as fname,
                     js->'data'->>'lname' as lname,
-                    js->'data'->>'roles' as roles,
+                    js->'data'->>'rights' as rights,
                     js->'data'->>'avatar' as avatar,
                     js->'data'->>'blocks' as blocks
             FROM data 
@@ -217,7 +217,7 @@ export const getUserById = async (id) => {
                 email: row.js?.data?.email || null,
                 fname: row.fname,
                 lname: row.lname,
-                roles: row.roles ? JSON.parse(row.roles) : [],
+                rights: row.rights ? JSON.parse(row.rights) : [],
                 avatar: row.avatar ? JSON.parse(row.avatar) : null
             };
         }
@@ -312,29 +312,6 @@ const authLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-// In-memory user store (replace with database in production)
-const users = [
-    {
-        id: 1,
-        username: 'admin',
-        email: 'admin@example.com',
-        password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewgXOmZJOTgEgX1u', // password123
-        role: 'admin',
-        isActive: true,
-        lastLogin: null,
-        refreshTokens: []
-    },
-    {
-        id: 2,
-        username: 'user',
-        email: 'user@example.com',
-        password: '$2a$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewgXOmZJOTgEgX1u', // password123
-        role: 'user',
-        isActive: true,
-        lastLogin: null,
-        refreshTokens: []
-    }
-];
 
 // Generate tokens
 export const generateTokens = (user) => {
@@ -342,6 +319,7 @@ export const generateTokens = (user) => {
         {
             id: user.id,
             fname: user.fname,
+            lname: user.lname,
             email: user.email
         },
         JWT_SECRET,

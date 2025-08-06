@@ -1,5 +1,5 @@
 import { deleteOrderWaybill } from "../../api/delete_order_waybill.js";
-import { sendEmailWaybill } from "../../api/send_email_waybill.js";
+import { sendEmailDocument } from "../../api/send_email_document.js";
 import { API, H, __html, parseApiError, toast } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 
@@ -7,6 +7,7 @@ export class PreviewDocument {
 
     constructor(type, order) {
 
+        this.type = type;
         this.order = order;
 
         this.init();
@@ -15,7 +16,7 @@ export class PreviewDocument {
     init = () => {
 
         // do API query
-        fetch(API() + '/document/waybill/?id=' + this.order.id, {
+        fetch(API() + '/document/' + this.type + '/?id=' + this.order.id, {
             method: 'get',
             headers: H(),
         })
@@ -52,7 +53,7 @@ export class PreviewDocument {
             <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
                 <i class="bi bi-envelope me-1"></i> ${__html('Send Email')}
             </button>
-            <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal">
+            <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
                 <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}
             </button>
             <button type="button" class="btn btn-outline-dark btn-print-pdf d-none btn-modal">
@@ -104,13 +105,13 @@ export class PreviewDocument {
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
 
-        sendEmailWaybill({ id: this.order.id, email: this.order.email }, (response) => {
+        sendEmailDocument({ id: this.order.id, type: this.type, email: this.order.email }, (response) => {
 
             if (response.success) {
 
                 // bus.emit('order:updated', this.order.id);
                 this.modal_cont.hide();
-                let msg = __html('Waybill sent to %1$', this.order.email);
+                let msg = __html('Document sent to %1$', this.order.email);
                 toast(msg);
             }
         });

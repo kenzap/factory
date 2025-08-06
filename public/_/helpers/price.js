@@ -1,4 +1,4 @@
-import { makeNumber } from "./global.js";
+import { makeNumber, priceFormat } from "./global.js";
 
 /**
  * Calculates pricing information based on item configuration and parameters
@@ -93,6 +93,154 @@ export const getPrice = (settings, item) => {
 }
 
 /**
+ * Formats order totals, based on getWaybillTotals method.
+ * 
+ * @param {Object} settings - Application settings containing currency information
+ * @param {number|string} price - Price value to format
+ * @returns {string} Formatted price string with currency symbol
+ */
+export const getTotalsHTML = (settings, order) => {
+
+    if (!order || !order.items) return '';
+
+    // Calculate totals based on VAT status
+    let item_total_0 = 0; // Items without VAT
+    let item_total_21 = 0; // Items with VAT
+    let item_grand_total = 0; // Grand total with and without VAT
+    let html = '';
+
+    let vat_text = 'PVN ' + settings.tax_percent + '%:';
+
+    settings.tax_percent = parseFloat(settings.tax_percent);
+
+    const tax_coef = (settings.tax_percent / 100) + 1;
+
+    console.log('order.items', order.items);
+    // Calculate totals for different VAT categories
+    // todo: standardize with peppol document format scheme 
+    order.items.forEach(item => {
+
+        if (typeof item.tax_id === "undefined") return;
+
+        // console.log('item.tax_id', item.total);
+
+        if (item.tax_id.length > 2 && order.vat_status == "1") {
+
+            let pvn_row = "ANM";
+            let xml_tax_category = "AE";
+
+            if (item.tax_id !== "0000") {
+                // PVN_metalapstrade = true; // Note: these variables need to be defined in scope
+            }
+
+            if (item.tax_id === "0000") {
+                // PVN_buvnieciba = true; // Note: these variables need to be defined in scope
+            }
+
+            if (!isNaN(item.tax_id) && item.tax_id !== "0000") {
+                vat_text = "PVN (143.4. pants): ";
+            }
+
+            if (!isNaN(item.tax_id) && item.tax_id === "0000") {
+                vat_text = "PVN (142 pants): ";
+            }
+
+            if (item.tax_id.includes("MET")) {
+                vat_text = "PVN (143 pants): ";
+            }
+
+            if (item.tax_id.includes("DAT")) {
+                vat_text = "PVN (143.1 pants): ";
+            }
+
+
+
+            // No VAT (reverse charge)
+            item_total_0 += makeNumber(item.total);
+        } else {
+
+            // With VAT
+            item_total_21 += makeNumber(item.total);
+        }
+    });
+
+    if (item_total_0 === 0 && item_total_21 > 0) {
+        // Only VAT items
+        item_grand_total = Math.round((item_total_21 * tax_coef) * 100) / 100;
+
+        html = `
+                <table class="totals-table">
+                    <tr>
+                        <td class="text-start"><strong>KOPĀ:</strong></td>
+                        <td class="text-end">${priceFormat(settings, item_total_21)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start"><strong>${vat_text}</strong></td>
+                        <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * settings.tax_percent) / 100)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start"><strong>KOPĀ APMAKSAI:</strong></td>
+                        <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
+                    </tr>
+                </table>`;
+
+    } else if (item_total_0 > 0 && item_total_21 === 0) {
+        // Only non-VAT items (reverse charge)
+        item_grand_total = Math.round(item_total_0 * 100) / 100;
+
+        html = `
+                <table class="totals-table">
+                    <tr>
+                        <td class="text-start"><strong>KOPĀ:</strong></td>
+                        <td class="text-end">${priceFormat(settings, item_total_0)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start"><strong>${vat_text}</strong></td>
+                        <td class="text-end">${priceFormat(settings, 0)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start"><strong>KOPĀ APMAKSAI:</strong></td>
+                        <td class="text-end">${priceFormat(settings, item_total_0)}</td>
+                    </tr>
+                </table>`;
+
+    } else if (item_total_0 > 0 && item_total_21 > 0) {
+
+        // Mixed VAT and non-VAT items
+        item_grand_total = Math.round((item_total_0 + (item_total_21 * tax_coef)) * 100) / 100;
+
+        html = `
+                <table class="totals-table">
+                    <tr>
+                        <td class="text-start me-2"><strong>KOPĀ:</strong> </td>
+                        <td class="text-end">${priceFormat(settings, item_total_0)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>KOPĀ (PVN ${settings.tax_percent}%):</strong> </td>
+                        <td class="text-end">${priceFormat(settings, item_total_21)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>${vat_text}</strong> </td>
+                        <td class="text-end">${priceFormat(settings, 0)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>PVN ${settings.tax_percent}%:</strong> </td>
+                        <td class="text-end">${priceFormat(settings, Math.round((item_total_21 * (tax_coef - 1)) * 100) / 100)}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>KOPĀ APMAKSAI:</strong> </td>
+                        <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
+                    </tr>
+                </table>`;
+    }
+
+    let price = { tax_calc: settings.tax_calc, tax_percent: settings.tax_percent, tax_total: (((item_total_21 * (tax_coef - 1)) * 100) / 100), total: item_total_21 + item_total_0, grand_total: item_grand_total };
+
+    return { html, price };
+
+}
+
+/**
  * Calculates order totals including tax information based on VAT status
  * @param {Object} settings - Configuration settings containing tax information
  * @param {Object} order - Order object containing VAT status and other order details
@@ -110,23 +258,25 @@ export const getTotals = (settings, order) => {
 
     order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
 
-    // let obj = { vat_status: "0", price: { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 } };
-
     let reversed_tax = false;
+
+    if (!order.items) return;
 
     order.items.forEach(obj => {
 
         if (!obj.price || !obj.qty || !obj.tax_id) return;
 
+        // if (order.vat_status == "0") obj.tax_id = "";
+
         obj.total = calculateItemTotal(obj.qty, obj.price, obj.adj, obj.discount);
 
-        if (obj.tax_id.length == 4) reversed_tax = true;
+        // if (obj.tax_id.length > 2) reversed_tax = true;
 
         order.price.total += obj.total;
 
         // reversed tax
-        order.price.tax_company_total += obj.tax_id.length == 4 ? 0 : obj.total * (parseFloat(settings.tax_percent) / 100);
-        order.price.tax_individual_total += obj.total * (parseFloat(settings.tax_percent) / 100);
+        // order.price.tax_company_total += obj.tax_id.length > 2 ? 0 : obj.total * (parseFloat(settings.tax_percent) / 100);
+        // order.price.tax_individual_total += obj.total * (parseFloat(settings.tax_percent) / 100);
 
         // console.log('discount ' +  getDiscount(obj.discounts));
         // console.log(obj.tax_id + " " + (obj.tax_id.length == 4 ? 0 : total * 0.21));
@@ -148,7 +298,7 @@ export const getTotals = (settings, order) => {
         // non VAT payer  
     } else {
 
-        order.price.tax_calc = true;
+        order.price.tax_calc = false;
         order.price.tax_percent = parseFloat(settings.tax_percent);
         order.price.tax_total = order.price.total * parseFloat(settings.tax_percent) / 100;
         order.price.total = order.price.total;
@@ -177,7 +327,7 @@ export const getTotals = (settings, order) => {
  */
 export const calculateItemTotal = (qty, price, adj, discount) => {
 
-    console.log('calculateItemTotal', qty, price, adj, discount);
+    // console.log('calculateItemTotal', qty, price, adj, discount);
 
     const basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
     const adjustedPrice = basePrice + (adj || 0);
@@ -191,10 +341,10 @@ export const calculateItemTotal = (qty, price, adj, discount) => {
     const discountAmount = adjustedPrice * (discountValue / 100);
     const finalPrice = adjustedPrice - discountAmount;
 
-    console.log('Final price calculation:', {
-        basePrice,
-        finalPrice
-    });
+    // console.log('Final price calculation:', {
+    //     basePrice,
+    //     finalPrice
+    // });
     return parseFloat(Math.max(0, finalPrice).toFixed(2));
 }
 

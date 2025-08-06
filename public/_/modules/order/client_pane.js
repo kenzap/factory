@@ -298,7 +298,7 @@ export class ClientPane {
             this.order.vat_status = clientData.vat_status;
             this.order.entity = clientData.entity;
 
-            bus.emit('client:updated', { _id: this.client._id });
+            bus.emit('client:updated', clientData);
         });
 
         // console.log('Saving client data...', clientData);

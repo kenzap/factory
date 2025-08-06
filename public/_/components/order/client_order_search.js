@@ -31,7 +31,7 @@ export class ClientOrderSearch {
         document.querySelector('client-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order.name || ''}" data-_id="${this.order.eid || ''}">
+                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order.name || ''}" data-_id="${this.order.eid || ''}" tabindex="1" >
                     <button class="btn btn-outline-primary edit-client-btn po" type="button" id="editClientBtn" >
                         <i class="bi bi-arrow-right"></i>
                     </button>

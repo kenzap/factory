@@ -150,6 +150,7 @@ export const getSettings = async () => {
                 currency: row.currency,
                 currency_symb: row.currency_symb,
                 currency_symb_loc: row.currency_symb_loc,
+                tax_calc: row.tax_calc,
                 tax_auto_rate: row.tax_auto_rate,
                 tax_rate: row.tax_rate,
                 tax_percent: row.tax_percent,

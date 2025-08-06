@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
-import { authenticateToken } from '../_/helpers/auth.js';
-import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillItemsTable, getWaybillNextNumber, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
+// import { authenticateToken } from '../_/helpers/auth.js';
+import { getDocumentData, getInvoiceNextNumber, getWaybillItemsTable, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
 import { send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
 
@@ -12,7 +12,7 @@ import { __html, getDbConnection, getLocale, log, sid } from '../_/helpers/index
  * @param {string} lang - Language code for product titles and categories
  * @returns {Promise<string>} - XML string of products
 */
-async function viewWaybill(_id, user, lang) {
+async function viewInvoice(_id, user, lang) {
 
     const db = getDbConnection();
     await db.connect();
@@ -20,27 +20,21 @@ async function viewWaybill(_id, user, lang) {
     try {
         const locale = await getLocale(db, sid, lang);
 
-        let data = await getDocumentData(db, "waybill", _id, user, locale);
+        let data = await getDocumentData(db, "invoice", _id, user, locale);
 
         data.lang = lang;
 
-        data.user = user;
+        let invoice = data.settings?.document_template || "";
 
-        let waybill = data.settings?.document_template || "";
+        data.order.invoice = await getInvoiceNextNumber(db, data.order, data.settings, user);
 
-        data.order.waybill = await getWaybillNextNumber(db, data.order, data.settings, user);
+        data.invoice_items_table = getWaybillItemsTable(data.settings, data.order);
 
-        data.manufacturing_date = getManufacturingDate(data.order);
+        data.invoice_totals = getWaybillTotals(data.settings, data.order);
 
-        data.issuing_date = getIssuingDate(data.order);
+        console.log(`Invoice next number:`, data.order.invoice);
 
-        data.waybill_items_table = getWaybillItemsTable(data.settings, data.order);
-
-        data.waybill_totals = getWaybillTotals(data.settings, data.order);
-
-        console.log(`Waybill next number:`, data.order.waybill);
-
-        return parseDocument(waybill, data);
+        return parseDocument(invoice, data);
 
     } finally {
         await db.end();
@@ -48,10 +42,10 @@ async function viewWaybill(_id, user, lang) {
 }
 
 // API route for product export
-function viewWaybillApi(app) {
+function viewInvoiceApi(app) {
 
-    app.get('/document/waybill/', authenticateToken, async (req, res) => {
-        // app.get('/document/waybill/', async (req, res) => {
+    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
+    app.get('/document/invoice/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
@@ -59,10 +53,10 @@ function viewWaybillApi(app) {
                 return res.status(400).json({ error: 'Waybill ID is required' });
             }
 
-            console.log('/document/waybill/', req.user);
+            console.log('/document/invoice/', req.user);
 
             // Generate HTML for waybill
-            const html = await viewWaybill(id, req.user, lang);
+            const html = await viewInvoice(id, req.user, lang);
 
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
@@ -85,7 +79,7 @@ function viewWaybillApi(app) {
                 await fs.promises.writeFile(screenshotPath, screenshotBuffer);
             }
 
-            const doc_path = '/app/server/document/pdf/waybill-' + req.query.id + '.pdf';
+            const doc_path = '/app/server/document/pdf/invoice-' + req.query.id + '.pdf';
 
             await page.emulateMedia({ media: 'screen' });
             const pdfBuffer = await page.pdf({
@@ -102,13 +96,13 @@ function viewWaybillApi(app) {
             if (req.query.email) {
 
                 const body = `
-                    <h1>Waybill for order #${req.query.id}</h1>
+                    <h1>Invoice for order #${req.query.id}</h1>
                     <p>Attached is the waybill document for your order.</p>
                 `;
 
-                // req.query.email = "pavel..";
+                // req.query.email = "pavel";
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Waybill for order #%1$", req.query.id), body, [doc_path]);
+                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Invoice for order #%1$", req.query.id), body, [doc_path]);
                 res.send({ success: true, message: 'email sent' });
 
                 // Clean up the PDF file after sending email
@@ -141,4 +135,4 @@ function viewWaybillApi(app) {
     });
 }
 
-export default viewWaybillApi;
+export default viewInvoiceApi;

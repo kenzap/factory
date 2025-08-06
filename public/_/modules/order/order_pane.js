@@ -43,7 +43,6 @@ export class OrderPane {
                 <button id="add-order-row" class="btn btn-primary btn-sm btn-add-row">
                     <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
                 </button>
-
                 <div id="order-table"></div>
             </div>
         `;
@@ -255,9 +254,10 @@ export class OrderPane {
             const newValue = cell.getValue();
             const rowData = row.getData();
 
-            // console.log(`Cell ${field} changed to: ${newValue}`, rowData);
-
-            // this.refreshRowTotals(cell);
+            // Check if this is the last row and automatically add a new one
+            if (this.table.getRows().length === 0) {
+                this.addRow();
+            }
 
             // You can perform specific actions based on the field or value
             this.updateCalculations(cell);

@@ -68,7 +68,7 @@ body {
     padding: 0.25rem 0.5rem;
 }
 
-.summary-item {
+/* .summary-item {
     display: flex;
     justify-content: space-between;
     padding: 2px 0;
@@ -80,6 +80,16 @@ body {
     border-top: 1px solid #dee2e6;
     margin-top: 5px;
     padding-top: 5px;
+} */
+
+.totals-table {
+    display: table;
+    width: 100%;
+}
+
+.totals-table strong{
+    color: #495057;
+    /* font-weight: 400; */
 }
 
 /* .whatsapp-btn {

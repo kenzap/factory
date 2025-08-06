@@ -3,8 +3,8 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, onClick, priceFormat, toast, toLocalDateTime } from "../../helpers/global.js";
-import { getTotals } from "../../helpers/price.js";
+import { __attr, __html, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { getTotalsHTML } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 
@@ -42,7 +42,7 @@ export class LeftPane {
                         </div>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}">
+                        <input type="text" class="form-control form-control-sm" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}" tabindex="0">
                     </div>
                     <div class="mb-2">
                         <client-order-search></client-order-search>
@@ -51,7 +51,7 @@ export class LeftPane {
                         <client-address-search></client-address-search>
                     </div>
                     <div class="mb-2">
-                        <textarea class="form-control form-control-sm" id="notes" rows="2" autocomplete="nope" placeholder="${__attr('Order notes...')}">${this.order.notes || ""}</textarea>
+                        <textarea class="form-control form-control-sm" id="notes" rows="2" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
                     </div>
                 </div>
                 
@@ -60,13 +60,13 @@ export class LeftPane {
                     <h6><i class="bi bi-telephone me-2"></i>${__html('Contact')}</h6>
                     <contact-order-search></contact-order-search>
                     <div class="input-group input-group-sm mb-2">
-                        <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}">
+                        <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}" tabindex="5">
                         <button class="btn btn-outline-success whatsapp-btn po" type="button" id="whatsappBtn">
                             <i class="bi bi-whatsapp"></i>
                         </button>
                     </div>
                     <div class="mb-2">
-                        <input id="contactEmail" type="text" class="form-control form-control-sm" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}">
+                        <input id="contactEmail" type="text" class="form-control form-control-sm" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}" tabindex="6">
                     </div>
                 </div>
                 
@@ -74,7 +74,7 @@ export class LeftPane {
                 <div class="form-section">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
                     <div class="input-group input-group-sm mb-2">
-                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}">
+                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}" tabindex="7">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -86,7 +86,7 @@ export class LeftPane {
                     <h6><i class="bi bi-file-earmark-text me-2"></i>${__html('Documents')}</h6>
                     <div class="btn-group-toggle d-flex flex-wrap gap-1" data-bs-toggle="buttons">
                         <button class="btn ${this.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-sm document-btn" data-type="waybill">${this.order?.waybill?.number ? this.order?.waybill?.number : __html('Waybill')}</button>
-                        <button class="btn btn-outline-primary btn-sm document-btn" data-type="invoice">${__html('Invoice')}</button>
+                        <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'}  btn-sm document-btn" data-type="invoice">${this.order?.invoice?.number ? __html('INV %1$', this.order?.invoice?.number) : __html('Invoice')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="invoiceEU">${__html('Invoice EU')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="receipt">${__html('Receipt')}</button>
                         <button class="btn btn-outline-secondary btn-sm document-btn" data-type="draft">${__html('Draft')}</button>
@@ -122,6 +122,11 @@ export class LeftPane {
 
         // Add event listeners or any additional initialization here
         this.listeners();
+
+        // Focus on order ID input
+        const orderIdInput = document.getElementById('orderId');
+        orderIdInput.focus();
+        orderIdInput.setSelectionRange(orderIdInput.value.length, orderIdInput.value.length);
     }
 
     listeners = () => {
@@ -142,15 +147,15 @@ export class LeftPane {
         });
 
         // Add event listener for order ID input
-        document.getElementById('orderId').addEventListener('keypress', (event) => {
-            if (event.key === 'Enter') {
-                event.preventDefault();
+        // document.getElementById('orderId').addEventListener('keypress', (event) => {
+        //     if (event.key === 'Enter') {
+        //         event.preventDefault();
 
-                this.order.id = document.getElementById('orderId').value;
+        //         this.order.id = document.getElementById('orderId').value;
 
-                bus.emit('order:updated', this.order.id);
-            }
-        });
+        //         bus.emit('order:updated', this.order.id);
+        //     }
+        // });
 
         // WhatsApp button
         onClick('#whatsappBtn', () => {
@@ -185,8 +190,68 @@ export class LeftPane {
                     new PreviewDocument(type, this.order);
                     break;
                 case 'invoice':
+                    new PreviewDocument(type, this.order);
                     break;
             }
+        });
+
+        // Due date input focus handler
+        document.getElementById('due_date').addEventListener('focus', (event) => {
+            // Format the current date if empty
+
+            if (!event.target.value) {
+                this.formatDueDate();
+            }
+            // Trigger the browser's native date picker
+            event.target.showPicker();
+
+            // // Handle Enter key to move to next input in tab order
+            // event.target.addEventListener('keydown', (e) => {
+            //     if (e.key === 'Enter') {
+            //         e.preventDefault();
+
+            //         simulateClick('.order-table-btn');
+            //     }
+            // });
+        });
+
+        // Handle Enter key as Tab for all input and textarea fields
+        document.querySelectorAll('.left-pane input, .left-pane textarea').forEach(element => {
+            element.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+
+                    // console.log('Enter key pressed on:', this.order.id, element.value);
+                    // event.preventDefault();
+                    // return;
+
+                    if (element.id === 'orderId') if (element.value != this.order.id && element.value > 0) window.location.href = '/order-edit/?id=' + element.value; // bus.emit('order:updated', element.value);
+                    if (element.id === 'orderId') if (element.value != this.order.id && element.value == 0) window.location.href = '/order-edit/';
+                    if (element.id === 'due_date') { simulateClick(document.querySelector('.order-table-btn')); return; }
+
+                    event.preventDefault();
+
+                    console.log('Enter key pressed, moving to next input', element.value, this.order.id);
+
+                    // Find all focusable elements with tabindex consideration
+                    const focusableElements = Array.from(document.querySelectorAll('.left-pane input, .left-pane textarea'))
+                        .filter(el => el.tabIndex >= 0)
+                        .sort((a, b) => {
+                            const aIndex = a.tabIndex || 0;
+                            const bIndex = b.tabIndex || 0;
+                            return aIndex - bIndex;
+                        });
+
+                    const currentIndex = focusableElements.indexOf(event.target);
+
+                    // Move to next focusable element following tab order
+                    if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+
+                        // setTimeout(() => {
+                        focusableElements[currentIndex + 1].focus();
+                        // }, 10); // Use setTimeout to ensure the focus change happens after the current event loop
+                    }
+                }
+            });
         });
 
         // Refresh totals
@@ -196,12 +261,16 @@ export class LeftPane {
         });
 
         // Update order summary when client is updated
-        bus.on('client:updated', () => {
+        bus.on('client:updated', (client) => {
+
+            console.log('Client updated:', client);
+
+            this.order.vat_status = client.vat_status || '0';
 
             this.summary();
         });
 
-        // summary
+        // Summary
         this.summary();
     }
 
@@ -222,31 +291,40 @@ export class LeftPane {
 
     summary = () => {
 
+
         // Calculate totals based on the order items and settings
-        this.order.price = getTotals(this.settings, this.order);
+        // this.order.price = getTotals(this.settings, this.order);
 
         console.log('Order summary updated:', this.order.price);
 
-        const order = this.order;
+        // const order = this.order;
 
-        if (!order.price) {
-            order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
-        }
+        // if (!order.price) {
+        //     order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
+        // }
 
-        // Create the order summary HTML
-        document.querySelector('order-summary').innerHTML = /*html*/`
-            <div class="d-flex justify-content-between">
-                <span>${__html('Subtotal')}</span>
-                <span id="subtotal">${priceFormat(this.settings, order.price.total)}</span>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span>${this.settings.tax_display + " " + this.settings.tax_percent}%</span>
-                <span id="vat_rate">${priceFormat(this.settings, order.price.tax_total)}</span>
-            </div>
-            <div class="d-flex justify-content-between">
-                <span>${__html('Total')}</span>
-                <span id="totalAmount">${priceFormat(this.settings, order.price.grand_total)}</span>
-            </div>`;
+        let totals = getTotalsHTML(this.settings, this.order);
+
+        console.log('Order totals:', totals.price);
+
+        this.order.price = totals.price;
+
+        document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html}</div>`;
+
+        // // Create the order summary HTML
+        // document.querySelector('order-summary').innerHTML = /*html*/`
+        //     <div class="d-flex justify-content-between">
+        //         <span>${__html('Subtotal')}</span>
+        //         <span id="subtotal">${priceFormat(this.settings, order.price.total)}</span>
+        //     </div>
+        //     <div class="d-flex justify-content-between">
+        //         <span>${this.settings.tax_display + " " + this.settings.tax_percent}%</span>
+        //         <span id="vat_rate">${priceFormat(this.settings, order.price.tax_total)}</span>
+        //     </div>
+        //     <div class="d-flex justify-content-between">
+        //         <span>${__html('Total')}</span>
+        //         <span id="totalAmount">${priceFormat(this.settings, order.price.grand_total)}</span>
+        //     </div>`;
     }
 
     save = () => {

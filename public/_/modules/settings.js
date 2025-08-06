@@ -517,6 +517,30 @@ export const getHtml = () => {
                         </div>
                       </div>
                     </div>
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
+                          <label class="col-sm-3 col-form-label">${__html('Invoice template.')}</label>
+                          <div class="col-sm-9">
+                            <div id="invoice_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                            <textarea id="invoice_document_template-" type="text" class="form-control d-none" name="invoice_document_template" data-type="textarea" rows="20"></textarea>
+                            <p class="form-text">${__html('Invoice document template with dynamic fields.')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
+                          <label class="col-sm-3 col-form-label">${__html('Proforma template.')}</label>
+                          <div class="col-sm-9">
+                            <div id="proforma_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                            <textarea id="proforma_document_template-" type="text" class="form-control d-none" name="proforma_document_template" data-type="textarea" rows="20"></textarea>
+                            <p class="form-text">${__html('Invoice document template with dynamic fields.')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <div class="tab-pane fade" id="nav-payout" role="tabpanel" aria-labelledby="nav-payout-link">

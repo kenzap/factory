@@ -1,28 +1,28 @@
 
 import { __html, makeNumber, priceFormat, sid } from './index.js';
 
-export async function getDocumentData(client, _id, user, locale) {
+export async function getDocumentData(client, type, _id, user, locale) {
 
     let settings = {}, order = {}, entity = {};
 
     // Get settings
     const settingsQuery = `
-            SELECT js->'data'->>'currency' as currency, 
-                   js->'data'->>'currency_symb' as currency_symb, 
-                   js->'data'->>'currency_symb_loc' as currency_symb_loc, 
-                   js->'data'->>'tax_calc' as tax_calc, 
-                   js->'data'->>'tax_auto_rate' as tax_auto_rate, 
-                   js->'data'->>'tax_percent' as tax_percent, 
-                   js->'data'->>'tax_display' as tax_display,
-                   js->'data'->>'waybill_last_number' as waybill_last_number,
-                   js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
-                   js->'data'->>'waybill_document_template' as waybill_document_template 
-            FROM data 
-            WHERE ref = $1 AND sid = $2 
-            LIMIT 1
-        `;
+                SELECT js->'data'->>'currency' as currency, 
+                       js->'data'->>'currency_symb' as currency_symb, 
+                       js->'data'->>'currency_symb_loc' as currency_symb_loc, 
+                       js->'data'->>'tax_calc' as tax_calc, 
+                       js->'data'->>'tax_auto_rate' as tax_auto_rate, 
+                       js->'data'->>'tax_percent' as tax_percent, 
+                       js->'data'->>'tax_display' as tax_display,
+                       js->'data'->>'waybill_last_number' as waybill_last_number,
+                       js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
+                       js->'data'->>$3 as document_template
+                FROM data 
+                WHERE ref = $1 AND sid = $2
+                LIMIT 1
+            `;
 
-    const settingsResult = await client.query(settingsQuery, ['3dfactory-settings', sid]);
+    const settingsResult = await client.query(settingsQuery, ['3dfactory-settings', sid, type + '_document_template']);
     if (settingsResult.rows.length > 0) {
         settings = settingsResult.rows[0];
     }
@@ -48,6 +48,7 @@ export async function getDocumentData(client, _id, user, locale) {
                 js->'data'->'entity' as "entity",
                 js->'data'->'operator' as "operator",
                 js->'data'->'waybill' as "waybill",
+                js->'data'->'invoice' as "invoice",
                 js->'data'->'items' as "items"
             FROM data
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
@@ -110,6 +111,25 @@ export async function updateWaybillNumber(db, order) {
         `;
 
     let response = await db.query(query, [JSON.stringify(waybill), sid, order.id]);
+
+    return response.rows[0] ? response.rows[0]._id : null;
+}
+
+export async function updateInvoiceNumber(db, order) {
+
+    console.log(`updateInvoiceNumber: ${order.id}, invoice_number: ${order.invoice.number}`);
+
+    let invoice = order.invoice || {};
+
+    // Update entire waybill object in the database
+    const query = `
+            UPDATE data
+            SET js = jsonb_set(js, '{data,invoice}', $1::jsonb)
+            WHERE ref = 'ecommerce-order' AND sid = $2 AND js->'data'->>'id' = $3
+            RETURNING _id
+        `;
+
+    let response = await db.query(query, [JSON.stringify(invoice), sid, order.id]);
 
     return response.rows[0] ? response.rows[0]._id : null;
 }
@@ -184,7 +204,7 @@ export const getWaybillTotals = (settings, order) => {
     // Calculate totals for different VAT categories
     // todo: standardize with peppol document format scheme 
     order.items.forEach(item => {
-        if (item.tax_id.length > 2) {
+        if (item.tax_id.length > 2 && order.vat_status == "1") {
 
             let pvn_row = "ANM";
             let xml_tax_category = "AE";
@@ -234,7 +254,7 @@ export const getWaybillTotals = (settings, order) => {
                 </tr>
                 <tr>
                     <td class="text-end"><strong>${vat_text}</strong></td>
-                    <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * settings.tax_percent * 100) / 100)}</td>
+                    <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * settings.tax_percent) / 100)}</td>
                 </tr>
                 <tr>
                     <td class="text-end"><strong>KOPĀ APMAKSAI:</strong></td>
@@ -485,6 +505,22 @@ export function getIssuingDate(order) {
     return latestDate;
 }
 
+export async function getInvoiceNextNumber(db, order, settings, user) {
+
+    // number already issued
+    if (order?.invoice && order?.invoice?.number) return order.invoice;
+
+    order.invoice = {
+        number: order.id,
+        date: new Date().toISOString(),
+        user_id: user?.id || null
+    }
+
+    await updateInvoiceNumber(db, { id: order.id, invoice: order.invoice });
+
+    return order.invoice;
+}
+
 export async function getWaybillNextNumber(db, order, settings, user) {
 
     // number already issued
@@ -565,7 +601,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
 export const parseDocument = (document, data) => {
 
     // Replace placeholders in the document template
-    document = data.order.waybill.date
+    document = data.order?.waybill?.date
         ? document.replace(/\{\{waybill_date\}\}/g, new Date(data.order.waybill.date).toLocaleDateString(data.lang, {
             year: 'numeric',
             month: 'long',
@@ -573,7 +609,7 @@ export const parseDocument = (document, data) => {
         }))
         : removeField(document, 'waybill_date');
 
-    document = data.order.waybill.date
+    document = data.order?.waybill?.date
         ? document.replace(/\{\{issue_date\}\}/g, new Date(data.order.waybill.date).toLocaleDateString(data.lang, {
             year: 'numeric',
             month: 'long',
@@ -605,7 +641,7 @@ export const parseDocument = (document, data) => {
         ? document.replace(/\{\{client_bank_code\}\}/g, data.entity.bank_code)
         : removeField(document, 'client_bank_code');
 
-    document = data.order.waybill.number
+    document = data.order?.waybill?.number
         ? document.replace(/\{\{waybill_number\}\}/g, data.order.waybill.number)
         : removeField(document, 'waybill_number');
 
@@ -649,17 +685,39 @@ export const parseDocument = (document, data) => {
         }))
         : removeField(document, 'receiving_date');
 
-    document = data.waybill_items_table
+    document = data?.waybill_items_table
         ? document.replace(/\{\{waybill_items_table\}\}/g, data.waybill_items_table)
         : removeField(document, 'waybill_items_table');
 
-    document = data.waybill_totals
+    document = data?.waybill_totals
         ? document.replace(/\{\{waybill_totals\}\}/g, data.waybill_totals)
         : removeField(document, 'waybill_totals');
 
     document = data.user?.fname
         ? document.replace(/\{\{operator_name\}\}/g, data.user?.fname || '' + ' ' + data.user?.lname || '')
         : removeField(document, 'operator_name');
+
+    // invoice specific fields
+    document = data.order.waybill?.number
+        ? document.replace(/\{\{invoice_number\}\}/g, data.order.waybill.number)
+        : removeField(document, 'invoice_number');
+
+    document = data.order.invoice?.number
+        ? document.replace(/\{\{invoice_date\}\}/g, new Date(data.order?.invoice?.date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }))
+        : removeField(document, 'invoice_date');
+
+    document = data?.invoice_items_table
+        ? document.replace(/\{\{invoice_items_table\}\}/g, data.invoice_items_table)
+        : removeField(document, 'invoice_items_table');
+
+    document = data?.invoice_totals
+        ? document.replace(/\{\{invoice_totals\}\}/g, data.invoice_totals)
+        : removeField(document, 'invoice_totals');
+
 
     return document;
 }

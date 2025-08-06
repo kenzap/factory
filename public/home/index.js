@@ -142,8 +142,9 @@ class Home {
                         link: link('/product-list/'),
                     },
                     {
-                        text: __html('Suppliers'),
-                        link: link('/warehouse/suppliers/'),
+                        text: __html('Stock'),
+                        target: '_blank',
+                        link: link('/stock/'),
                     },
                     {
                         text: __html('Metal'),

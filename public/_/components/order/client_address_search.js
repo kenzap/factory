@@ -29,7 +29,7 @@ export class ClientAddressSearch {
         document.querySelector('client-address-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address" value="${this.order.address || ''}" >
+                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address" value="${this.order.address || ''}" tabindex="2">
                 </div>
                 <div id="addressSuggestion" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
@@ -59,7 +59,7 @@ export class ClientAddressSearch {
 
         let loadSuggestions = (value) => {
 
-            const filtered = this.addresses.filter(address =>
+            const filtered = this.addresses?.filter(address =>
                 address.address.toLowerCase().includes(value)
             );
 
@@ -67,6 +67,13 @@ export class ClientAddressSearch {
                 `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-i="${i}" data-id="${address.id}" style="cursor: pointer;"><div data-i="${i}" data-id="${address.id}">${address.address}</div></div>`
             ).join('');
         }
+
+        addressInput.addEventListener('blur', (e) => {
+
+            setTimeout(() => {
+                suggestions.classList.add('d-none');
+            }, 500);
+        });
 
         addressInput.addEventListener('focus', (e) => {
 
@@ -162,33 +169,6 @@ export class ClientAddressSearch {
                 }, 0);
             }
         });
-
-        // bus.clear('client:removed');
-        // bus.on('client:removed', (data) => {
-
-        //     this.eid = '';
-
-        //     console.log('contact removed received:', data);
-        //     this.data();
-        // });
-
-        // bus.clear('contact:search:refresh');
-        // bus.on('contact:search:refresh', (data) => {
-
-        //     this.eid = data._id;
-
-        //     console.log('Client search received:', data);
-        //     this.data();
-        // });
-
-        // bus.clear('client:updated');
-        // bus.on('client:updated', (data) => {
-
-        //     this.eid = data._id;
-
-        //     console.log('Client update received:', data);
-        //     this.data();
-        // });
     }
 
     highlightItem = (items, index) => {
