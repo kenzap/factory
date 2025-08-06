@@ -36,6 +36,7 @@ async function getOrderDetails(id) {
             js->'data'->'vat_status' as "vat_status",
             js->'data'->'entity' as "entity",
             js->'data'->'operator' as "operator",
+            js->'data'->'waybill' as "waybill",
             js->'data'->'items' as "items"
         FROM data
         WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 

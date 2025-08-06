@@ -22,6 +22,11 @@ export function log(...args) {
     console.log(`[${new Date().toISOString()}]`, ...args);
 }
 
+// error logging with reporting
+export function log_error(...args) {
+    console.log(`[${new Date().toISOString()}]`, ...args);
+}
+
 // Database connection helper
 export function getDbConnection() {
 

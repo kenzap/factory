@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer';
+import { log_error } from './index.js';
 
 /**
  * SMTP email handler script
@@ -11,7 +12,7 @@ import nodemailer from 'nodemailer';
  * @param 	{String} 	attach			attachment files (optional)
  * @return 	{Object} 	status			operation success report
  */
-export async function send_email(mail_to, mail_from, from, subject, body, attach = "") {
+export async function send_email(mail_to, mail_from, from, subject, body, attach = []) {
     const output = {
         success: true,
         mail_to: mail_to,
@@ -42,17 +43,22 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
         mailOptions.replyTo = 'info@skarda.design';
     }
 
+    // Add attachments if provided
+    if (attach && attach.length > 0) {
+        mailOptions.attachments = attach.map(filePath => ({
+            filename: filePath.split('/').pop(), // Extract filename from path
+            path: filePath,
+            contentType: 'application/pdf'
+        }));
+    }
+
     try {
         const info = await transporter.sendMail(mailOptions);
         output.send = true;
         output.messageId = info.messageId;
     } catch (error) {
-        // Fallback function call
-        await send_email_kenzap(mail_to, mail_from, from, subject, body, attach);
 
-        output.success = false;
-        output.code = 301;
-        output.reason = `error sending email: ${error.message} \nsubject: ${subject} \nmail to: ${mail_to} \nserver time: ${Date.now()}`;
+        log_error(`Error sending email: ${error.message} \nsubject: ${subject} \nmail to: ${mail_to} \nserver time: ${Date.now()}`);
     }
 
     return output;

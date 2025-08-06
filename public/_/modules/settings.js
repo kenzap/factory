@@ -1,4 +1,4 @@
-import { __html } from "../helpers/global.js";
+import { __html, getCurrencies } from "../helpers/global.js";
 
 export const getHtml = () => {
 
@@ -200,7 +200,49 @@ export const getHtml = () => {
                       </div>
                     </div>
 
-          
+                    <h4 id="h-currency" class="card-title mb-4 mt-4">${__html('Payments')}</h4>
+                    <div class="row">
+                        <div class="col-lg-6">
+                        <div class="form-group row mb-3 mt-1">
+                            <label class="col-sm-3 col-form-label">${__html('Currency')}</label>
+                            <div class="col-sm-9">
+                                <select id="currency" class="form-select inp" name="currency" data-type="select">
+                                    <option value="">${__html('Choose currency')}</option>
+                                    ${getCurrencies().map(c => `<option value="${c.code}">${__html(c.name)} (${__html(c.code)})</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="form-group row mb-3 mt-1">
+                                <label class="col-sm-3 col-form-label">${__html('Currency symbol')}</label>
+                                <div class="col-sm-9">
+                                    <input id="currency_symb" type="text" class="form-select inp" name="currency_symb" value="" data-type="text">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+    
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="form-group row mb-3 mt-1">
+                                <label class="col-sm-3 col-form-label">${__html('Position')}</label>
+                                <div class="col-sm-9">
+                                    <select id="currency_symb_loc" class="form-select inp" name="currency_symb_loc" data-type="select">
+                                        <option value="left">${__html('Left')}</option>
+                                        <option value="right">${__html('Right')}</option>
+                                        <option value="left_space">${__html('Left with space')}</option>
+                                        <option value="right_space">${__html('Right with space')}</option>
+                                    </select>
+                                    <p class="form-text">${__html('Currency position symbol.')}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+    
+                        </div>
+                    </div>
+
                     <h4 id="h-tax" class="card-title mb-4 mt-4">${__html('Tax')}</h4>
                     <div class="row">
                       <div class="col-lg-6">
@@ -237,20 +279,20 @@ export const getHtml = () => {
                     <div class="row">
                       <div class="col-lg-6">
                           <div class="form-group row mb-3 mt-1">
-                          <label class="col-sm-3 col-form-label">${__html('Percent')}</label>
-                          <div class="col-sm-9">
-                              <input id="tax_percent" type="text" class="form-control inp" placeholder="21" name="tax_percent" data-type="text">
-                              <p class="form-text">${__html('Default tax rate. Example, 9 or 21. Use numeric value.')}</p>
-                          </div>
+                            <label class="col-sm-3 col-form-label">${__html('Percent')}</label>
+                            <div class="col-sm-9">
+                                <input id="tax_percent" type="text" class="form-control inp" placeholder="21" name="tax_percent" data-type="text">
+                                <p class="form-text">${__html('Default tax rate. Example, 9 or 21. Use numeric value.')}</p>
+                            </div>
                           </div>
                       </div>
                       <div class="col-lg-6">
                           <div class="form-group row mb-3 mt-1">
-                          <label class="col-sm-3 col-form-label">${__html('Display')}</label>
-                          <div class="col-sm-9">
-                              <input id="tax_display" type="text" class="form-control inp" placeholder="VAT" name="tax_display" data-type="text">
-                              <p class="form-text">${__html('Tax title. Example, VAT or GST.')}</p>
-                          </div>
+                            <label class="col-sm-3 col-form-label">${__html('Display')}</label>
+                            <div class="col-sm-9">
+                                <input id="tax_display" type="text" class="form-control inp" placeholder="VAT" name="tax_display" data-type="text">
+                                <p class="form-text">${__html('Tax title. Example, VAT or GST.')}</p>
+                            </div>
                           </div>
                       </div>
                     </div>
@@ -272,6 +314,20 @@ export const getHtml = () => {
                             <div class="col-sm-9">
                                 <input id="waybill_last_number" type="text" class="form-control inp" name="waybill_last_number" data-type="text">
                                 <p class="form-text">${__html('Define next new waybill ID number.')}</p>
+                            </div>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-6">
+                      
+                      </div>
+                      <div class="col-lg-6">
+                          <div class="form-group row mb-3 mt-1">
+                            <label class="col-sm-3 col-form-label">${__html('Annulled waybills')}</label>
+                            <div class="col-sm-9">
+                              <textarea id="waybill_anulled_list" type="text" class="form-control inp" name="waybill_anulled_list" data-type="textarea" rows="4"></textarea>
+                              <p class="form-text">${__html('List of canceled waybills queued for upcoming orders.')}</p>
                             </div>
                           </div>
                       </div>

@@ -85,7 +85,7 @@ export class LeftPane {
                 <div class="form-section">
                     <h6><i class="bi bi-file-earmark-text me-2"></i>${__html('Documents')}</h6>
                     <div class="btn-group-toggle d-flex flex-wrap gap-1" data-bs-toggle="buttons">
-                        <button class="btn btn-outline-primary btn-sm document-btn" data-type="waybill">${__html('Waybill')}</button>
+                        <button class="btn ${this.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-sm document-btn" data-type="waybill">${this.order?.waybill?.number ? this.order?.waybill?.number : __html('Waybill')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="invoice">${__html('Invoice')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="invoiceEU">${__html('Invoice EU')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="receipt">${__html('Receipt')}</button>
@@ -174,6 +174,9 @@ export class LeftPane {
         onClick('.document-btn', (event) => {
 
             const type = event.target.dataset.type;
+
+            event.target.disabled = true;
+            event.target.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
 
             if (!type) return;
 

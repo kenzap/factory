@@ -1,5 +1,118 @@
 
-import { __html, makeNumber, priceFormat } from './index.js';
+import { __html, makeNumber, priceFormat, sid } from './index.js';
+
+export async function getDocumentData(client, _id, user, locale) {
+
+    let settings = {}, order = {}, entity = {};
+
+    // Get settings
+    const settingsQuery = `
+            SELECT js->'data'->>'currency' as currency, 
+                   js->'data'->>'currency_symb' as currency_symb, 
+                   js->'data'->>'currency_symb_loc' as currency_symb_loc, 
+                   js->'data'->>'tax_calc' as tax_calc, 
+                   js->'data'->>'tax_auto_rate' as tax_auto_rate, 
+                   js->'data'->>'tax_percent' as tax_percent, 
+                   js->'data'->>'tax_display' as tax_display,
+                   js->'data'->>'waybill_last_number' as waybill_last_number,
+                   js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
+                   js->'data'->>'waybill_document_template' as waybill_document_template 
+            FROM data 
+            WHERE ref = $1 AND sid = $2 
+            LIMIT 1
+        `;
+
+    const settingsResult = await client.query(settingsQuery, ['3dfactory-settings', sid]);
+    if (settingsResult.rows.length > 0) {
+        settings = settingsResult.rows[0];
+    }
+
+    // Get order details
+    const orderQuery = `
+            SELECT
+                _id,
+                js->'data'->'id' as id,
+                js->'data'->'eid' as eid,
+                js->'data'->'phone' as "phone",
+                js->'data'->'address' as "address",
+                js->'data'->'draft' as "draft",
+                js->'data'->'email' as "email",
+                js->'data'->'status' as "status",
+                js->'data'->'name' as "name",
+                js->'data'->'legal_name' as "legal_name",
+                js->'data'->'person' as "person",
+                js->'data'->'due_date' as "due_date",
+                js->'data'->'notes' as "notes",
+                js->'data'->'price' as "price",
+                js->'data'->'vat_status' as "vat_status",
+                js->'data'->'entity' as "entity",
+                js->'data'->'operator' as "operator",
+                js->'data'->'waybill' as "waybill",
+                js->'data'->'items' as "items"
+            FROM data
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
+            LIMIT 1
+        `;
+
+    const orderResult = await client.query(orderQuery, ['ecommerce-order', sid, _id]);
+    if (orderResult.rows) order = orderResult.rows[0] || {};
+
+    // console.log('waybill order', order);
+
+    // Get client work 
+    const clientQuery = `
+            SELECT 
+                _id,
+                js->'data'->>'name' as name,
+                js->'data'->>'email' as email,
+                js->'data'->>'type' as "type",
+                js->'data'->>'entity' as entity,
+                js->'data'->>'legal_name' as "legal_name",
+                js->'data'->>'bank_name' as "bank_name",
+                js->'data'->>'bank_acc' as "bank_acc",
+                js->'data'->>'reg_address' as "reg_address",
+                js->'data'->>'reg_number' as "reg_number",
+                js->'data'->>'reg_num' as reg_num,
+                js->'data'->>'vat_number' as "vat_number",
+                js->'data'->>'vat_status' as "vat_status",
+                js->'data'->>'notes' as "notes",
+                js->'data'->>'phone' as phone,
+                js->'data'->'contacts' as contacts,
+                js->'data'->'drivers' as drivers,
+                js->'data'->'mnf_date' as mnf_date,
+                js->'data'->'isu_date' as isu_date
+            FROM data 
+            WHERE ref = $1 AND sid = $2 AND _id = $3
+        `;
+
+    const entityResult = await client.query(clientQuery, ['3dfactory-entity', sid, order.eid]);
+    if (entityResult.rows) entity = entityResult.rows[0] || {};
+
+    return {
+        settings,
+        order,
+        entity
+    };
+}
+
+export async function updateWaybillNumber(db, order) {
+
+    console.log(`updateWaybillNumber: ${order.id}, waybill_number: ${order.waybill.number}`);
+
+    let waybill = order.waybill || {};
+
+    // Update entire waybill object in the database
+    const query = `
+            UPDATE data
+            SET js = jsonb_set(js, '{data,waybill}', $1::jsonb)
+            WHERE ref = 'ecommerce-order' AND sid = $2 AND js->'data'->>'id' = $3
+            RETURNING _id
+        `;
+
+    let response = await db.query(query, [JSON.stringify(waybill), sid, order.id]);
+
+    return response.rows[0] ? response.rows[0]._id : null;
+}
 
 export function getWaybillItemsTable(settings, order) {
 
@@ -59,10 +172,47 @@ export const getWaybillTotals = (settings, order) => {
     // Calculate totals based on VAT status
     let item_total_0 = 0; // Items without VAT
     let item_total_21 = 0; // Items with VAT
+    let item_grand_total = 0; // Grand total with and without VAT
+    let totalsHtml = '';
+
+    let vat_text = 'PVN ' + settings.tax_percent + '%:';
+
+    settings.tax_percent = parseFloat(settings.tax_percent);
+
+    const tax_coef = (settings.tax_percent / 100) + 1;
 
     // Calculate totals for different VAT categories
+    // todo: standardize with peppol document format scheme 
     order.items.forEach(item => {
-        if (item.tax_id.length === 4) {
+        if (item.tax_id.length > 2) {
+
+            let pvn_row = "ANM";
+            let xml_tax_category = "AE";
+
+            if (item.tax_id !== "0000") {
+                // PVN_metalapstrade = true; // Note: these variables need to be defined in scope
+            }
+
+            if (item.tax_id === "0000") {
+                // PVN_buvnieciba = true; // Note: these variables need to be defined in scope
+            }
+
+            if (!isNaN(item.tax_id) && item.tax_id !== "0000") {
+                vat_text = "PVN (Nodokļa apgrieztā maksāšana 143.4. pants): ";
+            }
+
+            if (!isNaN(item.tax_id) && item.tax_id === "0000") {
+                vat_text = "PVN (Nodokļa apgrieztā maksāšana 142 pants): ";
+            }
+
+            if (item.tax_id.includes("MET")) {
+                vat_text = "PVN (Nodokļa apgrieztā maksāšana 143 pants): ";
+            }
+
+            if (item.tax_id.includes("DAT")) {
+                vat_text = "PVN (Nodokļa apgrieztā maksāšana 143.1 pants): ";
+            }
+
             // No VAT (reverse charge)
             item_total_0 += makeNumber(item.total);
         } else {
@@ -71,49 +221,43 @@ export const getWaybillTotals = (settings, order) => {
         }
     });
 
-    const pvnas = parseFloat(settings.tax_percent);
-    const pvnas0 = pvnas / 100;
-    const pvnas1 = (pvnas / 100) + 1;
-
-    let summa_final = 0;
-    let totalsHtml = '';
 
     if (item_total_0 === 0 && item_total_21 > 0) {
         // Only VAT items
-        summa_final = Math.round((item_total_21 * pvnas1) * 100) / 100;
+        item_grand_total = Math.round((item_total_21 * tax_coef) * 100) / 100;
 
         totalsHtml = `
             <table class="totals-table">
                 <tr>
-                    <td class="text-end"><strong>TOTAL:</strong></td>
+                    <td class="text-end"><strong>KOPĀ:</strong></td>
                     <td class="text-end">${priceFormat(settings, item_total_21)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end"><strong>VAT ${pvnas}%:</strong></td>
-                    <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * pvnas0 * 100) / 100)}</td>
+                    <td class="text-end"><strong>${vat_text}</strong></td>
+                    <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * settings.tax_percent * 100) / 100)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end"><strong>TOTAL TO PAY:</strong></td>
-                    <td class="text-end">${priceFormat(settings, summa_final)}</td>
+                    <td class="text-end"><strong>KOPĀ APMAKSAI:</strong></td>
+                    <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
                 </tr>
             </table>`;
 
     } else if (item_total_0 > 0 && item_total_21 === 0) {
         // Only non-VAT items (reverse charge)
-        summa_final = Math.round(item_total_0 * 100) / 100;
+        item_grand_total = Math.round(item_total_0 * 100) / 100;
 
         totalsHtml = `
             <table class="totals-table">
                 <tr>
-                    <td class="text-end"><strong>TOTAL:</strong></td>
+                    <td class="text-end"><strong>KOPĀ:</strong></td>
                     <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end"><strong>VAT (Reverse charge):</strong></td>
+                    <td class="text-end"><strong>${vat_text}</strong></td>
                     <td class="text-end">${priceFormat(settings, 0)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end"><strong>TOTAL TO PAY:</strong></td>
+                    <td class="text-end"><strong>KOPĀ APMAKSAI:</strong></td>
                     <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                 </tr>
             </table>`;
@@ -121,29 +265,29 @@ export const getWaybillTotals = (settings, order) => {
     } else if (item_total_0 > 0 && item_total_21 > 0) {
 
         // Mixed VAT and non-VAT items
-        summa_final = Math.round((item_total_0 + (item_total_21 * pvnas1)) * 100) / 100;
+        item_grand_total = Math.round((item_total_0 + (item_total_21 * tax_coef)) * 100) / 100;
 
         totalsHtml = `
             <table class="totals-table">
                 <tr>
-                    <td class="text-end me-2"><strong>TOTAL (Reverse charge):</strong> </td>
+                    <td class="text-end me-2"><strong>KOPĀ:</strong> </td>
                     <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end me-2"><strong>TOTAL (VAT 21%):</strong> </td>
+                    <td class="text-end me-2"><strong>KOPĀ (PVN ${settings.tax_percent}%):</strong> </td>
                     <td class="text-end">${priceFormat(settings, item_total_21)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end me-2"><strong>VAT (Reverse charge):</strong> </td>
+                    <td class="text-end me-2"><strong>${vat_text}</strong> </td>
                     <td class="text-end">${priceFormat(settings, 0)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end me-2"><strong>VAT (21%):</strong> </td>
-                    <td class="text-end">${priceFormat(settings, Math.round((item_total_21 * (pvnas1 - 1)) * 100) / 100)}</td>
+                    <td class="text-end me-2"><strong>PVN ${settings.tax_percent}%:</strong> </td>
+                    <td class="text-end">${priceFormat(settings, Math.round((item_total_21 * (tax_coef - 1)) * 100) / 100)}</td>
                 </tr>
                 <tr>
-                    <td class="text-end me-2"><strong>TOTAL TO PAY:</strong> </td>
-                    <td class="text-end">${priceFormat(settings, summa_final)}</td>
+                    <td class="text-end me-2"><strong>KOPĀ APMAKSAI:</strong> </td>
+                    <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
                 </tr>
             </table>`;
     }
@@ -152,13 +296,107 @@ export const getWaybillTotals = (settings, order) => {
         <!-- Totals -->
         <div class="totals">
             <div class="totals-left">
-                
+                <table>
+                    ${item_total_0 > 0 && item_total_21 > 0
+            ? `
+                        <tr>
+                            <td class="text-start me-2"><strong></strong> </td>
+                            <td class="text-start">&nbsp;</td>
+                        </tr>`
+            : ''}
+                    <tr>
+                        <td class="text-start me-2"><strong>Apm. termiņš:</strong> </td>
+                        <td class="text-start">3 dienas.</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>${item_total_0 > 0 ? "Darījuma veids:" : "&nbsp;"}</strong> </td>
+                        <td class="text-start">${item_total_0 > 0 ? "R7" : "&nbsp;"}</td>
+                    </tr>
+                    <tr>
+                        <td class="text-start me-2"><strong>Kopā apmaksai vārdos:</strong> </td>
+                        <td class="text-start">${amountToWords(item_grand_total, settings)}</td>
+                    </tr>
+                </table>
             </div>
             <div class="totals-right">
                 ${totalsHtml}
             </div>
         </div>`;
 }
+
+export const amountToWords = (amount, settings) => {
+
+    // console.log(`amountToWords: ${amount}, currency: ${currency}`);
+
+    // Convert amount to words based on currency
+    const amount_int = Math.floor(amount);
+    const amount_cents = Math.round((amount - amount_int) * 100);
+
+    const units = ["", "viens", "divi", "trīs", "četri", "pieci", "seši", "septiņi", "astoņi", "deviņi"];
+    const teens = ["desmit", "vienpadsmit", "divpadsmit", "trīspadsmit", "četrpadsmit", "piecpadsmit", "sešpadsmit", "septiņpadsmit", "astoņpadsmit", "deviņpadsmit"];
+    const tens = ["", "", "divdesmit", "trīsdesmit", "četrdesmit", "piecdesmit", "sešdesmit", "septiņdesmit", "astoņdesmit", "deviņdesmit"];
+    const hundreds = ["", "simts", "divsimt", "trīssimt", "četrsimt", "piecsimt", "sešsimt", "septiņsimt", "astoņsimt", "deviņsimt"];
+
+    function numberToWords(num) {
+        if (num === 0) return "";
+
+        let words = '';
+
+        if (num >= 100) {
+            const hundredsPart = Math.floor(num / 100);
+            if (hundredsPart === 1) {
+                words += "simts ";
+            } else {
+                words += units[hundredsPart] + "simt ";
+            }
+            num %= 100;
+        }
+
+        if (num >= 20) {
+            words += tens[Math.floor(num / 10)] + " ";
+            num %= 10;
+        } else if (num >= 10) {
+            words += teens[num - 10] + " ";
+            return words.trim();
+        }
+
+        if (num > 0) {
+            words += units[num] + " ";
+        }
+
+        return words.trim();
+    }
+
+    let result = '';
+
+    // Convert main amount
+    const mainWords = numberToWords(amount_int);
+    if (mainWords) {
+        result += mainWords.charAt(0).toUpperCase() + mainWords.slice(1) + " ";
+    } else {
+        result += "Nulle ";
+    }
+
+    // Add currency name
+    if (settings.currency === "EUR") {
+        result += amount_int === 1 ? "Eiro" : "Eiro";
+    } else {
+        result += currency;
+    }
+
+    // Add cents if they exist
+    if (amount_cents > 0) {
+        result += ", " + amount_cents + " ";
+        if (settings.currency === "EUR") {
+            result += "eirocenti";
+        } else {
+            result += "centi";
+        }
+    }
+
+    return result;
+}
+
 /**
    * Generates HTML table rows displaying the total price, VAT, and grand total.
    *
@@ -247,12 +485,45 @@ export function getIssuingDate(order) {
     return latestDate;
 }
 
-export function getWaybillNextNumber(settings) {
+export async function getWaybillNextNumber(db, order, settings, user) {
 
+    // number already issued
+    if (order?.waybill && order?.waybill?.number) return order.waybill;
+
+    // get number from annulled list if present
+    if (settings.waybill_anulled_list && settings.waybill_anulled_list.trim()) {
+        const annulledNumbers = settings.waybill_anulled_list.trim().split('\n').filter(num => num.trim());
+        if (annulledNumbers.length > 0) {
+
+            // Use the first annulled number and remove it from the list
+            const reusedNumber = annulledNumbers.shift().trim();
+            settings.waybill_anulled_list = annulledNumbers.join('\n');
+
+            order.waybill = {
+                number: reusedNumber,
+                date: new Date().toISOString(),
+                user_id: user?.id || null
+            }
+
+            await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+
+            // Update settings with the new annulled list
+            const updateSettingsQuery = `
+                UPDATE data
+                SET js = jsonb_set(js, '{data,waybill_anulled_list}', $1::jsonb)
+                WHERE ref = '3dfactory-settings' AND sid = $2
+            `;
+            await db.query(updateSettingsQuery, [JSON.stringify(settings.waybill_anulled_list), sid]);
+
+            console.log(`Reused annulled waybill number: ${reusedNumber}`);
+
+            return order.waybill;
+        }
+    }
+
+    // generate new waybill number
     let waybill_prefix;
     let waybill_next_number;
-
-    // get waybill prefix
     const prefixMatch = settings.waybill_last_number.toString().match(/^([^-]+)/);
     waybill_prefix = prefixMatch ? prefixMatch[1] : '';
 
@@ -270,7 +541,125 @@ export function getWaybillNextNumber(settings) {
     }
     waybill_next_number = settings.waybill_last_number ? parseInt(settings.waybill_last_number) : 0;
 
+    order.waybill = {
+        number: waybill_prefix + "-" + waybill_next_number,
+        date: new Date().toISOString(),
+        user_id: user?.id || null
+    }
 
+    // Update settings waybill_last_number
+    const settingsQuery = `
+            UPDATE data
+            SET js = jsonb_set(js, '{data,waybill_last_number}', $1::jsonb)
+            WHERE ref = '3dfactory-settings' AND sid = $2
+        `;
 
-    return waybill_prefix + "-" + waybill_next_number;
+    // when waybill is annulled this request is skipped
+    if (order.waybill.number) await db.query(settingsQuery, [JSON.stringify(order.waybill.number), sid]);
+
+    await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+
+    return order.waybill;
+}
+
+export const parseDocument = (document, data) => {
+
+    // Replace placeholders in the document template
+    document = data.order.waybill.date
+        ? document.replace(/\{\{waybill_date\}\}/g, new Date(data.order.waybill.date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }))
+        : removeField(document, 'waybill_date');
+
+    document = data.order.waybill.date
+        ? document.replace(/\{\{issue_date\}\}/g, new Date(data.order.waybill.date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }))
+        : removeField(document, 'issue_date');
+
+    document = data.entity.legal_name
+        ? document.replace(/\{\{client_name\}\}/g, data.entity.legal_name)
+        : removeField(document, 'client_name');
+
+    document = data.entity.reg_number
+        ? document.replace(/\{\{client_reg_number\}\}/g, data.entity.reg_number)
+        : removeField(document, 'client_reg_number');
+
+    document = data.entity.vat_number
+        ? document.replace(/\{\{client_vat_number\}\}/g, data.entity.vat_number)
+        : removeField(document, 'client_vat_number');
+
+    document = data.entity.bank_name
+        ? document.replace(/\{\{client_bank\}\}/g, data.entity.bank_name)
+        : removeField(document, 'client_bank');
+
+    document = data.entity.bank_acc
+        ? document.replace(/\{\{client_bank_acc\}\}/g, data.entity.bank_acc)
+        : removeField(document, 'client_bank_acc');
+
+    document = data.entity.bank_code
+        ? document.replace(/\{\{client_bank_code\}\}/g, data.entity.bank_code)
+        : removeField(document, 'client_bank_code');
+
+    document = data.order.waybill.number
+        ? document.replace(/\{\{waybill_number\}\}/g, data.order.waybill.number)
+        : removeField(document, 'waybill_number');
+
+    document = data.order.email
+        ? document.replace(/\{\{client_contact_email\}\}/g, data.order.email)
+        : removeField(document, 'client_contact_email');
+
+    document = data.order.phone
+        ? document.replace(/\{\{client_contact_phone\}\}/g, data.order.phone)
+        : removeField(document, 'client_contact_phone');
+
+    document = data.entity.reg_address
+        ? document.replace(/\{\{client_reg_address\}\}/g, data.entity.reg_address)
+        : removeField(document, 'client_reg_address');
+    // order.invoice = { number: "test" };
+    document = data.order?.invoice?.number
+        ? document.replace(/\{\{invoice_number\}\}/g, data.order?.invoice?.number)
+        : removeField(document, 'invoice_number');
+
+    document = data.order?.id
+        ? document.replace(/\{\{order_number\}\}/g, data.order?.id)
+        : removeField(document, 'order_number');
+
+    document = data.order?.address
+        ? document.replace(/\{\{delivery_address\}\}/g, data.order?.address)
+        : removeField(document, 'delivery_address');
+
+    document = data.manufacturing_date
+        ? document.replace(/\{\{manufacturing_date\}\}/g, new Date(data.manufacturing_date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+        }))
+        : removeField(document, 'manufacturing_date');
+
+    document = data.issuing_date
+        ? document.replace(/\{\{receiving_date\}\}/g, new Date(data.issuing_date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+        }))
+        : removeField(document, 'receiving_date');
+
+    document = data.waybill_items_table
+        ? document.replace(/\{\{waybill_items_table\}\}/g, data.waybill_items_table)
+        : removeField(document, 'waybill_items_table');
+
+    document = data.waybill_totals
+        ? document.replace(/\{\{waybill_totals\}\}/g, data.waybill_totals)
+        : removeField(document, 'waybill_totals');
+
+    document = data.user?.fname
+        ? document.replace(/\{\{operator_name\}\}/g, data.user?.fname || '' + ' ' + data.user?.lname || '')
+        : removeField(document, 'operator_name');
+
+    return document;
 }
