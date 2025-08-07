@@ -35,7 +35,9 @@ class OrderEdit {
         new Modal();
 
         getOrder(this.order.id, (response) => {
+
             console.log(response);
+
             // show UI loader
             if (!response.success) return;
 
@@ -51,8 +53,6 @@ class OrderEdit {
             new Session();
             new LeftPane(this.settings, this.order);
             new ClientPane(this.order);
-
-
         });
     }
 
