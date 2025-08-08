@@ -94,6 +94,10 @@ class Home {
                         text: __html('Cutting'),
                         link: link('/cutting/'),
                         target: '_blank',
+                    },
+                    {
+                        text: __html('Work Log'),
+                        link: link('/worklog/'),
                     }
                 ],
             },

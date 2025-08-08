@@ -3,7 +3,7 @@ import { deleteWorklogRecord } from "../_/api/delete_worklog_record.js";
 import { getWorkLog } from "../_/api/get_worklog.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
-import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
+import { __html, hideLoader, onClick, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Modal } from "../_/modules/modal.js";
@@ -29,7 +29,17 @@ class WorkLog {
             dateTo: ""
         };
 
-        this.order_id = new URLSearchParams(window.location.search).get('order_id') || null; // Order ID if applicable
+        this.record = {
+            order_id: new URLSearchParams(window.location.search).get('order_id') || "",
+            product_id: new URLSearchParams(window.location.search).get('product_id') || "",
+            product_name: unescape(new URLSearchParams(window.location.search).get('product_name')) || "",
+            color: new URLSearchParams(window.location.search).get('color') || "",
+            coating: new URLSearchParams(window.location.search).get('coating') || "",
+            qty: new URLSearchParams(window.location.search).get('qty') || 0,
+            stage: new URLSearchParams(window.location.search).get('stage') || '',
+        }
+
+        this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
 
         this.firstLoad = true;
 
@@ -49,7 +59,16 @@ class WorkLog {
 
         if (document.querySelector('.work-log')) return;
 
-        document.querySelector('#app').innerHTML = getHtml();
+        document.querySelector('#app').innerHTML = getHtml(this.record);
+
+        // hide summary if viewed in iframe
+        if (this.mini) {
+            document.querySelector('#app').classList.add('m-2');
+            document.querySelector('#app').classList.remove('mt-12');
+            document.querySelector('#app').classList.remove('mb-12');
+            document.querySelector('#app .container').classList.remove('mt-4');
+            document.querySelector('#app .container').classList.remove('container');
+        }
 
         this.listeners();
     }
@@ -135,7 +154,7 @@ class WorkLog {
                 time: parseInt(document.querySelector('#time').value) || 0,
                 stage: document.querySelector('#stage').value,
                 user_id: this.user.id,
-                order_id: this.order_id ? this.order_id : '',
+                order_id: this.record.order_id ? this.record.order_id : '',
             }
 
             // insert record
@@ -175,6 +194,7 @@ class WorkLog {
             // session
             new Session();
             new Header({
+                hidden: this.mini || false,
                 title: __html('Work Log'),
                 icon: 'clock-history',
                 style: 'navbar-light',
@@ -211,6 +231,8 @@ class WorkLog {
         // Populate stage filter
         const filterStage = `
             <option value="" ${this.filters.stage === '' ? 'selected' : ''}>${__html('All')}</option>
+            <option value="markup" ${this.filters.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
+            <option value="stamping" ${this.filters.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
             <option value="cutting" ${this.filters.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
             <option value="bending" ${this.filters.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
             <option value="assembly" ${this.filters.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
@@ -219,8 +241,20 @@ class WorkLog {
             <option value="finishing" ${this.filters.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
         `;
 
+        const recordStage = `
+            <option value="" ${this.record.stage === '' ? 'selected' : ''}>${__html('')}</option>
+            <option value="markup" ${this.record.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
+            <option value="stamping" ${this.record.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
+            <option value="cutting" ${this.record.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
+            <option value="bending" ${this.record.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
+            <option value="assembly" ${this.record.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
+            <option value="welding" ${this.record.stage === 'welding' ? 'selected' : ''}>${__html('Welding')}</option>
+            <option value="coating" ${this.record.stage === 'coating' ? 'selected' : ''}>${__html('Coating')}</option>
+            <option value="finishing" ${this.record.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
+        `;
+
         stageSelect.innerHTML = filterStage;
-        if (!stage.innerHTML) stage.innerHTML = filterStage;
+        if (!stage.innerHTML) stage.innerHTML = recordStage;
 
         // Populate date filters
         dateFromInput.value = this.filters.dateFrom || '';
@@ -247,48 +281,84 @@ class WorkLog {
 
         if (this.firstLoad) theader.innerHTML = `
                 <tr>
-                    <th style="width:80px;"><i class="bi bi-calendar me-2" id="calendarIcon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#dateRangeModal"></i> ${__html('Time')}</th>
+                    <th style="width:84px;"><i class="bi bi-calendar me-2" id="calendarIcon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#dateRangeModal"></i> ${__html('Time')}</th>
                     <th style="width:160px;">
                        <select class="form-select form-select-sm border-0 bg-transparent p-0" id="filterEmployee" onchange="workLog.applyFilters()" ></select>
                     </th>
+                    <th>${__html('Color')}</th>
+                    <th>${__html('Coating')}</th>
                     <th style="width:500px;">
                         <div class="position-relative" style="width:500px;">
-                            <input type="text" class="form-control form-control-sm- border-0 bg-transparent ms-4 pe-4" id="productFilter" onchange="workLog.applyFilters()" onkeyup="workLog.applyFilters()" placeholder="Product" value="${this.filters.product}" style="width: auto; height:21px; padding: 0; padding-right: 1rem;">
+                            <input type="text" class="form-control form-control-sm- border-0 bg-transparent ms-4 pe-4" id="productFilter" onchange="workLog.applyFilters()" onkeyup="workLog.applyFilters()" placeholder="${__html('Search product')}" value="${this.filters.product}" style="width: auto; height:21px; padding: 0; padding-right: 1rem;">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y me-2" style="font-size: 0.8rem;"></i>
                         </div>
                     </th>
                     <th>
                         <select class="form-select form-select-sm border-0 bg-transparent p-0" id="filterStage" onchange="workLog.applyFilters()"></select>
                     </th>
-                    <th>${__html('Quantity')}</th>
-                    <th>${__html('Time (min)')}</th>
+                    <th>${__html('Qty')}</th>
+                    <th>${__html('MIN')}</th>
                     <th></th>
                 </tr>
         `;
 
-        tbody.innerHTML = entriesToShow.map(entry => `
+        let lastDate = null;
+        tbody.innerHTML = entriesToShow.map(entry => {
+            const entryDate = new Date(entry.date).toDateString();
+            const today = new Date().toDateString();
+            const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toDateString();
+
+            let dateHeader = '';
+            if (lastDate !== entryDate) {
+                let dateLabel;
+                if (entryDate === today) {
+                    dateLabel = 'Today';
+                } else if (entryDate === yesterday) {
+                    dateLabel = 'Yesterday';
+                } else {
+                    dateLabel = new Date(entry.date).toLocaleDateString();
+                }
+
+                dateHeader = `
+                <tr>
+                <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
+                    ${dateLabel}
+                </td>
+                </tr>
+            `;
+                lastDate = entryDate;
+            }
+
+            return dateHeader + `
             <tr>
-                <td style="width:80px;">
-                    <span class="time-badge">${this.formatTime(entry.date)}</span>
-                </td>
-                <td style="width:160px;">
-                    <span class="employee-tag" >${this.getUserName(entry.user_id)}</span>
-                </td>
-                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span> ${entry.color || '-'} ${entry.material || '-'}</td>
-                <td>
-                    <span class="badge ${this.getStageClass(entry.stage)} stage-badge">
-                        ${entry.stage.charAt(0).toUpperCase() + entry.stage.slice(1)}
-                    </span>
-                </td>
-                <td><strong>${entry.qty}</strong></td>
-                <td><strong>${entry.time == "0" ? "" : entry.time}</strong></td>
-                <td class="text-end">
-                    <button class="btn btn-delete-worklog text-danger" onclick="workLog.deleteEntry('${entry._id}')" title="Delete entry">
-                        <i class="bi bi-trash"></i>
-                    </button>
-                </td>
+            <td style="width:80px;">
+                <span class="time-badge">${this.formatTime(entry.date)}</span>
+            </td>
+            <td style="width:160px;">
+                <span class="employee-tag" >${this.getUserName(entry.user_id)}</span>
+            </td>
+            <td tyle="width:80px;">
+                ${entry.color || '-'}
+            </td>
+            <td tyle="width:80px;">
+                ${entry.coating || '-'}
+            </td>
+            <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
+            <td>
+                <span class="badge ${this.getStageClass(entry.stage)} stage-badge">
+                ${entry.stage.charAt(0).toUpperCase() + entry.stage.slice(1)}
+                </span>
+            </td>
+            <td><strong>${entry.qty}</strong></td>
+            <td><strong>${entry.time == "0" ? "" : entry.time}</strong></td>
+            <td class="text-end">
+                <button class="btn btn-delete-worklog text-danger" onclick="workLog.deleteEntry('${entry._id}')" title="Delete entry">
+                <i class="bi bi-trash"></i>
+                </button>
+            </td>
             </tr>
-        `).join('');
+        `;
+        }).join('');
     }
 
     applyFilters() {
@@ -317,8 +387,8 @@ class WorkLog {
 
         const entriesToShow = this.filteredEntries.length > 0 ? this.filteredEntries : this.records;
         const totalEntries = entriesToShow.length;
-        const totalQuantity = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.qty), 0);
-        const totalTime = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.time), 0);
+        const totalQuantity = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.qty || 0), 0);
+        const totalTime = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.time || 0), 0);
         const uniqueProducts = new Set(entriesToShow.map(entry => entry.product_id)).size;
 
         // Update new fixed bottom summary
@@ -326,6 +396,9 @@ class WorkLog {
         document.getElementById('summaryProducts').textContent = uniqueProducts;
         document.getElementById('totalQuantity').textContent = totalQuantity;
         document.getElementById('summaryTime').textContent = totalTime.toLocaleString();
+
+        // hide summary if viewed in iframe
+        if (this.mini) document.querySelector('.fixed-summary').style.display = 'none';
     }
 
     formatTime(date) {

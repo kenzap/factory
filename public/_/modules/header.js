@@ -38,9 +38,9 @@ export class Header {
 
         return `
             <!-- Navigation -->
-            <nav class="header px-3 navbar navbar-expand-lg ${this.response.style || 'navbar-light'} fixed-top">
+            <nav class="header px-3 navbar navbar-expand-lg ${this.response.style || 'navbar-light'} fixed-top ${this.response.hidden ? 'd-none' : ''}" id="header">
                 <div class="container-fluid">
-                    <a class="navbar-brand fw-bold" href="#">
+                    <a class="navbar-brand fw-bold" href="/home/">
                         <i class="bi bi-${this.response.icon || 'boxes'} me-2"></i>${this.response.title || __html('Dashboard')}
                     </a>
                     

@@ -48,7 +48,7 @@ export class PreviewDocument {
 
         // render modal
         this.modal.querySelector(".modal-dialog").classList.add('modal-xl');
-        this.modal.querySelector(".modal-title").innerHTML = "";//__html('Add New User');
+        this.modal.querySelector(".modal-title").innerHTML = "";
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
                 <i class="bi bi-envelope me-1"></i> ${__html('Send Email')}

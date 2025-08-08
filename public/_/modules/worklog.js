@@ -1,6 +1,6 @@
 import { __html } from "../helpers/global.js";
 
-export const getHtml = () => {
+export const getHtml = (record) => {
 
     return /*html*/`
     <div class="container mt-4 work-log">
@@ -12,31 +12,31 @@ export const getHtml = () => {
                         <div class="col-md-3">
                             <label for="productName" class="form-label d-none">${__html('Product Name')}</label>
                             <div class="position-relative">
-                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="">
+                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="" value="${record.product_name}" >
                                 <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
                             </div>
                         </div>
                         <div class="col-md-1">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="RR21" required>
+                            <input type="text" class="form-control border-0" id="productColor" placeholder="" value="${record.color}" required>
                         </div>
                         <div class="col-md-2">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="Polyester" required>
+                            <input type="text" class="form-control border-0" id="productCoating" placeholder="" value="${record.coating}" required>
                         </div>
                         <div class="col-md-1">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
-                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="Qty" required>
+                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="Qty" value="${record.qty}" required>
                         </div>
                         <div class="col-md-1">
                             <label for="time" class="form-label d-none">${__html('Time (min)')}</label>
                             <input type="number" class="form-control border-0" id="time" min="1" placeholder="Min">
                         </div>
                         <div class="col-md-1">
-                            <label for="origin" class="form-label d-none">Origin</label>
+                            <label for="origin" class="form-label d-none">${__html('Origin')}</label>
                             <select class="form-select border-0" id="origin" required>
-                                <option value="w">Warehouse</option>
-                                <option value="o">Order</option>
+                                <option value="w">${__html('Warehouse')}</option>
+                                <option value="o" ${record.order_id ? "selected" : ""}>${__html('Order')}</option>
                                 <option value="">-</option>
                             </select>
                         </div>

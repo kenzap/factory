@@ -1,6 +1,7 @@
 import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrders } from "../_/api/get_orders.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
+import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { getHtml } from "../_/modules/manufacturing.js";
@@ -357,14 +358,14 @@ class Manufacturing {
                                         <td class="d-none">${i + 1}</td>
                                         <td>
                                             <div class="work-buttons">
-                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork(4, '${orderId}', '${item.id}')">M</button>
-                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork(1, '${orderId}', '${item.id}')">L</button>
-                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork(2, '${orderId}', '${item.id}')">K</button>
-                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork(3, '${orderId}', '${item.id}')">N</button>
+                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('markup', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('stamping', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                             </div>
                                         </td>
                                         <td>
-                                            <div><strong>${i + 1}. ${item.title}</strong></div>
+                                            <div><strong>${i + 1}. ${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}</strong></div>
                                             <small class="text-muted">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
                                         </td>
                                         <td>${item.unit || "gab"}</td>
@@ -652,7 +653,9 @@ class Manufacturing {
 
         if (this.inQuery) return;
 
-        if (confirm(__html('Issue order %1$?', orderId))) {
+        let msg = isIssue ? __html('Issue order %1$?', orderId) : __html('Cancel order %1$?', orderId);
+
+        if (confirm(msg)) {
 
             this.inQuery = true;
 
@@ -723,16 +726,18 @@ class Manufacturing {
         }
     }
 
-    openWork(type, orderId, itemId) {
-        const workTypes = {
-            1: 'Lasīšana',
-            2: 'Komplektēšana',
-            3: 'Nosūtīšana',
-            4: 'Mērīšana'
-        };
+    openWork(stage, order_id, product_id, product_name, color, coating, qty) {
 
-        const url = `/ ATS / darbs ? pid = ${orderId}& lid=${itemId}& dt=${type} `;
-        this.openWindow('darbs', url);
+        color = color || '';
+        coating = coating || '';
+        qty = qty || 0;
+
+        new PreviewWorkLog({ stage, order_id, product_id, product_name, color, coating, qty }, (response) => {
+            if (!response.success) {
+                toast(__html('Error opening work log'));
+                return;
+            }
+        });
     }
 
     openWindow(name, url) {
