@@ -116,7 +116,7 @@ export const getLocales = async () => {
     return locales;
 }
 
-export const getSettings = async () => {
+export const getSettings = async (fields) => {
 
     const client = getDbConnection();
     await client.connect();
@@ -125,8 +125,19 @@ export const getSettings = async () => {
 
     try {
 
-        // Get ecommerce settings
-        const query = `
+        // Get settings by specified fields
+        let query;
+        if (fields && fields.length > 0) {
+            const fieldSelections = fields.map(field => `js->'data'->'${field}' as ${field}`).join(', ');
+            query = `
+            SELECT ${fieldSelections}
+            FROM data 
+            WHERE ref = $1 AND sid = $2 
+            LIMIT 1
+            `;
+            // Default fields if none specified
+        } else {
+            query = `
             SELECT js->'data'->'currency' as currency, 
                    js->'data'->'currency_symb' as currency_symb, 
                    js->'data'->'currency_symb_loc' as currency_symb_loc, 
@@ -141,25 +152,40 @@ export const getSettings = async () => {
             FROM data 
             WHERE ref = $1 AND sid = $2 
             LIMIT 1
-        `;
+            `;
+        }
 
         const result = await client.query(query, ['3dfactory-settings', sid]);
         if (result.rows.length > 0) {
             const row = result.rows[0];
-            settings = {
-                currency: row.currency,
-                currency_symb: row.currency_symb,
-                currency_symb_loc: row.currency_symb_loc,
-                tax_calc: row.tax_calc,
-                tax_auto_rate: row.tax_auto_rate,
-                tax_rate: row.tax_rate,
-                tax_percent: row.tax_percent,
-                tax_display: row.tax_display,
-                price: row.price,
-                var_parent: row.var_parent,
-                textures: row.textures || [],
-                logo: process.env.LOGO || 'https://cdn.kenzap.com/logo.svg'
-            };
+
+            if (fields && fields.length > 0) {
+
+                // Only include the requested fields
+                fields.forEach(field => {
+                    settings[field] = row[field];
+                });
+
+            } else {
+
+                // Default fields when none specified
+                settings = {
+                    currency: row.currency,
+                    currency_symb: row.currency_symb,
+                    currency_symb_loc: row.currency_symb_loc,
+                    tax_calc: row.tax_calc,
+                    tax_auto_rate: row.tax_auto_rate,
+                    tax_rate: row.tax_rate,
+                    tax_percent: row.tax_percent,
+                    tax_display: row.tax_display,
+                    price: row.price,
+                    var_parent: row.var_parent,
+                    textures: row.textures || []
+                };
+            }
+
+            // Always include logo regardless of fields parameter
+            settings.logo = process.env.LOGO || 'https://cdn.kenzap.com/logo.svg';
         }
 
     } finally {

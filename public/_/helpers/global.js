@@ -295,8 +295,9 @@ export const makeNumber = function (price) {
 
 export const formatTime = (timestamp) => {
 
-    const d = new Date(parseInt(timestamp) * 1000);
-    return d.toLocaleDateString();
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    return date.toLocaleDateString();
 }
 
 // numbers only with allowed exceptions
@@ -307,8 +308,6 @@ export const onlyNumbers = (sel, chars) => {
     for (let el of document.querySelectorAll(sel)) {
 
         el.addEventListener('keypress', (e) => {
-
-            // console.log(e.which);
 
             if ((!chars.includes(e.which) && isNaN(String.fromCharCode(e.which))) || e.which == 32 || (document.querySelector(sel).value.includes(String.fromCharCode(e.which)) && chars.includes(e.which))) {
 
@@ -425,8 +424,6 @@ export const parseVariations = (_this, product) => {
             for (let d in product.variations[v].data) {
 
                 let checked = false;
-                // for public qr feed
-                // if(typeof(cart.state.product.variations[v]) !== 'undefined' && typeof(cart.state.product.variations[v].list) !== 'undefined' && typeof(cart.state.product.variations[v].list["_"+d]) !== 'undefined'){ checked = true; }
 
                 // verify variation price validity
                 product.variations[v].data[d]['price'] = makeNumber(product.variations[v].data[d]['price']);

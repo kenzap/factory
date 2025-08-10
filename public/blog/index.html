@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Blog</title> 
+		<meta name="Description" content="Publish articles to Factory Portal" />
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link href="/assets/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
+    <link href="/assets/css/editor.ace.css" rel="stylesheet" >
+    <link href="/assets/css/bootstrap-icons.css" rel="stylesheet">
+    <!-- <link rel="stylesheet" href="https://account.kenzap.com/css/kenzap_develop_landing.ace.css" > -->
+    <link href="styles.css?t=${timestamp}" rel="stylesheet">
+	</head>
+	<body class="bg-light bg-gradient" >
+		<div id="app" class="content mt-12 mb-12"></div>
+    <div class="loader">
+      <div class="dots">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+    <!-- <script src="https://account.kenzap.com/js/kenzap_develop_landing.ace.js"></script> -->
+    <script src="/assets/js/editor.ace.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+    <script type="module" defer src="index.js?t=${timestamp}"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/js-beautify/1.14.7/beautify-html.min.js"></script>
+    <script src="https://kenzap-static.b-cdn.net/libs/quill-1.3.8.js"></script>
+	</body>
+</html>
