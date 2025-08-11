@@ -89,7 +89,7 @@ export class ClientSearch {
 
             if (filtered.length > 0) {
                 suggestions.innerHTML = filtered.map(client =>
-                    `<div class="autocomplete-item p-2 border-bottom cursor-pointer" style="cursor: pointer;">${client.name}</div>`
+                    `<div class="autocomplete-item p-2 border-bottom cursor-pointer" style="cursor: pointer;" data-id="${client._id}">${client.name}</div>`
                 ).join('');
                 suggestions.classList.remove('d-none');
             } else {
@@ -102,7 +102,7 @@ export class ClientSearch {
             if (e.target.classList.contains('autocomplete-item')) {
                 clientInput.value = e.target.textContent;
                 suggestions.classList.add('d-none');
-                this.applyFilters();
+                bus.emit('table:refresh', { _id: e.target.dataset.id, name: clientInput.value });
             }
         });
 
@@ -146,7 +146,7 @@ export class ClientSearch {
                 if (activeItem) {
                     clientInput.value = activeItem.textContent;
                     suggestions.classList.add('d-none');
-                    bus.emit('table:refresh', { name: clientInput.value });
+                    bus.emit('table:refresh', { _id: activeItem.dataset.id, name: clientInput.value });
                 }
             } else if (e.key === 'Escape') {
                 suggestions.classList.add('d-none');
@@ -154,7 +154,7 @@ export class ClientSearch {
                 // Check if input becomes empty after the key is processed
                 setTimeout(() => {
                     if (clientInput.value.trim() === '') {
-                        bus.emit('table:refresh', { name: '' });
+                        bus.emit('table:refresh', { _id: '', name: '' });
                     }
                 }, 0);
             }
