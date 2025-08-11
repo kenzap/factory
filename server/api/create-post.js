@@ -36,7 +36,7 @@ async function createPost(data) {
                 js = EXCLUDED.js
             RETURNING _id`;
 
-        const params = [data._id, 0, 'blog-post', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
+        const params = [data._id, 0, 'blog-post', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 
         const result = await db.query(query, params);
 

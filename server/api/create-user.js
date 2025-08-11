@@ -30,7 +30,7 @@ async function createUser(data) {
             js = EXCLUDED.js
         RETURNING _id`;
 
-    const params = [data._id, 0, 'user', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
+    const params = [data._id, 0, 'user', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 
     try {
 

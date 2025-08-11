@@ -46,7 +46,7 @@
 .table-container { height: 500px; overflow: auto; }
 
 .tabulator {
-    font-size: 12px;
+    font-size: 14px;
 }
 
 .tabulator .tabulator-header .tabulator-col {

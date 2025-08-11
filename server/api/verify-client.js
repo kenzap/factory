@@ -92,40 +92,6 @@ async function verifyClient(data) {
     } catch (error) {
         return { success: false, error: error.message };
     }
-
-    // const client = getDbConnection();
-
-    // if (!data) return { success: false, error: 'no data provided' };
-
-    // // fac3f1a7e335d4fd27b0c20910e37157a234f3ed
-    // if (!data._id) data._id = makeId();
-
-    // let response = null;
-
-    // // Get orders
-    // let query = `
-    //     INSERT INTO data (_id, pid, ref, sid, js)
-    //     VALUES ($1, $2, $3, $4, $5)
-    //     ON CONFLICT (_id)
-    //     DO UPDATE SET
-    //         js = EXCLUDED.js
-    //     RETURNING _id`;
-
-    // const params = [data._id, 0, '3dfactory-entity', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
-
-    // try {
-
-    //     await client.connect();
-
-    //     const result = await client.query(query, params);
-
-    //     response = result.rows;
-
-    // } finally {
-    //     await client.end();
-    // }
-
-    // return response;
 }
 
 // Simple API route

@@ -25,8 +25,8 @@ async function createWorkLog(data) {
             data._id = makeId();
         }
 
-        data.created = Date.now();
-        data.updated = Date.now();
+        data.created = Math.floor(Date.now() / 1000);
+        data.updated = Math.floor(Date.now() / 1000);
         data.date = new Date().toISOString();
 
         // Get orders
@@ -38,7 +38,7 @@ async function createWorkLog(data) {
                 js = EXCLUDED.js
             RETURNING _id, js->'data'->>'id' as "id"`;
 
-        const params = [data._id, 0, 'worklog', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
+        const params = [data._id, 0, 'worklog', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 
         const result = await db.query(query, params);
 

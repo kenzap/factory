@@ -18,13 +18,15 @@ class Orders {
     constructor() {
 
         this.table = null;
+        this.firstLoad = true;
         this.selectedRows = [];
         this.modal = null;
         this.filters = {
+            for: "orders",
             client: '',
             dateFrom: '',
             dateTo: '',
-            type: '2' // Default to 'All'
+            type: '' // Default to 'All'
         };
 
         // connect to backend
@@ -86,33 +88,34 @@ class Orders {
                                 <div class="col-md-3">
                                     <client-search></client-search>
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-none">From:</label>
+                                <div class="col-md-1">
+                                    <label class="form-label d-none">${__html('From:')}</label>
                                     <input type="date" class="form-control" id="dateFrom">
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-none">To:</label>
+                                <div class="col-md-1">
+                                    <label class="form-label d-none">${__html('To:')}</label>
                                     <input type="date" class="form-control" id="dateTo">
                                 </div>
-                                <div class="col-md-2">
-                                    <label class="form-label d-none">Type:</label>
+                                <div class="col-md-1">
+                                    <label class="form-label d-none">${__html('Type:')}</label>
                                     <select class="form-select" id="typeFilter">
-                                        <option value="2">All</option>
-                                        <option value="1">Processed</option>
-                                        <option value="0">Orders</option>
+                                        <option value="">${__html('All')}</option>
+                                        <option value="draft">${__html('Draft')}</option>
+                                        <option value="issued">${__html('Issued')}</option>
+                                        <option value="manufactured">${__html('Manufactured')}</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 d-flex justify-content-end">
+                                <div class="col-md-6 d-flex justify-content-end">
                                     <label class="form-label d-none">&nbsp;</label>
-                                    <div class="btn-group d-block">
-                                        <button class="btn btn-primary" id="refreshBtn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-repeat" viewBox="0 0 16 16"><path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41m-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9"/><path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5 5 0 0 0 8 3M3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9z"/></svg> ${__html('Refresh')}
+                                    <div class="btn-group d-flex">
+                                        <button class="btn btn-primary d-flex align-items-center" id="refreshBtn">
+                                            <i class="bi bi-arrow-repeat d-flex me-1"></i> ${__html('Refresh')}
                                         </button>
-                                        <button class="btn btn-info" id="reportBtn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM1.6 11.85H0v3.999h.791v-1.342h.803q.43 0 .732-.173.305-.175.463-.474a1.4 1.4 0 0 0 .161-.677q0-.375-.158-.677a1.2 1.2 0 0 0-.46-.477q-.3-.18-.732-.179m.545 1.333a.8.8 0 0 1-.085.38.57.57 0 0 1-.238.241.8.8 0 0 1-.375.082H.788V12.48h.66q.327 0 .512.181.185.183.185.522m1.217-1.333v3.999h1.46q.602 0 .998-.237a1.45 1.45 0 0 0 .595-.689q.196-.45.196-1.084 0-.63-.196-1.075a1.43 1.43 0 0 0-.589-.68q-.396-.234-1.005-.234zm.791.645h.563q.371 0 .609.152a.9.9 0 0 1 .354.454q.118.302.118.753a2.3 2.3 0 0 1-.068.592 1.1 1.1 0 0 1-.196.422.8.8 0 0 1-.334.252 1.3 1.3 0 0 1-.483.082h-.563zm3.743 1.763v1.591h-.79V11.85h2.548v.653H7.896v1.117h1.606v.638z"/></svg> ${__html('Report')}
+                                        <button class="btn btn-info d-flex align-items-center" id="reportBtn">
+                                            <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
                                         </button>
-                                        <button class="btn btn-danger" id="deleteBtn">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-trash" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5m3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0z"/><path d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4zM2.5 3h11V2h-11z"/></svg> ${__html('Delete')}
+                                        <button class="btn btn-danger d-flex align-items-center" id="deleteBtn">
+                                           <i class="bi bi-trash d-flex me-1"></i> ${__html('Delete')}
                                         </button>
                                     </div>
                                 </div>
@@ -145,17 +148,36 @@ class Orders {
     // init page listeners
     listeners = () => {
 
+        if (!this.firstLoad) return;
+
         // Filter event listeners
-        // document.getElementById('clientFilter').addEventListener('change', () => this.applyFilters());
         document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = e.currentTarget.value; this.data() });
         document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value; this.data() });
-        document.getElementById('typeFilter').addEventListener('change', () => this.data());
+        document.getElementById('typeFilter').addEventListener('change', (e) => { this.filters.type = e.currentTarget.value; this.data(); });
 
         // Button event listeners
         document.getElementById('refreshBtn').addEventListener('click', () => this.data());
         document.getElementById('reportBtn').addEventListener('click', () => this.generateReport());
         document.getElementById('deleteBtn').addEventListener('click', () => this.deleteSelected());
-        // document.getElementById('saveBtn').addEventListener('click', () => this.saveChanges());
+
+        // Clear date input on backspace
+        document.getElementById('dateFrom').addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace') {
+                e.target.value = '';
+                this.filters.dateFrom = '';
+                this.data();
+            }
+        });
+
+        document.getElementById('dateTo').addEventListener('keydown', (e) => {
+            if (e.key === 'Backspace') {
+                e.target.value = '';
+                this.filters.dateTo = '';
+                this.data();
+            }
+        });
+
+        this.firstLoad = false;
     }
 
     setupTable() {
@@ -186,7 +208,9 @@ class Orders {
                     width: 100,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        const date = new Date(value * 1000);
+                        const row = cell.getRow().getData();
+                        const timestamp = value || row.created2;
+                        const date = new Date(timestamp * 1000);
                         return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
                     }
                 },
@@ -197,6 +221,18 @@ class Orders {
                     formatter: function (cell) {
                         const value = cell.getValue();
                         return `<span class="fw-bold text-dark">${value}</span>`;
+                    }
+                },
+                {
+                    title: __html("Draft"),
+                    field: "draft",
+                    width: 80,
+                    formatter: function (cell) {
+                        const value = cell.getValue();
+                        if (value === true) {
+                            return `<div class="badge bg-warning text-dark fw-light">${__html('Draft')}</div>`;
+                        }
+                        return "";
                     }
                 },
                 {
@@ -228,74 +264,88 @@ class Orders {
                 {
                     title: __html("Due Date & Time"),
                     field: "due_date",
-                    width: 100,
+                    width: 150,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<span class="fw-bold text-success">${value}</span>`;
+                        if (!value) return '';
+                        const date = new Date(value);
+                        return `<span class="fw-bold text-success">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>`;
                     }
                 },
+                // {
+                //     title: "Manufacturing Date",
+                //     field: "inventory",
+                //     width: 110,
+                //     formatter: (cell) => {
+                //         const inventory = cell.getValue();
+                //         if (!inventory || !inventory.isu_date || inventory.isu_date === '0000-00-00') return '';
+                //         const isu_date = new Date(inventory.isu_date);
+                //         return `<span class="fw-bold text-success">${isu_date.toLocaleDateString()}</span>`;
+                //     },
+                // },
+                // {
+                //     title: "Issue Date",
+                //     field: "inventory",
+                //     width: 110,
+                //     formatter: (cell) => {
+                //         const inventory = cell.getValue();
+                //         if (!inventory || !inventory.mnf_date || inventory.mnf_date === '0000-00-00') return '';
+                //         const mnf_date = new Date(inventory.mnf_date);
+                //         return `<span class="fw-bold text-success">${mnf_date.toLocaleDateString()}</span>`;
+                //     },
+                // },
                 {
-                    title: "Manufacturing Date",
-                    field: "mnf_date",
+                    title: "Payment",
+                    field: "payment",
                     width: 100,
                     formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value === '0000-00-00' ? '' : `<span class="fw-bold text-success">${value}</span>`;
-                    }
+                        const payment = cell.getValue();
+                        if (!payment || !payment.date || payment.date === '0000-00-00') return '';
+                        const date = new Date(payment.date);
+                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                    },
                 },
                 {
-                    title: "Dispatch Date",
-                    field: "dsp_date",
+                    title: "Invoice",
+                    field: "invoice",
                     width: 100,
                     formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value === '0000-00-00' ? '' : `<span class="fw-bold text-success">${value}</span>`;
-                    }
-                },
-                {
-                    title: "Invoice Date",
-                    field: "inv_date",
-                    width: 100,
-                    formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value === '0000-00-00' ? '' : `<span class="text-success">${value}</span>`;
-                    }
+                        const waybill = cell.getValue();
+                        if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
+                        const date = new Date(waybill.date);
+                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                    },
                 },
                 {
                     title: "Invoice #",
                     field: "invoice",
-                    width: 90,
+                    width: 110,
                     formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value == 0 ? '' : `<span class="fw-bold text-success">${value}</span>`;
-                    }
+                        const waybill = cell.getValue();
+                        if (!waybill || !waybill.number) return '';
+                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                    },
                 },
                 {
-                    title: "Payment Date",
-                    field: "pay_date",
+                    title: "Waybill",
+                    field: "waybill",
                     width: 100,
                     formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value === '0000-00-00' ? '' : `<span class="text-success">${value}</span>`;
-                    }
-                },
-                {
-                    title: "Waybill Date",
-                    field: "wbl_date",
-                    width: 100,
-                    formatter: (cell) => {
-                        const value = cell.getValue();
-                        return value === '0000-00-00' ? '' : `<span class="fw-bold text-success">${value}</span>`;
-                    }
+                        const waybill = cell.getValue();
+                        if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
+                        const date = new Date(waybill.date);
+                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                    },
                 },
                 {
                     title: "Waybill #",
                     field: "waybill",
-                    width: 90,
+                    width: 110,
                     formatter: (cell) => {
-                        const value = cell.getValue();
-                        return `<span class="fw-bold text-danger">${value}</span>`;
-                    }
+                        const waybill = cell.getValue();
+                        if (!waybill || !waybill.number) return '';
+                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                    },
                 },
                 { title: __html("Operator"), field: "operator", width: 100 },
                 {
@@ -338,24 +388,25 @@ class Orders {
 
         const data = this.table.getData("active");
         const count = data.length;
-        let totalSum = 0;
-        let bankSum = 0;
-        let pvdzSum = 0;
+        let order_total = 0;
+        let payment_total = 0;
+        let waybill_total = 0;
 
         data.forEach(row => {
             const amount = parseFloat(row.total) || 0;
-            totalSum += amount;
+            order_total += amount;
 
-            if (row.bandat && row.bandat !== '0000-00-00') {
-                bankSum += amount;
+            row.payment = row.payment || {};
+
+            if (row.payment.amount && row.payment.date) {
+                payment_total += parseFloat(row.payment.amount) || 0;
             }
 
-            if (row.pavdat && row.pavdat !== '0000-00-00') {
-                pvdzSum += amount;
+            if (row.waybill && row.waybill) {
+                waybill_total += amount;
             }
         });
 
-        console.log(`Summary - Count: ${count}, Total: ${totalSum}, Bank: ${bankSum}, PVDZ: ${pvdzSum}`);
         const footerContents = document.querySelector('.tabulator-footer-contents');
         if (footerContents) {
             // Create summary table
@@ -364,10 +415,10 @@ class Orders {
             summaryTable.innerHTML = `
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
-                                <td class="p-1 pe-2"><i class="fas fa-hashtag"></i> ${count}</td>
-                                <td class="p-1 pe-2"><i class="fas fa-euro-sign me-1 d-none"></i> €${totalSum.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="fas fa-university me-1"></i> €${bankSum.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="fas fa-receipt me-1"></i> €${pvdzSum.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-2"><i class="bi bi-hash"></i> ${count}</td>
+                                <td class="p-1 pe-2"><i class="bi bi-currency-euro me-1 d-none"></i> €${order_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-2"><i class="bi bi-bank me-1"></i> €${payment_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-2"><i class="bi bi-receipt me-1"></i> €${waybill_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
                         </table>
                     `;

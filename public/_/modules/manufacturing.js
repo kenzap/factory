@@ -7,7 +7,7 @@ export const getHtml = () => {
     <nav class="manufacturing-cont px-3 navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="#">
-                <i class="bi bi-box-seam me-2"></i>${__html('Stock')}
+                <i class="bi bi-box-seam me-2"></i>${__html('Manufacturing')}
             </a>
             
             <!-- Search Container -->

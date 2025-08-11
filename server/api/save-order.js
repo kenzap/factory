@@ -38,7 +38,7 @@ async function saveOrder(data) {
             js = EXCLUDED.js
         RETURNING _id, js->'data'->>'id' as "id"`;
 
-        const params = [data._id, 0, 'ecommerce-order', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
+        const params = [data._id, 0, 'ecommerce-order', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 
         const result = await client.query(query, params);
 

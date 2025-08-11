@@ -73,7 +73,7 @@ async function execOrderItemAction(actions) {
 
             const itemResult = await client.query(itemQuery, [actions.inventory.order_id, 'ecommerce-order', sid]);
 
-            console.log('execOrderItemAction itemResult', itemResult.rows[0]);
+            // console.log('execOrderItemAction itemResult', itemResult.rows[0]);
 
             let i = actions.inventory.index;
             let items = itemResult.rows[0]?.items || [];

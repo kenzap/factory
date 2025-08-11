@@ -21,12 +21,12 @@ class Manufacturing {
         this.autoUpdateInterval = null;
         this.mouseTime = Date.now() / 1000;
         this.filters = {
+            for: "manufacturing",
             client: '',
             dateFrom: '',
             dateTo: '',
-            draft: false,
             items: true,
-            type: '2' // Default to 'All'
+            type: '' // Default to 'All'
         };
 
         this.stats = {
@@ -145,7 +145,13 @@ class Manufacturing {
 
             // session
             new Session();
-            new Header(response);
+            new Header({
+                hidden: false,
+                title: __html('Manufacturing'),
+                icon: 'card-text',
+                style: 'navbar-light',
+                menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
+            });
 
             this.view();
 
@@ -634,6 +640,8 @@ class Manufacturing {
                 toast(__html('Error updating item status'));
                 return;
             }
+
+            if (!order.items[i].inventory) order.items[i].inventory = {};
 
             order.items[i].inventory.amount = actions.inventory.amount;
             order.items[i].inventory.mnf_date = actions.inventory.mnf_date;

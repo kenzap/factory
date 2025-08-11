@@ -100,10 +100,10 @@ class Transactions {
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('Type:')}</label>
                                     <select class="form-select" id="typeFilter">
-                                    <option value="">${__html('All')}</option>
-                                    <option value="paid">${__html('Paid')}</option>
-                                    <option value="unpaid">${__html('Unpaid')}</option>
-                                    <option value="transaction">${__html('Transaction')}</option>
+                                        <option value="">${__html('All')}</option>
+                                        <option value="paid">${__html('Paid')}</option>
+                                        <option value="unpaid">${__html('Unpaid')}</option>
+                                        <option value="transaction">${__html('Transaction')}</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 d-flex justify-content-end">
