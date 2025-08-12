@@ -3,6 +3,7 @@ import { getOrders } from "../_/api/get_orders.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
+import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { getHtml } from "../_/modules/manufacturing.js";
 import { Modal } from "../_/modules/modal.js";
@@ -283,7 +284,7 @@ class Manufacturing {
                         </div>
                     </div>
                     <div class="col-md-5 po px-0 py-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <div class="company-name">${this.formatCompanyName(order.name)}</div>
+                        <div class="company-name">${formatCompanyName(order)}</div>
                         <small class="text-muted elipsized">${order.notes}</small>
                     </div>
                     <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
@@ -408,19 +409,6 @@ class Manufacturing {
             console.error('Error loading order details:', error);
             toast('Error ' + error);
         }
-    }
-
-    formatCompanyName(company) {
-
-        // Detect physical persons and abbreviate
-        if (company.toLowerCase().indexOf(' sia') === -1 &&
-            company.toLowerCase().indexOf(' bdr') === -1 &&
-            company.toLowerCase().indexOf(' as') === -1 &&
-            company.indexOf(' ') > 0) {
-            const parts = company.split(' ');
-            return parts[0].substring(0, 1) + parts[1].substring(0, 1);
-        }
-        return company;
     }
 
     getStock(order_id) {

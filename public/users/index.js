@@ -60,7 +60,13 @@ class Users {
             new Session();
 
             // init header
-            new Header(response);
+            new Header({
+                hidden: false,
+                title: __html('Users'),
+                icon: 'person',
+                style: 'navbar-light',
+                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+            });
 
             // init footer
             new Footer(response);

@@ -6,7 +6,7 @@ export const getHtml = () => {
     <!-- Navigation -->
     <nav class="manufacturing-cont px-3 navbar navbar-expand-lg navbar-dark fixed-top">
         <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">
+            <a class="navbar-brand fw-bold" href="/home/">
                 <i class="bi bi-box-seam me-2"></i>${__html('Manufacturing')}
             </a>
             

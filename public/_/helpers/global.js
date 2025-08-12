@@ -300,6 +300,22 @@ export const formatTime = (timestamp) => {
     return date.toLocaleDateString();
 }
 
+export const formatDate = (iso) => {
+
+    if (!iso) return '';
+
+    const today = new Date();
+    const date = new Date(iso);
+    const diffTime = date.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return __html('Today');
+    if (diffDays === 1) return __html('Tomorrow');
+    if (diffDays === -1) return __html('Yesterday');
+
+    return date.toLocaleDateString();
+}
+
 // numbers only with allowed exceptions
 export const onlyNumbers = (sel, chars) => {
 
@@ -1268,6 +1284,17 @@ export const toast = (text, type = 'success') => {
     let toast = new bootstrap.Toast(document.querySelector('.toast'));
     document.querySelector('.toast .toast-body').innerHTML = __html(text);
     toast.show();
+}
+
+export const mapHexColor = (slug) => {
+
+    this.colors = { 'RR11': { hex_bg: '#14360f', hex_text: '#ffffff' }, 'RR20': { hex_bg: '#f5f9fc', hex_text: '#000000' }, 'RR21': { hex_bg: '#c0c0c0', hex_text: '#000000' }, 'RR22': { hex_bg: '#878a89', hex_text: '#000000' }, 'RR23': { hex_bg: '#37383d', hex_text: '#ffffff' }, 'RR29': { hex_bg: '#681a11', hex_text: '#ffffff' }, 'RR30': { hex_bg: '#cebb7f', hex_text: '#000000' }, 'RR32': { hex_bg: '#2f2218', hex_text: '#ffffff' }, 'RR33': { hex_bg: '#000000', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#32211f', hex_text: '#ffffff' }, 'RR750': { hex_bg: '#7e2f0d', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#37130d', hex_text: '#ffffff' }, 'RR946': { hex_bg: '#afafaf', hex_text: '#000000' }, '2H3': { hex_bg: '#28292b', hex_text: '#ffffff' } };
+
+    if (colors.hasOwnProperty(slug)) {
+        return colors[slug];
+    } else {
+        return { hex_bg: '#f5f9fc', hex_text: '#000000' };
+    }
 }
 
 // Country names object using 2-letter country codes to reference country name

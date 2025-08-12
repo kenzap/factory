@@ -40,7 +40,7 @@ export class Header {
             <!-- Navigation -->
             <nav class="header px-3 navbar navbar-expand-lg ${this.response.style || 'navbar-light'} fixed-top ${this.response.hidden ? 'd-none' : ''}" id="header">
                 <div class="container-fluid">
-                    <a class="navbar-brand fw-bold" href="/home/">
+                    <a class="navbar-brand fw-bold" href="${this.response.home || '/home/'}">
                         <i class="bi bi-${this.response.icon || 'boxes'} me-2"></i>${this.response.title || __html('Dashboard')}
                     </a>
                     

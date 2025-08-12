@@ -40,7 +40,15 @@ class Settings {
             new Session();
 
             // render header and footer
-            new Header(response);
+            new Header(
+                {
+                    hidden: false,
+                    title: __html('Settings'),
+                    icon: 'gear',
+                    style: 'navbar-light',
+                    menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+                }
+            );
             new Footer();
 
             // html

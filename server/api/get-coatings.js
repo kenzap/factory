@@ -2,15 +2,15 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getLocale, getSettings } from '../_/helpers/index.js';
 
 // API route
-function homeApi(app) {
+function getCoatingsApi(app) {
 
-    app.post('/api/home/', authenticateToken, async (_req, res) => {
+    app.post('/api/get-coatings/', authenticateToken, async (_req, res) => {
 
         const locale = await getLocale(_req.headers.locale);
-        const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);
+        const settings = await getSettings(["var_parent", "textures"]);
 
         res.json({ success: true, user: _req.user, settings, locale });
     });
 }
 
-export default homeApi;
+export default getCoatingsApi;

@@ -20,6 +20,7 @@ body {
   margin-top: 80px;
 }
 
+/* header */
 .navbar {
     background: var(--gray-color) !important;
     backdrop-filter: blur(10px);
@@ -121,29 +122,6 @@ body {
     /* color: var(--secondary-color); */
     font-weight: 600;
 }
-
-/* .action-btn {
-    border-radius: 20px;
-    padding: 8px 16px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    border: none;
-    white-space: nowrap;
-}
-
-.action-btn:hover {
-    transform: scale(1.05);
-} */
-
-/* .btn-issue {
-    background: linear-gradient(45deg, var(--success-color), #2ecc71);
-    color: white;
-}
-
-.btn-issue:hover {
-    background: linear-gradient(45deg, #2ecc71, var(--success-color));
-    color: white;
-} */
 
 .sub-items-row{
     margin-bottom: 2px;

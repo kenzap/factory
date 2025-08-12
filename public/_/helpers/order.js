@@ -25,3 +25,25 @@ export const getColors = (settings) => {
     const distinctCoatings = [...new Set(settings.price.map(item => item.title))];
     return distinctCoatings;
 }
+
+/**
+ * The purpose of this function is to format a company name for display. And hide individual names for physical persons.
+ * It checks if the company name contains certain abbreviations (like "SIA", "BDR", "AS") and if it does not,
+ * it abbreviates the name to the first letter of the first two words.
+ * @param {Object} settings - The settings object containing price information
+ * @returns 
+ */
+export const formatCompanyName = (order) => {
+
+    let company = order.name || '';
+
+    // Detect physical persons and abbreviate
+    if (company.toLowerCase().indexOf(' sia') === -1 &&
+        company.toLowerCase().indexOf(' bdr') === -1 &&
+        company.toLowerCase().indexOf(' as') === -1 &&
+        company.indexOf(' ') > 0) {
+        const parts = company.split(' ');
+        return parts[0].substring(0, 1) + parts[1].substring(0, 1);
+    }
+    return company;
+}
