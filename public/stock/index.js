@@ -1,10 +1,12 @@
 import { getProducts } from "../_/api/get_products.js";
 import { saveStockAmount } from "../_/api/save_stock_amount.js";
+import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
 import { __html, hideLoader, onChange, onClick, toast } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
+
 
 /**
  * Stock log.
@@ -248,18 +250,21 @@ class Stock {
 
                 // Product name cell with category badge
                 const productCell = document.createElement('td');
-                productCell.className = 'product-name';
+                productCell.className = 'product-name py-1';
                 productCell.innerHTML = `
-                <div>
-                    ${product.title} 
-                    ${product.sdesc ? `<small class="text-muted fw-normal">${product.sdesc}</small>` : ''}
-                </div> `;
+                <div class="product-name-container d-flex align-items-center">
+                    <i class="bi bi-plus fs-6 py-1 pe-2 po" onclick="stock.addSupply('${product._id}','${product.title}','${coating}');" ></i>
+                    <div class="d-flex flex-column justify-content-center">
+                        ${product.title} 
+                        ${product.sdesc ? `<small class="text-muted fw-normal">${product.sdesc}</small>` : ''}
+                    </div>
+                </div>`;
 
                 row.appendChild(productCell);
 
                 // Product coating
                 const coatingCell = document.createElement('td');
-                coatingCell.className = 'product-coating';
+                coatingCell.className = 'product-coating ';
                 coatingCell.innerHTML = `
                 <div>
                     ${coating}
@@ -308,6 +313,16 @@ class Stock {
         return "";
     }
 
+    addSupply(product_id, product_name, coating) {
+
+        new AddStockSupply({ product_id, product_name, coating }, (response) => {
+            if (!response.success) {
+                toast(__html('Error opening log: ') + response.error);
+                return;
+            }
+        });
+    }
+
     getStockClass(quantity) {
         if (quantity === 0) return 'out-of-stock';
         if (quantity <= 25) return 'very-low-stock';
@@ -316,4 +331,4 @@ class Stock {
     }
 }
 
-new Stock();
+window.stock = new Stock();

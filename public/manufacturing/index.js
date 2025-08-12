@@ -499,10 +499,10 @@ class Manufacturing {
             });
 
             document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
-                    <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
-                        </i> ${toLocalUserDate(mostRecentIssueDate)} ${toLocalUserTime(mostRecentIssueDate)}
-                    </button>
-                `;
+                <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
+                    </i> ${toLocalUserDate(mostRecentIssueDate)} ${toLocalUserTime(mostRecentIssueDate)}
+                </button>
+            `;
         }
 
         // checkboxes enable/disable
