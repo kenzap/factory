@@ -43,7 +43,7 @@
 .table-container { height: 500px; overflow: auto; }
 
 .tabulator {
-    font-size: 14px;
+    font-size: 16px;
 }
 
 .tabulator .tabulator-header .tabulator-col {
@@ -64,6 +64,7 @@
 
 .tabulator .tabulator-row {
     min-height: 25px;
+    border-bottom: 0;
 }
 
 .toolbar {

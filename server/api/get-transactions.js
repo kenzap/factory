@@ -23,7 +23,8 @@ async function getTransactions(filters = { client: { name: "" }, dateFrom: '', d
                 COALESCE(js->'data'->>'notes', '') as notes,
                 COALESCE(js->'data'->>'operator', '') as operator,
                 COALESCE(js->'data'->'price'->>'total', '') as total,
-                COALESCE(js->'data'->>'created', '') as created,
+                COALESCE(js->'meta'->>'created', '') as created,
+                COALESCE(js->'data'->>'created', '') as created2,
                 js->'data'->'invoice' as invoice,
                 js->'data'->'payment' as payment,
                 js->'data'->'waybill' as waybill

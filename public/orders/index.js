@@ -1,5 +1,5 @@
+import { ClientSearch } from "../_/components/entity/client_search.js";
 import { getOrders } from "/_/api/get_orders.js";
-import { ClientSearch } from "/_/components/entity/client_search.js";
 import { __html, hideLoader, priceFormat } from "/_/helpers/global.js";
 import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
 import { bus } from "/_/modules/bus.js";
@@ -90,15 +90,15 @@ class Orders {
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('From:')}</label>
-                                    <input type="date" class="form-control" id="dateFrom">
+                                    <input type="date" class="form-control border-0" id="dateFrom">
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('To:')}</label>
-                                    <input type="date" class="form-control" id="dateTo">
+                                    <input type="date" class="form-control border-0" id="dateTo">
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('Type:')}</label>
-                                    <select class="form-select" id="typeFilter">
+                                    <select class="form-select border-0" id="typeFilter">
                                         <option value="">${__html('All')}</option>
                                         <option value="draft">${__html('Draft')}</option>
                                         <option value="issued">${__html('Issued')}</option>
@@ -107,14 +107,14 @@ class Orders {
                                 </div>
                                 <div class="col-md-6 d-flex justify-content-end">
                                     <label class="form-label d-none">&nbsp;</label>
-                                    <div class="btn-group d-flex">
-                                        <button class="btn btn-primary d-flex align-items-center" id="refreshBtn">
+                                    <div class="btn-group d-flex gap-0" role="group">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="refreshBtn">
                                             <i class="bi bi-arrow-repeat d-flex me-1"></i> ${__html('Refresh')}
                                         </button>
-                                        <button class="btn btn-info d-flex align-items-center" id="reportBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="reportBtn">
                                             <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
                                         </button>
-                                        <button class="btn btn-danger d-flex align-items-center" id="deleteBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="deleteBtn">
                                            <i class="bi bi-trash d-flex me-1"></i> ${__html('Delete')}
                                         </button>
                                     </div>
@@ -205,19 +205,19 @@ class Orders {
                 {
                     title: __html("Date"),
                     field: "created",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const value = cell.getValue();
                         const row = cell.getRow().getData();
                         const timestamp = value || row.created2;
                         const date = new Date(timestamp * 1000);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     }
                 },
                 {
                     title: __html("Client"),
                     field: "name",
-                    minWidth: 150,
+                    minWidth: 200,
                     formatter: function (cell) {
                         const value = cell.getValue();
                         return `<span class="fw-bold text-dark">${value}</span>`;
@@ -230,7 +230,7 @@ class Orders {
                     formatter: function (cell) {
                         const value = cell.getValue();
                         if (value === true) {
-                            return `<div class="badge bg-warning text-dark fw-light rounded-pill-">${__html('Draft')}</div>`;
+                            return `<div class="item-status status-warning">${__html('Draft')}</div>`;
                         }
                         return "";
                     }
@@ -258,18 +258,29 @@ class Orders {
                     width: 120,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<span class="fw-bold text-danger">${priceFormat(self.settings, value)}</span>`;
+                        return `<span>${priceFormat(self.settings, value)}</span>`;
                     }
                 },
                 {
-                    title: __html("Due Date & Time"),
+                    title: __html("Due Date"),
                     field: "due_date",
-                    width: 150,
+                    width: 120,
                     formatter: (cell) => {
                         const value = cell.getValue();
                         if (!value) return '';
                         const date = new Date(value);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()} ${date.toLocaleTimeString()}</span>`;
+                        return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
+                    }
+                },
+                {
+                    title: __html("Time"),
+                    field: "due_date",
+                    width: 80,
+                    formatter: (cell) => {
+                        const value = cell.getValue();
+                        if (!value) return '';
+                        const date = new Date(value);
+                        return `<span class="fw-bold- text-success-">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
                     }
                 },
                 // {
@@ -297,23 +308,23 @@ class Orders {
                 {
                     title: "Payment",
                     field: "payment",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const payment = cell.getValue();
                         if (!payment || !payment.date || payment.date === '0000-00-00') return '';
                         const date = new Date(payment.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span class="item-status status-success">${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
                     title: "Invoice",
                     field: "invoice",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -323,18 +334,18 @@ class Orders {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                        return `<span class="item-status status-danger">INV-${waybill.number}</span>`;
                     },
                 },
                 {
                     title: "Waybill",
                     field: "waybill",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -344,23 +355,22 @@ class Orders {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                        return `<span class="item-status status-danger">${waybill.number}</span>`;
                     },
                 },
                 { title: __html("Operator"), field: "operator", width: 100 },
                 {
                     title: __html("Notes"),
                     field: "notes",
-                    minWidth: 120,
+                    minWidth: 180,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<span class="fw-bold text-dark" title="${value}">${value}</span>`;
+                        return `<span class="fw-bold- text-dark-" title="${value}">${value}</span>`;
                     }
                 }
             ],
             rowSelectionChanged: (data, rows) => {
                 this.selectedRows = rows;
-                // this.updateSummary();
             },
             cellDblClick: (e, cell) => {
                 this.editRow(cell.getRow().getData());
@@ -415,10 +425,10 @@ class Orders {
             summaryTable.innerHTML = `
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
-                                <td class="p-1 pe-2"><i class="bi bi-hash"></i> ${count}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-currency-euro me-1 d-none"></i> €${order_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-bank me-1"></i> €${payment_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-receipt me-1"></i> €${waybill_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-hash"></i> ${count}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${order_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${payment_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${waybill_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
                         </table>
                     `;

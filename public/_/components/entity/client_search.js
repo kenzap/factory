@@ -31,7 +31,7 @@ export class ClientSearch {
             <div class="autocomplete-container position-relative">
                 <input 
                     type="text" 
-                    class="form-control" 
+                    class="form-control border-0" 
                     id="clientFilter" 
                     placeholder="Search or enter client name..."
                     autocomplete="off"

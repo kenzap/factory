@@ -91,15 +91,15 @@ class Transactions {
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('From:')}</label>
-                                    <input type="date" class="form-control" id="dateFrom">
+                                    <input type="date" class="form-control border-0" id="dateFrom">
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('To:')}</label>
-                                    <input type="date" class="form-control" id="dateTo">
+                                    <input type="date" class="form-control border-0" id="dateTo">
                                 </div>
                                 <div class="col-md-1">
                                     <label class="form-label d-none">${__html('Type:')}</label>
-                                    <select class="form-select" id="typeFilter">
+                                    <select class="form-select border-0" id="typeFilter">
                                         <option value="">${__html('All')}</option>
                                         <option value="paid">${__html('Paid')}</option>
                                         <option value="unpaid">${__html('Unpaid')}</option>
@@ -108,20 +108,20 @@ class Transactions {
                                 </div>
                                 <div class="col-md-6 d-flex justify-content-end">
                                     <label class="form-label d-none">&nbsp;</label>
-                                    <div class="btn-group d-flex">
-                                        <button class="btn btn-outline-primary d-flex align-items-center" id="refreshBtn">
+                                    <div class="btn-group d-flex d-flex gap-0" role="group">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="refreshBtn">
                                             <i class="bi bi-arrow-repeat d-flex me-1"></i> ${__html('Refresh')}
                                         </button>
-                                        <button class="btn btn-outline-primary d-flex align-items-center" id="saveBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="saveBtn">
                                             <i class="bi bi-check-circle d-flex me-1"></i> ${__html('Save')}
                                         </button>
-                                        <button class="btn btn-outline-primary d-flex align-items-center" id="reportBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="reportBtn">
                                             <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
                                         </button>
-                                        <button class="btn btn-outline-danger d-flex align-items-center" id="addBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="addBtn">
                                             <i class="bi bi-plus-circle d-flex me-1"></i> ${__html('Add')}
                                         </button>
-                                        <button class="btn btn-outline-danger d-flex align-items-center" id="deleteBtn">
+                                        <button class="btn btn-outline-dark d-flex align-items-center" id="deleteBtn">
                                             <i class="bi bi-trash d-flex me-1"></i> ${__html('Delete')}
                                         </button>
                                     </div>
@@ -207,20 +207,23 @@ class Transactions {
                 {
                     title: "ID",
                     field: "id",
-                    width: 80,
+                    width: 100,
                     formatter: (cell) => {
                         const value = cell.getValue();
+                        if (!value) return `<span class="item-status status-danger">${__html('transaction')}</span>`;
                         return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                     }
                 },
                 {
                     title: __html("Date"),
                     field: "created",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        const date = new Date(value * 1000);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        const row = cell.getRow().getData();
+                        const timestamp = value || row.created2;
+                        const date = new Date(timestamp * 1000);
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     }
                 },
                 {
@@ -238,13 +241,13 @@ class Transactions {
                     width: 120,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<span class="fw-bold text-danger">${priceFormat(self.settings, value)}</span>`;
+                        return `<span>${priceFormat(self.settings, value)}</span>`;
                     }
                 },
                 {
                     title: __html("Payment"),
                     field: "payment",
-                    width: 160,
+                    width: 120,
                     sorter: (a, b) => {
                         const dateA = a && a.date ? new Date(a.date).getTime() : 0;
                         const dateB = b && b.date ? new Date(b.date).getTime() : 0;
@@ -254,7 +257,7 @@ class Transactions {
                         const payment = cell.getValue();
                         if (!payment || !payment.date || payment.date === '0000-00-00') return '';
                         const date = new Date(payment.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span class="item-status status-success">${date.toLocaleDateString()}</span>`;
                     },
                     cellClick: (e, cell) => {
                         // Create date input element
@@ -331,7 +334,7 @@ class Transactions {
                         const rowData = cell.getRow().getData();
                         const isEdited = this.editedRows && this.editedRows.has(rowData.id);
                         const bgClass = isEdited ? 'bg-warning bg-opacity-25' : '';
-                        return `<span class="fw-bold ${amount < 0 ? 'text-danger' : 'text-success'} ${bgClass}">${amount || ""}</span>`;
+                        return `<span class="fw-bold- ${amount < 0 ? 'text-danger' : 'text-success-'} ${bgClass}">${amount ? priceFormat(self.settings, amount) : ""}</span>`;
                     },
                     cellClick: (e, cell) => {
 
@@ -429,12 +432,12 @@ class Transactions {
                 {
                     title: "Invoice",
                     field: "invoice",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -444,18 +447,18 @@ class Transactions {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                        return `<span class="item-status status-danger">INV-${waybill.number}</span>`;
                     },
                 },
                 {
                     title: "Waybill",
                     field: "waybill",
-                    width: 100,
+                    width: 120,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold text-success">${date.toLocaleDateString()}</span>`;
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -465,7 +468,7 @@ class Transactions {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="fw-bold text-danger">${waybill.number}</span>`;
+                        return `<span class="item-status status-danger">${waybill.number}</span>`;
                     },
                 },
                 { title: __html("Operator"), field: "operator", width: 100 },
@@ -653,10 +656,10 @@ class Transactions {
             summaryTable.innerHTML = `
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
-                                <td class="p-1 pe-2"><i class="bi bi-hash"></i> ${count}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-currency-euro me-1 d-none"></i> €${order_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-bank me-1"></i> €${payment_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-2"><i class="bi bi-receipt me-1"></i> €${waybill_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-hash"></i> ${count}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${order_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${payment_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${waybill_total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
                         </table>
                     `;
