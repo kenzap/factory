@@ -93,6 +93,16 @@ export const getMediaAPI = () => {
     return window.location.host.indexOf("localhost") == 0 ? "https://api.media.app.kenzap.cloud" : "https://api.media.app.kenzap.cloud";
 }
 
+export const getDimUnit = (settings) => {
+
+    if (!settings || !settings.system_of_units) return " mm";
+    switch (settings.system_of_units) {
+        case "imperial": return " in";
+        case "metric": return " mm";
+
+    }
+}
+
 /**
  * Logs arguments to console if debug mode is enabled.
  * Debug mode is considered enabled if either sessionStorage or localStorage.

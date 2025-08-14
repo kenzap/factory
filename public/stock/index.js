@@ -7,7 +7,6 @@ import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
 
-
 /**
  * Stock log.
  * 
@@ -144,7 +143,7 @@ class Stock {
         // get products
         getProducts(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -252,13 +251,13 @@ class Stock {
                 const productCell = document.createElement('td');
                 productCell.className = 'product-name py-1';
                 productCell.innerHTML = `
-                <div class="product-name-container d-flex align-items-center">
-                    <i class="bi bi-plus fs-6 py-1 pe-2 po" onclick="stock.addSupply('${product._id}','${product.title}','${coating}');" ></i>
-                    <div class="d-flex flex-column justify-content-center">
-                        ${product.title} 
-                        ${product.sdesc ? `<small class="text-muted fw-normal">${product.sdesc}</small>` : ''}
-                    </div>
-                </div>`;
+                    <div class="product-name-container d-flex align-items-center">
+                        <i class="bi bi-plus fs-6 py-1 pe-2 po" onclick="stock.addSupply('${product._id}','${product.title}','${coating}');" ></i>
+                        <div class="d-flex flex-column justify-content-center">
+                            ${product.title} 
+                            ${product.sdesc ? `<small class="text-muted fw-normal">${product.sdesc}</small>` : ''}
+                        </div>
+                    </div>`;
 
                 row.appendChild(productCell);
 
@@ -289,8 +288,6 @@ class Stock {
                     tbody.appendChild(row);
                 });
             });
-
-
         });
     }
 

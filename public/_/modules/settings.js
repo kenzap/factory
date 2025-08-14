@@ -198,6 +198,19 @@ export const getHtml = () => {
                             </div>
                           </div>
                       </div>
+                      <div class="col-lg-6">
+                          <div class="form-group row mb-3 mt-1">
+                            <label class="col-sm-3 col-form-label">${__html('System of units')}</label>
+                            <div class="col-sm-9">
+                              <select id="system_of_units" class="form-select inp" name="system_of_units" data-type="select">
+                                <option value="">${__html('Choose system of units')}</option>
+                                <option value="metric">${__html('Metric System')}</option>
+                                <option value="imperial">${__html('Imperial System')}</option>
+                              </select>
+                              <p class="form-text">${__html('Default measurement unit for inventory tracking.')}</p>
+                            </div>
+                          </div>
+                      </div>
                     </div>
 
                     <h4 id="h-currency" class="card-title mb-4 mt-4">${__html('Payments')}</h4>

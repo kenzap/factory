@@ -1,4 +1,4 @@
-@import url("../../_/helpers/global.css");
+@import url("../_/helpers/global.css");
   
 .container {
     max-width: 1400px;
@@ -82,15 +82,16 @@
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
-
-    border-left: 8px solid var(--base-color-4);
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
+    border-left: 20px solid var(--base-color-4);
+    /* border-left: 20px solid #0f5132;
+    color: #d1e7dd; */
+    /* border-top-left-radius: 0;
+    border-bottom-left-radius: 0; */
 }
 
 .stock-item:hover {
     /* border-color: #4facfe; */
-    transform: translateY(-2px);
+    transform: scale(1.005);
     box-shadow: 0 4px 12px rgba(79, 172, 254, 0.2);
 }
 
@@ -120,6 +121,27 @@
     font-size: 0.75rem;
     color: #888;
     font-style: italic;
+}
+
+.vertical-text {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    white-space: nowrap;
+    font-weight: bold;
+    font-size: 14px;
+    color: #ffffff;
+    padding: 0px;
+    margin: auto;
+    height: 100%;
+    left: -20px;
+    top: 0;
+    display: flex;
+    align-items: center;
+    position: absolute;
+    justify-content: center;
+        /* color: #d4edda;
+    background : #155724; */
 }
 
 .orders-panel {
@@ -252,7 +274,7 @@
     text-align: center;
 }
 
-.status-waiting {
+/* .status-waiting {
     background: #fff3cd;
     color: #856404;
 }
@@ -265,7 +287,7 @@
 .status-complete {
     background: #d1ecf1;
     color: #0c5460;
-}
+} */
 
 .selection-info {
     background: linear-gradient(135deg, #667eea20, #764ba220);

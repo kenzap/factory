@@ -38,10 +38,12 @@
     --base-color-5:#a979f1;
     --base-color-6: #ff9800;
     --primary-color:#0d6ef8;
-    --gray-color:#495057;
-    --gray-color-light:#e9ecef;
-    --gray-color-highlight:#eaedf1;
-    --gray-color-highlight-hover:#dee2e6;
+    --gray-color:#6c757d;
+    --gray-color-light:#f8f9fa;
+    --gray-color-highlight:#f1f3f4;
+    --gray-color-highlight-hover:#e9ecef;
+    --bs-light-rgb: 248, 249, 250;
+    --bs-gradient: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0));
     --cd-color-1: #212529;
     --cd-color-2: hsl(204, 73%, 52%);
     --cd-color-3: hsl(0, 0%, 100%);
@@ -186,6 +188,44 @@ footer {
 /* bootstrap */
 .badge.bg-danger {
   background-color: var(--base-color) !important;
+}
+
+/* status colors */
+.item-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-align: center;
+}
+.status-warning {
+  background: #fff3cd;
+  color: #664d03;
+}
+
+.status-success {
+  background: #d1e7dd;
+  color: #0f5132;
+}
+
+.status-primary {
+  background: #cff4fc;
+  color: #055160;
+}
+
+.status-danger {
+  background: #f8d7da;
+  color: #842029;
+}
+
+.status-secondary {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.status-dark{
+  background: #212529;
+  color: #fff;
 }
 
 /* navigation header */

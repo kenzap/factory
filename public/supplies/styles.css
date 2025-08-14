@@ -45,6 +45,7 @@ body {
     font-weight: 500;
 }
 
+
 .stage-cutting { background-color: #dc3545; }
 .stage-bending { background-color: #fd7e14; }
 .stage-assembly { background-color: #6f42c1; }
@@ -115,7 +116,7 @@ body {
     padding-bottom: 80px;
 }
 
-.employee-tag {
+/* .document-tag {
     background-color: #e7f3ff;
     color: #0066cc;
     padding: 0.25rem 0.75rem;
@@ -123,7 +124,7 @@ body {
     font-size: 0.875rem;
     margin: 0.25rem;
     display: inline-block;
-}
+} */
 
 .time-badge {
     background-color: #f8f9fa;

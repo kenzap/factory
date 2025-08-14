@@ -1,10 +1,84 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
+
+async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dateTo: '', type: '', items: false }) {
+
+    const db = getDbConnection();
+
+    let log = [];
+
+    let query = `
+        SELECT
+            _id,
+            js->'data'->'supplier' AS supplier,
+            js->'data'->'qty' AS qty,
+            js->'data'->'type' AS type,
+            js->'data'->'status' AS status,
+            js->'data'->'product_id' AS product_id,
+            js->'data'->'product_name' AS product_name,
+            js->'data'->'color' AS color,
+            js->'data'->'coating' AS coating,
+            js->'data'->'width' AS width,
+            js->'data'->'length' AS length,
+            js->'data'->'thickness' AS thickness,
+            js->'data'->'origin' AS origin,
+            js->'data'->'date' AS date,
+            js->'data'->'notes' AS notes,
+            js->'data'->'price' AS price
+        FROM data
+        WHERE ref = $1 AND sid = $2 AND js->'data'->>'type' = 'metal' AND js->'data'->>'status' = 'instock'
+    `;
+
+    let params = ['supplylog', sid];
+
+    // query filters
+    if (filters) {
+        // if (filters.product) {
+        //     query += ` AND js->'data'->>'product_name' ILIKE $${params.length + 1}`;
+        //     params.push(`%${filters.product}%`);
+        // }
+        // if (filters.product_id) {
+        //     query += ` AND js->'data'->>'product_id' ILIKE $${params.length + 1}`;
+        //     params.push(`%${filters.product_id}%`);
+        // }
+        if (filters.color) {
+            query += ` AND js->'data'->>'color' = $${params.length + 1}`;
+            params.push(filters.color);
+        }
+        if (filters.coating) {
+            query += ` AND js->'data'->>'coating' = $${params.length + 1}`;
+            params.push(filters.coating);
+        }
+        // if (filters.dateFrom) {
+        //     query += ` AND js->'data'->>'date' >= $${params.length + 1}`;
+        //     params.push(filters.dateFrom);
+        // }
+        // if (filters.dateTo) {
+        //     query += ` AND js->'data'->>'date' <= $${params.length + 1}`;
+        //     params.push(filters.dateTo);
+        // }
+    }
+
+    query += ` ORDER BY js->'data'->>'date' DESC LIMIT 100`;
+
+    try {
+
+        await db.connect();
+
+        const result = await db.query(query, params);
+
+        log = result.rows;
+
+    } finally {
+        await db.end();
+    }
+
+    return log;
+}
+
 /**
- * Kenzap Factory Get Products
- *
- * List orders
- *
+ * Get orders for cutting
+ * 
  * @version 1.0
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
@@ -96,9 +170,10 @@ function getOrdersForCuttingApi(app) {
             const locale = await getLocale(req.headers.locale);
             const filters = req.body.filters || {};
             const orders = await getOrdersForCutting(filters);
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);
+            const stock = await getMetalStock(filters);
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units"]);
 
-            res.send({ success: true, settings, orders, locale });
+            res.send({ success: true, settings, orders, stock, locale });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

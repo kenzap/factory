@@ -3,7 +3,7 @@ import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getSupplyLog } from "../_/api/get_supply_log.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
-import { __html, hideLoader, onClick, toast, unescape } from "../_/helpers/global.js";
+import { __html, hideLoader, onChange, onClick, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Modal } from "../_/modules/modal.js";
@@ -106,18 +106,32 @@ class Supplies {
         // Add work log record
         onClick('.btn-add-worklog-record', (e) => {
 
-            console.log('Add btn clicked');
+            // console.log('Add btn clicked');
 
             e.preventDefault();
 
             // Validate required fields
-            const requiredFields = [
-                { selector: '#productName', name: 'Product name' },
+            let requiredFields = [
                 { selector: '#qty', name: 'Quantity' },
                 { selector: '#productColor', name: 'Color' },
                 { selector: '#productCoating', name: 'Coating' },
-                // { selector: '#stage', name: 'Stage' }
             ];
+
+            let type = document.querySelector(".supply-select-type").value;
+
+            if (type === 'metal') {
+                requiredFields.push(
+                    { selector: '#width', name: 'Width' },
+                    { selector: '#length', name: 'Length' },
+                    { selector: '#thickness', name: 'Thickness' }
+                );
+            }
+
+            if (type === 'product') {
+                requiredFields.push(
+                    { selector: '#productName', name: 'Product name' }
+                );
+            }
 
             for (const field of requiredFields) {
                 const element = document.querySelector(field.selector);
@@ -137,12 +151,16 @@ class Supplies {
             }
 
             const record = {
-
+                type: type,
                 product_id: this.record.product_id ? this.record.product_id : '',
                 product_name: document.querySelector('#productName').value,
+                status: document.querySelector('#status').value,
                 supplier: document.querySelector('#supplier').value.trim(),
                 color: document.querySelector('#productColor').value.trim(),
                 coating: document.querySelector('#productCoating').value.trim(),
+                width: parseFloat(document.querySelector('#width').value.trim()),
+                length: parseFloat(document.querySelector('#length').value.trim()),
+                thickness: parseFloat(document.querySelector('#thickness').value.trim()),
                 qty: parseFloat(document.querySelector('#qty').value),
                 price: parseFloat(document.querySelector('#price').value),
                 document: {
@@ -153,9 +171,7 @@ class Supplies {
                 user_id: this.user.id,
             }
 
-            console.log('Creating work log record:', record);
-
-            // return;
+            // console.log('Creating work log record:', record);
 
             // insert record
             createSupplyRecord(record, (response) => {
@@ -169,6 +185,36 @@ class Supplies {
                 }
             });
         });
+
+        onChange('.supply-select-type', (e) => {
+
+            const type = e.target.value;
+            const formControls = document.querySelectorAll('.form-cont');
+            formControls.forEach((el) => {
+                if (el.dataset.type === type || el.dataset.type === 'general') {
+                    el.classList.remove('d-none');
+                } else {
+                    el.classList.add('d-none');
+                }
+
+                // Hide form controls if type is not selected
+                if (type == '') {
+                    el.classList.add('d-none');
+                }
+            });
+
+            if (type === 'product') {
+                document.querySelector('#productName').focus();
+            } else {
+                document.querySelector('#width').focus();
+            }
+        });
+
+        // Trigger change event for supply type selector to initialize form visibility
+        const supplyTypeSelect = document.querySelector('.supply-select-type');
+        if (supplyTypeSelect) {
+            supplyTypeSelect.dispatchEvent(new Event('change'));
+        }
     }
 
     async data() {
@@ -205,60 +251,9 @@ class Supplies {
 
             this.renderRecords();
             this.updateSummary();
-            this.populateFilters();
 
             this.firstLoad = false;
         });
-    }
-
-    populateFilters() {
-
-        // const employeeSelect = document.getElementById('filterEmployee');
-        // const stageSelect = document.getElementById('filterStage');
-        const dateFromInput = document.getElementById('filterStartDate');
-        const dateToInput = document.getElementById('filterEndDate');
-        // const stage = document.getElementById('stage');
-
-        // // Populate employee filter
-        // if (this.users && this.users.length > 0) {
-        //     employeeSelect.innerHTML = `<option value="">${__html('All')}</option>` + this.users.map(user => `
-        //     <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user.lname.charAt(0)}</option>
-        //     `).join('');
-        // } else {
-        //     employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;
-        // }
-
-        // // Populate stage filter
-        // const filterStage = `
-        //     <option value="" ${this.filters.stage === '' ? 'selected' : ''}>${__html('All')}</option>
-        //     <option value="markup" ${this.filters.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
-        //     <option value="stamping" ${this.filters.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
-        //     <option value="cutting" ${this.filters.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
-        //     <option value="bending" ${this.filters.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
-        //     <option value="assembly" ${this.filters.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
-        //     <option value="welding" ${this.filters.stage === 'welding' ? 'selected' : ''}>${__html('Welding')}</option>
-        //     <option value="coating" ${this.filters.stage === 'coating' ? 'selected' : ''}>${__html('Coating')}</option>
-        //     <option value="finishing" ${this.filters.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
-        // `;
-
-        // const recordStage = `
-        //     <option value="" ${this.record.stage === '' ? 'selected' : ''}>${__html('')}</option>
-        //     <option value="markup" ${this.record.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
-        //     <option value="stamping" ${this.record.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
-        //     <option value="cutting" ${this.record.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
-        //     <option value="bending" ${this.record.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
-        //     <option value="assembly" ${this.record.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
-        //     <option value="welding" ${this.record.stage === 'welding' ? 'selected' : ''}>${__html('Welding')}</option>
-        //     <option value="coating" ${this.record.stage === 'coating' ? 'selected' : ''}>${__html('Coating')}</option>
-        //     <option value="finishing" ${this.record.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
-        // `;
-
-        // stageSelect.innerHTML = filterStage;
-        // if (!stage.innerHTML) stage.innerHTML = recordStage;
-
-        // Populate date filters
-        dateFromInput.value = this.filters.dateFrom || '';
-        dateToInput.value = this.filters.dateTo || '';
     }
 
     renderRecords() {
@@ -282,6 +277,7 @@ class Supplies {
         if (this.firstLoad) theader.innerHTML = `
                 <tr>
                     <th style="width:84px;"><i class="bi bi-calendar me-2" id="calendarIcon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#dateRangeModal"></i> ${__html('Time')}</th>
+                    <th>${__html('Status')}</th>
                     <th>${__html('Color')}</th>
                     <th>${__html('Coating')}</th>
                     <th style="width:500px;">
@@ -291,6 +287,7 @@ class Supplies {
                         </div>
                     </th>
                     <th>${__html('Qty')}</th>
+                    <th>${__html('Supplier')}</th>
                     <th>${__html('Document')}</th>
                     <th></th>
                 </tr>
@@ -330,16 +327,22 @@ class Supplies {
                 <td style="width:80px;">
                     <span class="time-badge">${this.formatTime(entry.date)}</span>
                 </td>
-                <td tyle="width:80px;">
+                <td style="width:80px;">
+                    ${this.supplyStatusBadge(entry)}
+                </td>
+                <td style="width:80px;">
                     ${entry.color || '-'}
                 </td>
-                <td tyle="width:80px;">
+                <td style="width:120px;">
                     ${entry.coating || '-'}
                 </td>
-                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
+                <td style="width:500px;" ><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
                 <td><strong>${entry.qty}</strong></td>
+                <td style="width:80px;" class="text-truncate">
+                    ${entry.supplier || ''}
+                </td>
                 <td style="width:160px;">
-                    <span class="employee-tag ${!entry?.document?.id ? "d-none" : ""}" >${entry.document.id}</span>
+                    <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry.document.id}</span>
                 </td>
                 <td class="text-end">
                     <button class="btn btn-delete-worklog text-danger" onclick="supplies.deleteEntry('${entry._id}')" title="Delete entry">
@@ -349,6 +352,27 @@ class Supplies {
             </tr>
         `;
         }).join('');
+    }
+
+    supplyStatusBadge(entry) {
+
+        if (!entry.status) return ``;
+        if (entry.status == 'waiting') return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
+        if (entry.status == 'instock') return `<span class="item-status status-success">${__html('In stock')}</span>`;
+        if (entry.status == 'withdrawn') return `<span class="item-status status-secondary">${__html('Withdrawn')}</span>`;
+    }
+
+    renderProductName(entry) {
+
+        if (entry.type === 'product') {
+            return `<span class="product-name">${entry.product_name}</span>`;
+        }
+
+        if (entry.type === 'metal') {
+            return `<span class="product-name">${__html('Metal')} ${entry.width} x ${entry.length} x ${entry.thickness}</span>`;
+        }
+
+        return `<span class="product-name">${entry.product_name}</span>`;
     }
 
     applyFilters() {
