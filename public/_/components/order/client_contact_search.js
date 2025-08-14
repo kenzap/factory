@@ -1,6 +1,5 @@
 import { getContacts } from "/_/api/get_contacts.js";
 import { __html } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
 
 /**
  * A contact search component that provides autocomplete functionality for searching contacts.
@@ -89,6 +88,8 @@ export class ClientContactSearch {
 
             const value = e.target.value.toLowerCase();
 
+            console.log("new input " + value);
+
             loadSuggestions(value);
 
             suggestions.classList.remove('d-none');
@@ -101,11 +102,11 @@ export class ClientContactSearch {
 
             const i = e.target.dataset.i;
 
-            console.log('Input contact search value:', i, this.contacts[i]);
+            // console.log('Input contact search value:', i, this.contacts[i]);
 
             const contact = this.contacts.find(contact => contact.id === e.target.dataset.id);
 
-            console.log('Suggestion clicked:', e.target.dataset.id, contact);
+            // console.log('Suggestion clicked:', e.target.dataset.id, contact);
 
             document.getElementById('contactPerson').value = contact.name;
             document.getElementById('contactPhone').value = contact.phone;
@@ -161,9 +162,22 @@ export class ClientContactSearch {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (activeItem) {
-                    clientInput.value = activeItem.textContent;
-                    clientInput.dataset._id = activeItem.dataset._id;
+
+                    const contact = this.contacts[currentIndex];
+
+                    // const contact = this.contacts.find(contact => contact.id === e.target.dataset.id);
+                    // console.log('Suggestion clicked:', e.target.dataset.id, contact);
+
+                    setTimeout(() => {
+                        document.getElementById('contactPerson').value = contact.name;
+                        document.getElementById('contactPhone').value = contact.phone;
+                        document.getElementById('contactEmail').value = contact.email;
+                    }, 200);
+
+                    // clientInput.value = activeItem.textContent;
+                    // clientInput.dataset._id = activeItem.dataset._id;
                     suggestions.classList.add('d-none');
+
                     // console.log('emit:client:search:refresh:1');
                     // bus.emit('contact:search:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
                 }
@@ -180,32 +194,32 @@ export class ClientContactSearch {
             }
         });
 
-        bus.clear('client:removed');
-        bus.on('client:removed', (data) => {
+        // // bus.clear('client:removed');
+        // bus.on('client:removed', (data) => {
 
-            this.eid = '';
+        //     this.eid = '';
 
-            console.log('contact removed received:', data);
-            this.data();
-        });
+        //     console.log('ClientContactSearch removed received:', data);
+        //     this.data();
+        // });
 
-        bus.clear('contact:search:refresh');
-        bus.on('contact:search:refresh', (data) => {
+        // bus.clear('contact:search:refresh');
+        // bus.on('contact:search:refresh', (data) => {
 
-            this.eid = data._id;
+        //     this.eid = data._id;
 
-            console.log('Client search received:', data);
-            this.data();
-        });
+        //     console.log('Client search received:', data);
+        //     this.data();
+        // });
 
-        bus.clear('client:updated');
-        bus.on('client:updated', (data) => {
+        // bus.clear('client:updated');
+        // bus.on('client:updated', (data) => {
 
-            this.eid = data._id;
+        //     this.eid = data._id;
 
-            console.log('Client update received:', data);
-            this.data();
-        });
+        //     console.log('Client update received:', data);
+        //     this.data();
+        // });
     }
 
     highlightItem = (items, index) => {

@@ -66,8 +66,9 @@ function getOrderApi(app) {
     app.post('/api/get-order/', authenticateToken, async (_req, res) => {
 
         const locale = await getLocale(_req.headers.locale);
+        const order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
 
-        res.json({ success: true, order: await getOrderDetails(_req.body.id), settings: await getSettings(), locale });
+        res.json({ success: true, order, settings: await getSettings(), locale });
     });
 }
 

@@ -162,7 +162,7 @@ export function getWaybillItemsTable(settings, order) {
 
         if (!item.tax_id) item.tax_id = "";
 
-        return `
+        return item.total ? `
             <tr class="${i == order.items.length - 1 ? "border-secondary" : ""}">
                 <th scope="row">${i + 1}</th>
                 <td>${item.title} ${item.coating} ${item.color}</td>
@@ -176,7 +176,7 @@ export function getWaybillItemsTable(settings, order) {
                 <td class="${order.vat_status == "0" ? "d-none" : ""}">${item.tax_id.length == 4 ? "ANM / " + item.tax_id : settings.tax_percent + "%"}</td>
                 <td class="text-end ${order.vat_status == "0" ? "d-none" : ""}">${priceFormat(settings, item.total * (item.tax_id.length == 4 ? 1 : (parseFloat(settings.tax_percent) / 100 + 1)))}</td>
             </tr>
-        `;
+        ` : '';
     }).join('')
         }
 

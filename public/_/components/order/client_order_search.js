@@ -31,7 +31,7 @@ export class ClientOrderSearch {
         document.querySelector('client-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order.name || ''}" data-_id="${this.order.eid || ''}" tabindex="1" >
+                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order?.name || ''}" data-_id="${this.order?.eid || ''}" tabindex="1" >
                     <button class="btn btn-outline-primary edit-client-btn po" type="button" id="editClientBtn" >
                         <i class="bi bi-arrow-right"></i>
                     </button>
@@ -42,6 +42,8 @@ export class ClientOrderSearch {
     }
 
     data = () => {
+
+        console.log("ClientOrderSearch data received");
 
         getClientSuggestions((response) => {
 
@@ -151,6 +153,12 @@ export class ClientOrderSearch {
                         bus.emit('contact:search:refresh', { _id: '', name: '' });
                     }
                 }, 0);
+                // normal keyboard input, reset ids
+            } else {
+
+                clientInput.dataset._id = "";
+
+                console.log("current value ", clientInput.value);
             }
         });
 
@@ -163,13 +171,6 @@ export class ClientOrderSearch {
             } else {
                 bus.emit('contact:search:refresh', { _id: '', name: '' });
             }
-        });
-
-        bus.clear('client:removed');
-        bus.on('client:removed', (data) => {
-
-            console.log('Client removed received:', data);
-            this.data();
         });
     }
 

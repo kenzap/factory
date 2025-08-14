@@ -210,7 +210,7 @@ class Transactions {
                     width: 80,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<a href="/order-edit/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
+                        return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                     }
                 },
                 {

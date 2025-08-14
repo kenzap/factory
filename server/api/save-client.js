@@ -38,7 +38,7 @@ async function saveClient(data) {
 
         const result = await client.query(query, params);
 
-        response = result.rows;
+        response = result.rows[0];
 
     } finally {
         await client.end();
@@ -57,9 +57,9 @@ function saveClientApi(app) {
         const data = _req.body;
         const response = await saveClient(data);
 
-        console.log('saveClient response', response);
+        console.log('/api/save-client/ response', response);
 
-        res.json({ success: true, response, message: 'client saved' });
+        res.json({ success: true, data: response });
     });
 }
 

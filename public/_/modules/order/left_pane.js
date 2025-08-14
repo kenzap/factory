@@ -112,11 +112,11 @@ export class LeftPane {
             </div>
         </div>`;
 
-        new ClientOrderSearch(this.order);
+        this.clientOrderSearch = new ClientOrderSearch(this.order);
 
-        new ClientAddressSearch(this.order);
+        this.clientAddressSearch = new ClientAddressSearch(this.order);
 
-        new ClientContactSearch(this.order);
+        this.clientContactSearch = new ClientContactSearch(this.order);
 
         this.formatDueDate(this.order.due_date);
 
@@ -224,8 +224,8 @@ export class LeftPane {
                     // event.preventDefault();
                     // return;
 
-                    if (element.id === 'orderId') if (element.value != this.order.id && element.value > 0) window.location.href = '/order-edit/?id=' + element.value; // bus.emit('order:updated', element.value);
-                    if (element.id === 'orderId') if (element.value != this.order.id && element.value == 0) window.location.href = '/order-edit/';
+                    if (element.id === 'orderId') if (element.value != this.order.id && element.value > 0) window.location.href = '/order/?id=' + element.value; // bus.emit('order:updated', element.value);
+                    if (element.id === 'orderId') if (element.value != this.order.id && element.value == 0) window.location.href = '/order/';
                     if (element.id === 'due_date') { simulateClick(document.querySelector('.order-table-btn')); return; }
 
                     event.preventDefault();
@@ -265,10 +265,46 @@ export class LeftPane {
 
             console.log('Client updated:', client);
 
+            this.clientOrderSearch.data();
+            this.clientAddressSearch.data();
+            this.clientContactSearch.data();
+
             this.order.vat_status = client.vat_status || '0';
 
             this.summary();
         });
+
+        // bus.clear('client:removed');
+        bus.on('client:removed', (data) => {
+
+            console.log('LeftPane removed received:', data);
+
+            this.clientOrderSearch.data();
+            this.clientAddressSearch.data();
+            this.clientContactSearch.data();
+
+            console.log("LeftPane data called");
+        });
+
+        bus.clear('contact:search:refresh');
+        bus.on('contact:search:refresh', (data) => {
+
+            this.order.eid = data._id;
+
+            console.log('LeftPane contact search received:', data);
+            this.clientOrderSearch.data();
+            this.clientAddressSearch.data();
+            this.clientContactSearch.data();
+        });
+
+
+        // bus.clear('client:updated');
+        // bus.on('client:updated', (data) => {
+
+        //     console.log('Client updated received:', data);
+        //     this.data();
+        //     console.log("ClientOrderSearch data called");
+        // });
 
         // Summary
         this.summary();
@@ -309,7 +345,7 @@ export class LeftPane {
 
         this.order.price = totals.price;
 
-        document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html}</div>`;
+        document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
 
         // // Create the order summary HTML
         // document.querySelector('order-summary').innerHTML = /*html*/`

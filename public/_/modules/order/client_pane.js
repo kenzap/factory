@@ -13,6 +13,7 @@ export class ClientPane {
 
     constructor(order) {
 
+        this.firstLoad = true;
         this.order = order;
         this.client = { _id: this.order.eid ? this.order.eid : null, drivers: [], addresses: [], contacts: [] };
 
@@ -159,20 +160,22 @@ export class ClientPane {
 
     listeners = () => {
 
+        if (!this.firstLoad) return;
+
         // Add event listeners for buttons and other interactive elements
         onClick('#saveClientBtn', this.save);
 
         // From the client side
-        bus.clear('order');
+        bus.clear('client:search:refresh');
         bus.on('client:search:refresh', (data) => {
 
-            // console.log('client:search:refresh received:', data);
+            console.log('client:search:refresh received:', data);
 
             if (!data) return;
 
             if (!data._id) {
 
-                this.client = { _id: null, drivers: [], addresses: [] };
+                this.client = { _id: null, drivers: [], addresses: [], name: data.name };
                 this.view();
             }
 
@@ -225,6 +228,8 @@ export class ClientPane {
                 }
             });
         });
+
+        this.firstLoad = true;
     }
 
     getValidatedClientData = () => {
@@ -241,23 +246,23 @@ export class ClientPane {
         const entity = document.querySelector('input[name="entity"]:checked');
 
         if (!entity) {
-            alert('Please select a client type.');
+            alert('Select a client type.');
             return false;
         }
 
         // Perform validation checks
-        if (!reg_number) {
-            alert('Please fill in all required fields.');
+        if (entity.dataset.entity == "company") if (!reg_number) {
+            alert('Fill in registration number.');
             return false;
         }
 
         if (email) if (!isEmail(email)) {
-            alert('Please enter a valid email address.');
+            alert('Enter a valid email address.');
             return false;
         }
 
         if (clientPhoneRight) if (!isPhone(clientPhoneRight)) {
-            alert('Please enter a valid phone number.');
+            alert('Enter a valid phone number.');
             return false;
         }
 
@@ -291,14 +296,18 @@ export class ClientPane {
 
         saveClient(clientData, (response) => {
 
-            // console.log('Saved successfully', response);
+            console.log('Saved successfully', response);
 
-            toast(__html('Client updated'), 'success');
+            toast('Client updated');
 
             this.order.vat_status = clientData.vat_status;
             this.order.entity = clientData.entity;
+            this.client._id = response.data._id;
+            clientData._id = response.data._id;
 
             bus.emit('client:updated', clientData);
+
+            this.init();
         });
 
         // console.log('Saving client data...', clientData);

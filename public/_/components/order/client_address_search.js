@@ -1,4 +1,4 @@
-import { getAddresses } from "/_/api/get_addresses.js";
+import { getAddresses } from "../../api/get_addresses.js";
 
 /**
  * A contact search component that provides autocomplete functionality for searching addresses.
@@ -169,6 +169,32 @@ export class ClientAddressSearch {
                 }, 0);
             }
         });
+
+        // bus.on('client:removed', (data) => {
+
+        //     this.eid = '';
+
+        //     console.log('ClientAddressSearch removed received:', data);
+        //     this.data();
+        // });
+
+        // bus.clear('contact:search:refresh');
+        // bus.on('contact:search:refresh', (data) => {
+
+        //     this.eid = data._id;
+
+        //     console.log('ClientAddressSearch search received:', data);
+        //     this.data();
+        // });
+
+        // bus.clear('client:updated');
+        // bus.on('client:updated', (data) => {
+
+        //     this.eid = data._id;
+
+        //     console.log('ClientAddressSearch update received:', data);
+        //     this.data();
+        // });
     }
 
     highlightItem = (items, index) => {

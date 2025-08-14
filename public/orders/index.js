@@ -199,7 +199,7 @@ class Orders {
                     width: 80,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<a href="/order-edit/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
+                        return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                     }
                 },
                 {
@@ -230,7 +230,7 @@ class Orders {
                     formatter: function (cell) {
                         const value = cell.getValue();
                         if (value === true) {
-                            return `<div class="badge bg-warning text-dark fw-light">${__html('Draft')}</div>`;
+                            return `<div class="badge bg-warning text-dark fw-light rounded-pill-">${__html('Draft')}</div>`;
                         }
                         return "";
                     }

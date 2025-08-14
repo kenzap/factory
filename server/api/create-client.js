@@ -38,7 +38,7 @@ async function saveClient(data) {
 
         const result = await client.query(query, params);
 
-        response = result.rows;
+        response = result.rows[0];
 
     } finally {
         await client.end();
@@ -50,14 +50,14 @@ async function saveClient(data) {
 // Simple API route
 function saveClientApi(app) {
 
-    app.post('/api/save-client/', authenticateToken, async (_req, res) => {
+    app.post('/api/create-client/', authenticateToken, async (_req, res) => {
 
         // console.log('saveClientApi _req.body', _req.body);
 
         const data = _req.body;
         const response = await saveClient(data);
 
-        console.log('saveClient response', response);
+        console.log('/api/create-client/ response', response);
 
         res.json({ success: true, response, message: 'client saved' });
     });
