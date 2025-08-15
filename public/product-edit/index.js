@@ -255,7 +255,7 @@ class ProductEdit {
         this.settings.textures = setTextureDefaults(this.product, this.settings);
 
         // price
-        data['var_price'] = JSON.parse(document.querySelector('#price').value);
+        data['var_price'] = this.product.var_price;
         data['calc_price'] = document.querySelector('#calc_price').value;
         data['formula'] = document.querySelector('#formula').value.trim();
         data['formula_price'] = document.querySelector('#formula_price').value.trim();
@@ -288,7 +288,6 @@ class ProductEdit {
 
             log("locale", locale.locale);
         });
-
 
         // complex product parts
         document.querySelector("#parts").value.trim().split('\n').forEach(el => {

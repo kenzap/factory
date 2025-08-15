@@ -205,6 +205,8 @@ class Stock {
 
         this.coatings.sort((a, b) => a.localeCompare(b));
 
+        if (this.coatings.length === 0) this.coatings.push("-");
+
         return this.coatings;
     }
 

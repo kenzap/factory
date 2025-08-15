@@ -72,6 +72,7 @@ export const getPrice = (settings, item) => {
                 }
             }
 
+            // get input fields from digital sketch
             item.input_fields.forEach((field, i) => {
 
                 obj.formula = obj.formula.replaceAll(field.label, field.default);
@@ -80,11 +81,38 @@ export const getPrice = (settings, item) => {
                 obj.formula_length_calc = obj.formula_length_calc.replaceAll(field.label, field.default);
             });
 
+            // no input fields provided work with cell values
+            if (!item.input_fields.length) {
+
+                // console.log(item);
+
+                obj.formula = obj.formula.replaceAll("W", item.formula_width_calc);
+                obj.formula = obj.formula.replaceAll("L", item.formula_length_calc);
+
+                obj.formula_price = obj.formula_price.replaceAll("W", item.formula_width_calc);
+                obj.formula_price = obj.formula_price.replaceAll("L", item.formula_length_calc);
+
+                obj.formula_width_calc = obj.formula_width_calc.replaceAll("W", item.formula_width_calc);
+                obj.formula_width_calc = obj.formula_width_calc.replaceAll("L", item.formula_length_calc);
+
+                obj.formula_length_calc = obj.formula_length_calc.replaceAll("W", item.formula_width_calc);
+                obj.formula_length_calc = obj.formula_length_calc.replaceAll("L", item.formula_length_calc);
+
+                console.log(obj);
+
+                obj.price = makeNumber((calculate(obj.formula) / 1000000 * coating_price)) + makeNumber(calculate(obj.formula_price));
+                obj.total = obj.price * item.qty;
+                obj.formula_width_calc = calculate(obj.formula_width_calc);
+                obj.formula_length_calc = calculate(obj.formula_length_calc);
+            }
+
             // make final calculations
-            obj.price = makeNumber((calculate(obj.formula) / 1000000 * coating_price)) + makeNumber(calculate(obj.formula_price));
-            obj.total = obj.price * item.qty;
-            obj.formula_width_calc = calculate(obj.formula_width_calc);
-            obj.formula_length_calc = calculate(obj.formula_length_calc);
+            if (item.input_fields.length > 0) {
+                obj.price = makeNumber((calculate(obj.formula) / 1000000 * coating_price)) + makeNumber(calculate(obj.formula_price));
+                obj.total = obj.price * item.qty;
+                obj.formula_width_calc = calculate(obj.formula_width_calc);
+                obj.formula_length_calc = calculate(obj.formula_length_calc);
+            }
 
             break;
     }

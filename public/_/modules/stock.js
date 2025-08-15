@@ -15,15 +15,17 @@ export const getHtml = () => {
                 <div class="me-3">
                     <select id="categoryFilter" class="form-select" style="border-radius: 12px;">
                         <option value="">${__html('All Categories')}</option>
-                        <option value="K-style rainwater system">K-style rainwater system</option>
-                        <option value="Round rainwater system Ø 125/100">Round rainwater system Ø 125/100</option>
-                        <option value="Round rainwater system Ø 150/120">Round rainwater system Ø 150/120</option>
-                        <option value="Round rainwater system Ø 150/140">Round rainwater system Ø 150/140</option>
-                        <option value="Snow barrier">Snow barrier</option>
+                        <option value="Rainwater system (square)">${__html('Rainwater system - square')}</option>
+                        <option value="Round rainwater system Ø 125/100">${__html('Rainwater system - 125/100')}</option>
+                        <option value="Round rainwater system Ø 150/120">${__html('Rainwater system - 150/120')}</option>
+                        <option value="Round rainwater system Ø 150/140">${__html('Rainwater system - 150/140')}</option>
+                        <option value="Snow barrier - round">${__html('Snow barrier - round')}</option>
+                        <option value="Snow barrier - oval">${__html('Snow barrier - oval')}</option>
+                        <option value="Round tube">${__html('Round tube')}</option>
                         <option value="Instruments">Instruments</option>
                     </select>
                 </div>
-                <button class="btn btn-outline-light action-btn me-2" onclick="manufacturing.refreshOrders()">
+                <button class="btn btn-outline-light action-btn me-2" onclick="stock.init()">
                     <i class="bi bi-arrow-clockwise"></i> ${__html('Refresh')}
                 </button>
             </div>
@@ -42,14 +44,14 @@ export const getHtml = () => {
                         Operators
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol1', '/ATS/noliktava2?ats=1')">
+                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol1', '/ATS/noliktava2?ats=1')">
                             <i class="bi bi-box me-2"></i>Noliktava 1</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol2', '/ATS/noliktava2?ats=2')">
+                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol2', '/ATS/noliktava2?ats=2')">
                             <i class="bi bi-box me-2"></i>Noliktava 2</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol3', '/ATS/noliktava2?ats=3')">
+                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol3', '/ATS/noliktava2?ats=3')">
                             <i class="bi bi-box me-2"></i>Noliktava 3</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('darbs', '/ATS/darbs')">
+                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('darbs', '/ATS/darbs')">
                             <i class="bi bi-tools me-2"></i>Darbs: Viss</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item text-danger" href="/logout.php">

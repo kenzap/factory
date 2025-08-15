@@ -1,5 +1,14 @@
-import { __html, log, onChange, onClick, onKeyUp, onlyNumbers, priceFormat, toast } from "../../helpers/global.js";
+import { __html, onChange, onClick, onKeyUp, onlyNumbers, randomString, toast } from "../../helpers/global.js";
 
+/**
+ * Handles creation, editing, and deletion of product price variations
+ * 
+ * @constructor
+ * @param {Object} product - The product object containing variation data
+ * @param {Array} product.var_price - Array of price variation objects
+ * @param {Object} settings - Configuration settings for the component
+ * @param {string} settings.var_parent - Parent variation options (newline separated)
+ */
 export class ProductPriceVariations {
 
     constructor(product, settings) {
@@ -7,8 +16,7 @@ export class ProductPriceVariations {
         this.product = product;
         this.settings = settings;
         this.state = {};
-
-        // log("ProductPriceVariations")
+        this.var_parent = this.settings.var_parent;
     }
 
     show() {
@@ -34,35 +42,26 @@ export class ProductPriceVariations {
             </div>`;
 
         this.view();
-        // return; x
-
 
         // price variations
-        // setup coatings and prices
-        let price = JSON.parse(document.querySelector('#price').value), var_parent = [];
         let parent_options = '<option value="">' + __html('None') + '</option>';
-        if (price.length == 0) price = self.settings.price;
-        if (self.settings.var_parent) var_parent = self.settings.var_parent;
-
-        // console.log(price);
-
-        if (Array.isArray(price)) {
+        if (Array.isArray(this.product.var_price)) {
 
             // pricing row parent
-            price.forEach((price, i) => {
+            this.product.var_price.forEach((o, i) => {
 
-                if (!price.parent) {
+                // defaults
+                if (!o.id) o.id = randomString(6);
+                if (!o.code) o.code = "";
 
-                    document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(price, i));
-                }
+                document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(o, i));
             });
 
             // pricing row
-            price.forEach((price, i) => {
+            this.product.var_price.forEach((price, i) => {
 
                 if (price.parent) {
 
-                    // console.log('.price-table > tbody [data-parent="'+price.parent+'"]');
                     if (document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]')) {
                         document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]').insertAdjacentHTML("afterend", self.structCoatingRow(price, i)); // :last-child
                     } else {
@@ -72,18 +71,14 @@ export class ProductPriceVariations {
             });
 
         } else {
-            price = [];
-            document.querySelector('#price').value = '[]';
+            this.product.var_price = [];
         }
 
-        var_parent.split('\n').forEach(el => {
+        this.var_parent.split('\n').forEach(el => {
 
             parent_options += '<option value="' + el + '">' + el + '</option>';
         });
         document.querySelector('.price-parent').innerHTML = parent_options;
-
-        // cache prices
-        document.querySelector('#price').value = JSON.stringify(price);
 
         // init modal listeners
         this.listeners();
@@ -124,7 +119,7 @@ export class ProductPriceVariations {
                                     </td>
                                     <td>
                                         <div class="me-1 me-sm-3 mt-2">
-                                            <input type="text" value="" autocomplete="off" placeholder=" " class="form-control price-title" data-id="" data-index="" list="item-suggestions">
+                                            <input type="text" value="" autocomplete="off" placeholder="" class="form-control price-title" data-id="" data-index="" list="item-suggestions">
                                         </div>
                                     </td>
                                     <td class="price">
@@ -153,7 +148,6 @@ export class ProductPriceVariations {
                     </div>
                 </div>
             </div>`;
-
     }
 
     measurementUnit(i, value) {
@@ -177,7 +171,8 @@ export class ProductPriceVariations {
         let obj = {}
 
         obj.id = document.querySelector('.price-id').value;
-        obj.title = document.querySelector('.price-title').value.trim(); document.querySelector('.price-title').value = '';
+        obj.title = document.querySelector('.price-title').value.trim();
+        document.querySelector('.price-title').value = '';
         obj.parent = document.querySelector('.price-parent').value.trim();
         obj.price = document.querySelector('.price-price').value.trim();
         obj.stock = document.querySelector('.price-stock').value.trim();
@@ -186,37 +181,20 @@ export class ProductPriceVariations {
 
         if (obj.title.length < 1 || obj.price.length < 1) return false;
 
-        // console.log(obj);
-
-        let prices = document.querySelector('#price').value;
-
-        // console.log(prices);
-
-        if (prices) { prices = JSON.parse(prices); } else { prices = []; }
-        if (Array.isArray(prices)) { prices.push(obj); } else { prices = []; }
-        document.querySelector('#price').value = JSON.stringify(prices);
+        // Update this.product.var_price instead of DOM
+        if (!Array.isArray(this.product.var_price)) {
+            this.product.var_price = [];
+        }
+        this.product.var_price.push(obj);
 
         if (document.querySelector('.price-table > tbody [data-parent="' + obj.parent + '"]:last-child')) {
-            document.querySelector('.price-table > tbody [data-parent="' + obj.parent + '"]:last-child').insertAdjacentHTML("afterend", self.structCoatingRow(obj, prices.length - 1));
+            document.querySelector('.price-table > tbody [data-parent="' + obj.parent + '"]:last-child').insertAdjacentHTML("afterend", self.structCoatingRow(obj, this.product.var_price.length - 1));
         } else {
-            document.querySelector('.price-table').insertAdjacentHTML("beforeend", self.structCoatingRow(obj, prices.length - 1));
+            document.querySelector('.price-table').insertAdjacentHTML("beforeend", self.structCoatingRow(obj, this.product.var_price.length - 1));
         }
 
-        // add price listener
-        onClick('.remove-price', e => { self.removePrice(e); });
-
-        // only nums for price
-        onlyNumbers(".price-price", [8, 46]);
-        onlyNumbers(".price-stock", [8, 46]);
-
-        // update price
-        onChange('.price-price', e => { self.updatePrice(e); });
-
-        // update unit
-        onKeyUp('.price-unit', e => { self.updateUnit(e); });
-
-        // price public
-        onClick('.price-public', e => { self.publicPrice(e); });
+        // Reinitialize listeners for new elements
+        this.initRowListeners();
     }
 
     removePrice(e) {
@@ -229,124 +207,88 @@ export class ProductPriceVariations {
 
         let hash = e.currentTarget.parentElement.parentElement.dataset.hash;
 
-        let prices = JSON.parse(document.querySelector('#price').value);
-
-        prices = prices.filter((obj) => { return escape(obj.id + obj.title + obj.parent) != hash });
-
-        document.querySelector('#price').value = JSON.stringify(prices);
+        this.product.var_price = this.product.var_price.filter((obj) => {
+            return escape(obj.id + obj.title + obj.parent) != hash
+        });
 
         e.currentTarget.parentElement.parentElement.remove();
-
     }
 
     updatePrice(e) {
-
-        e.preventDefault();
-
-        // let i = e.currentTarget.dataset.i;
-
-        let hash = (e.currentTarget.parentElement.parentElement.parentElement.dataset.hash);
-
-        log(hash);
-
-        if (!hash) return;
-
-        let prices = JSON.parse(document.querySelector('#price').value);
-
-        prices.forEach((obj, i) => { if (escape(obj.id + obj.title + obj.parent) == hash) { prices[i].price = e.currentTarget.value; } });
-
-        // prices[i].price = e.currentTarget.value;
-
-        // console.log(e.currentTarget.value);
-
-        console.log(prices);
-
-        document.querySelector('#price').value = JSON.stringify(prices);
-
-        // console.log(e.currentTarget.value);
+        this.updateField(e, 'price', e.currentTarget.value);
     }
 
     updateUnit(e) {
-
-        e.preventDefault();
-
-        let hash = (e.currentTarget.parentElement.parentElement.parentElement.dataset.hash);
-
-        log(hash);
-
-        if (!hash) return;
-
-        let prices = JSON.parse(document.querySelector('#price').value);
-
-        prices.forEach((obj, i) => { if (escape(obj.id + obj.title + obj.parent) == hash) { prices[i].unit = e.currentTarget.value; } });
-
-        document.querySelector('#price').value = JSON.stringify(prices);
+        this.updateField(e, 'unit', e.currentTarget.value);
     }
 
     updateStock(e) {
+        this.updateField(e, 'stock', parseInt(e.currentTarget.value));
+    }
+
+    updateP1(e) {
+        this.updateField(e, 'parent', e.currentTarget.value);
+    }
+
+    updateP2(e) {
+        this.updateField(e, 'title', e.currentTarget.value);
+    }
+
+    updateField(e, field, value) {
 
         e.preventDefault();
 
-        let hash = (e.currentTarget.parentElement.parentElement.parentElement.dataset.hash);
+        this.product.var_price.forEach((obj, i) => {
+            if (obj.id == e.currentTarget.dataset.id) {
+                this.product.var_price[i][field] = value;
 
-        log(hash);
-
-        if (!hash) return;
-
-        let prices = JSON.parse(document.querySelector('#price').value);
-
-        prices.forEach((obj, i) => { if (escape(obj.id + obj.title + obj.parent) == hash) { prices[i].stock = parseInt(e.currentTarget.value); } });
-
-        document.querySelector('#price').value = JSON.stringify(prices);
+                console.log('Updated field:', field, 'Value:', value);
+            }
+        });
     }
 
     publicPrice(e) {
 
-        // let i = e.currentTarget.dataset.i;
-        let hash = (e.currentTarget.parentElement.parentElement.dataset.hash);
+        this.product.var_price.forEach((obj, i) => {
+            if (obj.id == e.currentTarget.dataset.id) {
+                this.product.var_price[i].public = e.currentTarget.checked ? true : false;
+            }
+        });
+    }
 
-        let prices = JSON.parse(document.querySelector('#price').value);
+    initRowListeners() {
+        let self = this;
 
-        prices.forEach((obj, i) => { if (escape(obj.id + obj.title + obj.parent) == hash) { prices[i].public = e.currentTarget.checked ? true : false; } });
+        // Remove existing listeners to prevent duplicates
+        document.querySelectorAll('.remove-price').forEach(el => {
+            el.replaceWith(el.cloneNode(true));
+        });
 
-        // console.log(i);
-
-        // prices[i].public = e.currentTarget.checked ? true : false;
-
-        // prices[i].public = e.currentTarget.value;
-
-        document.querySelector('#price').value = JSON.stringify(prices);
+        // Re-add listeners
+        onClick('.remove-price', e => { self.removePrice(e); });
+        onlyNumbers(".price-price", [8, 46]);
+        onKeyUp('.price-price', e => { self.updatePrice(e); });
+        onKeyUp('.price-stock', e => { self.updateStock(e); });
+        onKeyUp('.price-parent', e => { self.updateP1(e); });
+        onChange('.price-parent', e => { self.updateP1(e); });
+        onKeyUp('.price-title', e => { self.updateP2(e); });
+        onChange('.price-title', e => { self.updateP2(e); });
+        onChange('.price-unit', e => { self.updateUnit(e); });
+        onClick('.price-public', e => { self.publicPrice(e); });
     }
 
     listeners() {
 
         let self = this;
 
-        // add price listener
-        onClick('.remove-price', e => { self.removePrice(e); });
-
-        // only nums for price
-        onlyNumbers(".price-price", [8, 46]);
-
-        // update price
-        onKeyUp('.price-price', e => { self.updatePrice(e); });
-
-        // update price
-        onKeyUp('.price-stock', e => { self.updateStock(e); });
-
-        // update unit
-        onChange('.price-unit', e => { self.updateUnit(e); });
-
-        // price public
-        onClick('.price-public', e => { self.publicPrice(e); });
+        // Initialize row-specific listeners
+        this.initRowListeners();
 
         // add price listener
         onClick('.add-price', e => { self.addPrice(e); });
 
         // add paste event
         this.onPaste();
-
-        // onPaste('.price-price', e => { self.handlePaste(e); });
     }
 
     onPaste() {
@@ -357,71 +299,71 @@ export class ProductPriceVariations {
             let paste = (event.clipboardData || window.clipboardData).getData("text");
             let error = false;
 
-            // console.log(paste);
-
             if (paste.length < 20) return true;
 
             event.preventDefault();
 
             try {
-
                 JSON.parse(paste);
-
             } catch (e) {
-
                 error = true;
-
-                // console.log(e);
             }
 
             if (!error) {
-
-                let js = JSON.parse(paste);
-
-                document.querySelector('#price').value = paste;
-
-                // console.log(js);
-
+                this.product.var_price = JSON.parse(paste);
                 this.state.modalCont.hide();
-
                 this.show();
-
                 toast("Prices updated")
             }
         });
     }
 
+    /**
+     * Generates HTML structure for a single price variation table row.
+     * 
+     * @method structCoatingRow
+     * @param {Object} obj - Price variation object
+     * @param {string} obj.id - Unique identifier
+     * @param {string} obj.code - Product code
+     * @param {string} obj.parent - Parent variation ID
+     * @param {string} obj.title - Variation title
+     * @param {number} obj.price - Variation price
+     * @param {number} obj.stock - Stock quantity
+     * @param {string} obj.unit - Measurement unit
+     * @param {boolean} obj.public - Public visibility flag
+     * @param {number} i - Index in the variations array
+     * @returns {string} HTML string for the table row
+     */
     structCoatingRow(obj, i) {
 
         return `
             <tr class="new-item-row ${obj.parent ? "pr-parent" : ""}" data-parent="${obj.parent ? obj.parent : ""}" data-title="${obj.title}" data-hash="${escape(obj.id + obj.title + obj.parent)}">
                 <td style="max-width:25px;">
-                    <input class="form-check-input price-public" type="checkbox" value="" data-i="${i}" ${obj.public ? 'checked' : ""} >
+                    <input class="form-check-input price-public" type="checkbox" data-id="${obj.id}" data-i="${i}" value="" ${obj.public ? 'checked' : ""} >
                 </td>
                 <td class="tp">
                     <div class="me-1 me-sm-3 my-1 ">
-                        ${obj.id}
+                        ${obj.code}
                     </div>
                 </td>
                 <td>
                     <div class="me-1 me-sm-3 my-1">
-                        ${obj.parent ? obj.parent : ""}
+                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-parent" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.parent ? obj.parent : ""}">
                     </div>
                 </td>
                 <td>
                     <div class="me-1 me-sm-3 my-1">
-                        ${obj.title}
+                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-title" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.title ? obj.title : ''}">
                     </div>
                 </td>
                 <td class="price">
                     <div class="me-1 me-sm-3 my-1" >
-                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-price" style="max-width:80px;" data-i="${i}" value="${obj.price}">
-                        <span class="d-none"> ${priceFormat(this, obj.price)} </span>
+                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-price" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.price}">
                     </div>
                 </td>
                 <td class="price">
                     <div class="me-1 me-sm-3 my-1" >
-                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-stock" style="max-width:80px;" data-i="${i}" value="${obj.stock ? obj.stock : 0}">
+                        <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-stock" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.stock ? obj.stock : 0}">
                     </div>
                 </td>
                 <td class="price">
@@ -431,7 +373,7 @@ export class ProductPriceVariations {
                     </div>
                 </td>
                 <td class="align-middle text-center pt-2"> 
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#ff0079" class="remove-price bi bi-x-circle po" data-i="${i}" viewBox="0 0 16 16">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="#ff0079" class="remove-price bi bi-x-circle po" data-id="${obj.id}" data-i="${i}" viewBox="0 0 16 16">
                         <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"></path>
                         <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"></path>
                     </svg>

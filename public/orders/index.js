@@ -230,7 +230,7 @@ class Orders {
                     formatter: function (cell) {
                         const value = cell.getValue();
                         if (value === true) {
-                            return `<div class="item-status status-warning">${__html('Draft')}</div>`;
+                            return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-warning">${__html('Draft')}</span></div>`;
                         }
                         return "";
                     }
@@ -313,7 +313,7 @@ class Orders {
                         const payment = cell.getValue();
                         if (!payment || !payment.date || payment.date === '0000-00-00') return '';
                         const date = new Date(payment.date);
-                        return `<span class="item-status status-success">${date.toLocaleDateString()}</span>`;
+                        return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-success">${date.toLocaleDateString()}</span></div>`;
                     },
                 },
                 {
@@ -324,7 +324,7 @@ class Orders {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -334,7 +334,7 @@ class Orders {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="item-status status-danger">INV-${waybill.number}</span>`;
+                        return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">INV-${waybill.number}</span></div>`;
                     },
                 },
                 {
@@ -345,7 +345,7 @@ class Orders {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
                         const date = new Date(waybill.date);
-                        return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
+                        return `<span>${date.toLocaleDateString()}</span>`;
                     },
                 },
                 {
@@ -355,7 +355,7 @@ class Orders {
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
-                        return `<span class="item-status status-danger">${waybill.number}</span>`;
+                        return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${waybill.number}</span></div>`;
                     },
                 },
                 { title: __html("Operator"), field: "operator", width: 100 },
@@ -365,7 +365,7 @@ class Orders {
                     minWidth: 180,
                     formatter: (cell) => {
                         const value = cell.getValue();
-                        return `<span class="fw-bold- text-dark-" title="${value}">${value}</span>`;
+                        return `<span title="${value}">${value}</span>`;
                     }
                 }
             ],

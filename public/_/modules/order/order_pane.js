@@ -710,6 +710,7 @@ export class OrderPane {
                 clearTimeout(searchTimeout);
 
                 if (selectedIndex >= 0 && selectedIndex < options.length) {
+
                     // Select the highlighted option
                     const selectedSuggestion = options[selectedIndex].textContent;
                     input.value = selectedSuggestion;
@@ -721,6 +722,7 @@ export class OrderPane {
                         this.navigateToNextCell(cell);
                     }, 10);
                 } else {
+
                     // No option selected, just accept current input value
                     dropdown.style.display = "none";
                     this.productSuggestions = [];
@@ -752,7 +754,11 @@ export class OrderPane {
 
         // Map suggestion values to current row
         const rowData = cell.getRow().getData();
-        const updatedData = { ...rowData, ...suggestion };
+        let updatedData = { ...rowData, ...suggestion };
+
+        updatedData.title = updatedData.title.trim();
+
+        // console.log('Product selected:', updatedData);
 
         // Update the row with all suggestion properties
         cell.getRow().update(updatedData);
@@ -804,26 +810,10 @@ export class OrderPane {
         return 0;
     }
 
-    // // Function to calculate total price
-    // calculatetotal = (area, qty, price, adj, discount) => {
-    //     const basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
-    //     const adjustedPrice = basePrice + (adj || 0);
-
-    //     // Handle discount with % sign - extract numeric value
-    //     let discountValue = discount || 0;
-    //     if (typeof discountValue === 'string' && discountValue.includes('%')) {
-    //         discountValue = parseFloat(discountValue.replace('%', '')) || 0;
-    //     }
-
-    //     // console.log('Calculating total with basePrice:', basePrice, 'qty:', qty, 'price:', price, 'adj:', adj, 'discount:', discountValue);
-
-    //     const discountAmount = adjustedPrice * (discountValue / 100);
-    //     const finalPrice = adjustedPrice - discountAmount;
-    //     return parseFloat(Math.max(0, finalPrice).toFixed(2));
-    // }
-
     // Function to update calculations for a row
     updateCalculations = (cell) => {
+
+        console.log('Updating calculations for cell:', cell.getField());
 
         const row = cell.getRow();
         const data = row.getData();
@@ -831,7 +821,6 @@ export class OrderPane {
 
         let coating = data.coating || "";
         let color = data.color || "";
-
         let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
 
         // update product price in the row
@@ -855,7 +844,9 @@ export class OrderPane {
         }
 
         // Calculate square footage
-        const area = this.calculatearea(data.width, data.length);
+        const area = this.calculatearea(data.formula_width_calc, data.formula_length_calc);
+        console.log('Calculated area:', area);
+
         row.update({ area: area });
 
         // Calculate total price

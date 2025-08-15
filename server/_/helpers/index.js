@@ -99,7 +99,7 @@ export const getLocales = async () => {
                 js->'data'->'locale' as locale,
                 js->'data'->'language' as language
             FROM data 
-            WHERE ref = $1 AND sid = $2 
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'ext' = 'ecommerce'
             LIMIT 50
         `;
 
