@@ -171,7 +171,7 @@ export class ProductMeta {
 
         const d = document;
 
-        this.ProductSlug = new ProductSlug(this.product);
+        this.ProductSlug = new ProductSlug(this.product, this.locales, this.settings);
 
         // general section
         d.querySelector("#p-title").value = this.product.title;

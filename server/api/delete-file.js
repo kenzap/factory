@@ -1,6 +1,6 @@
 import OSS from 'ali-oss';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, sid } from '../_/helpers/index.js';
+import { getDbConnection, log, log_error, sid } from '../_/helpers/index.js';
 
 /**
  * Delete file from the database and cloud storage
@@ -43,22 +43,24 @@ async function deleteFile(id) {
 
 // Alibaba Cloud OSS delete function
 async function deleteFromBucket(id) {
-    const client = new OSS({
-        region: process.env.BUCKET_REGION,
-        accessKeyId: process.env.BUCKET_KEY,
-        accessKeySecret: process.env.BUCKET_SECRET,
-        bucket: process.env.BUCKET_NAME,
-        secure: true,
-    });
-
-    // Assuming the object key is based on the id
-    const objectKey = `S${sid}/${id}`;
 
     try {
+
+        const client = new OSS({
+            region: process.env.BUCKET_REGION,
+            accessKeyId: process.env.BUCKET_KEY,
+            accessKeySecret: process.env.BUCKET_SECRET,
+            bucket: process.env.BUCKET_NAME,
+            secure: true,
+        });
+
+        // Assuming the object key is based on the id
+        const objectKey = `S${sid}/${id}`;
+
         const result = await client.delete(objectKey);
         return { success: true, result };
     } catch (error) {
-        throw new Error(`OSS delete failed: ${error.message}`);
+        log_error(`OSS delete failed: ${error.message}`);
     }
 }
 
@@ -67,14 +69,19 @@ function deleteFileApi(app) {
 
     app.post('/api/delete-file/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/delete-file/', _req.body.id);
+        log('/api/delete-file/', _req.body.id);
 
         const responseDB = await deleteFile(_req.body.id);
-        const ext = responseDB.ext;
+        const ext = responseDB?.ext;
+
+        // no info about file extension, nothing to delete from the bucket
+        if (!ext) {
+            res.json({ success: true, responseDB });
+            return;
+        }
+
         const objectId = ext ? `${responseDB._id}.${ext}` : `${responseDB._id}`;
         const responseBucket = await deleteFromBucket(objectId);
-
-        // console.log('deleteClient response', response);
 
         res.json({ success: true, responseDB, responseBucket });
     });

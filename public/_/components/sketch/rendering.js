@@ -9,7 +9,7 @@ export const renderProduction = (product) => {
 
     if (!product.sketch.textures) product.sketch.textures = product.sketch.textures;
 
-    fetch('https://render.factory.app.kenzap.cloud:3999/?cmd=render&swap_colors=' + product.sketch.swap + '&files=' + JSON.stringify(product.sketch.cad_files) + '&camera=' + encodeURIComponent(JSON.stringify(product.sketch.camera)) + '&offset=' + encodeURIComponent(JSON.stringify(product.sketch.offset)) + '&textures=' + encodeURIComponent(JSON.stringify(product.sketch.textures)) + '&fov=' + product.sketch.fov + '&id=' + getProductId() + '&space=' + spaceID() + '&storage=' + encodeURIComponent(getStorage()) + '&hash=' + randomString(6), {
+    fetch('https://render.factory.app.kenzap.cloud:3999/?cmd=render&swap_colors=' + product.sketch.swap + '&files=' + JSON.stringify(product.cad_files) + '&camera=' + encodeURIComponent(JSON.stringify(product.sketch.camera)) + '&offset=' + encodeURIComponent(JSON.stringify(product.sketch.offset)) + '&textures=' + encodeURIComponent(JSON.stringify(product.sketch.textures)) + '&fov=' + product.sketch.fov + '&id=' + getProductId() + '&space=' + spaceID() + '&storage=' + encodeURIComponent(getStorage()) + '&hash=' + randomString(6), {
         method: 'get',
         // headers: H()
     })

@@ -1,3 +1,4 @@
+import { randomString, spaceID } from "../../../_/helpers/global.js";
 
 /**
  * Custom module for quilljs to allow user to drag images from their file system into the editor
@@ -22,6 +23,7 @@ export class ImageDrop {
         // bind handlers to this instance
         this.handleDrop = this.handleDrop.bind(this);
         this.handlePaste = this.handlePaste.bind(this);
+
         // listen for drop and paste events
         this.quill.root.addEventListener('drop', this.handleDrop, false);
         this.quill.root.addEventListener('paste', this.handlePaste, false);
@@ -77,14 +79,14 @@ export class ImageDrop {
      */
     insert(dataUrl) {
 
-        showLoader();
+        // showLoader();
 
         console.log("insert");
         console.log(dataUrl);
 
         // handle file upload
-        let id = makeid(24);
-        let sid = getSiteId();
+        let id = randomString(24);
+        let sid = spaceID();
 
         // console.log(file);
         // let file = fileEl.files[0];
@@ -105,7 +107,7 @@ export class ImageDrop {
         // fd.append('field', file);
         fd.append('file', file);
         fd.append('slug', 'post-' + id);
-        fd.append('token', getCookie('kenzap_token'));
+        // fd.append('token', getCookie('kenzap_token'));
 
         // clear input file so that its not updated again
         // file.value = '';
@@ -138,8 +140,6 @@ export class ImageDrop {
                     // hideLoader();
                 }
             });
-
-
     }
 
     dataURLtoFile(dataurl, filename) {

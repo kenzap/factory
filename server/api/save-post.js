@@ -20,7 +20,7 @@ async function savePost(data) {
 
         if (!data) return { success: false, error: 'no data provided' };
 
-        data.updated = new Date().toISOString();
+        data.updated = Math.floor(new Date().getTime() / 1000);
 
         // Prepare update for only provided keys in data
         const updateKeys = Object.keys(data);
