@@ -147,7 +147,7 @@ function getProductsApi(app) {
             const records = await getProducts(filters);
             const settings = await getSettings();
 
-            res.send({ success: true, settings, products: records.products, meta: records.meta, message: '' });
+            res.send({ success: true, user: req.user, settings, products: records.products, meta: records.meta, message: '' });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

@@ -76,7 +76,15 @@ class ProductEdit {
             new Session();
 
             // render header and footer
-            new Header(response);
+            new Header({
+                hidden: false,
+                title: __html('Product Edit'),
+                icon: 'box',
+                style: 'navbar-light',
+                user: response?.user,
+                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+            });
+
             new Footer();
 
             this.view();
@@ -108,7 +116,7 @@ class ProductEdit {
             // render breadcrumbs
             initBreadcrumbs([
                 { link: link('/home/'), text: __html('Home') },
-                { link: link('/product-list/'), text: __html('Product List') },
+                { link: link('/product-list/'), text: __html('Products') },
                 { text: __html('Product Edit') }
             ]);
 

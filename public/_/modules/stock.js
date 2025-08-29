@@ -1,6 +1,6 @@
 import { __html } from "../helpers/global.js";
 
-export const getHtml = () => {
+export const getHtml = (response) => {
 
     return /*html*/`
     <!-- Navigation -->
@@ -13,17 +13,21 @@ export const getHtml = () => {
             <!-- Search Container -->
             <div class="search-container d-flex align-items-center">
                 <div class="me-3">
-                    <select id="categoryFilter" class="form-select" style="border-radius: 12px;">
-                        <option value="">${__html('All Categories')}</option>
-                        <option value="Rainwater system (square)">${__html('Rainwater system - square')}</option>
-                        <option value="Round rainwater system Ø 125/100">${__html('Rainwater system - 125/100')}</option>
-                        <option value="Round rainwater system Ø 150/120">${__html('Rainwater system - 150/120')}</option>
-                        <option value="Round rainwater system Ø 150/140">${__html('Rainwater system - 150/140')}</option>
-                        <option value="Snow barrier - round">${__html('Snow barrier - round')}</option>
-                        <option value="Snow barrier - oval">${__html('Snow barrier - oval')}</option>
-                        <option value="Round tube">${__html('Round tube')}</option>
-                        <option value="Instruments">Instruments</option>
-                    </select>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 12px; min-width: 200px;">
+                            <span id="selectedCategory">${__html('All Categories')}</span>
+                        </button>
+                        <ul class="dropdown-menu" id="categoryFilter">
+                            <li><a class="dropdown-item py-3" href="#" data-value="">${__html('All Categories')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Rainwater system (square)">${__html('Rainwater system - square')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 125/100">${__html('Rainwater system - 125/100')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 150/120">${__html('Rainwater system - 150/120')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 150/140">${__html('Rainwater system - 150/140')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Snow barrier - round">${__html('Snow barrier - round')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Snow barrier - oval">${__html('Snow barrier - oval')}</a></li>
+                            <li><a class="dropdown-item py-3" href="#" data-value="Instruments">${__html('Instruments')}</a></li>
+                        </ul>
+                    </div>
                 </div>
                 <button class="btn btn-outline-light action-btn me-2" onclick="stock.init()">
                     <i class="bi bi-arrow-clockwise"></i> ${__html('Refresh')}
@@ -41,20 +45,20 @@ export const getHtml = () => {
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-2"></i>
-                        Operators
+                        ${response?.user?.fname}${response?.user?.lname ? ' ' + response.user.lname.charAt(0) + '.' : ''}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol1', '/ATS/noliktava2?ats=1')">
-                            <i class="bi bi-box me-2"></i>Noliktava 1</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol2', '/ATS/noliktava2?ats=2')">
-                            <i class="bi bi-box me-2"></i>Noliktava 2</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('nol3', '/ATS/noliktava2?ats=3')">
-                            <i class="bi bi-box me-2"></i>Noliktava 3</a></li>
+                        <li><a class="dropdown-item" href="/home/">
+                            <i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
+                        <li><a class="dropdown-item" href="/manufacturing/" >
+                            <i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
+                        <li><a class="dropdown-item" href="/worklog/">
+                            <i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="stock.openWindow('darbs', '/ATS/darbs')">
-                            <i class="bi bi-tools me-2"></i>Darbs: Viss</a></li>
+                        <li><a class="dropdown-item" href="#">
+                            <i class="bi bi-person me-2"></i>${__html('My Profile')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="/logout.php">
+                        <li><a class="dropdown-item text-danger sign-out" href="#">
                             <i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
                     </ul>
                 </div>

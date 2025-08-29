@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { getRequestCount, incrementRequestCount, isValidEmail, sendOtpEmail, storeNonce, storeOtp } from '../_/helpers/auth.js';
+import { getRequestCount, incrementRequestCount, isValidEmail, isValidPhone, sendOtpEmail, sendOtpWhatsApp, storeNonce, storeOtp } from '../_/helpers/auth.js';
 import { log } from '../_/helpers/index.js';
 
 // API route for product export
@@ -12,20 +12,26 @@ function getOtpApi(app) {
     app.post('/api/auth/get-otp', async (req, res) => {
         try {
 
-            const { email } = req.body;
+            const { email_or_phone } = req.body;
 
-            if (!email) {
-                res.status(400).json({ error: 'email is required', code: 400 });
+            if (!email_or_phone) {
+                res.status(400).json({ error: 'email or phone is required', code: 400 });
                 return;
             }
 
-            if (!isValidEmail(email)) {
-                res.status(400).json({ error: 'invalid email format', code: 400 });
+            if (!isValidEmail(email_or_phone) && !isValidPhone(email_or_phone)) {
+                res.status(400).json({ error: 'invalid email or phone format', code: 400 });
                 return;
+            }
+
+            if (isValidPhone(email_or_phone) && email_or_phone.startsWith('+')) {
+
+                email_or_phone = email_or_phone.substring(1); // remove leading +
+                email_or_phone = email_or_phone.replace(/\D/g, '');
             }
 
             // Check rate limiting - allow max 3 OTP requests per email per 15 minutes
-            const rateLimitKey = `otp_requests_${email}`;
+            const rateLimitKey = `otp_requests_${email_or_phone}`;
             const maxRequests = 3;
             const timeWindow = 15 * 60 * 1000; // 15 minutes
 
@@ -53,13 +59,14 @@ function getOtpApi(app) {
 
             // Store OTP with expiration (you'll need to implement storage - Redis, database, or in-memory)
             // This is a placeholder for your storage implementation
-            await storeOtp(email, otp, 5 * 60 * 1000); // 5 minutes expiration
-            await storeNonce(email, nonce, 5 * 60 * 1000); // 5 minutes expiration
+            await storeOtp(email_or_phone, otp, 5 * 60 * 1000); // 5 minutes expiration
+            await storeNonce(email_or_phone, nonce, 5 * 60 * 1000); // 5 minutes expiration
 
             // Send OTP via email (you'll need to implement email service)
-            await sendOtpEmail(email, otp);
+            if (isValidEmail(email_or_phone)) await sendOtpEmail(email_or_phone, otp);
+            if (isValidPhone(email_or_phone)) await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
 
-            log(`OTP generated for ${email} - ${otp}`);
+            log(`OTP generated for ${email_or_phone} - ${otp}`);
 
             res.json({ success: true, code: 200, nonce: nonce, message: 'otp sent successfully' });
         } catch (err) {

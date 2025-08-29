@@ -43,7 +43,7 @@ function getLocalesApi(app) {
             const locales = await getLocales(filters);
             const locale = await getLocale(req.headers.locale);
 
-            res.send({ success: true, locales, locale });
+            res.send({ success: true, locales, locale, user: req.user });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

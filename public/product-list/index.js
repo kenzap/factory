@@ -101,7 +101,7 @@ class ProductList extends Component {
     initBreadcrumbs() {
         initBreadcrumbs([
             { link: link('/home/'), text: __html('Home') },
-            { text: __html('Product List') }
+            { text: __html('Products') }
         ]);
     }
 
@@ -128,7 +128,14 @@ class ProductList extends Component {
 
             hideLoader();
 
-            new Header(response);
+            new Header({
+                hidden: false,
+                title: __html('Products'),
+                icon: 'box',
+                style: 'navbar-light',
+                user: response?.user,
+                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+            });
 
             this.setState({
                 products: response.products,

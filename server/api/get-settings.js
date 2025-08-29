@@ -43,7 +43,7 @@ function getSettingsApi(app) {
             const locale = await getLocale(req.headers.locale);
             const settings = await getSettings();
 
-            res.send({ success: true, settings, locale, sid: 0 });
+            res.send({ success: true, settings, locale, sid: 0, user: req.user, });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get settings' });

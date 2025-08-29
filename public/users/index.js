@@ -65,6 +65,7 @@ class Users {
                 title: __html('Users'),
                 icon: 'person',
                 style: 'navbar-light',
+                user: response?.user,
                 menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
             });
 

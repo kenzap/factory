@@ -53,20 +53,20 @@ export class Header {
                         <div class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown">
                                 <i class="bi bi-person-circle me-2"></i>
-                                Operators
+                                ${this.response?.user?.fname ? this.response?.user?.fname : ""}${this.response?.user?.lname ? ' ' + this.response.user.lname.charAt(0) + '.' : ''}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol1', '/ATS/noliktava2?ats=1')">
-                                    <i class="bi bi-box me-2"></i>Noliktava 1</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol2', '/ATS/noliktava2?ats=2')">
-                                    <i class="bi bi-box me-2"></i>Noliktava 2</a></li>
-                                <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol3', '/ATS/noliktava2?ats=3')">
-                                    <i class="bi bi-box me-2"></i>Noliktava 3</a></li>
+                                <li><a class="dropdown-item" href="/home/">
+                                    <i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
+                                <li><a class="dropdown-item" href="/manufacturing/" >
+                                    <i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
+                                <li><a class="dropdown-item" href="/worklog/">
+                                    <i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('darbs', '/ATS/darbs')">
-                                    <i class="bi bi-tools me-2"></i>Darbs: Viss</a></li>
+                                <li><a class="dropdown-item" href="#">
+                                    <i class="bi bi-person me-2"></i>${__html('My Profile')}</a></li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="/logout.php">
+                                <li><a class="dropdown-item text-danger sign-out" href="#">
                                     <i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
                             </ul>
                         </div>
@@ -80,6 +80,8 @@ export class Header {
 
         // sign out listener
         onClick('.sign-out', (e) => {
+
+            e.preventDefault();
 
             authLogout(() => {
 

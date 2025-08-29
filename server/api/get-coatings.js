@@ -9,7 +9,7 @@ function getCoatingsApi(app) {
         const locale = await getLocale(_req.headers.locale);
         const settings = await getSettings(["var_parent", "textures"]);
 
-        res.json({ success: true, user: _req.user, settings, locale });
+        res.json({ success: true, user: _req.user, settings, locale, user: _req.user, });
     });
 }
 

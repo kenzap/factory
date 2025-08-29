@@ -1,7 +1,7 @@
-import { isEmail } from "../helpers/validation.js";
-import { getOTP } from "/_/api/auth_get_otp.js";
-import { validateOTP } from "/_/api/auth_validate_otp.js";
-import { __html, onClick } from "/_/helpers/global.js";
+import { getOTP } from "../api/auth_get_otp.js";
+import { validateOTP } from "../api/auth_validate_otp.js";
+import { __html, onClick } from "../helpers/global.js";
+import { isEmail, isPhone } from "../helpers/validation.js";
 import { bus } from "/_/modules/bus.js";
 import { Login } from "/_/modules/login.js";
 import { Modal } from "/_/modules/modal.js";
@@ -40,6 +40,8 @@ export class Auth {
             self.modalCont = new bootstrap.Modal(self.modal, { backdrop: 'static', keyboard: false });
         }
 
+        if (!self.modal) return;
+
         self.modal.querySelector('.modal-title').innerHTML = __html('Sign in');
 
         // should we reset attempt restrictions
@@ -66,25 +68,25 @@ export class Auth {
         `;
 
         let modalHTML = `
-        <form class="form-cont needs-validation" novalidate>
-            <div class="form-group row mb-3 mx-sm-3">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
-                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                </svg>
-                <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address')}</label>
-                <div class="col-lg-12">
-                    <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
-                    <div class="invalid-feedback otp-email-notice"></div>
-                    <p class="form-text text-center">${__html('*You will receive a one-time password to your email address.')}</p>
-                    <div class="text-center">
-                        <div class="form-check form-switch d-inline-block form-text mt-4">
-                            <input class="form-check-input" type="checkbox" id="trust-device" ${self.email.length > 0 ? 'checked' : ''}>
-                            <label class="form-check-label" for="trust-device">${__html('Trust this device for 30 days.')}</label>
+            <form class="form-cont needs-validation" novalidate>
+                <div class="form-group row mb-3 mx-sm-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
+                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                    </svg>
+                    <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address or phone')}</label>
+                    <div class="col-lg-12">
+                        <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
+                        <div class="invalid-feedback otp-email-notice text-center"></div>
+                        <p class="form-text text-center">${__html('*You will receive a one-time password to your email address.')}</p>
+                        <div class="text-center">
+                            <div class="form-check form-switch d-inline-block form-text mt-4">
+                                <input class="form-check-input" type="checkbox" id="trust-device" ${self.email.length > 0 ? 'checked' : ''}>
+                                <label class="form-check-label" for="trust-device">${__html('Trust this device for 30 days.')}</label>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>`;
+            </div>`;
 
         self.modal.querySelector('.modal-body').innerHTML = modalHTML;
 
@@ -101,6 +103,14 @@ export class Auth {
         onClick('.btn-get-otp', e => {
 
             self.getOTP();
+        });
+
+        // on enter key get OTP
+        self.modal.querySelector('#otp-email').addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                self.getOTP();
+            }
         });
 
         // on modal close listener
@@ -124,21 +134,21 @@ export class Auth {
         self.modal.querySelector('#otp-email').setCustomValidity(''); self.modal.querySelector('.otp-email-notice').innerHTML = '';
 
         // validate email
-        let email = self.modal.querySelector('#otp-email').value;
-        if (!isEmail(email)) {
+        let email_or_phone = self.modal.querySelector('#otp-email').value.trim();
+        if (!isEmail(email_or_phone) && !isPhone(email_or_phone)) {
 
-            self.modal.querySelector('#otp-email').setCustomValidity('wrong email format');
-            self.modal.querySelector('.otp-email-notice').innerHTML = __html('wrong email format');
+            self.modal.querySelector('#otp-email').setCustomValidity('wrong email or phone format');
+            self.modal.querySelector('.otp-email-notice').innerHTML = __html('wrong email or phone format');
             self.modal.querySelector('form').classList.add('was-validated');
 
             return;
         }
 
         // email must be lower case
-        email = email.toLowerCase();
+        email_or_phone = email_or_phone.toLowerCase();
 
         // cache email address for one day
-        self.email = email;
+        self.email_or_phone = email_or_phone;
 
         // validate form
         self.modal.querySelector('form').classList.add('was-validated');
@@ -149,7 +159,7 @@ export class Auth {
 
         // cache valid email address in the browser if user trusts this device
         let trust = self.modal.querySelector('#trust-device').checked;
-        if (trust) localStorage.setItem('otp-email', email);
+        if (trust) localStorage.setItem('otp-email', email_or_phone);
 
         // cache unsuccessful attempts
         self.resendTimes += 1;
@@ -158,7 +168,9 @@ export class Auth {
         localStorage.setItem('otp-resend-last', self.resendLast);
 
         // request OTP on server
-        getOTP(email, (response) => {
+        getOTP(email_or_phone, (response) => {
+
+            if (!response.success && response.error) { self.modal.querySelector('.otp-email-notice').innerHTML = response.error; return; }
 
             if (!response.nonce) return;
 
@@ -171,7 +183,7 @@ export class Auth {
 
         const self = this;
         const nonce = response['nonce'];
-        const email = self.email;
+        const email_or_phone = self.email_or_phone;
 
         self.modal.querySelector('.modal-footer').innerHTML = `
                 <button type="button" class="btn btn-branded btn-modal btn-validate-otp">${__html('Verify')}</button>
@@ -191,7 +203,7 @@ export class Auth {
                                     <h6>${__html('Please enter a one-time password %1$ to verify your account.', '<br>')}</h6> 
                                 <div>
                                 <span class="form-text">${__html('A password has been sent to')}</span> 
-                                <small>${email}</small>
+                                <small>${email_or_phone}</small>
                             </div>
                             <div id="otp" class="inputs d-flex flex-row justify-content-center mt-2"> 
                                 <input class="m-1 m-sm-2 text-center form-control rounded" type="text" id="f1" autocomplete="off" maxlength="1" /> 
@@ -219,7 +231,7 @@ export class Auth {
         self.modal.querySelector('#f1').focus();
 
         // validate OTP click listener
-        self.modal.querySelector('.btn-validate-otp').addEventListener('click', () => { self.validateOTP(email, nonce); });
+        self.modal.querySelector('.btn-validate-otp').addEventListener('click', () => { self.validateOTP(email_or_phone, nonce); });
 
         // resend OTP click listener
         self.modal.querySelector('.btn-resend-otp').addEventListener('click', () => { self.view(self); });
@@ -257,7 +269,7 @@ export class Auth {
 
                     if (e.currentTarget.id == 'f6') {
 
-                        self.validateOTP(email, nonce);
+                        self.validateOTP(email_or_phone, nonce);
                     }
 
                 } else {
@@ -326,7 +338,7 @@ export class Auth {
                         if (document.querySelector('.modal-body #otp > #f' + (i + 1))) document.querySelector('.modal-body #otp > #f' + (i + 1)).value = c;
                     });
 
-                    self.validateOTP(email, nonce);
+                    self.validateOTP(email_or_phone, nonce);
                 }
                 return false;
             });
@@ -334,7 +346,7 @@ export class Auth {
     }
 
     // valite OTP
-    validateOTP = (email, nonce) => {
+    validateOTP = (email_or_phone, nonce) => {
 
         let self = this;
 
@@ -358,7 +370,7 @@ export class Auth {
         self.modal.querySelector('.btn-validate-otp').innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>' + __html('Loading..');
 
         // submit application
-        validateOTP(email, otp, nonce, (response) => {
+        validateOTP(email_or_phone, otp, nonce, (response) => {
 
             // clear previous attempts 
             localStorage.setItem('otp-resend-times', 0);
@@ -407,7 +419,7 @@ export class Auth {
                         <div class="card-2 otp-note"> 
                             <div class="content d-flex justify-content-center align-items-center form-text"> 
                                 <span>${__html('Need more help?')}</span> 
-                                <a href="mailto:support@kenzap.com?subject=EATA%20Carnet%20Dashboard%20Support" class="ms-3 btn-resend-otp">${__html('Contact support')}</a> 
+                                <a href="mailto:support@skarda.design" class="ms-3 btn-resend-otp">${__html('Contact support')}</a> 
                             </div> 
                         </div> 
                     </div>

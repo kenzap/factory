@@ -1,7 +1,7 @@
 import { getProducts } from "../_/api/get_products.js";
 import { saveStockAmount } from "../_/api/save_stock_amount.js";
 import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
-import { __html, hideLoader, onChange, onClick, toast } from "../_/helpers/global.js";
+import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
@@ -49,11 +49,19 @@ class Stock {
 
         if (document.querySelector('.stock-cont')) return;
 
-        document.querySelector('#app').innerHTML = getHtml();
+        document.querySelector('#app').innerHTML = getHtml({ user: this.user, settings: this.settings });
 
-        onChange('#categoryFilter', (e) => {
+        onClick('#categoryFilter .dropdown-item', (e) => {
 
-            this.filters.cat = e.target.value;
+            e.preventDefault();
+
+            const selectedCategory = document.getElementById('selectedCategory');
+            selectedCategory.textContent = e.target.textContent;
+
+            const category = e.target.getAttribute('data-value');
+            e.target.closest('.dropdown').querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+            e.target.classList.add('active');
+            this.filters.cat = category;
 
             this.data();
         });
@@ -153,10 +161,13 @@ class Stock {
 
             this.settings = response.settings;
             this.products = response.products;
+            this.user = response.user;
 
             // session
             new Session();
-            new Header(response);
+            new Header({
+                hidden: true,
+            });
 
             this.view();
 

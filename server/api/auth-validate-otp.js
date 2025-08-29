@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { cacheUserSession, generateTokens, getOtpByEmail, getUserByEmail, isValidEmail } from '../_/helpers/auth.js';
+import { cacheUserSession, generateTokens, getOtpByEmailOrPhone, getUserByEmail, getUserByPhone, isValidEmail, isValidPhone } from '../_/helpers/auth.js';
 import { log } from '../_/helpers/index.js';
 
 // API route for product export
@@ -12,9 +12,9 @@ function validateOtpApi(app) {
     app.post('/api/auth/validate-otp', async (req, res) => {
         try {
 
-            const { email, nonce, otp } = req.body;
+            const { email_or_phone, nonce, otp } = req.body;
 
-            if (!email || !otp || !nonce) {
+            if (!email_or_phone || !otp || !nonce) {
                 res.status(400).json({
                     error: 'email, otp and nonce are required',
                     code: 400
@@ -22,18 +22,13 @@ function validateOtpApi(app) {
                 return;
             }
 
-            if (!email) {
-                res.status(400).json({ error: 'email is required', code: 400 });
-                return;
-            }
-
-            if (!isValidEmail(email)) {
-                res.status(400).json({ error: 'invalid email format', code: 400 });
+            if (!isValidEmail(email_or_phone) && !isValidPhone(email_or_phone)) {
+                res.status(400).json({ error: 'email or phone is required', code: 400 });
                 return;
             }
 
             // Send OTP via email (you'll need to implement email service)
-            const otpCached = await getOtpByEmail(email, nonce);
+            let otpCached = await getOtpByEmailOrPhone(email_or_phone, nonce);
 
             if (!otpCached) {
                 res.status(400).json({ error: 'invalid nonce', code: 400 });
@@ -41,14 +36,19 @@ function validateOtpApi(app) {
             }
 
             if (otpCached !== otp) {
-                res.status(400).json({ error: 'invalid otp', code: 400 });
+                res.status(400).json({ error: 'invalid otp', email_or_phone, otpCached, otp, code: 400 });
                 return;
             }
 
-            log(`OTP validated for ${email}`);
+            log(`OTP validated for ${email_or_phone}`);
+
+            let user = null;
 
             // get user by email
-            const user = await getUserByEmail(email);
+            if (isValidEmail(email_or_phone)) user = await getUserByEmail(email_or_phone);
+
+            // get user by phone
+            if (isValidPhone(email_or_phone)) user = await getUserByPhone(email_or_phone);
 
             // if user not found
             if (!user) {

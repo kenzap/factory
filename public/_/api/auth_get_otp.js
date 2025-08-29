@@ -1,13 +1,13 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const getOTP = (email, cb) => {
+export const getOTP = (email_or_phone, cb) => {
 
     // do API query
     fetch(API() + '/api/auth/get-otp', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({
-            email: email
+            email_or_phone: email_or_phone
         })
     })
         .then(response => response.json())
@@ -16,9 +16,9 @@ export const getOTP = (email, cb) => {
             // hide UI loader
             hideLoader();
 
-            if (response.success) cb(response);
+            if (response) cb(response);
 
-            if (!response.success) parseApiError(response);
+            if (!response) parseApiError(response);
         })
         .catch(error => { parseApiError(error); });
 }

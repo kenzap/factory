@@ -41,7 +41,14 @@ class Home {
             new Session();
 
             // init header
-            new Header(response);
+            new Header({
+                hidden: false,
+                title: __html('Dashboard'),
+                icon: 'bi bi-grid',
+                style: 'navbar-light',
+                user: response?.user,
+                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+            });
 
             // init footer
             new Footer(response);

@@ -85,7 +85,7 @@ function getProductApi(app) {
             const locales = await getLocales();
             const settings = await getSettings();
 
-            res.send({ success: true, settings, locale, locales, product: records });
+            res.send({ success: true, settings, locale, locales, product: records, user: req.user });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

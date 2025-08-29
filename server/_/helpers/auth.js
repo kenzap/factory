@@ -3,7 +3,7 @@ import { body } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { send_email } from './email.js';
-import { getDbConnection, sid } from './index.js';
+import { getDbConnection, log, log_error, sid } from './index.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-provided-in-env';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-provided-in-env';
@@ -38,6 +38,12 @@ export const authenticateToken = async (req, res, next) => {
 export const isValidEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
+};
+
+// Phone validation helper
+export const isValidPhone = (phone) => {
+    const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
+    return phoneRegex.test(phone);
 };
 
 // Store OTP function placeholder
@@ -96,6 +102,80 @@ export const sendOtpEmail = async (email, otp) => {
     }
 }
 
+// Send OTP via WhatsApp function placeholder
+export const sendOtpWhatsApp = async (phone, otp, isOtp = false) => {
+
+    try {
+        // 360dialog API configuration
+        // production
+        const url = "https://waba.360dialog.io/v1/messages";
+        const apiKey = process.env.DIALOG_KEY;
+
+        // sandbox
+        // const url = "https://waba-sandbox.360dialog.io/v1/messages";
+        // const apiKey = "UXENI6_sandbox";
+
+        // Define template at https://developers.facebook.com/apps/ > your app > WhatsApp > Message Templates
+        const payload = {
+            to: phone,
+            type: "template",
+            template: {
+                namespace: process.env.WHATSAPP_NAMESPACE,
+                language: {
+                    policy: "deterministic",
+                    code: "en"
+                },
+                name: "auth_otp",
+                components: [
+                    {
+                        type: "body",
+                        parameters: [
+                            {
+                                type: "text",
+                                text: otp
+                            }
+                        ]
+                    },
+                    {
+                        type: "button",
+                        sub_type: "url",
+                        index: "0",
+                        parameters: [
+                            {
+                                type: "text",
+                                text: otp
+                            }
+                        ]
+                    }
+                ]
+            }
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'D360-Api-Key': apiKey
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            log_error(`HTTP error! status: ${response}`);
+        }
+
+        const result = await response.json();
+
+        log(`WhatsApp OTP sent to ${phone}:`, result);
+
+        return { success: true, message: 'WhatsApp message sent successfully', data: result };
+
+    } catch (error) {
+        log_error('Error sending WhatsApp message:', error);
+        throw error;
+    }
+}
+
 // Increment request count for rate limiting
 export const getRequestCount = async (key) => {
     try {
@@ -125,7 +205,7 @@ export const incrementRequestCount = async (key, timeWindow) => {
 }
 
 // Get OTP by email and nonce
-export const getOtpByEmail = async (email, nonce) => {
+export const getOtpByEmailOrPhone = async (email, nonce) => {
     try {
         const redisClient = createClient({ url: process.env.REDIS_URL });
         await redisClient.connect();
@@ -139,7 +219,7 @@ export const getOtpByEmail = async (email, nonce) => {
         }
         return null;
     } catch (error) {
-        console.error('Error getting OTP by email:', error);
+        console.error('Error getting OTP by email or phone:', error);
         throw error;
     }
 }
@@ -168,6 +248,48 @@ export const getUserByEmail = async (email) => {
         `;
 
         const userResult = await client.query(userQuery, ['user', sid, email]);
+        if (userResult.rows.length > 0) {
+            const row = userResult.rows[0];
+            user = {
+                id: row._id,
+                fname: row.fname,
+                lname: row.lname,
+                rights: row.rights ? JSON.parse(row.rights) : [],
+                avatar: row.avatar ? JSON.parse(row.avatar) : null
+            };
+        }
+
+        return user;
+
+    } finally {
+        await client.end();
+    }
+}
+
+// This function should retrieve the user from the database by email
+export const getUserByPhone = async (phone) => {
+
+    let user = null;
+
+    const client = getDbConnection();
+    await client.connect();
+
+    try {
+
+        // Get user
+        const userQuery = `
+            SELECT  _id, 
+                    js->'data'->>'fname' as fname,
+                    js->'data'->>'lname' as lname,
+                    js->'data'->>'rights' as rights,
+                    js->'data'->>'avatar' as avatar,
+                    js->'data'->>'blocks' as blocks
+            FROM data 
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'phone' = $3
+            LIMIT 1
+        `;
+
+        const userResult = await client.query(userQuery, ['user', sid, phone]);
         if (userResult.rows.length > 0) {
             const row = userResult.rows[0];
             user = {

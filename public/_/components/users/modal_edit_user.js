@@ -39,30 +39,30 @@ export class EditUser {
                 <p class="d-none">${__html('Manually add users to the database. You can update user rights after adding them.')}</p>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userFname">${__html('First Name')}</label>
-                    <input class="form-control" type="input" id="userFname" placeholder="${__attr('Alex')}" value="${this.user.fname || ""}" autocomplete="off">  
+                    <input class="form-control" type="text" id="userFname" placeholder="${__attr('Alex')}" value="${this.user.fname || ""}" autocomplete="off">  
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userLname">${__html('Last Name')}</label>
-                    <input class="form-control" type="input" id="userLname" placeholder="${__attr('Smith')}" value="${this.user.lname || ""}" autocomplete="off">  
+                    <input class="form-control" type="text" id="userLname" placeholder="${__attr('Smith')}" value="${this.user.lname || ""}" autocomplete="off">  
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userEmail">${__html('Email Address')}</label>
-                    <input class="form-control" type="input" id="userEmail" placeholder="${__attr('name@example.com')}" value="${this.user.email || ""}" autocomplete="off">  
+                    <input class="form-control" type="text" id="userEmail" placeholder="${__attr('name@example.com')}" value="${this.user.email || ""}" autocomplete="off">  
                     <div class="invalid-feedback userEmail-notice"></div>
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userPhone">${__html('Phone Number')}</label>
-                    <input class="form-control" type="input" id="userPhone" placeholder="${__attr('+1 234 000-000')}" value="${this.user.phone || ""}" autocomplete="off">  
+                    <input class="form-control" type="text" id="userPhone" placeholder="${__attr('1234000000')}" value="${this.user.phone || ""}" autocomplete="off">  
                     <div class="invalid-feedback userPhone-notice"></div>
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userNotes">${__html('Notes')}</label>
-                    <input class="form-control" type="input" id="userNotes" placeholder="" value="${this.user.notes || ""}" autocomplete="off">  
+                    <input class="form-control" type="text" id="userNotes" placeholder="" value="${this.user.notes || ""}" autocomplete="off">  
                     <div class="invalid-feedback userNotes-notice"></div>
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userPortal">${__html('Portal')}</label>
-                    <select class="form-control" type="input" id="userPortal" autocomplete="off">  
+                    <select class="form-control" type="select" id="userPortal" autocomplete="off">  
                         <option value="home" ${this.user.portal == "home" ? "selected" : ""}>${__html('Default')}</option>
                         <option value="manufacturing" ${this.user.portal == "manufacturing" ? "selected" : ""}>${__html('Manufacturing')}</option>
                         <option value="cutting" ${this.user.portal == "cutting" ? "selected" : ""}>${__html('Cutting')}</option>
@@ -85,6 +85,13 @@ export class EditUser {
     listeners() {
 
         let user = { _id: this.user._id };
+
+        // phone input listener to allow only digits
+        this.modal.querySelector('#userPhone').addEventListener('keypress', e => {
+            if (!/\d/.test(e.key) && !['Backspace', 'Delete', 'Tab', 'Enter', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
 
         // update button listener
         this.modal.querySelector(".btn-save-user").addEventListener('click', e => {

@@ -1,13 +1,13 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const validateOTP = (email, otp, nonce, cb) => {
+export const validateOTP = (email_or_phone, otp, nonce, cb) => {
 
     // do API query
     fetch(API() + '/api/auth/validate-otp', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({
-            email: email,
+            email_or_phone: email_or_phone,
             otp: otp,
             nonce: nonce
         })
