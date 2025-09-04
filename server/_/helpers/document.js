@@ -16,6 +16,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                        js->'data'->>'tax_display' as tax_display,
                        js->'data'->>'waybill_last_number' as waybill_last_number,
                        js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
+                       js->'data'->>'groups' as groups,
                        js->'data'->>$3 as document_template
                 FROM data 
                 WHERE ref = $1 AND sid = $2
@@ -344,6 +345,126 @@ export const getWaybillTotals = (settings, order) => {
         </div>`;
 }
 
+export function getProductionItemsTable(settings, order) {
+
+    let groups = settings.groups || [];
+
+    if (!Array.isArray(groups)) groups = [];
+
+    let tableContent = '';
+    let itemIndex = 1;
+
+    groups.forEach(group => {
+
+        // Filter order items that belong to this group
+        const groupItems = order.items.filter(item =>
+            group.id == item?.group
+        );
+
+        // Sort group items alphabetically by product name
+        groupItems.sort((a, b) => {
+            const nameA = (a.title || '').toLowerCase();
+            const nameB = (b.title || '').toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+
+        // Only create group section if there are items for this group
+        if (groupItems.length > 0) {
+            // Add group header
+            tableContent += `
+                <thead class="table-secondary">
+                    <tr>
+                        <th scope="col"></th>
+                        <th scope="col">${__html(group.name)}</th>
+                        <th scope="col">${__html("Qty")}</th>
+                        <th scope="col">${__html("Unit")}</th>
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            // Add items for this group
+            groupItems.forEach((item, i) => {
+                item.updated = 1;
+                if (item.total) {
+                    tableContent += `
+                        <tr class="${i == groupItems.length - 1 ? "border-secondary" : ""}">
+                            <th scope="row">${itemIndex}</th>
+                            <td>
+                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color}</div>
+                                ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
+                            </td>
+                            <td>${item.qty}</td>
+                            <td>${item.unit || __html("pc")}</td>
+                        </tr>
+                    `;
+                    itemIndex++;
+                }
+            });
+
+            tableContent += '</tbody>';
+        }
+    });
+
+    // Add ungrouped items if any
+    const groupedItemIds = groups.flatMap(group => group.id);
+    const ungroupedItems = order.items.filter(item =>
+        !groupedItemIds.includes(item?.group)
+    );
+
+    // Sort ungrouped items alphabetically by product name
+    ungroupedItems.sort((a, b) => {
+        const nameA = (a.title || '').toLowerCase();
+        const nameB = (b.title || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+
+    if (ungroupedItems.length > 0) {
+        tableContent += `
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col"></th>
+                    <th scope="col">${__html("Product")}</th>
+                    <th scope="col">${__html("Qty")}</th>
+                    <th scope="col">${__html("Unit")}</th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+
+        ungroupedItems.forEach((item, i) => {
+            item.updated = 1;
+
+            if (item.total) {
+                tableContent += `
+                    <tr class="${i == ungroupedItems.length - 1 ? "border-secondary" : ""}">
+                        <th scope="row">${itemIndex}</th>
+                        <td>
+                            <div>${item.title} ${item.coating} ${item.color}</div>
+                            ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
+                            <div>${item._id}</div>
+                        </td>
+                        <td>${item.qty}</td>
+                        <td>${item.unit || __html("pc")}</td>
+                    </tr>
+                `;
+                itemIndex++;
+            }
+        });
+
+        tableContent += '</tbody>';
+    }
+
+    let table = `
+        <!-- Items Table -->
+        <table class="items-table">
+            ${tableContent}
+        </table>
+    `;
+
+    return table;
+}
+
 export const amountToWords = (amount, settings) => {
 
     // console.log(`amountToWords: ${amount}, currency: ${currency}`);
@@ -665,17 +786,41 @@ export const parseDocument = (document, data) => {
         ? document.replace(/\{\{order_number\}\}/g, data.order?.id)
         : removeField(document, 'order_number');
 
+    document = data.order?.notes
+        ? document.replace(/\{\{order_notes\}\}/g, data.order?.notes)
+        : removeField(document, 'order_notes');
+
+    document = new Date().toLocaleDateString(data.lang, {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    })
+        ? document.replace(/\{\{today_date\}\}/g, new Date().toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        }))
+        : removeField(document, 'today_date');
+
     document = data.order?.address
         ? document.replace(/\{\{delivery_address\}\}/g, data.order?.address)
         : removeField(document, 'delivery_address');
 
-    document = data.manufacturing_date
-        ? document.replace(/\{\{manufacturing_date\}\}/g, new Date(data.manufacturing_date).toLocaleDateString(data.lang, {
+    document = data.order?.manufacturing_date
+        ? document.replace(/\{\{manufacturing_date\}\}/g, new Date(data.order?.manufacturing_date).toLocaleDateString(data.lang, {
             year: 'numeric',
             month: 'numeric',
             day: 'numeric'
         }))
         : removeField(document, 'manufacturing_date');
+
+    document = data.order?.due_date
+        ? document.replace(/\{\{due_date\}\}/g, new Date(data.order?.due_date).toLocaleDateString(data.lang, {
+            year: 'numeric',
+            month: 'numeric',
+            day: 'numeric'
+        }))
+        : removeField(document, 'due_date');
 
     document = data.issuing_date
         ? document.replace(/\{\{receiving_date\}\}/g, new Date(data.issuing_date).toLocaleDateString(data.lang, {
@@ -688,6 +833,10 @@ export const parseDocument = (document, data) => {
     document = data?.waybill_items_table
         ? document.replace(/\{\{waybill_items_table\}\}/g, data.waybill_items_table)
         : removeField(document, 'waybill_items_table');
+
+    document = data?.production_items_table
+        ? document.replace(/\{\{production_items_table\}\}/g, data.production_items_table)
+        : removeField(document, 'production_items_table');
 
     document = data?.waybill_totals
         ? document.replace(/\{\{waybill_totals\}\}/g, data.waybill_totals)

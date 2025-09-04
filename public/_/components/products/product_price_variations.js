@@ -47,6 +47,8 @@ export class ProductPriceVariations {
         let parent_options = '<option value="">' + __html('None') + '</option>';
         if (Array.isArray(this.product.var_price)) {
 
+            // console.log("this.product.var_price", this.product.var_price);
+
             // pricing row parent
             this.product.var_price.forEach((o, i) => {
 
@@ -57,18 +59,18 @@ export class ProductPriceVariations {
                 document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(o, i));
             });
 
-            // pricing row
-            this.product.var_price.forEach((price, i) => {
+            // // pricing row
+            // this.product.var_price.forEach((price, i) => {
 
-                if (price.parent) {
+            //     if (price.parent) {
 
-                    if (document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]')) {
-                        document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]').insertAdjacentHTML("afterend", self.structCoatingRow(price, i)); // :last-child
-                    } else {
-                        document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(price, i));
-                    }
-                }
-            });
+            //         if (document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]')) {
+            //             document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]').insertAdjacentHTML("afterend", self.structCoatingRow(price, i)); // :last-child
+            //         } else {
+            //             document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(price, i));
+            //         }
+            //     }
+            // });
 
         } else {
             this.product.var_price = [];
@@ -335,6 +337,8 @@ export class ProductPriceVariations {
      * @returns {string} HTML string for the table row
      */
     structCoatingRow(obj, i) {
+
+        console.log("structCoatingRow", obj.id, obj.title, obj.parent);
 
         return `
             <tr class="new-item-row ${obj.parent ? "pr-parent" : ""}" data-parent="${obj.parent ? obj.parent : ""}" data-title="${obj.title}" data-hash="${escape(obj.id + obj.title + obj.parent)}">

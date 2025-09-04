@@ -1,5 +1,6 @@
 import { getSettings } from "../_/api/get_settings.js";
 import { saveSettings } from "../_/api/save_settings.js";
+import { GroupsControl } from "../_/components/settings/groups_control.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Modal } from "../_/modules/modal.js";
@@ -78,6 +79,8 @@ class Settings {
                 { text: __html('Settings') }
             ]
         );
+
+        new GroupsControl(this.state.settings);
 
         // setup coatings and prices
         let price = [];
@@ -173,6 +176,7 @@ class Settings {
 
         // add price listener
         onClick('.add-price', e => this.addPrice(this, e));
+
 
         // remove price listener
         // onClick('.remove-price', _this.listeners.removePrice);
@@ -274,7 +278,6 @@ class Settings {
         // prices[i].public = e.currentTarget.value;
 
         document.querySelector('#price').value = JSON.stringify(prices);
-
     }
 
     saveSettings(self, e) {
@@ -310,7 +313,9 @@ class Settings {
             delete data.last_order_id;
         }
 
-        // log(data); return;
+        data.groups = this.state.settings.groups;
+
+        // console.log(data); return;
 
         delete data[''];
 

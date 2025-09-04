@@ -91,7 +91,7 @@ export class LeftPane {
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="receipt">${__html('Receipt')}</button>
                         <button class="btn btn-outline-secondary btn-sm document-btn" data-type="draft">${__html('Draft')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="bill">${__html('Bill')}</button>
-                        <button class="btn btn-outline-info btn-sm document-btn" data-type="p1">${__html('P1')}</button>
+                        <button class="btn btn-outline-info btn-sm document-btn" data-type="production-slip">${__html('Production Slip')}</button>
                         <button class="btn btn-outline-info btn-sm document-btn" data-type="p2">${__html('P2')}</button>
                     </div>
                 </div>
@@ -190,6 +190,9 @@ export class LeftPane {
                     new PreviewDocument(type, this.order);
                     break;
                 case 'invoice':
+                    new PreviewDocument(type, this.order);
+                    break;
+                case 'production-slip':
                     new PreviewDocument(type, this.order);
                     break;
             }

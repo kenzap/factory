@@ -53,17 +53,10 @@ export const getHtml = () => {
                         </div>
                       </div>
           
-                      <div class="col-lg-6 d-none">
-                        <div class="form-group row mb-3 mt-1">
-                          <label class="col-sm-3 col-form-label">${__html('Colors')}</label>
-                          <div class="col-sm-9">
-                            <textarea id="colors" class="form-control inp" name="colors" rows="6" data-type="text" style="font-size:13px;font-family: monospace;"></textarea>
-                            <p class="form-text">${__html('Provide one color code per line')}</p>
-                          </div> 
-                        </div>
+                      <div class="col-lg-6">
+                        <groups-control></groups-control>
                       </div>
                     </div>
-                    
                     <h4 id="pricing" class="card-title mb-4">${__html('Pricing')}</h4>
                     <table class="price-table order-form mb-3">
                       <thead>
@@ -545,6 +538,30 @@ export const getHtml = () => {
                     <div class="row">
                       <div class="col-lg-12">
                         <div class="form-group row mb-3 mt-1">
+                          <label class="col-sm-3 col-form-label">${__html('Production slip template.')}</label>
+                          <div class="col-sm-9">
+                            <div id="production_slip_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                            <textarea id="production_slip_document_template-" type="text" class="form-control d-none" name="production_slip_document_template" data-type="textarea" rows="20"></textarea>
+                            <p class="form-text">${__html('Production slip template with dynamic fields.')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
+                          <label class="col-sm-3 col-form-label">${__html('Package slip template.')}</label>
+                          <div class="col-sm-9">
+                            <div id="package_slip_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                            <textarea id="package_slip_document_template-" type="text" class="form-control d-none" name="package_slip_document_template" data-type="textarea" rows="20"></textarea>
+                            <p class="form-text">${__html('Production slip template with dynamic fields.')}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row">
+                      <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
                           <label class="col-sm-3 col-form-label">${__html('Proforma template.')}</label>
                           <div class="col-sm-9">
                             <div id="proforma_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
@@ -694,6 +711,7 @@ export const getHtml = () => {
                         </div>
                       </div>
                     </div>
+                    
                   </div>
                 </div>
               </div>

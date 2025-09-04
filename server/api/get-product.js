@@ -24,6 +24,7 @@ async function getProduct(id) {
             js->'data'->'ldesc' AS ldesc,
             js->'data'->'slugs' AS slugs,
             js->'data'->'keywords' AS keywords,
+            js->'data'->'group' AS group,
             js->'data'->'stock' AS stock,
             js->'data'->'cats' AS cats,
             js->'data'->'sketch' AS sketch,
@@ -83,7 +84,7 @@ function getProductApi(app) {
             const records = await getProduct(req.body.id);
             const locale = await getLocale();
             const locales = await getLocales();
-            const settings = await getSettings();
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "price", "taxes", "groups"]);
 
             res.send({ success: true, settings, locale, locales, product: records, user: req.user });
         } catch (err) {

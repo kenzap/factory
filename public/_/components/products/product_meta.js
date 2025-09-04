@@ -100,7 +100,18 @@ export class ProductMeta {
                     <input type="number" id="priority" class="form-control inp mw-" name="priority" rows="6" data-type="text"></textarea>
                     <p class="form-text">${__html('Prioritize products in the list.')}</p>
                 </div>
-            </div >
+                <div class="mb-3 mw">
+                    <div style="clear:both;margin-top:16px;"></div>
+                    <label class="form-label" for="group">${__html('Group')}</label>
+                    <select id="group" class="form-select inp mw-" name="group" data-type="select">
+                    <option value="">${__html('Select a group')}</option>
+                    ${this.settings.groups ? this.settings.groups.map(group =>
+            `<option value="${attr(group.id)}" ${this.product['group'] == group.id ? "selected='true'" : ""}">${__html(group.name)}</option>`
+        ).join('') : ''}
+                    </select>
+                    <p class="form-text">${__html('Group products by group.')}</p>
+                </div>
+            </div>
 
             <div style='margin:24px 0 48px;border-bottom:0px solid #ccc;'></div>
 
