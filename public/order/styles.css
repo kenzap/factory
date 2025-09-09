@@ -30,6 +30,12 @@ body {
     padding: 2em;
 }
 
+.right-pane client-pane{
+    max-width: 840px;
+    margin: 0 auto;
+    display: block;
+}
+
 .main-container {
     display: flex;
     height: 100vh;

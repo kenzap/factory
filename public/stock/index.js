@@ -3,6 +3,7 @@ import { saveStockAmount } from "../_/api/save_stock_amount.js";
 import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
 import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
@@ -155,6 +156,9 @@ class Stock {
 
             // show UI loader
             if (!response.success) return;
+
+            // init locale
+            new Locale(response);
 
             // hide UI loader
             hideLoader();

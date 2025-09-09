@@ -1,69 +1,69 @@
-import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, log, sid } from '../_/helpers/index.js';
+// import { authenticateToken } from '../_/helpers/auth.js';
+// import { getDbConnection, log, sid } from '../_/helpers/index.js';
 
-/**
- * Kenzap Factory Get Clients
- *
- * List clients
- *
- * @version 1.0
- * @param {string} lang - Language code for product titles and categories
- * @returns {Array<Object>} - Array of clients
-*/
-async function getClientSuggestions() {
+// /**
+//  * Kenzap Factory Get Clients
+//  *
+//  * List clients
+//  *
+//  * @version 1.0
+//  * @param {string} lang - Language code for product titles and categories
+//  * @returns {Array<Object>} - Array of clients
+// */
+// async function getClientSuggestions() {
 
-    const client = getDbConnection();
+//     const client = getDbConnection();
 
-    let clients = {};
+//     let clients = {};
 
-    // Get clients 
-    // const query = `
-    //     SELECT DISTINCT COALESCE(js->'data'->>'name', '') as name
-    //     FROM data 
-    //     WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
-    //     ORDER BY name ASC
-    //     LIMIT 1000
-    //     `;
+//     // Get clients 
+//     // const query = `
+//     //     SELECT DISTINCT COALESCE(js->'data'->>'name', '') as name
+//     //     FROM data 
+//     //     WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
+//     //     ORDER BY name ASC
+//     //     LIMIT 1000
+//     //     `;
 
-    // Get clients 
-    const query = `
-        SELECT COALESCE(js->'data'->>'name', '') as name, _id
-        FROM data 
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
-        ORDER BY name ASC
-        LIMIT 1000
-        `;
+//     // Get clients 
+//     const query = `
+//         SELECT COALESCE(js->'data'->>'name', '') as name, _id
+//         FROM data 
+//         WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
+//         ORDER BY name ASC
+//         LIMIT 1000
+//         `;
 
-    try {
+//     try {
 
-        await client.connect();
+//         await client.connect();
 
-        const result = await client.query(query, ['3dfactory-entity', sid]);
+//         const result = await client.query(query, ['3dfactory-entity', sid]);
 
-        clients = result.rows;
+//         clients = result.rows;
 
-    } finally {
-        await client.end();
-    }
+//     } finally {
+//         await client.end();
+//     }
 
-    return clients;
-}
+//     return clients;
+// }
 
-// API route
-function getClientsApi(app) {
+// // API route
+// function getClientsApi(app) {
 
-    app.post('/api/get-client-suggestions/', authenticateToken, async (req, res) => {
-        try {
+//     app.post('/api/get-client-suggestions/', authenticateToken, async (req, res) => {
+//         try {
 
-            const clients = await getClientSuggestions();
+//             const clients = await getClientSuggestions();
 
-            res.send({ success: true, clients, message: '' });
-        } catch (err) {
+//             res.send({ success: true, clients, message: '' });
+//         } catch (err) {
 
-            res.status(500).json({ error: 'failed to retrieve records' });
-            log(`Error getting records: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
-        }
-    });
-}
+//             res.status(500).json({ error: 'failed to retrieve records' });
+//             log(`Error getting records: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+//         }
+//     });
+// }
 
-export default getClientsApi;
+// export default getClientsApi;

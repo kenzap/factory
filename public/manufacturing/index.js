@@ -5,6 +5,7 @@ import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { getHtml } from "../_/modules/manufacturing.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
@@ -133,10 +134,13 @@ class Manufacturing {
         // get orders
         getOrders(this.filters, (response) => {
 
-            console.log(response);
+            /// console.log(response);
 
             // show UI loader
             if (!response.success) return;
+
+            // init locale
+            new Locale(response);
 
             // hide UI loader
             hideLoader();

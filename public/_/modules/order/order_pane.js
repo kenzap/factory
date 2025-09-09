@@ -13,8 +13,6 @@ export class OrderPane {
         this.order = order;
         this.order.items = this.order.items || [];
 
-        // console.log('OrderPane initialized with settings:', this.settings, 'and order:', this.order);
-
         // check if header is already present
         this.init();
     }
@@ -46,9 +44,6 @@ export class OrderPane {
                 <div id="order-table"></div>
             </div>
         `;
-
-        // // Add event listeners or any additional initialization here
-        // this.listeners();
     }
 
     table = () => {
@@ -61,14 +56,6 @@ export class OrderPane {
             movableColumns: true,
             sortable: false,
             sorter: false,
-            // keybindings: {
-            //     "navNext": "Enter",
-            //     "navPrev": "shift+tab",
-            //     "navDown": false,
-            //     "navUp": false,
-            //     "navLeft": false,
-            //     "navRight": false,
-            // },
             data: this.order.items,
             columns: [
                 {
@@ -87,7 +74,19 @@ export class OrderPane {
                     editorParams: {
                         suggestions: this.colorSuggestions
                     },
-                    width: 80
+                    width: 80,
+                    cellEdited: (cell) => {
+                        // Match entered value with suggestions (case-insensitive)
+                        const enteredValue = cell.getValue();
+                        if (enteredValue) {
+                            const matchedSuggestion = this.colorSuggestions.find(suggestion =>
+                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                            );
+                            if (matchedSuggestion && matchedSuggestion !== enteredValue) {
+                                cell.setValue(matchedSuggestion);
+                            }
+                        }
+                    }
                 },
                 {
                     title: __html("Coating"),
@@ -97,7 +96,19 @@ export class OrderPane {
                     editorParams: {
                         suggestions: this.coatingSuggestions
                     },
-                    width: 100
+                    width: 100,
+                    cellEdited: (cell) => {
+                        // Match entered value with suggestions (case-insensitive)
+                        const enteredValue = cell.getValue();
+                        if (enteredValue) {
+                            const matchedSuggestion = this.coatingSuggestions.find(suggestion =>
+                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                            );
+                            if (matchedSuggestion && matchedSuggestion !== enteredValue) {
+                                cell.setValue(matchedSuggestion);
+                            }
+                        }
+                    }
                 },
                 {
                     title: __html("Product"),
@@ -205,6 +216,16 @@ export class OrderPane {
                     }
                 },
                 {
+                    title: __html("Note"),
+                    field: "note",
+                    headerSort: false,
+                    width: 200,
+                    editor: "textarea",
+                    formatter: function (cell) {
+                        return '<span class="form-text">' + cell.getValue() + '</span>';
+                    }
+                },
+                {
                     title: "",
                     field: "actions",
                     headerSort: false,
@@ -264,7 +285,7 @@ export class OrderPane {
             this.syncItems();
         });
 
-        // this.addRow();
+        if (this.order.items.length === 0) setTimeout(() => { this.addRow() }, 100);
     }
 
     syncItems = () => {
@@ -358,6 +379,7 @@ export class OrderPane {
             adj: 0,
             price: 0,
             discount: 0,
+            note: "",
             total: 0
         });
 
@@ -416,7 +438,7 @@ export class OrderPane {
         const columns = this.table.getColumns().filter(col => col.getField() !== 'actions' && col.getField() !== 'area' && col.getField() !== 'total');
         const currentColumnIndex = columns.findIndex(col => col.getField() === currentColumn.getField());
 
-        if (currentColumnIndex < columns.length - 1) {
+        if (currentColumnIndex < columns.length - 2) {
             // Move to next column in same row
             const nextColumn = columns[currentColumnIndex + 1];
             const nextCell = currentRow.getCell(nextColumn.getField());

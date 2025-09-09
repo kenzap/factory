@@ -6,6 +6,7 @@ import { EditLocale } from "../_/components/localization/edit_locale.js";
 import { __html, countries, formatTime, hideLoader, initBreadcrumbs, languages, link, onClick, parseApiError, showLoader, toast } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -54,6 +55,9 @@ class Localization {
 
             this.locales = response.locales;
             this.settings = response.settings;
+
+            // init locale
+            new Locale(response);
 
             // initialize session
             new Session();

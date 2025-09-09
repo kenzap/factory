@@ -166,7 +166,7 @@ export class SearchComponent extends Component {
     renderInput() {
         return `
             <div class="search-cont input-group input-group-sm mb-0 justify-content-start">
-                <input type="text" placeholder="${__html('Search products')}" class="form-control border-top-0 border-start-0 border-end-0 rounded-0" style="max-width: 200px;">
+                <input type="text" placeholder="${__html('Search..')}" class="form-control border-top-0 border-start-0 border-end-0 rounded-0" style="max-width: 200px;">
             </div>
             <span>${__html("Title")}</span>
         `;

@@ -10,35 +10,41 @@ import { getDbConnection, log, sid } from '../_/helpers/index.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Array of clients
 */
-async function getClients() {
+async function getClientSuggestions(filters) {
+
+    console.log('filters', filters);
 
     const client = getDbConnection();
 
     let clients = {};
 
     // Get clients 
-    // const query = `
-    //     SELECT DISTINCT COALESCE(js->'data'->>'name', '') as name
-    //     FROM data 
-    //     WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
-    //     ORDER BY name ASC
-    //     LIMIT 1000
-    //     `;
-
-    // Get clients 
-    const query = `
-        SELECT COALESCE(js->'data'->>'name', '') as name, _id
+    let query = `
+        SELECT COALESCE(js->'data'->>'legal_name', '') as name, COALESCE(js->'data'->>'reg_address', '') as address, _id
         FROM data 
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'name' IS NOT NULL AND js->'data'->>'name' != ''
-        ORDER BY name ASC
-        LIMIT 1000
+        WHERE ref = $1 AND sid = $2 AND js->'data'->>'legal_name' IS NOT NULL AND js->'data'->>'legal_name' != ''
         `;
+
+    let params = ['3dfactory-entity', sid];
 
     try {
 
         await client.connect();
 
-        const result = await client.query(query, ['3dfactory-entity', sid]);
+        if (filters.s && filters.s.trim() !== '') {
+
+            console.log('Search string:', filters.s);
+
+            query += ` AND unaccent(js->'data'->>'legal_name') ILIKE unaccent($3)`;
+            params.push(`%${filters.s}%`);
+        }
+
+        // ORDER BY name
+        query += `
+            ORDER BY js->'data'->'legal_name' ASC
+            LIMIT 100`;
+
+        const result = await client.query(query, params);
 
         clients = result.rows;
 
@@ -50,12 +56,14 @@ async function getClients() {
 }
 
 // API route
-function getClientsApi(app) {
+function getClientSuggestionsApi(app) {
 
-    app.post('/api/get-clients/', authenticateToken, async (req, res) => {
+    console.log('getClientSuggestionsApi loaded');
+
+    app.post('/api/get-client-suggestions/', authenticateToken, async (req, res) => {
         try {
 
-            const clients = await getClients();
+            const clients = await getClientSuggestions(req.body.filters);
 
             res.send({ success: true, clients, message: '' });
         } catch (err) {
@@ -66,4 +74,4 @@ function getClientsApi(app) {
     });
 }
 
-export default getClientsApi;
+export default getClientSuggestionsApi;

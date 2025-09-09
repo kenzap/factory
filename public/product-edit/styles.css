@@ -1,4 +1,4 @@
-@import url("/_/helpers/global.css");
+@import url("../_/helpers/global.css");
   
 /* product edit containers */
 .mw{max-width:560px;}
@@ -15,6 +15,10 @@
 /* right pane */
 #p-status0:focus{border-color: rgb(255, 193, 7); box-shadow: 0 0 0 0.25rem rgba(255, 193, 7, 0.30);}
 #p-status0:checked{background-color: #ffc107;border-color: rgb(255, 193, 7);}
+
+/* right pane */
+#p-status3:focus{border-color: var(--base-color-4); box-shadow: 0 0 0 0.25rem rgba(49, 178, 69, 0.30);}
+#p-status3:checked{background-color: var(--base-color-4); border-color: var(--base-color-4);}
 
 /* image gallery */
 .destt{ min-width: 350px; }

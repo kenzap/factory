@@ -71,7 +71,7 @@ export class ClientContacts {
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="contactName_${contact.id}" value="${contact.name}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Phone')}</label>
+                            <label class="form-label">${__html('Phone number')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="contactPhone_${contact.id}" value="${contact.phone}">
                         </div>
                         <div class="col-md-6 mb-2">
@@ -84,9 +84,9 @@ export class ClientContacts {
                         </div>
                         <div class="col-12 mb-3">
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" autocomplete="off" id="contactMain_${contact.id}" name="contactMain_${contact.id}" ${contact.main ? 'checked' : ''}>
-                                <label class="form-check-label" for="contactMain_${contact.id}">
-                                    ${__html('Primary contact')}
+                                <input class="form-check-input" type="checkbox" autocomplete="off" id="contactPrimary_${contact.id}" name="contactPrimary_${contact.id}" ${contact.primary ? 'checked' : ''}>
+                                <label class="form-check-label" for="contactPrimary_${contact.id}">
+                                    ${__html('Primary')}
                                 </label>
                             </div>
                         </div>
@@ -104,17 +104,20 @@ export class ClientContacts {
             const fieldName = e.currentTarget.name.split('_')[0].replace('contact', '').toLowerCase();
             const fieldValue = e.currentTarget.value;
 
+            // console.log('Field fieldName:', fieldName, contactId);
+
             // Update the contacts object with the new field value
             const contactIndex = this.client.contacts.findIndex(contact => contact.id === contactId);
             if (contactIndex !== -1) {
-                if (fieldName === 'contactMain') {
+                if (fieldName === 'primary') {
+                    // console.log("updating primary with ", e.currentTarget.checked);
                     this.client.contacts[contactIndex][fieldName] = e.currentTarget.checked;
                 } else {
                     this.client.contacts[contactIndex][fieldName] = fieldValue;
                 }
             }
 
-            console.log('Updated contact:', this.client.contacts);
+            // console.log('Updated contact:', this.client.contacts);
         });
 
         if (this.client.contacts.length === 0) {
@@ -134,7 +137,7 @@ export class ClientContacts {
             phone: ``,
             email: ``,
             notes: ``,
-            main: false
+            primary: false
         });
 
         this.refreshContacts();

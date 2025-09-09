@@ -2,6 +2,7 @@ import { getCoatings } from "../_/api/get_coatings.js";
 import { __html, hideLoader } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -36,6 +37,9 @@ class Cutting {
             hideLoader();
 
             this.settings = response.settings;
+
+            // init locale
+            new Locale(response);
 
             // session
             new Session();

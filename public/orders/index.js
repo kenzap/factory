@@ -1,11 +1,12 @@
+import { getOrders } from "../_/api/get_orders.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
-import { getOrders } from "/_/api/get_orders.js";
-import { __html, hideLoader, priceFormat } from "/_/helpers/global.js";
-import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
-import { bus } from "/_/modules/bus.js";
-import { Footer } from "/_/modules/footer.js";
-import { Modal } from "/_/modules/modal.js";
-import { Session } from "/_/modules/session.js";
+import { __html, hideLoader, priceFormat } from "../_/helpers/global.js";
+import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
+import { bus } from "../_/modules/bus.js";
+import { Footer } from "../_/modules/footer.js";
+import { Locale } from "../_/modules/locale.js";
+import { Modal } from "../_/modules/modal.js";
+import { Session } from "../_/modules/session.js";
 
 /**
  * Orders Journal
@@ -56,6 +57,9 @@ class Orders {
 
             this.settings = response.settings;
             this.orders = response.orders;
+
+            // init locale
+            new Locale(response);
 
             // session
             new Session();

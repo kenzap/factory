@@ -6,6 +6,7 @@ import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotalsHTML } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
+import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 
 export class LeftPane {
@@ -37,7 +38,7 @@ export class LeftPane {
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
                             <label class="form-check-label" for="draft">
-                                ${__html('Draft')}
+                                ${__html('Estimate')}
                             </label>
                         </div>
                     </div>
@@ -51,7 +52,7 @@ export class LeftPane {
                         <client-address-search></client-address-search>
                     </div>
                     <div class="mb-2">
-                        <textarea class="form-control form-control-sm" id="notes" rows="2" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
+                        <textarea class="form-control form-control-sm" id="notes" rows="3" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
                     </div>
                 </div>
                 
@@ -92,7 +93,7 @@ export class LeftPane {
                         <button class="btn btn-outline-secondary btn-sm document-btn" data-type="draft">${__html('Draft')}</button>
                         <button class="btn btn-outline-primary btn-sm document-btn" data-type="bill">${__html('Bill')}</button>
                         <button class="btn btn-outline-info btn-sm document-btn" data-type="production-slip">${__html('Production Slip')}</button>
-                        <button class="btn btn-outline-info btn-sm document-btn" data-type="p2">${__html('P2')}</button>
+                        <button class="btn btn-outline-info btn-sm document-btn" data-type="packing-slip">${__html('Packing Slip')}</button>
                     </div>
                 </div>
             </div>
@@ -106,7 +107,7 @@ export class LeftPane {
                 <!-- Save Button -->
                 <div class="form-section">
                     <button class="btn ${this.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
-                        <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save Changes') : __html('Create Order')}
+                        <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save') : __html('Create')}
                     </button>
                 </div>
             </div>
@@ -125,8 +126,14 @@ export class LeftPane {
 
         // Focus on order ID input
         const orderIdInput = document.getElementById('orderId');
-        orderIdInput.focus();
-        orderIdInput.setSelectionRange(orderIdInput.value.length, orderIdInput.value.length);
+        const clientFilter = document.getElementById('clientFilter');
+
+        if (orderIdInput.value) {
+            orderIdInput.focus();
+            orderIdInput.setSelectionRange(orderIdInput.value.length, orderIdInput.value.length);
+        } else {
+            clientFilter.focus();
+        }
     }
 
     listeners = () => {
@@ -138,6 +145,12 @@ export class LeftPane {
             console.log('Save Order button clicked');
 
             this.save();
+        });
+
+        // Order list table button
+        onClick('#editClientBtn', () => {
+
+            new ClientPane(this.order);
         });
 
         // Order list table button
@@ -268,11 +281,15 @@ export class LeftPane {
 
             console.log('Client updated:', client);
 
-            this.clientOrderSearch.data();
+            // this.clientOrderSearch.data();
             this.clientAddressSearch.data();
             this.clientContactSearch.data();
 
             this.order.vat_status = client.vat_status || '0';
+
+            if (document.getElementById('clientFilter').value != client.legal_name && client.legal_name.length) {
+                document.getElementById('clientFilter').value = client.legal_name;
+            }
 
             this.summary();
         });
@@ -282,7 +299,7 @@ export class LeftPane {
 
             console.log('LeftPane removed received:', data);
 
-            this.clientOrderSearch.data();
+            // this.clientOrderSearch.data();
             this.clientAddressSearch.data();
             this.clientContactSearch.data();
 
@@ -295,7 +312,7 @@ export class LeftPane {
             this.order.eid = data._id;
 
             console.log('LeftPane contact search received:', data);
-            this.clientOrderSearch.data();
+            // this.clientOrderSearch.data();
             this.clientAddressSearch.data();
             this.clientContactSearch.data();
         });
@@ -388,7 +405,7 @@ export class LeftPane {
         const date = new Date(due_date);
         const due_date_utc = date.toISOString();
 
-        console.log('Time Zone:', due_date_utc);
+        // console.log('Time Zone:', due_date_utc);
 
         // Collect other necessary data and send it to the server
         const orderData = {

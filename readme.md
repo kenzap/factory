@@ -20,3 +20,8 @@ An ERP for sheet metal fabrication. Infcludes the following modules:
 - Warehouse and product inventory
 - Financial reports
 - Analytics module
+
+## Opening Posgres from cluster
+kubectl get svc -n db-eu --kubeconfig=kubeconfig-GJDmHH.yaml
+kubectl -n db-eu port-forward svc/app 5432:5432 --kubeconfig=kubeconfig-GJDmHH.yaml
+

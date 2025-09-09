@@ -78,8 +78,8 @@ export const formatStatus = (st) => {
     switch (st) {
         case 0: return '<div class="badge bg-warning text-dark fw-light">' + __html('Draft') + '</div>';
         case 1: return '<div class="badge bg-primary fw-light">' + __html('Published') + '</div>';
-        case 2: return '<div class="badge bg-primary fw-light">' + __html('Private') + '</div>';
-        case 3: return '<div class="badge bg-secondary fw-light">' + __html('Unpublished') + '</div>';
+        case 2: return '<div class="badge bg-primary fw-light">' + __html('Published') + '</div>';
+        case 3: return '<div class="badge bg-success fw-light">' + __html('Private') + '</div>';
         default: return '<div class="badge bg-secondary fw-light">' + __html('Drafts') + '</div>';
     }
 }

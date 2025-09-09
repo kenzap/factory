@@ -2,6 +2,7 @@ import { getHome } from "../_/api/get_home.js";
 import { __html, attr, hideLoader, html, initBreadcrumbs, link } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -36,6 +37,9 @@ class Home {
             hideLoader();
 
             this.settings = response.settings;
+
+            // locale
+            new Locale(response);
 
             // session
             new Session();
@@ -76,7 +80,7 @@ class Home {
                 links: [
                     {
                         text: __html('New'),
-                        link: link('/order-edit/'),
+                        link: link('/order/'),
                         target: '_blank',
                     },
                     {

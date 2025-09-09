@@ -2,9 +2,9 @@ import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { __html, formatDate, getDimUnit, hideLoader } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
-
 
 /**
  * This page displays a list of orders for cutting based on selected color and coating.
@@ -46,6 +46,9 @@ class CuttingList {
 
             // show UI loader
             if (!response.success) return;
+
+            // init locale
+            new Locale(response);
 
             // hide UI loader
             hideLoader();

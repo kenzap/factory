@@ -14,6 +14,8 @@ export class Header {
 
         this.response = response;
 
+        console.log("header", this.response);
+
         // check if header is already present
         this.init();
     }

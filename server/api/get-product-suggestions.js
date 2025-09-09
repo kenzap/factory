@@ -44,7 +44,12 @@ async function getProductSuggestions(filters) {
     }
 
     query += `
-            ORDER BY js->'data'->'priority' ASC
+            ORDER BY 
+                CASE 
+                    WHEN js->'data'->>'priority' = '' THEN 1 
+                    ELSE 0 
+                END,
+                js->'data'->'priority' ASC
             LIMIT 50`;
 
     // ORDER BY name ASC

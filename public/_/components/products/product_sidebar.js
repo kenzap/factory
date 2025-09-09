@@ -34,7 +34,7 @@ export class ProductSidebar {
                                     <div class="form-check">
                                         <label class="form-check-label status-publish form-label">
                                             <input type="radio" class="form-check-input" name="p-status" id="p-status1" value="1">
-                                            ${__html('Published')}
+                                            ${__html('Published (primary)')}
                                         </label>
                                     </div>
                                 </div>
@@ -43,6 +43,15 @@ export class ProductSidebar {
                                     <div class="form-check">
                                         <label class="form-check-label status-private form-label">
                                             <input type="radio" class="form-check-input" name="p-status" id="p-status2" value="2">
+                                            ${__html('Published')}
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-12">
+                                    <div class="form-check">
+                                        <label class="form-check-label status-private form-label">
+                                            <input type="radio" class="form-check-input" name="p-status" id="p-status3" value="3">
                                             ${__html('Private')}
                                         </label>
                                     </div>

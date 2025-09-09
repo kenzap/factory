@@ -6,6 +6,7 @@ import { ProductSearch } from "../_/components/products/product_search.js";
 import { __html, hideLoader, onChange, onClick, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/supplies.js";
@@ -226,6 +227,9 @@ class Supplies {
 
             // show UI loader
             if (!response.success) return;
+
+            // init locale
+            new Locale(response);
 
             // hide UI loader
             hideLoader();

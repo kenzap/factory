@@ -5,7 +5,7 @@ import { verifyClient } from "../../api/verify_client.js";
 import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
-import { __html, onClick, toast } from "../../helpers/global.js";
+import { __html, attr, onClick, toast } from "../../helpers/global.js";
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 
@@ -30,7 +30,7 @@ export class ClientPane {
 
     data = () => {
 
-        console.log('Fetching client details for ID:', this.client);
+        // console.log('Fetching client details for ID:', this.client);
 
         if (!this.client._id) return;
 
@@ -57,12 +57,18 @@ export class ClientPane {
 
     view = () => {
 
+        console.log('Rendering client pane for client:', this.client);
+
         // Add fade effect to indicate loading/disabled state
         // document.querySelector('.right-pane').style.opacity = '0.5';
         // document.querySelector('.right-pane').style.pointerEvents = 'none';
         document.querySelector('.right-pane').innerHTML = /*html*/`
+        <client-pane>
+            <!-- Alert Notification -->
+            <alert-notification></alert-notification>
+
             <!-- Right Pane -->
-            <h4 class="mb-4"><i class="bi bi-building me-2"></i>${__html('Client Information')}</h4>
+            <h4 class="mb-4"><client-badge><i class="bi ${this.client.entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i></client-badge>${__html('Client Information')}<verified-badge></verified-badge></h4>
             
             <!-- Client Type -->
             <div class="row mb-3">
@@ -99,19 +105,11 @@ export class ClientPane {
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="legal_name" class="form-label">${__html('Company Name')}</label>
-                    <input type="text" class="form-control" id="legal_name" value="${this.client.legal_name || this.client.name || ''}">
-                </div>
-                <div class="col-md-6 mb-3 d-none">
-                    <label for="clientPhoneRight" class="form-label">${__html('Phone Number')}</label>
-                    <input type="tel" class="form-control" id="clientPhoneRight" value="${this.client.phone || ''}" >
-                </div>
-                <div class="col-md-6 mb-3 d-none">
-                    <label for="email" class="form-label">${__html('Email')}</label>
-                    <input type="email" class="form-control" id="email" value="${this.client.email || ''}">
+                    <input type="text" class="form-control" id="legal_name" value="${attr(this.client.legal_name || this.client.name || '')}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank_name" class="form-label">${__html('Bank Name')}</label>
-                    <input type="text" class="form-control" id="bank_name" value="${this.client.bank_name || ''}">
+                    <input type="text" class="form-control" id="bank_name" value="${(attr(this.client.bank_name || ''))}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank_acc" class="form-label">${__html('Bank Account')}</label>
@@ -124,6 +122,14 @@ export class ClientPane {
                 <div class="col-12 mb-3">
                     <label for="client_notes" class="form-label">${__html('Internal Note')}</label>
                     <textarea class="form-control" id="client_notes" rows="3" >${this.client.notes || ''}</textarea>
+                </div>
+                <div class="col-md-6 mb-3 d-none">
+                    <label for="clientPhoneRight" class="form-label">${__html('Phone Number')}</label>
+                    <input type="tel" class="form-control" id="clientPhoneRight" value="${attr(this.client.phone || '')}" >
+                </div>
+                <div class="col-md-6 mb-3 d-none">
+                    <label for="email" class="form-label">${__html('Email')}</label>
+                    <input type="email" class="form-control" id="email" value="${attr(this.client.email || '')}">
                 </div>
             </div>
             
@@ -139,14 +145,15 @@ export class ClientPane {
             <!-- Save Button -->
             <div class="text-end">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary btn-lg px-5" id="saveClientBtn">
+                    <button class="btn btn-outline-primary btn-lg px-3" id="saveClientBtn">
                         <i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save Client')}
                     </button>
-                    <button class="btn btn-outline-danger btn-lg px-5" id="removeClientBtn">
+                    <button class="btn btn-outline-danger btn-lg px-3" id="removeClientBtn">
                         <i class="bi bi-trash fs-5"></i>
                     </button>
                 </div>
-            </div>`;
+            </div>
+        <client-pane>`;
 
         new ClientContacts(this.client);
 
@@ -212,19 +219,71 @@ export class ClientPane {
 
                     // document.getElementById('reg_number').value = response.reg_number || '';
                     document.getElementById('vat_number').value = response.client.pvncode || '';
-                    document.getElementById('legal_name').value = response.client.klients_new || '';
-                    document.getElementById('reg_address').value = response.client.adress_full || '';
-                    this.client.vat_status = response.client.pvnStatus || '';
 
-                    // // Update client data with the verified details
-                    // this.client = { ...this.client, ...response.data };
+                    if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
+                    if (response.client.pvnStatus) this.client.vat_status = response.client.pvnStatus || '';
+                    if (response.client.adress_full) this.client.reg_address = response.client.adress_full || '';
 
-                    // // Update the view with the new client data
-                    // this.view();
+                    // entity
+                    const entity = document.querySelector('input[name="entity"]:checked');
+
+                    if (!entity) {
+                        alert('Select a client type.');
+                        return false;
+                    }
+
+                    // trigger alert if client can not be verified
+                    if (response.client.pvnStatus === '0' && entity.dataset.entity === 'company') {
+
+                        document.querySelector('alert-notification').innerHTML = /*html*/`
+                            <div class="alert alert-danger d-flex alert-dismissible mb-4" role="alert">
+                                <div class="align-items-center">
+                                    <i class="bi bi-exclamation-triangle fs-5 me-2"></i>
+                                    ${__html('Client status can not be verified')}
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>`
+                    }
+
+                    if (response.client.pvnStatus === 'active' && entity.dataset.entity === 'company') {
+
+                        document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
+
+                        this.save();
+                    }
 
                     toast(__html('Client details verified'), 'success');
                 } else {
                     toast(__html('Failed to verify client details'), 'error');
+                }
+            });
+        });
+
+        // Handle Enter key as Tab for all input and textarea fields
+        document.querySelectorAll('.right-pane input, .right-pane textarea').forEach(element => {
+            element.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+
+                    event.preventDefault();
+
+                    console.log('Enter key pressed, moving to next input', element.value, this.order.id);
+
+                    // Find all focusable elements with tabindex consideration
+                    const focusableElements = Array.from(document.querySelectorAll('.right-pane input, .right-pane textarea'))
+                        .filter(el => el.tabIndex >= 0)
+                        .sort((a, b) => {
+                            const aIndex = a.tabIndex || 0;
+                            const bIndex = b.tabIndex || 0;
+                            return aIndex - bIndex;
+                        });
+
+                    const currentIndex = focusableElements.indexOf(event.target);
+
+                    // Move to next focusable element following tab order
+                    if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
+
+                        focusableElements[currentIndex + 1].focus();
+                    }
                 }
             });
         });
@@ -298,7 +357,7 @@ export class ClientPane {
 
             console.log('Saved successfully', response);
 
-            toast('Client updated');
+            toast('Updated');
 
             this.order.vat_status = clientData.vat_status;
             this.order.entity = clientData.entity;
@@ -307,7 +366,7 @@ export class ClientPane {
 
             bus.emit('client:updated', clientData);
 
-            this.init();
+            // this.init();
         });
 
         // console.log('Saving client data...', clientData);

@@ -4,6 +4,7 @@ import { ProductListRow, ProductModal, ProductService, SearchComponent } from ".
 import { __html, hideLoader, initBreadcrumbs, link, parseApiError, showLoader, toast } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -37,10 +38,6 @@ class ProductList extends Component {
 
     render() {
         if (!this.state.firstLoad) return;
-
-        document.querySelector('#app').innerHTML = this.getTemplate();
-        this.initBreadcrumbs();
-        this.attachListeners();
     }
 
     getTemplate() {
@@ -126,7 +123,14 @@ class ProductList extends Component {
 
             const response = await this.productService.getProducts(params);
 
+            // init locale
+            new Locale(response);
+
             hideLoader();
+
+            document.querySelector('#app').innerHTML = this.getTemplate();
+            this.initBreadcrumbs();
+            this.attachListeners();
 
             new Header({
                 hidden: false,

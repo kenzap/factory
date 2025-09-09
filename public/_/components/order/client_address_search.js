@@ -1,4 +1,5 @@
 import { getAddresses } from "../../api/get_addresses.js";
+import { __html, attr } from "../../helpers/global.js";
 
 /**
  * A contact search component that provides autocomplete functionality for searching addresses.
@@ -29,7 +30,7 @@ export class ClientAddressSearch {
         document.querySelector('client-address-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="Construction site address" value="${this.order.address || ''}" tabindex="2">
+                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="${__html('Address')}" value="${attr(this.order.address || '')}" tabindex="2">
                 </div>
                 <div id="addressSuggestion" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>

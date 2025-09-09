@@ -1,5 +1,5 @@
 import { getClientSuggestions } from "../../api/get_client_suggestions.js";
-import { __html, onClick } from "../../helpers/global.js";
+import { __html, attr, onClick } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 
 /**
@@ -19,7 +19,7 @@ export class ClientOrderSearch {
 
     init = () => {
 
-        this.data();
+        // this.data();
 
         this.view();
 
@@ -31,7 +31,7 @@ export class ClientOrderSearch {
         document.querySelector('client-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
                 <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${this.order?.name || ''}" data-_id="${this.order?.eid || ''}" tabindex="1" >
+                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${attr(this.order?.name || '')}" data-_id="${this.order?.eid || ''}" tabindex="1" >
                     <button class="btn btn-outline-primary edit-client-btn po" type="button" id="editClientBtn" >
                         <i class="bi bi-arrow-right"></i>
                     </button>
@@ -39,21 +39,6 @@ export class ClientOrderSearch {
                 <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
             `;
-    }
-
-    data = () => {
-
-        console.log("ClientOrderSearch data received");
-
-        getClientSuggestions((response) => {
-
-            // console.log('Clients response:', response);
-            if (response && response.clients) {
-                this.clients = response.clients;
-            } else {
-                this.clients = [];
-            }
-        });
     }
 
     listeners = () => {
@@ -71,24 +56,31 @@ export class ClientOrderSearch {
                 return;
             }
 
-            const filtered = this.clients.filter(client =>
-                client.name.toLowerCase().includes(value)
-            );
+            getClientSuggestions({ s: value }, (response) => {
 
-            if (filtered.length > 0) {
-                suggestions.innerHTML = filtered.map(client =>
-                    `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" style="cursor: pointer;">${client.name}</div>`
-                ).join('');
-                suggestions.classList.remove('d-none');
-            } else {
-                suggestions.classList.add('d-none');
-            }
+                // console.log('Clients response:', response);
+                if (response && response.clients) {
+                    this.clients = response.clients;
+                    if (this.clients.length > 0) {
+                        suggestions.innerHTML = this.clients.map(client =>
+                            `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${client.name}</div>`
+                        ).join('');
+                        suggestions.classList.remove('d-none');
+                    } else {
+                        suggestions.classList.add('d-none');
+                    }
+                } else {
+                    this.clients = [];
+                }
+            });
         });
 
         // Handle suggestion clicks
         suggestions.addEventListener('click', (e) => {
+            const addressInput = document.getElementById('address');
             if (e.target.classList.contains('autocomplete-item')) {
                 clientInput.value = e.target.textContent;
+                addressInput.value = e.target.dataset.address || '';
                 clientInput.dataset._id = e.target.dataset._id;
                 suggestions.classList.add('d-none');
                 // console.log('emit:client:search:refresh:4');
@@ -135,7 +127,9 @@ export class ClientOrderSearch {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (activeItem) {
+                    const addressInput = document.getElementById('address');
                     clientInput.value = activeItem.textContent;
+                    addressInput.value = activeItem.dataset.address || '';
                     clientInput.dataset._id = activeItem.dataset._id;
                     suggestions.classList.add('d-none');
                     // console.log('emit:client:search:refresh:1');

@@ -3,6 +3,7 @@ import { Auth } from "/_/modules/auth.js";
 export const CDN = "https://cdn.kenzap.cloud";
 export const FILES = "https://render.factory.app.kenzap.cloud";
 export const API_KEY = "";
+export const version = "2.0.0";
 
 export const spaceID = () => {
 
@@ -306,7 +307,7 @@ export const makeNumber = function (price) {
 export const formatTime = (timestamp) => {
 
     if (!timestamp) return '';
-    const date = new Date(timestamp);
+    const date = new Date(timestamp * 1000);
     return date.toLocaleDateString();
 }
 

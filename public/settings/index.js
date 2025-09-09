@@ -3,6 +3,7 @@ import { saveSettings } from "../_/api/save_settings.js";
 import { GroupsControl } from "../_/components/settings/groups_control.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/settings.js";
@@ -36,6 +37,9 @@ class Settings {
             console.log(response);
 
             this.state.settings = response.settings;
+
+            // init locale
+            new Locale(response);
 
             // initialize session
             new Session();

@@ -2,6 +2,7 @@ import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getTransactions } from "../_/api/get_transactions.js";
 import { saveTransaction } from "../_/api/save_transaction.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
+import { Locale } from "../_/modules/locale.js";
 import { __html, hideLoader, priceFormat, toast } from "/_/helpers/global.js";
 import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
 import { bus } from "/_/modules/bus.js";
@@ -57,6 +58,9 @@ class Transactions {
 
             this.settings = response.settings;
             this.orders = response.orders;
+
+            // locale
+            new Locale(response);
 
             // session
             new Session();

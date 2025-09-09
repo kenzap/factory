@@ -14,6 +14,7 @@ import { __html, hideLoader, initBreadcrumbs, link, log, onClick, parseApiError,
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -71,6 +72,9 @@ class ProductEdit {
             this.locales = response.locales;
 
             this.defaults();
+
+            // init locale
+            new Locale(response);
 
             // initialize session
             new Session();

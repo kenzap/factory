@@ -69,7 +69,7 @@ export class ClientDrivers {
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="companyName_${driver.id}" value="${driver.companyName}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Company Reg Number')}</label>
+                            <label class="form-label">${__html('Registration Number')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="companyRegNumber_${driver.id}" value="${driver.companyRegNumber}">
                         </div>
                         <div class="col-md-6 mb-2">
@@ -92,7 +92,7 @@ export class ClientDrivers {
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" autocomplete="off" id="waybillAllowed_${driver.id}" name="waybillAllowed_${driver.id}" ${driver.waybillAllowed ? 'checked' : ''}>
                                 <label class="form-check-label" for="waybillAllowed_${driver.id}">
-                                    ${__html('Allowed to collect waybills')}
+                                    ${__html('Primary')}
                                 </label>
                             </div>
                         </div>
@@ -134,8 +134,8 @@ export class ClientDrivers {
 
         this.client.drivers.push({
             id: randomString(6),
-            companyName: ``,
-            companyRegNumber: ``,
+            companyName: this.client.legal_name || ``,
+            companyRegNumber: this.client.reg_number || ``,
             driverName: ``,
             driverCode: ``,
             carNumber: ``,
