@@ -28,7 +28,7 @@ class Home {
 
         getHome((response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -99,16 +99,17 @@ class Home {
                     {
                         text: __html('Manufacturing'),
                         link: link('/manufacturing/'),
-                        target: '_self',
+                        target: '_blank',
                     },
                     {
                         text: __html('Cutting'),
                         link: link('/cutting/'),
-                        target: '_self',
+                        target: '_blank',
                     },
                     {
                         text: __html('Work Log'),
                         link: link('/worklog/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -126,6 +127,7 @@ class Home {
                     {
                         text: __html('Reports'),
                         link: link('/reports/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -143,6 +145,7 @@ class Home {
                     {
                         text: __html('Reports'),
                         link: link('/journal/transactions/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -154,17 +157,18 @@ class Home {
                 links: [
                     {
                         text: __html('Products'),
-                        target: '_self',
                         link: link('/product-list/'),
+                        target: '_blank',
                     },
                     {
                         text: __html('Stock'),
-                        target: '_self',
                         link: link('/stock/'),
+                        target: '_blank',
                     },
                     {
                         text: __html('Metal'),
                         link: link('/warehouse/metal/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -177,6 +181,7 @@ class Home {
                     {
                         text: __html('Settings'),
                         link: link('/settings/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -189,6 +194,7 @@ class Home {
                     {
                         text: __html('Analytics'),
                         link: link('/analytics/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -201,6 +207,7 @@ class Home {
                     {
                         text: __html('Blog'),
                         link: link('/blog/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -213,6 +220,7 @@ class Home {
                     {
                         text: __html('Localization'),
                         link: link('/localization/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -225,6 +233,7 @@ class Home {
                     {
                         text: __html('View'),
                         link: link('/media/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -237,6 +246,7 @@ class Home {
                     {
                         text: __html('Setup'),
                         link: link('/access/'),
+                        target: '_blank',
                     }
                 ],
             },
@@ -249,6 +259,7 @@ class Home {
                     {
                         text: __html('Users'),
                         link: link('/users/'),
+                        target: '_blank',
                     }
                 ],
             }

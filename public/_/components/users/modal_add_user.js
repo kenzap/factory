@@ -32,12 +32,11 @@ export class AddUser {
         this.modal.querySelector(".modal-body").innerHTML = `
             <div class="form-cont add-user-cont">
                 <img style="width:100%;max-height:100px;" src="/assets/img/verification-1.svg">
-                <p class="d-none">${__html('Manually add users to the database. You can update user rights after adding them.')}</p>
                 <div class="mb-1 form_cont">
-                    <label class="form-label" for="userEmail">${__html('Email Address')}</label>
+                    <label class="form-label" for="userEmail">${__html('Email')}</label>
                     <input class="form-control" type="input" id="userEmail" placeholder="${__attr('name@example.com')}" value="" autocomplete="off">  
                     <div class="invalid-feedback userEmail-notice"></div>
-                    <p class="form-text">${__html('Manually add users to the database. You can update user rights after adding them.')}</p>
+                    <p class="form-text">${__html('Add new user to the portal. You can update user rights after adding them.')}</p>
                 </div>
             </div>`;
 

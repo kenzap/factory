@@ -27,7 +27,7 @@ export class ManageUserRights {
 
         // render modal
         this.modal.querySelector(".modal-dialog").classList.remove('modal-fullscreen');
-        this.modal.querySelector(".modal-title").innerHTML = __html('User Rights');
+        this.modal.querySelector(".modal-title").innerHTML = __html('Rights');
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-primary btn-save-rights btn-modal">${__html('Update')}</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${__html('Close')}</button>
@@ -36,7 +36,7 @@ export class ManageUserRights {
         this.modal.querySelector(".modal-body").innerHTML = `
             <div class="form-cont">
                 <h3>${this.user.email}</h3>
-                <p>${__html('Turn on or off specific user rights.')}</p>
+                <p>${__html('Turn specific user rights on or off.')}</p>
                 ${Object.entries(getRights()).map((role, i) => {
 
             return `
@@ -49,7 +49,7 @@ export class ManageUserRights {
         }).join('')
             }
 
-                <p class="form-text">${__html('Ask the user to sign out and sign in for changes to take immediate effect after modifying these settings.')}</p>
+                <p class="form-text">${__html('Users must sign out and back in for changes to apply immediately.')}</p>
             </div>`;
 
         this.modal_cont.show();

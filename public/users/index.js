@@ -212,6 +212,11 @@ class Users {
             });
         });
 
+        // stop here
+        if (!this.firstLoad) return;
+
+        // console.log('Init users page listeners');
+
         // add user listener
         onClick('.btn-add-user-dialog', e => { new AddUser(); });
 

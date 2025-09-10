@@ -27,7 +27,7 @@ export class EditUser {
 
         // render modal
         this.modal.querySelector(".modal-dialog").classList.remove('modal-fullscreen');
-        this.modal.querySelector(".modal-title").innerHTML = __html('Edit User');
+        this.modal.querySelector(".modal-title").innerHTML = __html('Edit');
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-primary btn-save-user btn-modal">${__html('Save')}</button>
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${__html('Close')}</button>
@@ -38,20 +38,20 @@ export class EditUser {
                 <img style="width:100%;max-height:180px;" src="/assets/img/undraw_under_construction.svg">
                 <p class="d-none">${__html('Manually add users to the database. You can update user rights after adding them.')}</p>
                 <div class="mb-3 form_cont">
-                    <label class="form-label" for="userFname">${__html('First Name')}</label>
+                    <label class="form-label" for="userFname">${__html('First name')}</label>
                     <input class="form-control" type="text" id="userFname" placeholder="${__attr('Alex')}" value="${this.user.fname || ""}" autocomplete="off">  
                 </div>
                 <div class="mb-3 form_cont">
-                    <label class="form-label" for="userLname">${__html('Last Name')}</label>
+                    <label class="form-label" for="userLname">${__html('Last name')}</label>
                     <input class="form-control" type="text" id="userLname" placeholder="${__attr('Smith')}" value="${this.user.lname || ""}" autocomplete="off">  
                 </div>
                 <div class="mb-3 form_cont">
-                    <label class="form-label" for="userEmail">${__html('Email Address')}</label>
+                    <label class="form-label" for="userEmail">${__html('Email')}</label>
                     <input class="form-control" type="text" id="userEmail" placeholder="${__attr('name@example.com')}" value="${this.user.email || ""}" autocomplete="off">  
                     <div class="invalid-feedback userEmail-notice"></div>
                 </div>
                 <div class="mb-3 form_cont">
-                    <label class="form-label" for="userPhone">${__html('Phone Number')}</label>
+                    <label class="form-label" for="userPhone">${__html('Phone number')}</label>
                     <input class="form-control" type="text" id="userPhone" placeholder="${__attr('1234000000')}" value="${this.user.phone || ""}" autocomplete="off">  
                     <div class="invalid-feedback userPhone-notice"></div>
                 </div>
@@ -69,7 +69,7 @@ export class EditUser {
                         <option value="stock" ${this.user.portal == "stock" ? "selected" : ""}>${__html('Inventory')}</option>
                         <option value="product-list" ${this.user.portal == "product-list" ? "selected" : ""}>${__html('Products')}</option>
                     </select>
-                    <p class="form-text">${__html('Redirects the user to their default page after a successful sign-in.')}</p>
+                    <p class="form-text">${__html('Redirects the user to their default page after successful sign-in.')}</p>
                 </div>
                 <div class="mb-3 form_cont">
                     <label class="form-label
