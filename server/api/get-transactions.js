@@ -8,7 +8,7 @@ import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getTransactions(filters = { client: { name: "" }, dateFrom: '', dateTo: '', type: '' }) {
+async function getTransactions(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '' }) {
 
     const client = getDbConnection();
 
@@ -40,9 +40,14 @@ async function getTransactions(filters = { client: { name: "" }, dateFrom: '', d
 
     const params = ['ecommerce-order', sid];
 
-    if (filters.client?.name && filters.client.name.trim() !== '') {
-        query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
-        params.push(`%${filters.client.name.trim()}%`);
+    // if (filters.client?.name && filters.client.name.trim() !== '') {
+    //     query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
+    //     params.push(`%${filters.client.name.trim()}%`);
+    // }
+
+    if (filters.client?.eid) {
+        query += ` AND js->'data'->>'eid' = $${params.length + 1}`;
+        params.push(`${filters.client.eid.trim()}`);
     }
 
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {

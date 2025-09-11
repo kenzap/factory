@@ -2,15 +2,13 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
 
 /**
- * Kenzap Factory Get Products
- *
  * List orders
  *
  * @version 1.0
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo: '', type: '', items: false }) {
+async function getOrders(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', items: false }) {
 
     const db = getDbConnection();
 
@@ -22,6 +20,7 @@ async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo:
                 COALESCE(js->'data'->>'id', '') as id, 
                 COALESCE(js->'data'->>'from', '') as from, 
                 COALESCE(js->'data'->>'name', '') as name, 
+                COALESCE(js->'data'->>'eid', '') as eid, 
                 COALESCE(js->'data'->>'notes', '') as notes,
                 COALESCE(js->'data'->'price'->>'total', '') as total,
                 COALESCE(js->'data'->>'operator', '') as operator,
@@ -39,9 +38,15 @@ async function getOrders(filters = { client: { name: "" }, dateFrom: '', dateTo:
 
     const params = ['ecommerce-order', sid];
 
-    if (filters.client?.name && filters.db.name.trim() !== '') {
-        query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
-        params.push(`%${filters.client.name.trim()}%`);
+    // if (filters.client?.name && filters.db.name.trim() !== '') {
+    //     query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
+    //     params.push(`%${filters.client.name.trim()}%`);
+    // }
+
+    if (filters.client?.eid) {
+        query += ` AND (js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`;
+        params.push(`${filters.client.eid.trim()}`);
+        params.push(`${filters.client.name.trim()}`);
     }
 
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {

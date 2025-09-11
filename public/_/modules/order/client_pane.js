@@ -220,10 +220,6 @@ export class ClientPane {
                     // document.getElementById('reg_number').value = response.reg_number || '';
                     document.getElementById('vat_number').value = response.client.pvncode || '';
 
-                    if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
-                    if (response.client.pvnStatus) this.client.vat_status = response.client.pvnStatus || '';
-                    if (response.client.adress_full) this.client.reg_address = response.client.adress_full || '';
-
                     // entity
                     const entity = document.querySelector('input[name="entity"]:checked');
 
@@ -250,6 +246,13 @@ export class ClientPane {
                         document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
 
                         this.save();
+                    }
+
+                    if (response.client.pvnStatus === 'active') {
+
+                        if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
+                        if (response.client.pvnStatus) this.client.vat_status = response.client.pvnStatus || '';
+                        if (response.client.adress_full) this.client.reg_address = response.client.adress_full || '';
                     }
 
                     toast(__html('Client details verified'), 'success');

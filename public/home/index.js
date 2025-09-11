@@ -139,7 +139,7 @@ class Home {
                 links: [
                     {
                         text: __html('Clients'),
-                        link: link('/journal/clients/'),
+                        link: link('/clients/'),
                         target: '_blank',
                     },
                     {

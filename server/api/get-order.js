@@ -51,7 +51,7 @@ async function getOrderDetails(id) {
         const result = await client.query(query, ['ecommerce-order', sid, id]);
         if (result.rows) data = result.rows[0] || {};
 
-        console.log('getOrderDetails result', result.rows);
+        // console.log('getOrderDetails result', result.rows);
 
     } finally {
         await client.end();

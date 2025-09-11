@@ -138,7 +138,7 @@ export class Header {
                 { code: 'lt', name: 'Lietuvių', flag: '🇱🇹' }
             ];
 
-            const currentLocale = window.i18n?.state?.locale?.current || 'en';
+            const currentLocale = localStorage.getItem("locale") || 'en';
 
             const languageList = `
                             <div class="row g-2">
@@ -147,7 +147,6 @@ export class Header {
                                         <button type="button" class="btn border-0 w-100 text-start d-flex align-items-center p-3 border rounded ${lang.code === currentLocale ? 'text-dark' : 'text-dark'}" data-language="${lang.code}">
                                             <span class="me-2">${lang.flag}</span>
                                             <span class="flex-grow-1 ${lang.code === currentLocale ? "" : "btn-link"}">${lang.name}</span>
-                                            ${lang.code === currentLocale ? '<i class="bi bi-check-circle-fill text-primary"></i>' : ''}
                                         </button>
                                     </div>`
             ).join('')}

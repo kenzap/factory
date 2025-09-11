@@ -4,14 +4,6 @@
     margin-top:0;
 }
 
-/*table */
-/* .tabulator-row.tabulator-selectable.tabulator-row-even{
-    background-color: var(--gray-color-highlight) !important;
-}
-.tabulator-row.tabulator-selectable:hover{
-    background-color: var(--gray-color-highlight-hover) !important;
-} */
-
 /* journal */
 .toolbar {
     background: #f8f9fa;
@@ -42,11 +34,6 @@
 .status-both { background: #6f42c1; color: white; }
 .btn-group-sm > .btn { padding: 0.25rem 0.5rem; }
 .modal-lg { max-width: 90%; }
-/*table */
-.tabulator-row.tabulator-selectable.tabulator-row-even{background-color: var(--gray-color-highlight) !important;}
-.tabulator-row.tabulator-selectable:hover{background-color: var(--gray-color-highlight-hover) !important;}
-.tabulator-row.tabulator-selected.tabulator-row-odd { background-color: #0d6efd2e !important; }
-.tabulator-row.tabulator-selected.tabulator-row-even { background-color: #0d6efd2e !important; }
 
 .table-container { height: 500px; overflow: auto; }
 
@@ -74,6 +61,9 @@
     min-height: 25px;
     border-bottom: 0;
 }
+
+.tabulator-row.tabulator-selected { background-color: var(--cd-color-1) !important; }
+.tabulator-row.tabulator-selected .text-dark, .tabulator-row.tabulator-selected .tabulator-cell, .tabulator-row.tabulator-selected .form-text, .tabulator-row.tabulator-selected a{ color: #ffffff!important; }
 
 .toolbar {
     background: #f8f9fa;
@@ -166,7 +156,7 @@ body {
     height: 100%;
 }
 
-#ordersTable {
+#clientsTable {
     height: 100% !important;
 }    
 
@@ -202,3 +192,5 @@ body {
 .pr-parent {
   font-size: 1rem;
 }
+
+.loader{opacity:1!important;}

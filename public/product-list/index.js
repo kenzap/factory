@@ -103,8 +103,6 @@ class ProductList extends Component {
     }
 
     attachListeners() {
-        if (!this.state.firstLoad) return;
-
         this.addListener('.btn-add-product', 'click', this.handleAddProduct.bind(this));
         this.addListener('.bi-search', 'click', this.handleSearchActivate.bind(this));
     }
@@ -128,18 +126,22 @@ class ProductList extends Component {
 
             hideLoader();
 
-            document.querySelector('#app').innerHTML = this.getTemplate();
-            this.initBreadcrumbs();
-            this.attachListeners();
+            if (this.state.firstLoad) {
 
-            new Header({
-                hidden: false,
-                title: __html('Products'),
-                icon: 'box',
-                style: 'navbar-light',
-                user: response?.user,
-                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
-            });
+                document.querySelector('#app').innerHTML = this.getTemplate();
+
+                this.initBreadcrumbs();
+                this.attachListeners();
+
+                new Header({
+                    hidden: false,
+                    title: __html('Products'),
+                    icon: 'box',
+                    style: 'navbar-light',
+                    user: response?.user,
+                    menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+                });
+            }
 
             this.setState({
                 products: response.products,
@@ -163,7 +165,20 @@ class ProductList extends Component {
         const tbody = document.querySelector(".table tbody");
 
         if (this.state.products.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="6">${__html("No products to display.")}</td></tr>`;
+            tbody.innerHTML = `
+                <tr>
+                    <td style="width:40px;">
+                        <div class="timgc">
+                           
+                        </div>
+                    </td>
+                    <td class="destt" style="max-width:250px;min-width:250px;">${__html("No products to display.")}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td class="text-end"></td>
+                </tr>
+            `;
             return;
         }
 

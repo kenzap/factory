@@ -39,10 +39,6 @@ class Transactions {
 
         new Modal();
 
-        this.html();
-
-        this.setupTable();
-
         this.data();
     }
 
@@ -65,8 +61,14 @@ class Transactions {
             // session
             new Session();
 
+            // load page
+            this.html();
+
+            // setup table
+            this.setupTable();
+
             // render page
-            this.render();
+            setTimeout(() => { this.render() }, 100);
 
             // init footer
             new Footer(response);
@@ -79,6 +81,8 @@ class Transactions {
 
     // load page
     html = () => {
+
+        if (!this.firstLoad) return;
 
         document.querySelector('#app').innerHTML = /*html*/`
             <div class="container-fluid">
@@ -196,6 +200,8 @@ class Transactions {
 
     setupTable() {
 
+        if (!this.firstLoad) return;
+
         const self = this;
 
         this.table = new TabulatorFull("#ordersTable", {
@@ -251,7 +257,7 @@ class Transactions {
                 {
                     title: __html("Payment"),
                     field: "payment",
-                    width: 120,
+                    width: 128,
                     sorter: (a, b) => {
                         const dateA = a && a.date ? new Date(a.date).getTime() : 0;
                         const dateB = b && b.date ? new Date(b.date).getTime() : 0;
@@ -434,7 +440,7 @@ class Transactions {
                     }
                 },
                 {
-                    title: "Invoice",
+                    title: __html("Invoice"),
                     field: "invoice",
                     width: 120,
                     formatter: (cell) => {
@@ -445,7 +451,7 @@ class Transactions {
                     },
                 },
                 {
-                    title: "Invoice #",
+                    title: __html("Invoice #"),
                     field: "invoice",
                     width: 110,
                     formatter: (cell) => {
@@ -455,7 +461,7 @@ class Transactions {
                     },
                 },
                 {
-                    title: "Waybill",
+                    title: __html("Waybill"),
                     field: "waybill",
                     width: 120,
                     formatter: (cell) => {
@@ -466,16 +472,16 @@ class Transactions {
                     },
                 },
                 {
-                    title: "Waybill #",
+                    title: __html("Waybill #"),
                     field: "waybill",
-                    width: 110,
+                    width: 130,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
                         return `<span class="item-status status-danger">${waybill.number}</span>`;
                     },
                 },
-                { title: __html("Operator"), field: "operator", width: 100 },
+                { title: __html("Operator"), field: "operator", width: 110 },
                 // {
                 //     title: __html("Notes"),
                 //     field: "notes",
@@ -508,7 +514,7 @@ class Transactions {
 
         bus.on('table:refresh', (value) => {
             console.log('Refreshing table data...', value);
-            self.filters.client = value;
+            self.filters.client = { name: value.name, eid: value._id };
             self.data();
         });
     }

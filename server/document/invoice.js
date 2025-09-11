@@ -1,5 +1,5 @@
 import { chromium } from 'playwright';
-// import { authenticateToken } from '../_/helpers/auth.js';
+import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getInvoiceNextNumber, getWaybillItemsTable, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
 import { send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
@@ -24,6 +24,8 @@ async function viewInvoice(_id, user, lang) {
 
         data.lang = lang;
 
+        data.user = user;
+
         let invoice = data.settings?.document_template || "";
 
         data.order.invoice = await getInvoiceNextNumber(db, data.order, data.settings, user);
@@ -41,21 +43,21 @@ async function viewInvoice(_id, user, lang) {
     }
 }
 
-// API route for product export
+// API route for product export 
 function viewInvoiceApi(app) {
 
-    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
-    app.get('/document/invoice/', async (req, res) => {
+    app.get('/document/invoice/', authenticateToken, async (req, res) => {
+        // app.get('/document/invoice/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
             if (!id) {
-                return res.status(400).json({ error: 'Waybill ID is required' });
+                return res.status(400).json({ error: 'Order ID is required' });
             }
 
             console.log('/document/invoice/', req.user);
 
-            // Generate HTML for waybill
+            // Generate HTML for invoice
             const html = await viewInvoice(id, req.user, lang);
 
             const browser = await chromium.launch({ headless: true });
@@ -75,7 +77,7 @@ function viewInvoiceApi(app) {
             if (process.env.NODE_ENV === 'development') {
                 const fs = await import('fs');
                 const path = await import('path');
-                const screenshotPath = path.join(process.cwd(), '/public/waybill-screenshot.png');
+                const screenshotPath = path.join(process.cwd(), '/public/invoice-screenshot.png');
                 await fs.promises.writeFile(screenshotPath, screenshotBuffer);
             }
 
@@ -97,7 +99,7 @@ function viewInvoiceApi(app) {
 
                 const body = `
                     <h1>Invoice for order #${req.query.id}</h1>
-                    <p>Attached is the waybill document for your order.</p>
+                    <p>Attached is the invoice document for your order.</p>
                 `;
 
                 // req.query.email = "pavel";
@@ -123,7 +125,7 @@ function viewInvoiceApi(app) {
                 res.send(html);
             } else {
                 res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
-                res.setHeader('Content-Disposition', 'filename="waybill.pdf"');
+                res.setHeader('Content-Disposition', 'filename="invoice.pdf"');
                 res.setHeader('Content-Length', pdfBuffer.length);
                 res.send(pdfBuffer);
             }

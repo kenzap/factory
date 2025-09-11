@@ -182,7 +182,7 @@ footer {
 
 /* loader color */
 .loader .dots span{
-  background-color: var(--base-color);
+  background-color: var(--primary-color);
 }
 
 /* bootstrap */

@@ -144,7 +144,6 @@ class WorkLog {
             }
 
             const record = {
-
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
                 product_id: this.product ? this.product.id : '',
@@ -177,7 +176,7 @@ class WorkLog {
         // get products
         getWorkLog(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -202,6 +201,7 @@ class WorkLog {
                 title: __html('Work Log'),
                 icon: 'clock-history',
                 style: 'navbar-light',
+                user: response?.user,
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
             });
 
@@ -225,11 +225,11 @@ class WorkLog {
 
         // Populate employee filter
         if (this.users && this.users.length > 0) {
-            employeeSelect.innerHTML = `<option value="">${__html('All')}</option>` + this.users.map(user => `
+            if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('All')}</option>` + this.users.map(user => `
             <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user.lname.charAt(0)}</option>
             `).join('');
         } else {
-            employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;
+            if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;
         }
 
         // Populate stage filter
@@ -257,12 +257,12 @@ class WorkLog {
             <option value="finishing" ${this.record.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
         `;
 
-        stageSelect.innerHTML = filterStage;
+        if (stageSelect) stageSelect.innerHTML = filterStage;
         if (!stage.innerHTML) stage.innerHTML = recordStage;
 
         // Populate date filters
-        dateFromInput.value = this.filters.dateFrom || '';
-        dateToInput.value = this.filters.dateTo || '';
+        if (dateFromInput) dateFromInput.value = this.filters.dateFrom || '';
+        if (dateToInput) dateToInput.value = this.filters.dateTo || '';
     }
 
     renderRecords() {
@@ -325,9 +325,9 @@ class WorkLog {
 
                 dateHeader = `
                 <tr>
-                <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
-                    ${dateLabel}
-                </td>
+                    <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
+                        ${dateLabel}
+                    </td>
                 </tr>
             `;
                 lastDate = entryDate;
@@ -335,31 +335,31 @@ class WorkLog {
 
             return dateHeader + `
             <tr>
-            <td style="width:80px;">
-                <span class="time-badge">${this.formatTime(entry.date)}</span>
-            </td>
-            <td style="width:160px;">
-                <span class="employee-tag" >${this.getUserName(entry.user_id)}</span>
-            </td>
-            <td tyle="width:80px;">
-                ${entry.color || '-'}
-            </td>
-            <td tyle="width:80px;">
-                ${entry.coating || '-'}
-            </td>
-            <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
-            <td>
-                <span class="badge ${this.getStageClass(entry.stage)} stage-badge">
-                ${entry.stage.charAt(0).toUpperCase() + entry.stage.slice(1)}
-                </span>
-            </td>
-            <td><strong>${entry.qty}</strong></td>
-            <td><strong>${entry.time == "0" ? "" : entry.time}</strong></td>
-            <td class="text-end">
-                <button class="btn btn-delete-worklog text-danger" onclick="workLog.deleteEntry('${entry._id}')" title="Delete entry">
-                <i class="bi bi-trash"></i>
-                </button>
-            </td>
+                <td style="width:80px;">
+                    <span class="time-badge">${this.formatTime(entry.date)}</span>
+                </td>
+                <td style="width:160px;">
+                    <span class="employee-tag" >${this.getUserName(entry.user_id)}</span>
+                </td>
+                <td tyle="width:80px;">
+                    ${entry.color || '-'}
+                </td>
+                <td tyle="width:80px;">
+                    ${entry.coating || '-'}
+                </td>
+                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
+                <td>
+                    <span class="badge ${this.getStageClass(entry.stage)} stage-badge">
+                    ${entry.stage.charAt(0).toUpperCase() + entry.stage.slice(1)}
+                    </span>
+                </td>
+                <td><strong>${entry.qty}</strong></td>
+                <td><strong>${entry.time == "0" ? "" : entry.time}</strong></td>
+                <td class="text-end">
+                    <button class="btn btn-delete-worklog text-danger" onclick="workLog.deleteEntry('${entry._id}')" title="Delete entry">
+                    <i class="bi bi-trash"></i>
+                    </button>
+                </td>
             </tr>
         `;
         }).join('');

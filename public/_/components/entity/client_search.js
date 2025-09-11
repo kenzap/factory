@@ -1,5 +1,5 @@
 import { getClientSuggestions } from "/_/api/get_client_suggestions.js";
-import { __html } from "/_/helpers/global.js";
+import { __html, attr } from "/_/helpers/global.js";
 import { bus } from "/_/modules/bus.js";
 
 /**
@@ -17,7 +17,7 @@ export class ClientSearch {
 
     init = () => {
 
-        this.data();
+        // this.data();
 
         this.view();
 
@@ -33,7 +33,7 @@ export class ClientSearch {
                     type="text" 
                     class="form-control border-0" 
                     id="clientFilter" 
-                    placeholder="Search or enter client name..."
+                    placeholder="${__html('Search..')}"
                     autocomplete="off"
                 >
                 <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
@@ -43,15 +43,23 @@ export class ClientSearch {
 
     data = () => {
 
-        getClientSuggestions((response) => {
+        // const clientInput = document.getElementById('clientFilter');
+        // const value = e.target.value.toLowerCase();
 
-            console.log('Clients response:', response);
-            if (response && response.clients) {
-                this.clients = response.clients;
-            } else {
-                this.clients = [];
-            }
-        });
+        // if (value.length === 0) {
+        //     suggestions.classList.add('d-none');
+        //     return;
+        // }
+
+        // getClientSuggestions({ s: value }, (response) => {
+
+        //     console.log('Clients response:', response);
+        //     if (response && response.clients) {
+        //         this.clients = response.clients;
+        //     } else {
+        //         this.clients = [];
+        //     }
+        // });
     }
 
     listeners = () => {
@@ -61,20 +69,6 @@ export class ClientSearch {
         const clientInput = document.getElementById('clientFilter');
         const suggestions = document.getElementById('clientSuggestions');
 
-        // Hardcoded client list for testing
-        // const hardcodedClients = [
-        //     'ABC Manufacturing Corp',
-        //     'XYZ Industries Ltd',
-        //     'Global Solutions Inc',
-        //     'TechnoWorks Company',
-        //     'Premium Parts Ltd',
-        //     'Industrial Systems Corp',
-        //     'Advanced Materials Inc',
-        //     'Quality Components Ltd',
-        //     'Precision Manufacturing',
-        //     'Elite Products Group'
-        // ];
-
         clientInput.addEventListener('input', (e) => {
             const value = e.target.value.toLowerCase();
 
@@ -83,18 +77,36 @@ export class ClientSearch {
                 return;
             }
 
-            const filtered = this.clients.filter(client =>
-                client.name.toLowerCase().includes(value)
-            );
+            getClientSuggestions({ s: value }, (response) => {
 
-            if (filtered.length > 0) {
-                suggestions.innerHTML = filtered.map(client =>
-                    `<div class="autocomplete-item p-2 border-bottom cursor-pointer" style="cursor: pointer;" data-id="${client._id}">${client.name}</div>`
-                ).join('');
-                suggestions.classList.remove('d-none');
-            } else {
-                suggestions.classList.add('d-none');
-            }
+                // console.log('Clients response:', response);
+                if (response && response.clients) {
+                    this.clients = response.clients;
+                    if (this.clients.length > 0) {
+                        suggestions.innerHTML = this.clients.map(client =>
+                            `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${client.name}</div>`
+                        ).join('');
+                        suggestions.classList.remove('d-none');
+                    } else {
+                        suggestions.classList.add('d-none');
+                    }
+                } else {
+                    this.clients = [];
+                }
+            });
+
+            // const filtered = this.clients.filter(client =>
+            //     client.name.toLowerCase().includes(value)
+            // );
+
+            // if (filtered.length > 0) {
+            //     suggestions.innerHTML = filtered.map(client =>
+            //         `<div class="autocomplete-item p-2 border-bottom cursor-pointer" style="cursor: pointer;" data-id="${client._id}">${client.name}</div>`
+            //     ).join('');
+            //     suggestions.classList.remove('d-none');
+            // } else {
+            //     suggestions.classList.add('d-none');
+            // }
         });
 
         // Handle suggestion clicks
@@ -102,7 +114,7 @@ export class ClientSearch {
             if (e.target.classList.contains('autocomplete-item')) {
                 clientInput.value = e.target.textContent;
                 suggestions.classList.add('d-none');
-                bus.emit('table:refresh', { _id: e.target.dataset.id, name: clientInput.value });
+                bus.emit('table:refresh', { _id: e.target.dataset._id, name: clientInput.value });
             }
         });
 
@@ -146,7 +158,7 @@ export class ClientSearch {
                 if (activeItem) {
                     clientInput.value = activeItem.textContent;
                     suggestions.classList.add('d-none');
-                    bus.emit('table:refresh', { _id: activeItem.dataset.id, name: clientInput.value });
+                    bus.emit('table:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
                 }
             } else if (e.key === 'Escape') {
                 suggestions.classList.add('d-none');

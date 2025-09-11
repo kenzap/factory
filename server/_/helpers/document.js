@@ -467,7 +467,7 @@ export function getProductionItemsTable(settings, order) {
 
 export const amountToWords = (amount, settings) => {
 
-    // console.log(`amountToWords: ${amount}, currency: ${currency}`);
+    console.log(`amountToWords: ${amount}, settings: ${settings}`);
 
     // Convert amount to words based on currency
     const amount_int = Math.floor(amount);
@@ -522,7 +522,7 @@ export const amountToWords = (amount, settings) => {
     if (settings.currency === "EUR") {
         result += amount_int === 1 ? "Eiro" : "Eiro";
     } else {
-        result += currency;
+        result += settings.currency;
     }
 
     // Add cents if they exist

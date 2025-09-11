@@ -59,7 +59,7 @@ function deleteTransactionApi(app) {
 
         console.log('delete ', _req.body);
 
-        const response = await deleteTransaction(_req.body);
+        const response = await deleteTransaction(_req.body.data);
 
         res.json({ success: true, response });
     });

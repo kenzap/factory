@@ -1,6 +1,7 @@
+import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getOrders } from "../_/api/get_orders.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
-import { __html, hideLoader, priceFormat } from "../_/helpers/global.js";
+import { __html, hideLoader, priceFormat, toast } from "../_/helpers/global.js";
 import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
@@ -38,10 +39,6 @@ class Orders {
 
         new Modal();
 
-        this.html();
-
-        this.setupTable();
-
         this.data();
     }
 
@@ -64,20 +61,26 @@ class Orders {
             // session
             new Session();
 
+            // load page
+            this.html();
+
+            // setup table
+            this.setupTable();
+
             // render page
-            this.render();
+            setTimeout(() => { this.render() }, 100);
 
             // init footer
             new Footer(response);
 
             this.listeners();
-
-            // console.log(response);
         });
     }
 
     // load page
     html = () => {
+
+        if (!this.firstLoad) return;
 
         document.querySelector('#app').innerHTML = /*html*/`
             <div class="container-fluid">
@@ -104,7 +107,7 @@ class Orders {
                                     <label class="form-label d-none">${__html('Type:')}</label>
                                     <select class="form-select border-0" id="typeFilter">
                                         <option value="">${__html('All')}</option>
-                                        <option value="draft">${__html('Draft')}</option>
+                                        <option value="draft">${__html('Estimates')}</option>
                                         <option value="issued">${__html('Issued')}</option>
                                         <option value="manufactured">${__html('Manufactured')}</option>
                                     </select>
@@ -129,7 +132,7 @@ class Orders {
                         <!-- Data Grid -->
                         <div class="card border-0">
                             <div class="card-body p-0">
-                            <div id="ordersTable"></div>
+                                <div id="ordersTable"></div>
                             </div>
                         </div>
                     </div>
@@ -162,7 +165,7 @@ class Orders {
         // Button event listeners
         document.getElementById('refreshBtn').addEventListener('click', () => this.data());
         document.getElementById('reportBtn').addEventListener('click', () => this.generateReport());
-        document.getElementById('deleteBtn').addEventListener('click', () => this.deleteSelected());
+        document.getElementById('deleteBtn').addEventListener('click', () => this.delete());
 
         // Clear date input on backspace
         document.getElementById('dateFrom').addEventListener('keydown', (e) => {
@@ -184,7 +187,36 @@ class Orders {
         this.firstLoad = false;
     }
 
+    delete = () => {
+
+        const selectedData = this.table.getSelectedData();
+        if (!selectedData || selectedData.length === 0) {
+            toast('No rows selected for deletion.');
+            return;
+        }
+
+        if (!confirm(__html('Delete record?'))) return;
+
+        console.log('Deleting rows:', selectedData);
+
+        // Send to db
+        deleteTransaction(selectedData, (response) => {
+
+            if (response.success) {
+
+                toast('Selected rows deleted successfully.');
+                this.table.redraw(); // Redraw table to reflect changes
+                // this.editedRows.clear(); // Clear edited rows after saving
+                this.data(); // Refresh data after saving
+            } else {
+                toast('Error deleting rows: ' + response.error);
+            }
+        });
+    }
+
     setupTable() {
+
+        if (!this.firstLoad) return;
 
         const self = this;
 
@@ -194,6 +226,7 @@ class Orders {
             pagination: true, //enable pagination
             paginationMode: "local", //enable remote pagination
             paginationSize: 100,
+            selectableRows: 1,
             // footerElement: this.getSummary(),
             selectable: true,
             columns: [
@@ -228,9 +261,9 @@ class Orders {
                     }
                 },
                 {
-                    title: __html("Draft"),
+                    title: __html("Estimate"),
                     field: "draft",
-                    width: 80,
+                    width: 110,
                     formatter: function (cell) {
                         const value = cell.getValue();
                         if (value === true) {
@@ -310,9 +343,9 @@ class Orders {
                 //     },
                 // },
                 {
-                    title: "Payment",
+                    title: __html("Payment"),
                     field: "payment",
-                    width: 120,
+                    width: 128,
                     formatter: (cell) => {
                         const payment = cell.getValue();
                         if (!payment || !payment.date || payment.date === '0000-00-00') return '';
@@ -321,7 +354,7 @@ class Orders {
                     },
                 },
                 {
-                    title: "Invoice",
+                    title: __html("Invoice"),
                     field: "invoice",
                     width: 120,
                     formatter: (cell) => {
@@ -332,7 +365,7 @@ class Orders {
                     },
                 },
                 {
-                    title: "Invoice #",
+                    title: __html("Invoice #"),
                     field: "invoice",
                     width: 110,
                     formatter: (cell) => {
@@ -342,7 +375,7 @@ class Orders {
                     },
                 },
                 {
-                    title: "Waybill",
+                    title: __html("Waybill"),
                     field: "waybill",
                     width: 120,
                     formatter: (cell) => {
@@ -353,16 +386,16 @@ class Orders {
                     },
                 },
                 {
-                    title: "Waybill #",
+                    title: __html("Waybill #"),
                     field: "waybill",
-                    width: 110,
+                    width: 130,
                     formatter: (cell) => {
                         const waybill = cell.getValue();
                         if (!waybill || !waybill.number) return '';
                         return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${waybill.number}</span></div>`;
                     },
                 },
-                { title: __html("Operator"), field: "operator", width: 100 },
+                { title: __html("Operator"), field: "operator", width: 110 },
                 {
                     title: __html("Notes"),
                     field: "notes",
@@ -393,7 +426,7 @@ class Orders {
 
         bus.on('table:refresh', (value) => {
             console.log('Refreshing table data...', value);
-            self.filters.client = value;
+            self.filters.client = { name: value.name, eid: value._id };
             self.data();
         });
     }

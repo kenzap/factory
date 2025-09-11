@@ -25,7 +25,7 @@ export const getHtml = () => {
 
             <!-- Stats -->
             <div class="stats-container text-white small">
-                <div>${__html('Last')} <span id="latestOrders" class="fw-bold">-</span></div>
+                <div>${__html('Latest')} <span id="latestOrders" class="fw-bold">-</span></div>
                 <div>${__html('Issued')} <span id="issuedOrders" class="fw-bold">-</span></div>
             </div>
 

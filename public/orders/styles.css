@@ -5,12 +5,12 @@
 }
 
 /*table */
-.tabulator-row.tabulator-selectable.tabulator-row-even{
+/* .tabulator-row.tabulator-selectable.tabulator-row-even{
     background-color: var(--gray-color-highlight) !important;
 }
 .tabulator-row.tabulator-selectable:hover{
     background-color: var(--gray-color-highlight-hover) !important;
-}
+} */
 
 /* journal */
 .toolbar {
