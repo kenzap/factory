@@ -1,6 +1,6 @@
 import { __html } from "../helpers/global.js";
 
-export const getHtml = () => {
+export const getHtml = (response) => {
 
     return /*html*/`
     <!-- Navigation -->
@@ -34,7 +34,7 @@ export const getHtml = () => {
                 <div class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle fw-bold" href="#" role="button" data-bs-toggle="dropdown">
                         <i class="bi bi-person-circle me-2"></i>
-                        Operators
+                        ${response?.user?.fname ? response?.user?.fname : ""}${response?.user?.lname ? ' ' + response.user.lname.charAt(0) + '.' : ''}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol1', '/ATS/noliktava2?ats=1')">

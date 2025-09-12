@@ -84,7 +84,7 @@ function getProductApi(app) {
             const records = await getProduct(req.body.id);
             const locale = await getLocale();
             const locales = await getLocales();
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "price", "taxes", "groups"]);
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "price", "taxes", "groups", "stock_categories"]);
 
             res.send({ success: true, settings, locale, locales, product: records, user: req.user });
         } catch (err) {

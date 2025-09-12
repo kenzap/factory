@@ -24,6 +24,7 @@ class Transactions {
         this.firstLoad = true;
         this.selectedRows = [];
         this.filters = {
+            for: "transactions",
             client: '',
             dateFrom: '',
             dateTo: '',

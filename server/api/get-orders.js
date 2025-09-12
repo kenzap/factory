@@ -8,7 +8,7 @@ import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getOrders(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false }) {
+async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false }) {
 
     const db = getDbConnection();
 
@@ -63,7 +63,7 @@ async function getOrders(filters = { client: { name: "", eid: "" }, dateFrom: ''
         query += ` AND (js->'data'->'draft')::boolean = true`;
     }
 
-    if (filters.for && filters.for === 'orders') {
+    if (filters.for === 'orders') {
         query += ` AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)`;
     }
 
@@ -115,10 +115,17 @@ async function getOrders(filters = { client: { name: "", eid: "" }, dateFrom: ''
 
         await db.connect();
 
+        // console.log('getOrders query', query);
+        // console.log('getOrders params', params);
+
         const result = await db.query(query, params);
 
-        // Get total count for pagination
-        const countQuery = `
+        orders.records = result.rows;
+
+        if (filters.for === 'orders' || filters.for === 'transactions') {
+
+            // Get total count for pagination
+            const countQuery = `
             SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
@@ -126,23 +133,23 @@ async function getOrders(filters = { client: { name: "", eid: "" }, dateFrom: ''
                 SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
             FROM data 
             WHERE ref = $1 AND sid = $2 ` +
-            (filters.client?.eid ? ` AND (js->'data'->>'eid' = $3 OR unaccent(js->'data'->>'name') ILIKE unaccent($4))` : '') +
-            (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 5 : 3}` : '') +
-            (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 6 : 5) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
-            (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
+                (filters.client?.eid ? ` AND (js->'data'->>'eid' = $3 OR unaccent(js->'data'->>'name') ILIKE unaccent($4))` : '') +
+                (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 5 : 3}` : '') +
+                (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 6 : 5) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
+                (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
 
-        const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
-        const countResult = await db.query(countQuery, countParams);
+            const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
+            const countResult = await db.query(countQuery, countParams);
 
-        console.log(countResult.rows)
+            // console.log(countResult.rows)
 
-        orders.records = result.rows;
-        orders.total = parseInt(countResult.rows[0].total);
-        orders.summary = {
-            total: parseFloat(countResult.rows[0].total_amount),
-            paid: parseFloat(countResult.rows[0].total_paid),
-            waybill: parseFloat(countResult.rows[0].total_waybill)
-        };
+            orders.total = parseInt(countResult.rows[0].total);
+            orders.summary = {
+                total: parseFloat(countResult.rows[0].total_amount),
+                paid: parseFloat(countResult.rows[0].total_paid),
+                waybill: parseFloat(countResult.rows[0].total_waybill)
+            };
+        }
 
     } finally {
         await db.end();

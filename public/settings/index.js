@@ -312,6 +312,7 @@ class Settings {
         }
 
         data.work_categories = this.settings.work_categories;
+        data.stock_categories = this.settings.stock_categories;
         data.groups = this.settings.groups;
 
         // console.log(data); return;

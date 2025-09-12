@@ -18,16 +18,20 @@ import { Session } from "../_/modules/session.js";
 class Manufacturing {
 
     constructor() {
-        this.orders = [];
+        this.orders = { records: [], total: 0 };
         this.subItems = new Map();
         this.autoUpdateInterval = null;
         this.mouseTime = Date.now() / 1000;
         this.filters = {
             for: "manufacturing",
-            client: '',
+            client: {},
             dateFrom: '',
             dateTo: '',
             items: true,
+            limit: 1000,
+            offset: 0,
+            sort_by: null,
+            sort_dir: null,
             type: '' // Default to 'All'
         };
 
@@ -52,7 +56,7 @@ class Manufacturing {
 
         if (document.querySelector('.manufacturing-cont')) return;
 
-        document.querySelector('#app').innerHTML = getHtml();
+        document.querySelector('#app').innerHTML = getHtml(this.response);
 
         this.setupEventListeners();
         this.startAutoUpdate();
@@ -129,12 +133,12 @@ class Manufacturing {
         });
     }
 
-    async loadOrders(orderId = '', company = '') {
+    async loadOrders() {
 
         // get orders
         getOrders(this.filters, (response) => {
 
-            /// console.log(response);
+            console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -146,7 +150,7 @@ class Manufacturing {
             hideLoader();
 
             this.settings = response.settings;
-            this.orders = response.orders;
+            this.orders = response.orders.records;
 
             // session
             new Session();
@@ -155,6 +159,7 @@ class Manufacturing {
                 title: __html('Manufacturing'),
                 icon: 'card-text',
                 style: 'navbar-light',
+                user: response?.user,
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
             });
 

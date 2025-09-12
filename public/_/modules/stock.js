@@ -19,13 +19,10 @@ export const getHtml = (response) => {
                         </button>
                         <ul class="dropdown-menu" id="categoryFilter">
                             <li><a class="dropdown-item py-3" href="#" data-value="">${__html('All Categories')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Rainwater system (square)">${__html('Rainwater system - square')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 125/100">${__html('Rainwater system - 125/100')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 150/120">${__html('Rainwater system - 150/120')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Round rainwater system Ø 150/140">${__html('Rainwater system - 150/140')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Snow barrier - round">${__html('Snow barrier - round')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Snow barrier - oval">${__html('Snow barrier - oval')}</a></li>
-                            <li><a class="dropdown-item py-3" href="#" data-value="Instruments">${__html('Instruments')}</a></li>
+                            ${(response?.settings?.stock_categories || []).map(cat => {
+        return /*html*/`<li><a class="dropdown-item py-3" href="#" data-value="${cat.id}">${__html(cat.name)}</a></li>`;
+    }).join('')
+        }
                         </ul>
                     </div>
                 </div>

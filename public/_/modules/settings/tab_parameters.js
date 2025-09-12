@@ -1,4 +1,5 @@
 import { GroupsControl } from "../../components/settings/groups_control.js";
+import { StockCategoriesControl } from "../../components/settings/stock_categories_control.js";
 import { WorkCategoriesControl } from "../../components/settings/work_categories_control.js";
 import { __html } from "../../helpers/global.js";
 
@@ -11,6 +12,8 @@ export class TabParameters {
         new GroupsControl(settings);
 
         new WorkCategoriesControl(settings);
+
+        new StockCategoriesControl(settings);
     }
 
     tab = () => {
@@ -37,6 +40,14 @@ export class TabParameters {
                 <div class="row">
                     <div class="col-lg-6">
                         <work-categories-control></work-categories-control>
+                    </div>
+                    <div class="col-lg-6">
+                        <groups-control></groups-control>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <stock-categories-control></stock-categories-control>
                     </div>
                     <div class="col-lg-6">
                         <groups-control></groups-control>

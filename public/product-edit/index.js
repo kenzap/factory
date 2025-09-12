@@ -250,10 +250,13 @@ class ProductEdit {
 
         // inventory
         data["stock"] = {};
-        data['stock']['sku'] = document.querySelector('#stock_sku').value;
+        data['stock']['sku'] = document.querySelector('#sku_number').value;
+        data['stock']['gtin'] = document.querySelector('#gtin_number').value;
+        data['stock']['mpn'] = document.querySelector('#mpn_number').value;
         data['stock']['management'] = document.querySelector('#stock_management').checked;
         data['stock']['qty'] = document.querySelector('#stock_quantity').value;
         data['stock']['low_threshold'] = document.querySelector('#stock_low_threshold').value;
+        data['stock']['category'] = Array.from(document.querySelector('#stock-category').selectedOptions).map(option => option.value);
 
         // status
         data["status"] = document.querySelector('input[name="p-status"]:checked').value;
@@ -290,8 +293,6 @@ class ProductEdit {
             if (locale.locale == 'default') slug = '';
 
             if (!data['locales'][locale.locale]) data['locales'][locale.locale] = {};
-
-            // if (data['#p-title-' + locale.locale]) delete data['#p-title-' + locale.locale];
 
             data['locales'][locale.locale]['title'] = document.querySelector('#p-title' + slug).value.trim();
             data['locales'][locale.locale]['sdesc'] = document.querySelector('#p-sdesc' + slug).value.trim();

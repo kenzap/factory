@@ -152,7 +152,7 @@ class Stock {
         // get products
         getProducts(this.filters, (response) => {
 
-            // console.log(response);
+            console.log(response);
 
             // show UI loader
             if (!response.success) return;
