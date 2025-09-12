@@ -17,8 +17,6 @@ export class ClientSearch {
 
     init = () => {
 
-        // this.data();
-
         this.view();
 
         this.listeners();
@@ -29,37 +27,16 @@ export class ClientSearch {
         document.querySelector('client-search').innerHTML = `
             <label class="form-label d-none">${__html('Client:')}</label>
             <div class="autocomplete-container position-relative">
-                <input 
-                    type="text" 
-                    class="form-control border-0" 
-                    id="clientFilter" 
-                    placeholder="${__html('Search..')}"
-                    autocomplete="off"
-                >
-                <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 200px; overflow-y: auto; z-index: 1000;"></div>
+            <input 
+                type="text" 
+                class="form-control border-0" 
+                id="clientFilter" 
+                placeholder="${__html('Search..')}"
+                autocomplete="off"
+            >
+            <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 360px; overflow-y: auto; z-index: 1000; scrollbar-width: thick; scrollbar-color: #888 #f1f1f1;"></div>
             </div>
         `;
-    }
-
-    data = () => {
-
-        // const clientInput = document.getElementById('clientFilter');
-        // const value = e.target.value.toLowerCase();
-
-        // if (value.length === 0) {
-        //     suggestions.classList.add('d-none');
-        //     return;
-        // }
-
-        // getClientSuggestions({ s: value }, (response) => {
-
-        //     console.log('Clients response:', response);
-        //     if (response && response.clients) {
-        //         this.clients = response.clients;
-        //     } else {
-        //         this.clients = [];
-        //     }
-        // });
     }
 
     listeners = () => {
@@ -94,19 +71,6 @@ export class ClientSearch {
                     this.clients = [];
                 }
             });
-
-            // const filtered = this.clients.filter(client =>
-            //     client.name.toLowerCase().includes(value)
-            // );
-
-            // if (filtered.length > 0) {
-            //     suggestions.innerHTML = filtered.map(client =>
-            //         `<div class="autocomplete-item p-2 border-bottom cursor-pointer" style="cursor: pointer;" data-id="${client._id}">${client.name}</div>`
-            //     ).join('');
-            //     suggestions.classList.remove('d-none');
-            // } else {
-            //     suggestions.classList.add('d-none');
-            // }
         });
 
         // Handle suggestion clicks

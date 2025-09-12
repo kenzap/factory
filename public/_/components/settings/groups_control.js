@@ -1,4 +1,4 @@
-import { __html, randomString } from "../../helpers/global.js";
+import { __html, slugify } from "../../helpers/global.js";
 
 // ▢ rainwater system
 // ◯ rainwater system
@@ -25,7 +25,7 @@ export class GroupsControl {
 
         document.querySelector("groups-control").innerHTML = `
             <div class="form-group row mb-3 mt-1">
-                <label class="col-sm-3 col-form-label">${__html('Groups')}</label>
+                <label class="col-sm-3 col-form-label">${__html('Product groups')}</label>
                 <div class="col-sm-9">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <p class="form-text m-0">${__html('Manage product groups')}</p>
@@ -37,7 +37,7 @@ export class GroupsControl {
                         <table class="table table-sm table-borderless" id="groups-table">
                             <thead>
                                 <tr>
-                                    <th class="form-text">${__html('Name')}</th>
+                                    <th class="form-text">${__html('Title')}</th>
                                     <th width="100" class="form-text text-end">${__html('Action')}</th>
                                 </tr>
                             </thead>
@@ -83,7 +83,7 @@ export class GroupsControl {
 
     listeners = () => {
         document.querySelector("#add-group-btn").addEventListener('click', () => {
-            const newGroup = { id: randomString(6), name: "" };
+            const newGroup = { id: "", name: "" };
             this.settings.groups.push(newGroup);
             this.populateGroups();
             this.syncGroupsInput();
@@ -101,6 +101,7 @@ export class GroupsControl {
         document.addEventListener('input', (e) => {
             if (e.target.classList.contains('group-name')) {
                 const index = parseInt(e.target.dataset.index);
+                this.settings.groups[index].id = this.id(e.target.value);
                 this.settings.groups[index].name = e.target.value;
                 this.syncGroupsInput();
             }
@@ -112,5 +113,19 @@ export class GroupsControl {
         if (input) {
             input.value = JSON.stringify(this.settings.groups);
         }
+    }
+
+    id = (text) => {
+
+        let slug = slugify(text, {
+            replacement: '-',  // replace spaces with replacement character, defaults to `-`
+            remove: undefined, // remove characters that match regex, defaults to `undefined`
+            lower: true,       // convert to lower case, defaults to `false`
+            strict: true,      // strip special characters except replacement, defaults to `false`
+            locale: "en",      // language code of the locale to use
+            trim: true         // trim leading and trailing replacement chars, defaults to `true`
+        });
+
+        return slug.trim('/');
     }
 }

@@ -24,7 +24,7 @@ class Clients {
         this.selectedRows = [];
         this.filters = {
             for: "clients",
-            client: '',
+            client: {},
             type: '', // Default to 'All'
             from: 0,        // Starting record index
             limit: 100      // Records per page
@@ -51,7 +51,6 @@ class Clients {
             sortMode: "remote",
             // Handle pagination requests
             ajaxURL: "/clients/",
-            // ajaxSorting: true,
             ajaxRequestFunc: (url, config, params) => {
 
                 log('Loading data with params:', params, config);

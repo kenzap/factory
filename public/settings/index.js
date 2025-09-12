@@ -1,12 +1,14 @@
 import { getSettings } from "../_/api/get_settings.js";
 import { saveSettings } from "../_/api/save_settings.js";
-import { GroupsControl } from "../_/components/settings/groups_control.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
-import { getHtml } from "../_/modules/settings.js";
+import { TabGeneral } from "../_/modules/settings/tab_general.js";
+import { TabParameters } from "../_/modules/settings/tab_parameters.js";
+import { TabTemplates } from "../_/modules/settings/tab_templates.js";
+import { getHtml } from "../_/modules/settings/tabs.js";
 import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
 
 /**
@@ -19,11 +21,9 @@ import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, p
 class Settings {
 
     constructor() {
-        this.state = {
-            firstLoad: true,
-            settings: null,
-            editors: {}
-        }
+
+        this.firstLoad = true;
+        this.editors = {};
 
         this.init();
     }
@@ -36,7 +36,7 @@ class Settings {
 
             console.log(response);
 
-            this.state.settings = response.settings;
+            this.settings = response.settings;
 
             // init locale
             new Locale(response);
@@ -60,6 +60,11 @@ class Settings {
             // html
             document.querySelector('#app').innerHTML = getHtml();
 
+            // init tabs
+            new TabGeneral();
+            new TabTemplates(this.settings, this.editors);
+            new TabParameters(this.settings);
+
             // render
             this.view();
 
@@ -67,7 +72,7 @@ class Settings {
             this.listeners();
 
             // first load
-            this.state.firstLoad = false;
+            this.firstLoad = false;
         });
     }
 
@@ -77,19 +82,17 @@ class Settings {
 
         // console.log(response);
 
-        if (this.state.firstLoad) initBreadcrumbs(
+        if (this.firstLoad) initBreadcrumbs(
             [
                 { link: link('/home/'), text: __html('Home') },
                 { text: __html('Settings') }
             ]
         );
 
-        new GroupsControl(this.state.settings);
-
         // setup coatings and prices
         let price = [];
         let parent_options = '<option value="">' + __html('None') + '</option>';
-        if (this.state.settings.price) price = this.state.settings.price;
+        if (this.settings.price) price = this.settings.price;
 
         // sort by 
         if (Array.isArray(price)) {
@@ -123,29 +126,20 @@ class Settings {
             document.querySelector('#price').value = '[]';
         }
 
-        // init editors
-        [...document.querySelectorAll('.html-editor')].forEach(editor => {
-
-            self.state.editors[editor.id] = ace.edit(editor.id);
-            ace.config.set('basePath', 'https://account.kenzap.com/js/ace/');
-            self.state.editors[editor.id].getSession().setMode("ace/mode/html");
-            if (self.state.settings[editor.id]) self.state.editors[editor.id].setValue(self.state.settings[editor.id], -1);
-        });
-
         // populate fields
-        for (let field in self.state.settings) {
+        for (let field in self.settings) {
 
-            if (typeof (self.state.settings[field]) === "undefined") continue;
-            if (self.state.settings[field] == "") continue;
+            if (typeof (self.settings[field]) === "undefined") continue;
+            if (self.settings[field] == "") continue;
             if (document.querySelector("[name='" + field + "']")) switch (document.querySelector("[name='" + field + "']").dataset.type) {
 
                 case 'text':
                 case 'email':
                 case 'emails':
                 case 'select':
-                case 'textarea': document.querySelector("#" + field).value = self.state.settings[field]; break;
-                case 'checkbox': document.querySelector("#" + field).checked = self.state.settings[field] == "1" ? true : false; break;
-                case 'radio': document.querySelector("[name='" + field + "'][value='" + self.state.settings[field] + "']").checked = true; break;
+                case 'textarea': document.querySelector("#" + field).value = self.settings[field]; break;
+                case 'checkbox': document.querySelector("#" + field).checked = self.settings[field] == "1" ? true : false; break;
+                case 'radio': document.querySelector("[name='" + field + "'][value='" + self.settings[field] + "']").checked = true; break;
             }
         }
 
@@ -302,7 +296,7 @@ class Settings {
                 case 'textarea': data[s.id] = s.value; break;
                 case 'checkbox': data[s.id] = s.checked ? s.value : ""; break;
                 case 'radio': data[s.name] = s.parentElement.parentElement.parentElement.parentElement.querySelector('input:checked').value; break;
-                case 'editor': data[s.id] = this.state.editors[s.id].getValue(); break;
+                case 'editor': data[s.id] = this.editors[s.id].getValue(); break;
             }
         }
 
@@ -312,12 +306,13 @@ class Settings {
         if (data['price']) data['price'] = JSON.parse(data['price']);
 
         // do not save last_order_id if it was unchanged. Avoids conflicts.
-        if (self.state.response) if (self.state.response.settings.last_order_id == data.last_order_id) {
+        if (this.settings.last_order_id == data.last_order_id) {
 
             delete data.last_order_id;
         }
 
-        data.groups = this.state.settings.groups;
+        data.work_categories = this.settings.work_categories;
+        data.groups = this.settings.groups;
 
         // console.log(data); return;
 

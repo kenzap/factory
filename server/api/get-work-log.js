@@ -94,7 +94,7 @@ async function getWorkLog(filters) {
 
     query += ` ORDER BY js->'data'->>'date' DESC LIMIT 100`;
 
-    console.log(filters);
+    // console.log(filters);
 
     // execute query
     try {
@@ -124,7 +124,7 @@ function getWorkLogApi(app) {
             const records = await getWorkLog(req.body.filters);
             const locale = await getLocale();
             const locales = await getLocales();
-            const settings = await getSettings();
+            const settings = await getSettings(["work_categories", "currency", "currency_symb", "currency_symb_loc", "price"]);
 
             res.send({ success: true, settings, locale, locales, records: records, users: users, user: req.user });
         } catch (err) {

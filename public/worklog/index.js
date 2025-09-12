@@ -233,28 +233,19 @@ class WorkLog {
         }
 
         // Populate stage filter
+
         const filterStage = `
             <option value="" ${this.filters.stage === '' ? 'selected' : ''}>${__html('All')}</option>
-            <option value="markup" ${this.filters.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
-            <option value="stamping" ${this.filters.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
-            <option value="cutting" ${this.filters.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
-            <option value="bending" ${this.filters.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
-            <option value="assembly" ${this.filters.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
-            <option value="welding" ${this.filters.stage === 'welding' ? 'selected' : ''}>${__html('Welding')}</option>
-            <option value="coating" ${this.filters.stage === 'coating' ? 'selected' : ''}>${__html('Coating')}</option>
-            <option value="finishing" ${this.filters.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
+            ${this.settings?.work_categories?.map(category =>
+            `<option value="${category.id}" ${this.filters.stage === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
+        ).join('') || ''}
         `;
 
         const recordStage = `
-            <option value="" ${this.record.stage === '' ? 'selected' : ''}>${__html('')}</option>
-            <option value="markup" ${this.record.stage === 'markup' ? 'selected' : ''}>${__html('Markup')}</option>
-            <option value="stamping" ${this.record.stage === 'stamping' ? 'selected' : ''}>${__html('Stamping')}</option>
-            <option value="cutting" ${this.record.stage === 'cutting' ? 'selected' : ''}>${__html('Cutting')}</option>
-            <option value="bending" ${this.record.stage === 'bending' ? 'selected' : ''}>${__html('Bending')}</option>
-            <option value="assembly" ${this.record.stage === 'assembly' ? 'selected' : ''}>${__html('Assembly')}</option>
-            <option value="welding" ${this.record.stage === 'welding' ? 'selected' : ''}>${__html('Welding')}</option>
-            <option value="coating" ${this.record.stage === 'coating' ? 'selected' : ''}>${__html('Coating')}</option>
-            <option value="finishing" ${this.record.stage === 'finishing' ? 'selected' : ''}>${__html('Finishing')}</option>
+            <option value="" ${this.record.stage === '' ? 'selected' : ''}>${__html('Select type')}</option>
+            ${this.settings?.work_categories?.map(category =>
+            `<option value="${category.id}" ${this.record.stage === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
+        ).join('') || ''}
         `;
 
         if (stageSelect) stageSelect.innerHTML = filterStage;

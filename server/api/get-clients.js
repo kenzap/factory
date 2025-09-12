@@ -115,7 +115,8 @@ async function getClients(filters = { client: { name: "", eid: "" }, dateFrom: '
             (filters.client?.eid ? ` AND (js->'data'->>'eid' = $3 OR unaccent(js->'data'->>'name') ILIKE unaccent($4))` : '') +
             (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 5 : 3}` : '') +
             (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 6 : 5) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
-            (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
+            (filters.type == 'individual' ? ` AND js->'data'->>'entity' = 'individual'` : '') +
+            (filters.type == 'company' ? ` AND js->'data'->>'entity' = 'company'` : '');
 
         const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
         const countResult = await db.query(countQuery, countParams);
