@@ -21,11 +21,13 @@ class Stock {
         this.autoUpdateInterval = null;
         this.mouseTime = Date.now() / 1000;
         this.filters = {
+            for: 'stock',
             client: '',
             dateFrom: '',
             dateTo: '',
             draft: false,
             items: true,
+            cat: 'rainwater-system-square',
             type: '2' // Default to 'All'
         };
 
@@ -152,7 +154,7 @@ class Stock {
         // get products
         getProducts(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;

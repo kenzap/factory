@@ -28,7 +28,7 @@ export const getPrice = (settings, item) => {
 
     let obj = {};
 
-    if (item.coating == '-') item.coating = 'Painted';
+    // if (item.coating == '-') item.coating = '-';
 
     switch (item.calc_price) {
 

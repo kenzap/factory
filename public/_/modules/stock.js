@@ -15,10 +15,9 @@ export const getHtml = (response) => {
                 <div class="me-3">
                     <div class="dropdown">
                         <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 12px; min-width: 200px;">
-                            <span id="selectedCategory">${__html('All Categories')}</span>
+                            <span id="selectedCategory">${__html(response?.settings?.stock_categories[0].name)}</span>
                         </button>
                         <ul class="dropdown-menu" id="categoryFilter">
-                            <li><a class="dropdown-item py-3" href="#" data-value="">${__html('All Categories')}</a></li>
                             ${(response?.settings?.stock_categories || []).map(cat => {
         return /*html*/`<li><a class="dropdown-item py-3" href="#" data-value="${cat.id}">${__html(cat.name)}</a></li>`;
     }).join('')

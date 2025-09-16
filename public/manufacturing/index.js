@@ -1,5 +1,6 @@
 import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrders } from "../_/api/get_orders.js";
+import { getProductBundles } from "../_/api/get_product_bundles.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
@@ -7,6 +8,7 @@ import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { getHtml } from "../_/modules/manufacturing.js";
+import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
@@ -370,18 +372,30 @@ class Manufacturing {
                             </thead>
                             <tbody>
                                 ${order.items.map((item, i) => `
-                                    <tr>
+                                    <tr class="order-item-row" data-order_id="${order._id}" data-item_id="${item._id}" data-qty="${item.qty}">
                                         <td class="d-none">${i + 1}</td>
                                         <td>
                                             <div class="work-buttons">
-                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('markup', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('stamping', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('markup', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('stamping', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                             </div>
                                         </td>
                                         <td>
-                                            <div><strong>${i + 1}. ${item.title + (item.sdesc.length ? ' - ' + item.sdesc : '')}</strong></div>
+                                            <div class="d-flex justify-content-start align-items-center">
+                                                <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
+                                                <div class="dropdown itemsActionsCont ms-2">
+                                                    <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                                                        <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                                    </svg>
+                                                    <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
+                                                        <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle('${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
+                                                        <li><hr class="dropdown-divider d-none"></li>
+                                                        <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                                                    </ul>
+                                                </div>
+                                            </div>
                                             <small class="text-muted">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
                                         </td>
                                         <td>${item.unit || "gab"}</td>
@@ -399,7 +413,7 @@ class Manufacturing {
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
                                             
                                         </td>
-                                    </tr >
+                                    </tr>
                 `).join('')}
                             </tbody>
                         </table>
@@ -414,10 +428,122 @@ class Manufacturing {
 
             this.getStock(order._id);
 
+            this.getBundles(order._id);
+
         } catch (error) {
             console.error('Error loading order details:', error);
             toast('Error ' + error);
         }
+    }
+
+    getBundles(orderId) {
+
+        console.log('Getting bundles for order', orderId, this.orders);
+
+        // Get stock for each item in the order
+        const order = this.orders.find(o => o._id === orderId);
+        if (!order) return;
+
+        let products = [];
+
+        console.log('Order found', order);
+
+        order.items.forEach((item, i) => {
+
+            // todo: add bundled products
+            products.push({
+                _id: item._id,
+                coating: item.coating || '',
+                color: item.color || ''
+            });
+        });
+
+        console.log('Requesting getProductBundles', products);
+
+        // Reload bundles for all orders
+        getProductBundles(products, (response) => {
+
+            console.log('getProductBundles response', response);
+
+            if (response.success && response.products && response.products.length > 0) {
+
+                // Clear existing bundles for this order before adding new ones
+                document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"]`).forEach(element => {
+                    // Remove any existing bundle rows that follow this item
+                    let nextSibling = element.nextElementSibling;
+                    while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
+                        let toRemove = nextSibling;
+                        nextSibling = nextSibling.nextElementSibling;
+                        toRemove.remove();
+                    }
+                });
+
+                response.products.forEach((item, i) => {
+
+                    //  console.log('Bundle item', (response.products.length - 1), i);
+
+                    document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"][data-item_id="${item.product_id}"]`).forEach(element => {
+
+                        let row = ` 
+                        <tr class="">
+                            <td class="d-none py-0"></td>
+                            <td class="py-0">
+
+                            </td>
+                            <td class="py-0" >
+                                <div class="" >
+                                    <small class="text-muted me-2"><i class="bi bi-box me-1"></i> ${item?.title}</small>
+                                    <small class="text-muted me-2">${item?.color}</small>
+                                    <small class="text-muted me-2">${item?.coating}</small>
+                                </div>
+                            </td>
+                            <td class="py-0"><small class="text-muted">${item?.unit || "gab"}</small></td>
+                            <td class="py-0">
+                                <small class="text-muted">${item?.qty || 1} x ${element.dataset.qty}</small>
+                                <input type="number" class="form-control form-control-xs writeoff-amount d-none" data-type="w" data-order-id="${orderId}" data-i="${i}" value="${item?.qty}" style="width: 80px;">
+                            </td>
+                            <td class="py-0">
+                                <div class="d-flex align-items-center action-ns">
+                                    <input type="checkbox" data-type="w" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${orderId}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                </div>
+                            </td>
+                            <td class="py-0">
+                                <small class="text-muted">
+                                    <div class="stock-${item.coating}-${item.color}-${item._id}">${item?.stock}</div>
+                                </small>
+                            </td>
+                            <td class="py-0">
+                                <input type="number" class="form-control form-control-xs writeoff-amount" data-type="w" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount || 0}" style="width: 80px;">
+                            </td>
+                            <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${i}">
+
+                            </td>
+                        </tr>`;
+
+                        element.insertAdjacentHTML('afterend', row);
+                    });
+                });
+            }
+        });
+    }
+
+    addBundle(_id, title, color, coating, orderId) {
+
+        const orders = this.orders;
+        const self = this;
+
+        new AddBundle({ _id, title, color, coating, orderId }, this.settings, (response) => {
+            if (!response.success) {
+                toast(__html('Error: ') + response.error);
+                return;
+            }
+
+            console.log('Getting bundles', response.orderId, orders, this.orders);
+
+            self.orders = orders; // restore orders reference
+
+            this.getBundles(response.orderId);
+        });
     }
 
     getStock(order_id) {
@@ -441,7 +567,7 @@ class Manufacturing {
 
         getProductStock(products, (response) => {
 
-            console.log('getProductStock response', response);
+            // console.log('getProductStock response', response);
 
             if (response.success && response.products && response.products.length > 0) {
 

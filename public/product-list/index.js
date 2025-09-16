@@ -114,6 +114,7 @@ class ProductList extends Component {
 
         try {
             const params = {
+                for: 'product-list',
                 s: this.searchComponent.getValue(),
                 limit: this.state.limit,
                 offset: (getPageNumber() - 1) * this.state.limit

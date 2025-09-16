@@ -8,7 +8,7 @@ import { getDbConnection, getLocale, getSettings, locale, log, sid } from '../_/
  * @param {Object} filter - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getProducts(filters = { limit: 50, s: '', cat: '' }) {
+async function getProducts(filters = { for: 'product-list', limit: 50, s: '', cat: '' }) {
 
     const client = getDbConnection();
     let products = [], meta = {};
@@ -43,15 +43,14 @@ async function getProducts(filters = { limit: 50, s: '', cat: '' }) {
 
     // Add search filter if present
     if (filters.s && filters.s.trim() !== '') {
-        query += ` AND unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4)`;
+        query += ` AND (unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4) OR unaccent(js->'data'->>'title') ILIKE unaccent($4))`;
         params.push(`%${filters.s}%`);
     }
 
     // Add cat search matching filter if present
     if (filters.cat && filters.cat.trim() !== '') {
-        query += ` AND js->'data'->'cats' @> $${params.length + 1}::jsonb`;
+        query += ` AND js->'data'->'stock'->'category' @> $${params.length + 1}::jsonb`;
         params.push(JSON.stringify([filters.cat]));
-        // params.push(`%${filters.cat}%`);
     }
 
     // Pagination
@@ -59,10 +58,19 @@ async function getProducts(filters = { limit: 50, s: '', cat: '' }) {
     const offset = Number.isInteger(filters.offset) && filters.offset > 0 ? filters.offset : 0;
     params.push(limit, offset);
 
-    query += `
-        ORDER BY js->'data'->'created' DESC
-        LIMIT $${params.length - 1} OFFSET $${params.length}
-    `;
+    if (filters.for == 'product-list') {
+        query += `
+            ORDER BY js->'data'->'created' DESC
+            LIMIT $${params.length - 1} OFFSET $${params.length}
+        `;
+    }
+
+    if (filters.for == 'stock') {
+        query += `
+            ORDER BY js->'data'->'priority' DESC
+            LIMIT $${params.length - 1} OFFSET $${params.length}
+        `;
+    }
 
     // Get total number of available records for pagination
     let total_records = 0;

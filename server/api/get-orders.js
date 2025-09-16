@@ -169,7 +169,7 @@ function getOrdersApi(app) {
             const locale = await getLocale(req.headers.locale);
             const filters = req.body.filters || {};
             const orders = await getOrders(filters);
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price"]);
 
             res.send({ success: true, settings, user: req.user, orders, locale });
         } catch (err) {

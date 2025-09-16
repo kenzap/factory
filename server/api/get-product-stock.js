@@ -51,9 +51,7 @@ async function getProductStock(products) {
                 if (inputProduct && (inputProduct.coating || inputProduct.color)) {
                     filteredVarPrice = (row.var_price || []).filter(vp => {
 
-                        // if (inputProduct.coating == '-') inputProduct.coating = 'Painted';
-
-                        const matchesCoating = inputProduct.coating ? (vp.parent === inputProduct.coating || (inputProduct.coating === '-' && vp.parent === "Painted")) : true;
+                        const matchesCoating = inputProduct.coating ? (vp.parent === inputProduct.coating || (inputProduct.coating === '-' && vp.parent === "-")) : true;
                         const matchesColor = inputProduct.color ? vp.title === inputProduct.color : true;
                         return matchesCoating && matchesColor;
                     });
@@ -66,6 +64,7 @@ async function getProductStock(products) {
                     row.hash = (filteredVarPrice[0]?.parent || '') + filteredVarPrice[0].title + row._id;
                     row.color = inputProduct.color || '';
                     row.coating = inputProduct.coating || '';
+                    row.bundled_products = row.bundled_products || [];
                 }
 
                 delete row.var_price;

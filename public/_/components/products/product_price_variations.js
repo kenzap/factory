@@ -76,6 +76,8 @@ export class ProductPriceVariations {
             this.product.var_price = [];
         }
 
+        console.log("this.var_parent", this.var_parent);
+
         this.var_parent.split('\n').forEach(el => {
 
             parent_options += '<option value="' + el + '">' + el + '</option>';

@@ -29,7 +29,7 @@ export const setProductStock = async (client, inventory, user_id) => {
     // find product by color and coating
     var_price.forEach(v => {
 
-        if ((v.parent === inventory.coating || (v.parent == 'Painted' && inventory.coating == '-')) && v.title === inventory.color) {
+        if ((v.parent === inventory.coating || (v.parent == '-' && inventory.coating == '-')) && v.title === inventory.color) {
             v.stock = parseInt(inventory.amount);
         }
     });
@@ -94,7 +94,7 @@ export const updateProductStock = async (client, inventory, user_id) => {
     // find product by color and coating
     var_price.forEach(v => {
 
-        if ((v.parent === inventory.coating || (v.parent == 'Painted' && inventory.coating == '-')) && v.title === inventory.color) {
+        if ((v.parent === inventory.coating || (v.parent == '-' && inventory.coating == '-')) && v.title === inventory.color) {
             v.stock = (v.stock || 0) - inventory.amount;
         }
     });

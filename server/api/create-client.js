@@ -20,6 +20,7 @@ async function saveClient(data) {
     if (!data._id) data._id = makeId();
 
     let response = null;
+    let now = Math.floor(new Date().getTime() / 1000);
 
     // Get orders
     let query = `
@@ -30,7 +31,7 @@ async function saveClient(data) {
             js = EXCLUDED.js
         RETURNING _id`;
 
-    const params = [data._id, 0, '3dfactory-entity', sid, JSON.stringify({ data: data, meta: { created: Date.now(), updated: Date.now() } })];
+    const params = [data._id, 0, '3dfactory-entity', sid, JSON.stringify({ data: data, meta: { created: now, updated: now } })];
 
     try {
 

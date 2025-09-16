@@ -263,3 +263,10 @@ body {
 .autocomplete-suggestion:last-child {
     border-bottom: none;
 }
+
+.form-control-xs {
+    min-height: calc(1.2em + .2rem + calc(var(--bs-border-width) * 2));
+    padding: .25rem .5rem;
+    font-size: .8rem;
+    border-radius: var(--bs-border-radius-sm)
+}

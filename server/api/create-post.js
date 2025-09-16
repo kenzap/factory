@@ -23,8 +23,8 @@ async function createPost(data) {
         if (!data._id) {
 
             data._id = makeId();
-            data.created = Date.now();
-            data.updated = Date.now();
+            data.created = Math.floor(new Date().getTime() / 1000);
+            data.updated = Math.floor(new Date().getTime() / 1000);
         }
 
         // Get orders

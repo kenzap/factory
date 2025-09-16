@@ -37,8 +37,7 @@ export class ProductPrice {
             <div class="mb-3 mw">
                 <label class="form-label" for="calc_price">${__html('Calculate price')}</label>
                 <select id="calc_price" class="form-select inp" >
-                    <option value="default">${__html('Default price')}</option>
-                    <option value="variable">${__html('Variable')}</option>
+                    <option value="variable">${__html('By variation')}</option>
                     <option value="sketch">${__html('By sketch')}</option>
                     <option value="formula">${__html('By formula')}</option>
                     <option value="complex">${__html('Complex product')}</option>

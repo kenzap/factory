@@ -115,7 +115,7 @@ export class OrderPane {
                     field: "title",
                     editor: this.productEditor,
                     headerSort: false,
-                    width: 360,
+                    width: 400,
                     // cellEdited: (cell) => {
                     //     this.updateCalculations(cell.getRow());
                     // }
