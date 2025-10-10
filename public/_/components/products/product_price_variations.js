@@ -33,7 +33,7 @@ export class ProductPriceVariations {
 
         this.state.modal.querySelector(".modal-title").innerHTML = `
             <div class="d-flex align-items-center">
-                ${__html("Variations")}
+                <span class="variations-h"></span>
                 <div class="ms-2 po d-none"> 
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M4 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zm2-1a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V2a1 1 0 0 0-1-1zM2 5a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-1h1v1a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1v1z"/>
@@ -59,18 +59,6 @@ export class ProductPriceVariations {
                 document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(o, i));
             });
 
-            // // pricing row
-            // this.product.var_price.forEach((price, i) => {
-
-            //     if (price.parent) {
-
-            //         if (document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]')) {
-            //             document.querySelector('.price-table > tbody [data-parent="' + price.parent + '"]').insertAdjacentHTML("afterend", self.structCoatingRow(price, i)); // :last-child
-            //         } else {
-            //             document.querySelector('.price-table > tbody').insertAdjacentHTML("beforeend", self.structCoatingRow(price, i));
-            //         }
-            //     }
-            // });
 
         } else {
             this.product.var_price = [];
@@ -89,6 +77,9 @@ export class ProductPriceVariations {
 
         // view modal
         this.state.modalCont.show();
+
+        // refresh count
+        this.refreshCount();
 
         // simulate click to enable Paste event handling
         // setTimeout(() => { simulateClick(document.querySelector('.p-modal .modal-header')); }, 2000);
@@ -110,7 +101,7 @@ export class ProductPriceVariations {
                                     </td>
                                     <td class="tp">
                                         <div class="me-1 me-sm-3 mt-2">
-                                            <input type="text" value="" autocomplete="off" class="form-control price-id" style="max-width:100px;">
+                                            <input type="text" value="" autocomplete="off" class="form-control price-code" style="max-width:100px;">
                                         </div>
                                     </td>
                                     <td>
@@ -174,7 +165,8 @@ export class ProductPriceVariations {
 
         let obj = {}
 
-        obj.id = document.querySelector('.price-id').value;
+        obj.id = randomString(6);
+        obj.code = document.querySelector('.price-code').value;
         obj.title = document.querySelector('.price-title').value.trim();
         document.querySelector('.price-title').value = '';
         obj.parent = document.querySelector('.price-parent').value.trim();
@@ -184,6 +176,8 @@ export class ProductPriceVariations {
         obj.public = true;
 
         if (obj.title.length < 1 || obj.price.length < 1) return false;
+
+        console.log("Adding price variation", obj);
 
         // Update this.product.var_price instead of DOM
         if (!Array.isArray(this.product.var_price)) {
@@ -199,6 +193,7 @@ export class ProductPriceVariations {
 
         // Reinitialize listeners for new elements
         this.initRowListeners();
+        this.refreshCount();
     }
 
     removePrice(e) {
@@ -216,6 +211,8 @@ export class ProductPriceVariations {
         });
 
         e.currentTarget.parentElement.parentElement.remove();
+
+        this.refreshCount();
     }
 
     updatePrice(e) {
@@ -249,6 +246,15 @@ export class ProductPriceVariations {
                 console.log('Updated field:', field, 'Value:', value);
             }
         });
+    }
+
+    refreshCount() {
+
+        let count = Array.isArray(this.product.var_price) ? this.product.var_price.length : 0;
+        const totalRecordsSpan = this.state.modal.querySelector('.variations-h');
+        if (totalRecordsSpan) {
+            totalRecordsSpan.innerHTML = __html("%1$ variation(s)", count);
+        }
     }
 
     publicPrice(e) {

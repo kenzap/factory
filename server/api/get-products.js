@@ -8,7 +8,7 @@ import { getDbConnection, getLocale, getSettings, locale, log, sid } from '../_/
  * @param {Object} filter - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getProducts(filters = { for: 'product-list', limit: 50, s: '', cat: '' }) {
+async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0, s: '', cat: '' }) {
 
     const client = getDbConnection();
     let products = [], meta = {};
@@ -60,14 +60,14 @@ async function getProducts(filters = { for: 'product-list', limit: 50, s: '', ca
 
     if (filters.for == 'product-list') {
         query += `
-            ORDER BY js->'data'->'created' DESC
+            ORDER BY js->'data'->>'created' DESC
             LIMIT $${params.length - 1} OFFSET $${params.length}
         `;
     }
 
     if (filters.for == 'stock') {
         query += `
-            ORDER BY js->'data'->'priority' DESC
+            ORDER BY js->'data'->>'priority' DESC
             LIMIT $${params.length - 1} OFFSET $${params.length}
         `;
     }

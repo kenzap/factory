@@ -9,7 +9,7 @@ import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
 
 /**
- * Stock log.
+ * Stock log.  
  * 
  * @version 1.0
  */
@@ -258,11 +258,18 @@ class Stock {
 
         tbody.innerHTML = '';
 
+        // console.log(this.products);
+
         this.products.forEach(product => {
 
             if (!product.title) return;
 
             this.coatings.forEach(coating => {
+
+                // skip coatings that do not exist for this product
+                if (product.var_price && !product.var_price.find(vp => vp.parent === coating)) {
+                    return;
+                }
 
                 const row = document.createElement('tr');
 

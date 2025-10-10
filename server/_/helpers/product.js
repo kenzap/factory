@@ -24,7 +24,7 @@ export const setProductStock = async (client, inventory, user_id) => {
             `;
 
     const varResult = await client.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
-    let var_price = varResult.rows[0]?.var_price || {};
+    let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
     var_price.forEach(v => {
@@ -89,7 +89,7 @@ export const updateProductStock = async (client, inventory, user_id) => {
             `;
 
     const varResult = await client.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
-    let var_price = varResult.rows[0]?.var_price || {};
+    let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
     var_price.forEach(v => {

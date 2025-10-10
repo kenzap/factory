@@ -108,8 +108,12 @@ export const sendOtpWhatsApp = async (phone, otp, isOtp = false) => {
     try {
         // 360dialog API configuration
         // production
-        const url = "https://waba.360dialog.io/v1/messages";
+        // const url = "https://waba.360dialog.io/v1/messages";
+        const url = "https://waba-v2.360dialog.io/messages";
         const apiKey = process.env.DIALOG_KEY;
+
+        // console.log('Using WhatsApp API URL:', url);
+        // console.log('Using WhatsApp API Key:', apiKey ? 'Provided' : 'Not Provided', apiKey);
 
         // sandbox
         // const url = "https://waba-sandbox.360dialog.io/v1/messages";
@@ -118,6 +122,7 @@ export const sendOtpWhatsApp = async (phone, otp, isOtp = false) => {
         // Define template at https://developers.facebook.com/apps/ > your app > WhatsApp > Message Templates
         const payload = {
             to: phone,
+            messaging_product: "whatsapp",
             type: "template",
             template: {
                 namespace: process.env.WHATSAPP_NAMESPACE,
@@ -161,7 +166,7 @@ export const sendOtpWhatsApp = async (phone, otp, isOtp = false) => {
         });
 
         if (!response.ok) {
-            log_error(`HTTP error! status: ${response}`);
+            log_error(`HTTP error! status:`, response);
         }
 
         const result = await response.json();

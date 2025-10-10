@@ -140,6 +140,7 @@ body {
     /* padding-top:74px; */
     /* max-height: calc(100vh - 200px); */
     overflow: auto;
+    padding-bottom: 80px;
     /* border-radius: 15px; */
     /* box-shadow: 0 5px 15px rgba(0,0,0,0.1); */
 }

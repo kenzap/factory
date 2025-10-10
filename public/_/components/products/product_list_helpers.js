@@ -194,7 +194,7 @@ export class SearchComponent extends Component {
 
     getValue() {
         const input = document.querySelector('.search-cont input');
-        return input ? input.value : '';
+        return input ? input.value.trim() : '';
     }
 }
 
