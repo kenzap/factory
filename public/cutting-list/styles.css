@@ -322,3 +322,36 @@
 .indicator-waiting { background: #ffc107; }
 .indicator-cutting { background: #28a745; }
 .indicator-complete { background: #17a2b8; }
+
+/* write-off modal */
+.cbo .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+.cbo .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.cbs .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.cbs .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}   
+
+.cbw .form-check-input:checked {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+}
+
+.cbw .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25); 
+}
+
+/* .modal.writeoff .modal-content{
+    border-radius: 8px;
+    position: relative;
+    border-left: 20px solid var(--base-color-4);
+} */

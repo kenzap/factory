@@ -9,7 +9,8 @@ import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
 
 /**
- * Stock log.  
+ * Stock log.
+ * Shows current stock levels and allows editing them.
  * 
  * @version 1.0
  */

@@ -7,13 +7,14 @@ import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../
 import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
-import { getHtml } from "../_/modules/manufacturing.js";
 import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
+import { getHtml } from "../_/modules/manufacturing/html.js";
+import { Inventory } from "../_/modules/manufacturing/inventory.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
-/**
- * Manufacturing log.
+/** 
+ * Manufacturing log. 
  * 
  * @version 1.0
  */
@@ -48,6 +49,8 @@ class Manufacturing {
     init() {
 
         new Modal();
+
+        this.Inventory = new Inventory();
 
         this.loadOrders();
 
@@ -140,7 +143,7 @@ class Manufacturing {
         // get orders
         getOrders(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -151,6 +154,7 @@ class Manufacturing {
             // hide UI loader
             hideLoader();
 
+            this.response = response;
             this.settings = response.settings;
             this.orders = response.orders.records;
 
@@ -172,8 +176,6 @@ class Manufacturing {
 
             document.getElementById('loadingIndicator').style.display = 'none';
             document.getElementById('ordersContainer').style.display = 'block';
-
-            // console.log(response);
         });
     }
 
@@ -279,8 +281,7 @@ class Manufacturing {
     createOrderRow(order, index) {
         const div = document.createElement('div');
 
-        // order.status = 'new';
-        div.className = `order-card status-${order.status} fade-in`;
+        div.className = `order-card status-${order.status} fade-in-`;
         div.style.animationDelay = `${index * 0.05}s`;
 
         const shortId = order.id.substring(0, order.id.length - 4);
@@ -351,17 +352,23 @@ class Manufacturing {
             // Render sub-items as a table
             subRow.innerHTML = `
                 <div class="p-3">
-                    <div class="mb-2 d-none">
-                        <strong>Pozīcijas pasūtījumam:</strong> ${orderId}
-                        <button class="btn btn-sm btn-outline-secondary float-end" onclick="this.parentNode.parentNode.parentNode.remove()">Aizvērt</button>
-                    </div>
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered- mb-0">
                             <thead class="table-light">
                                 <tr>
                                     <th class="d-none">${__html('Nr.')}</th>
                                     <th>${__html('Works')}</th>
-                                    <th>${__html('Product')}</th>
+                                    <th>
+                                        <div class="d-flex align-items-center text-bold product-name">
+                                            <div class="d-none">${__html('Product')}</div>
+                                            <select class="form-select- form-select-sm- bg-transparent ps-0 p-0 border-0 fw-bold" id="groupFilter-${orderId}" style="width: auto;" onchange="manufacturing.filterByGroup('${order._id}', this.value)">
+                                                <option value="">${__html('Products')}</option>
+                                                ${this.settings?.groups ? this.settings.groups.map(group => `
+                                                    <option value="${group.id}" class="fw-700">${__html(group.name)}</option>
+                                                `).join('') : ''}
+                                            </select>
+                                        </div>
+                                    </th>
                                     <th>${__html('Unit')}</th>
                                     <th>${__html('Quantity')}</th>
                                     <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
@@ -372,7 +379,7 @@ class Manufacturing {
                             </thead>
                             <tbody>
                                 ${order.items.map((item, i) => `
-                                    <tr class="order-item-row" data-order_id="${order._id}" data-item_id="${item._id}" data-qty="${item.qty}">
+                                    <tr class="order-item-row" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-qty="${item.qty}" data-group="${item.group}" >
                                         <td class="d-none">${i + 1}</td>
                                         <td>
                                             <div class="work-buttons">
@@ -383,14 +390,14 @@ class Manufacturing {
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="d-flex justify-content-start align-items-center">
+                                            <div class="d-flex justify-content-start align-items-center product-name">
                                                 <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
                                                 <div class="dropdown itemsActionsCont ms-2">
                                                     <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                                         <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                                     </svg>
                                                     <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
-                                                        <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle('${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
+                                                        <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
                                                         <li><hr class="dropdown-divider d-none"></li>
                                                         <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
                                                     </ul>
@@ -402,19 +409,35 @@ class Manufacturing {
                                         <td>${item.qty}</td>
                                         <td>
                                             <div class="d-flex align-items-center action-ns">
-                                                <input type="checkbox" data-type="w" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                                <input type="checkbox" data-type="m" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                                <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                                <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                             </div>
                                         </td>
-                                        <td><div class="stock-${item.coating}-${item.color}-${item._id}"></div></td>
+                                        <td><div class="stock-${item.coating}-${item.color}-${item._id}"><span>&nbsp;</span></div></td>
                                         <td>
-                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount}" style="width: 80px;">
+                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
                                             
-                                        </td>
+                                        </td> 
                                     </tr>
                 `).join('')}
+                                    <tr class="order-item-row-empty d-none">
+                                        <td class="d-none">0</td>
+                                        <td class="align-middle">
+                                            <div class="work-buttons">
+                                                <button class="work-btn btn btn-outline-primary btn-sm" >M</button>
+                                                <button class="work-btn btn btn-outline-success btn-sm" >L</button>
+                                                <button class="work-btn btn btn-outline-warning btn-sm" >K</button>
+                                                <button class="work-btn btn btn-outline-info btn-sm" >N</button>
+                                            </div>
+                                        </td>
+                                        <td colspan="6" class="text-center align-middle">
+                                            <div class="d-flex align-items-center justify-content-start h-100">
+                                                <span class="text-muted">${__html('No products found')}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
                             </tbody>
                         </table>
                     </div>
@@ -438,15 +461,11 @@ class Manufacturing {
 
     getBundles(orderId) {
 
-        console.log('Getting bundles for order', orderId, this.orders);
-
         // Get stock for each item in the order
         const order = this.orders.find(o => o._id === orderId);
         if (!order) return;
 
         let products = [];
-
-        console.log('Order found', order);
 
         order.items.forEach((item, i) => {
 
@@ -458,12 +477,8 @@ class Manufacturing {
             });
         });
 
-        console.log('Requesting getProductBundles', products);
-
         // Reload bundles for all orders
         getProductBundles(products, (response) => {
-
-            console.log('getProductBundles response', response);
 
             if (response.success && response.products && response.products.length > 0) {
 
@@ -478,56 +493,94 @@ class Manufacturing {
                     }
                 });
 
-                response.products.forEach((item, i) => {
+                // Group products by product_id first
+                const groupedProducts = {};
+                response.products.forEach(product => {
+                    if (!groupedProducts[product.product_id]) {
+                        groupedProducts[product.product_id] = [];
+                    }
+                    groupedProducts[product.product_id].push(product);
+                });
 
-                    //  console.log('Bundle item', (response.products.length - 1), i);
+                // Process each product group
+                Object.keys(groupedProducts).forEach(productId => {
+                    const bundleItems = groupedProducts[productId];
 
-                    document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"][data-item_id="${item.product_id}"]`).forEach(element => {
+                    document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"][data-item_id="${productId}"]`).forEach((element, bi) => {
+                        let bundleItemIndex = 0;
+                        const itemIndex = parseInt(element.dataset.i);
+                        const orderItem = order.items[itemIndex];
 
-                        let row = ` 
-                        <tr class="">
-                            <td class="d-none py-0"></td>
-                            <td class="py-0">
+                        bundleItems.forEach((bundleItem) => {
 
-                            </td>
-                            <td class="py-0" >
-                                <div class="" >
-                                    <small class="text-muted me-2"><i class="bi bi-box me-1"></i> ${item?.title}</small>
-                                    <small class="text-muted me-2">${item?.color}</small>
-                                    <small class="text-muted me-2">${item?.coating}</small>
-                                </div>
-                            </td>
-                            <td class="py-0"><small class="text-muted">${item?.unit || "gab"}</small></td>
-                            <td class="py-0">
-                                <small class="text-muted">${item?.qty || 1} x ${element.dataset.qty}</small>
-                                <input type="number" class="form-control form-control-xs writeoff-amount d-none" data-type="w" data-order-id="${orderId}" data-i="${i}" value="${item?.qty}" style="width: 80px;">
-                            </td>
-                            <td class="py-0">
-                                <div class="d-flex align-items-center action-ns">
-                                    <input type="checkbox" data-type="w" data-i="${i}" onchange="manufacturing.execOrderItemAction(event, '${orderId}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                </div>
-                            </td>
-                            <td class="py-0">
-                                <small class="text-muted">
-                                    <div class="stock-${item.coating}-${item.color}-${item._id}">${item?.stock}</div>
-                                </small>
-                            </td>
-                            <td class="py-0">
-                                <input type="number" class="form-control form-control-xs writeoff-amount" data-type="w" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount || 0}" style="width: 80px;">
-                            </td>
-                            <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${i}">
+                            // Map bundle data from order.items.bundles if it exists
+                            let bundleInventory = null;
+                            let bundleId = "";
+                            let bundleAmount = 0;
+                            let bundleChecked = 0;
 
-                            </td>
-                        </tr>`;
+                            if (orderItem.bundle_items && Array.isArray(orderItem.bundle_items)) {
 
-                        element.insertAdjacentHTML('afterend', row);
+                                const matchingBundle = orderItem.bundle_items.find(b =>
+                                    b.inventory._id === bundleItem.bundle_id
+                                );
+
+                                if (matchingBundle) {
+                                    bundleId = matchingBundle.inventory._id
+                                    bundleInventory = matchingBundle.inventory || bundleItem.inventory;
+                                    bundleAmount = matchingBundle.inventory?.amount || bundleItem.inventory?.amount || 0;
+                                    bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
+                                }
+                            }
+
+                            let row = ` 
+                                <tr class="">
+                                    <td class="d-none py-0"></td>
+                                    <td class="py-0">
+
+                                    </td>
+                                    <td class="py-0" >
+                                        <div class="product-name">
+                                            <small class="text-muted me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
+                                            <small class="text-muted me-2">${bundleItem?.coating}</small>
+                                            <small class="text-muted me-2">${bundleItem?.color}</small>
+                                        </div>
+                                    </td>
+                                    <td class="py-0"><small class="text-muted">${bundleItem?.unit || "gab"}</small></td>
+                                    <td class="py-0">
+                                        <small class="text-muted">${bundleItem?.qty || 1} x ${element.dataset.qty}</small>
+                                    </td>
+                                    <td class="py-0">
+                                        <div class="d-flex align-items-center action-ns">
+                                            <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * element.dataset.qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
+                                        </div>
+                                    </td>
+                                    <td class="py-0">
+                                        <small class="text-muted">
+                                            <div class="stock-${bundleItem.coating}-${bundleItem.color}-${bundleId}"><span></span></div>
+                                        </small>
+                                    </td>
+                                    <td class="py-0">
+                                        <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" value="${bundleAmount}" style="width: 80px;">
+                                    </td>
+                                    <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
+                                    </td> 
+                                </tr>`;
+
+                            element.insertAdjacentHTML('afterend', row);
+                            bundleItemIndex++;
+                        });
                     });
                 });
             }
+
+            this.refreshButtons(order._id);
         });
     }
 
-    addBundle(_id, title, color, coating, orderId) {
+    addBundle(event, _id, title, color, coating, orderId) {
+
+        event.preventDefault();
 
         const orders = this.orders;
         const self = this;
@@ -556,13 +609,27 @@ class Manufacturing {
 
         order.items.forEach((item, i) => {
 
-            // todo: add bundled products
+            // Add bundled products to the list
             products.push({
                 _id: item._id,
                 hash: item.coating + item.color + item._id,
                 coating: item.coating || '',
                 color: item.color || ''
             });
+
+            // Bundled products
+            if (item.bundle_items && Array.isArray(item.bundle_items)) {
+                item.bundle_items.forEach(bundleItem => {
+                    if (bundleItem.inventory) {
+                        products.push({
+                            _id: bundleItem.inventory._id,
+                            hash: (bundleItem.inventory.coating || '') + (bundleItem.inventory.color || '') + bundleItem.inventory._id,
+                            coating: bundleItem.inventory.coating || '',
+                            color: bundleItem.inventory.color || ''
+                        });
+                    }
+                });
+            }
         });
 
         getProductStock(products, (response) => {
@@ -571,16 +638,70 @@ class Manufacturing {
 
             if (response.success && response.products && response.products.length > 0) {
 
-                response.products.forEach((item, i) => {
+                response.products.forEach((product, i) => {
 
-                    let sel = `.stock-${item.coating}-${item.color}-${item._id}`;
+                    if (!product.stock) return;
 
-                    if (document.querySelector(sel)) document.querySelector(sel).innerHTML = `
-                        <span class="text-muted">${item.stock || 0}</span>
-                    `;
+                    let sel = `.stock-${product.coating}-${product.color}-${product._id}`;
+
+                    // console.log('Updating stock for', sel, product.stock);
+
+                    document.querySelectorAll(sel).forEach(element => {
+                        element.innerHTML = `<span class="text-muted">${product.stock || 0}</span>`;
+                    });
                 });
             }
         });
+    }
+
+    filterByGroup(orderId, groupId) {
+
+        // console.log('Filtering by group', groupId, orderId);
+
+        const rows = document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"]`);
+        rows.forEach(row => {
+            const itemGroup = row.dataset.group;
+
+            if (groupId === '' || itemGroup === groupId) {
+
+                // Show the row
+                row.classList.remove("d-none");
+
+                // Also show any bundle rows that follow this item
+                let nextSibling = row.nextElementSibling;
+                while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
+                    // nextSibling.style.display = '';
+                    nextSibling.classList.remove("d-none");
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+            } else {
+
+                // Hide the row
+                row.classList.add("d-none");
+
+                // Also hide any bundle rows that follow this item
+                let nextSibling = row.nextElementSibling;
+                while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
+                    // nextSibling.style.display = 'none';
+                    nextSibling.classList.add("d-none");
+                    nextSibling = nextSibling.nextElementSibling;
+                }
+            }
+        });
+
+        // Check if any rows are visible
+        const anyVisible = Array.from(rows).some(row => !row.classList.contains("d-none"));
+        const emptyRow = document.querySelector(`.order-item-row-empty`);
+
+        console.log('Any visible rows:', anyVisible, emptyRow);
+
+        if (emptyRow) {
+            if (anyVisible) {
+                emptyRow.classList.add('d-none');
+            } else {
+                emptyRow.classList.remove('d-none');
+            }
+        }
     }
 
     refreshButtons(order_id) {
@@ -642,9 +763,9 @@ class Manufacturing {
 
         // checkboxes enable/disable
         order.items.forEach((item, i) => {
-            let checkboxW = document.querySelector(`.action-ns input[data-type="w"][data-i="${i}"]`);
-            let checkboxM = document.querySelector(`.action-ns input[data-type="m"][data-i="${i}"]`);
-            let writeoffAmount = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
+            let checkboxW = document.querySelector(`.action-ns input[data-source="item"][data-type="w"][data-i="${i}"]`);
+            let checkboxM = document.querySelector(`.action-ns input[data-source="item"][data-type="m"][data-i="${i}"]`);
+            let writeoffAmount = document.querySelector(`.writeoff-amount[data-source="item"][data-order-id="${order._id}"][data-i="${i}"]`);
 
             if (!checkboxW || !checkboxM) return;
 
@@ -660,24 +781,39 @@ class Manufacturing {
             } else {
                 writeoffAmount.classList.remove('d-none'); // Enable input if warehouse is checked
             }
+
+            // Handle bundle items writeoff-amount visibility
+            if (item.bundle_items && Array.isArray(item.bundle_items)) {
+                item.bundle_items.forEach((bundleItem, bundleIndex) => {
+                    let bundleCheckboxW = document.querySelector(`.action-ns input[data-source="bundle"][data-type="w"][data-i="${bundleIndex}"]`);
+                    let bundleWriteoffAmount = document.querySelector(`.writeoff-amount[data-source="bundle"][data-order-id="${order._id}"][data-i="${bundleIndex}"]`);
+
+                    if (!bundleCheckboxW || !bundleWriteoffAmount) return;
+
+                    if (!bundleCheckboxW.checked) {
+                        bundleWriteoffAmount.classList.add('d-none'); // Hide input if bundle checkbox is not checked
+                    } else {
+                        bundleWriteoffAmount.classList.remove('d-none'); // Show input if bundle checkbox is checked
+                    }
+                });
+            }
         });
 
         // inventory amount
-        order.items.forEach((item, i) => {
+        document.querySelectorAll(`.writeoff-amount`).forEach(input => {
 
-            let input = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
-            if (input) {
+            // Only add the event listener if it hasn't been attached yet
+            if (!input.dataset.listenerAttached) {
+                input.addEventListener('change', (e) => {
 
-                input.value = 0;
-                if (item?.inventory?.origin == 'w' && item?.inventory?.amount) input.value = item?.inventory?.amount || 0;
+                    this.Inventory.syncInventoryState(e, order, (order) => {
 
-                // Only add the event listener if it hasn't been attached yet
-                if (!input.dataset.listenerAttached) {
-                    input.addEventListener('change', (e) => {
-                        this.execOrderItemAction(e, order._id);
+                        // Refresh UI
+                        this.refreshButtons(order._id);
+                        this.getStock(order._id);
                     });
-                    input.dataset.listenerAttached = "true";
-                }
+                });
+                input.dataset.listenerAttached = "true";
             }
         });
     }
@@ -686,8 +822,6 @@ class Manufacturing {
 
         const item = this.orders.find(order => order._id === order_id)?.items[index];
         if (!item) return '';
-
-        // console.log('getActionItemsButton inventory', item?.inventory);
 
         return `
         ${item?.inventory?.mnf_date ?
@@ -699,85 +833,13 @@ class Manufacturing {
         `;
     }
 
-    // w: product item taken from warehouse
-    // m: product item manufactured
-    // c: product item action canceled
-    execOrderItemAction(e, _id) {
+    syncCheckboxStates(e, order_id) {
 
-        if (this.inQuery) return;
+        const order = this.orders.find(o => o._id === order_id);
+        if (!order) return;
 
-        this.inQuery = true;
-
-        const order = this.orders.find(o => o._id === _id);
-
-        // const checkbox = e.target;
-        // const i = checkbox.dataset.i;
-        const i = e.target.dataset.i;
-
-        let input = document.querySelector(`.writeoff-amount[data-order-id="${order._id}"][data-i="${i}"]`);
-        let amount = parseInt(input.value) || 0;
-
-        // If checkbox is unchecked, set input value to 0
-        let checkbox_m = document.querySelector(`.action-ns input[data-type="m"][data-i="${i}"]`);
-        let checkbox_w = document.querySelector(`.action-ns input[data-type="w"][data-i="${i}"]`);
-
-        if (!checkbox_m || !input || !checkbox_w) return;
-
-        if (checkbox_w.checked && amount == 0) input.value = order.items[i].qty || 0;
-
-        if (!checkbox_w.checked && amount > 0) input.value = 0;
-
-        this.inQuery = false;
-
-        // console.log('write off amount ', input.value);
-
-        // if (checkbox.checked && input && checkbox.dataset.type === 'w')
-        //     if (input.value == 0 || input.value == '')
-        //         input.value = order.items[i].qty || 0;
-
-        let actions = {
-            inventory:
-            {
-                order_id: order._id,
-                // origin: checkbox_w.checked : 'c' + checkbox.dataset.type, // 'w' or 'm' or 'cw' or 'cm'
-                index: i,
-                item_id: order.items[i]._id,
-                amount: input.value,
-                mnf_date: checkbox_w.checked || checkbox_m.checked ? new Date().toISOString() : null,
-                color: order.items[i].color || '',
-                coating: order.items[i].coating || ''
-            }
-        };
-
-        if (checkbox_w.checked) actions.inventory.origin = 'w';
-        if (checkbox_m.checked) actions.inventory.origin = 'm';
-        if (!checkbox_w.checked && !checkbox_m.checked) actions.inventory.origin = 'c';
-
-        console.log('execOrderItemAction actions', actions);
-
-        execOrderItemAction(actions, (response) => {
-
-            this.inQuery = false;
-
-            if (!response.success) {
-                toast(__html('Error updating item status'));
-                return;
-            }
-
-            if (!order.items[i].inventory) order.items[i].inventory = {};
-
-            order.items[i].inventory.amount = actions.inventory.amount;
-            order.items[i].inventory.mnf_date = actions.inventory.mnf_date;
-            order.items[i].inventory.origin = actions.inventory.origin;
-
-            // order.items[i].inventory = actions.inventory;
-
-            this.refreshButtons(order._id);
-
-            // Update stock for the item
-            this.getStock(order._id);
-
-        });
+        // console.log(this.Inventory);
+        this.Inventory.syncCheckboxState(e, order);
     }
 
     async issueOrder(orderId, isIssue) {
@@ -887,9 +949,37 @@ class Manufacturing {
         }
 
         if (name) {
-            filtered = filtered.filter(order =>
-                order.name.toLowerCase().includes(name.toLowerCase())
-            );
+            filtered = filtered.filter(order => {
+                const normalizedOrderName = order.name.toLowerCase()
+                    .replace(/[āàáâãäå]/g, 'a')
+                    .replace(/[ēèéêë]/g, 'e')
+                    .replace(/[īìíîï]/g, 'i')
+                    .replace(/[ōòóôõö]/g, 'o')
+                    .replace(/[ūùúûü]/g, 'u')
+                    .replace(/[ķ]/g, 'k')
+                    .replace(/[ļ]/g, 'l')
+                    .replace(/[ņ]/g, 'n')
+                    .replace(/[ģ]/g, 'g')
+                    .replace(/[š]/g, 's')
+                    .replace(/[ž]/g, 'z')
+                    .replace(/[č]/g, 'c');
+
+                const normalizedSearchName = name.toLowerCase()
+                    .replace(/[āàáâãäå]/g, 'a')
+                    .replace(/[ēèéêë]/g, 'e')
+                    .replace(/[īìíîï]/g, 'i')
+                    .replace(/[ōòóôõö]/g, 'o')
+                    .replace(/[ūùúûü]/g, 'u')
+                    .replace(/[ķ]/g, 'k')
+                    .replace(/[ļ]/g, 'l')
+                    .replace(/[ņ]/g, 'n')
+                    .replace(/[ģ]/g, 'g')
+                    .replace(/[š]/g, 's')
+                    .replace(/[ž]/g, 'z')
+                    .replace(/[č]/g, 'c');
+
+                return normalizedOrderName.includes(normalizedSearchName);
+            });
         }
 
         this.renderFilteredOrders(filtered);
@@ -905,6 +995,9 @@ class Manufacturing {
 
             this.refreshButtons(order._id);
         });
+
+        // Scroll to top after rendering filtered orders
+        window.scrollTo({ top: 0, behavior: 'instant' });
     }
 
     refreshOrders() {
@@ -925,7 +1018,7 @@ class Manufacturing {
             const now = Date.now() / 1000;
 
             // Only update if user hasn't been active for 30 seconds
-            if ((now - this.mouseTime) > 30) {
+            if ((now - this.mouseTime) > 60) {
                 await this.loadOrders();
             } else {
                 // Show update indicator
@@ -1017,83 +1110,6 @@ class Manufacturing {
             } catch (error) {
                 toast('Kļūda atcelšanas procesā');
             }
-        }
-    }
-
-    // Autocomplete functionality
-    setupAutocomplete(inputElement, dataSource) {
-        let suggestions = [];
-
-        inputElement.addEventListener('input', async (e) => {
-            const value = e.target.value;
-            if (value.length < 2) {
-                this.hideAutocomplete();
-                return;
-            }
-
-            try {
-                // Simulate API call for suggestions
-                suggestions = await this.getSuggestions(dataSource, value);
-                this.showAutocomplete(inputElement, suggestions);
-            } catch (error) {
-                console.error('Error getting suggestions:', error);
-            }
-        });
-
-        inputElement.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.hideAutocomplete();
-            }
-        });
-    }
-
-    async getSuggestions(dataSource, query) {
-        // Mock suggestion data
-        const mockSuggestions = {
-            colors: ['Balts', 'Melns', 'Sarkans', 'Zils', 'Zaļš', 'Dzeltens'],
-            materials: ['Metāls', 'Plastmasa', 'Koks', 'Stikls', 'Betona'],
-            companies: ['VILARDS SIA', 'AVLAND SIA', 'AVR Baltija SIA', 'BOGUS SIA']
-        };
-
-        await this.delay(200);
-
-        const data = mockSuggestions[dataSource] || [];
-        return data.filter(item =>
-            item.toLowerCase().includes(query.toLowerCase())
-        );
-    }
-
-    showAutocomplete(inputElement, suggestions) {
-        this.hideAutocomplete();
-
-        if (suggestions.length === 0) return;
-
-        const container = document.createElement('div');
-        container.className = 'autocomplete-suggestions';
-        container.style.top = `${inputElement.offsetTop + inputElement.offsetHeight} px`;
-        container.style.left = `${inputElement.offsetLeft} px`;
-        container.style.width = `${inputElement.offsetWidth} px`;
-
-        suggestions.forEach(suggestion => {
-            const div = document.createElement('div');
-            div.className = 'autocomplete-suggestion';
-            div.textContent = suggestion;
-            div.addEventListener('click', () => {
-                inputElement.value = suggestion;
-                this.hideAutocomplete();
-                inputElement.dispatchEvent(new Event('input'));
-            });
-            container.appendChild(div);
-        });
-
-        inputElement.parentNode.style.position = 'relative';
-        inputElement.parentNode.appendChild(container);
-    }
-
-    hideAutocomplete() {
-        const existing = document.querySelector('.autocomplete-suggestions');
-        if (existing) {
-            existing.remove();
         }
     }
 

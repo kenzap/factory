@@ -1,6 +1,7 @@
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
-import { __html, formatDate, getDimUnit, hideLoader } from "../_/helpers/global.js";
+import { __html, formatDate, getDimUnit, hideLoader, onClick } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
+import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
@@ -118,13 +119,13 @@ class CuttingList {
             <div class="main-container">
                 <div class="stock-panel">
                     <div class="stock-header d-none">
-                    <span>📦</span>
-                    <span>Available Stock</span>
+                        <span>📦</span>
+                        <span>Available Stock</span>
                     </div>
                     <div class="stock-list bg-light pt-0" id="stockList">
 
                     ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
-                        <div class="stock-item" data-coil="${coil.id}">
+                        <div class="stock-item" data-coil="${coil._id}">
                             <div class="vertical-text">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
                             <div class="coil-info">
                                 <div class="coil-dimensions fs-5">${coil.width} × ${coil.length} ${getDimUnit(this.settings)}</div>
@@ -149,8 +150,8 @@ class CuttingList {
                             <div class="order-items">
                                 ${order.items ? order.items.map(item => `
                                 <div class="order-item">
-                                    <input type="checkbox" class="checkbox" data-item="${order.id}-${item.id}">
-                                    <span class="item-id">${item.id || order.id}</span>
+                                    <input type="checkbox" class="checkbox" data-item="${order.id}-${item._id}">
+                                    <span class="item-id">${order.id}</span>
                                     <span class="item-description">${item.title || 'N/A'}</span>
                                     <span class="item-dimensions">${item.formula_width_calc || 0} × ${item.formula_length_calc || 0} ${getDimUnit(this.settings)}</span>
                                     <span class="item-quantity">${item.qty || 1}</span>
@@ -205,7 +206,48 @@ class CuttingList {
             });
         });
 
+        onClick('.stock-item', e => {
 
+            e.preventDefault();
+
+            const coilId = e.currentTarget.dataset.coil;
+
+            let coil = this.stock.find(c => c._id === coilId);
+
+            let items = [];
+
+            // get selected items
+            document.querySelectorAll('.order-item input[type="checkbox"]:checked').forEach(checkbox => {
+                const itemId = checkbox.dataset.item;
+                const [orderId, itmId] = itemId.split('-');
+                const order = this.orders.find(o => o.id === orderId);
+
+                console.log('Selected item:', itemId, orderId, itmId, order);
+                if (order) {
+                    const item = order.items.find(i => i._id === itmId);
+                    if (item) {
+                        items.push({
+                            order_id: order.id,
+                            item_id: item._id,
+                            title: item.title,
+                            formula_width_calc: item.formula_width_calc,
+                            formula_length_calc: item.formula_length_calc,
+                            qty: item.qty
+                        });
+                    }
+                }
+            });
+
+            console.log('Write off material from coil:', coil);
+            console.log('Selected items:', items);
+
+            new WriteoffMetal(coil, items, this.settings, (updated) => {
+
+                if (updated) {
+                    this.init();
+                }
+            });
+        });
     }
 }
 

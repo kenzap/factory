@@ -95,11 +95,16 @@ export const updateProductStock = async (client, inventory, user_id) => {
     var_price.forEach(v => {
 
         if ((v.parent === inventory.coating || (v.parent == '-' && inventory.coating == '-')) && v.title === inventory.color) {
+
+            // console.log('Updated var_price:', v);
+
             v.stock = (v.stock || 0) - inventory.amount;
+
+            // console.log('Updated var_price:', v);
         }
     });
 
-    console.log('Updated var_price:', var_price);
+    // console.log('Updated var_price:', var_price);
 
     // update product stock
     const updateQuery = `

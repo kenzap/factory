@@ -20,7 +20,7 @@ export class AddStockSupply {
         this.modal_cont = new bootstrap.Modal(this.modal);
 
         // render modal
-        this.modal.querySelector(".modal-dialog").classList.add('modal-xl');
+        this.modal.querySelector(".modal-dialog").classList.add('modal-fullscreen');
         this.modal.querySelector(".modal-title").innerHTML = ""; //__html('Add New User');
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-dark btn-close-modal btn-modal" data-bs-dismiss="modal">
@@ -39,4 +39,4 @@ export class AddStockSupply {
 
         this.modal_cont.show();
     }
-}
+} 

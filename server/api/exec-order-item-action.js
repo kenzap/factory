@@ -23,107 +23,72 @@ async function execOrderItemAction(actions) {
 
         if (!actions) return { success: false, error: 'no data provided' };
 
-        if (actions.inventory) {
+        if (actions.update_item) {
 
-            // validate inventory data
-            if (actions.inventory.origin === undefined || actions.inventory.amount === undefined || actions.inventory.index === undefined || actions.inventory.order_id === undefined || actions.inventory.item_id === undefined) {
-                return { success: false, error: 'no inventory data provided' };
+            // validate update item data
+            if (actions.update_item.order_id === undefined || actions.update_item.index === undefined || actions.update_item.item === undefined) {
+                return { success: false, error: 'no update item data provided' };
             }
 
             // validate index
-            actions.inventory.index = parseInt(actions.inventory.index);
-            if (isNaN(actions.inventory.index) || actions.inventory.index < 0 || actions.inventory.index > 1000) {
-                return { success: false, error: 'invalid inventory index' };
+            actions.update_item.index = parseInt(actions.update_item.index);
+            if (isNaN(actions.update_item.index) || actions.update_item.index < 0 || actions.update_item.index > 1000) {
+                return { success: false, error: 'invalid update item index' };
             }
 
-            // validate amount
-            actions.inventory.amount = parseInt(actions.inventory.amount);
-            if (isNaN(actions.inventory.amount) || actions.inventory.amount < 0 || actions.inventory.index > 1000000) {
-                return { success: false, error: 'invalid inventory amount' };
-            }
-
-            // validate origin, m: manufacturing, w: warehouse, c: canceled
-            if (!['m', 'w', 'c', 'cm', 'cw'].includes(actions.inventory.origin)) {
-                return { success: false, error: 'invalid inventory origin' };
-            }
-
-            // validate id
-            if (typeof actions.inventory.order_id !== 'string' || !/^[a-zA-Z0-9]{40}$/.test(actions.inventory.order_id)) {
+            // validate order_id
+            if (typeof actions.update_item.order_id !== 'string' || !/^[a-zA-Z0-9]{40}$/.test(actions.update_item.order_id)) {
                 return { success: false, error: 'invalid order_id' };
             }
 
-            // validate item_id
-            if (typeof actions.inventory.item_id !== 'string' || !/^[a-zA-Z0-9]{40}$/.test(actions.inventory.item_id)) {
-                return { success: false, error: 'invalid item_id' };
-            }
-
-            const inventory = {
-                origin: actions.inventory.mnf_date ? actions.inventory.origin : 'c',
-                amount: actions.inventory.amount ? actions.inventory.amount : 0,
-                mnf_date: actions.inventory.mnf_date ? new Date().toISOString() : null,
-                mnf_user: actions.user_id || null
-            }
+            const item = actions.update_item.item;
+            const index = actions.update_item.index;
 
             // find the order item by id
             const itemQuery = `
-                SELECT js->'data'->'items' as items
-                FROM data 
-                WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
+            SELECT js->'data'->'items' as items
+            FROM data 
+            WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
             `;
 
-            const itemResult = await client.query(itemQuery, [actions.inventory.order_id, 'ecommerce-order', sid]);
+            const itemResult = await client.query(itemQuery, [actions.update_item.order_id, 'ecommerce-order', sid]);
 
-            // console.log('execOrderItemAction itemResult', itemResult.rows[0]);
-
-            let i = actions.inventory.index;
             let items = itemResult.rows[0]?.items || [];
+            let targetItem = items[index];
 
-            // check if item exists
-            if (items.length === 0 || !items[i]) {
+            // check if main item exists
+            if (!targetItem) {
                 return { success: false, error: 'item not found' };
             }
 
-            if (!items[i].inventory) {
-                items[i].inventory = {};
+            // update only inventory and bundle_items keys
+            if (item.inventory) {
+                items[index].inventory = {
+                    ...targetItem.inventory,
+                    ...item.inventory
+                };
             }
 
-            // get previous inventory data
-            if (items[i].inventory.amount > 0) {
-
-                // revert stock amount
-                await updateProductStock(client, { _id: actions.inventory.item_id, amount: -1 * items[i].inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
-
-                console.log('Previous inventory data:', items[i].inventory.amount);
+            if (item.bundle_items) {
+                items[index].bundle_items = item.bundle_items;
             }
 
-            if (inventory.amount > 0) {
-
-                // write off stock
-                await updateProductStock(client, { _id: actions.inventory.item_id, amount: inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
-
-                console.log('Current inventory data:', inventory.amount);
-            }
-
-            // let origin_prev = items[i].inventory.origin;
-            items[i].inventory.origin = inventory.origin;
-            items[i].inventory.amount = inventory.amount;
-            items[i].inventory.mnf_date = inventory.mnf_date;
-            items[i].inventory.mnf_user = inventory.mnf_user;
+            // console.log('Updated main item:', items[index]);
 
             const updateQuery = `
-                UPDATE data
-                SET js = jsonb_set(
-                    js,
-                    '{data,items}',
-                    $4::jsonb,
-                    true
-                )
-                WHERE _id = $1 AND ref = $2 AND sid = $3
-                RETURNING _id
+            UPDATE data
+            SET js = jsonb_set(
+                js,
+                '{data,items}',
+                $4::jsonb,
+                true
+            )
+            WHERE _id = $1 AND ref = $2 AND sid = $3
+            RETURNING _id
             `;
 
             const updateParams = [
-                actions.inventory.order_id,
+                actions.update_item.order_id,
                 'ecommerce-order',
                 sid,
                 JSON.stringify(items)
@@ -132,11 +97,118 @@ async function execOrderItemAction(actions) {
             const updateResult = await client.query(updateQuery, updateParams);
             response = updateResult.rows[0] || {};
 
-            // write off stock
-            // if (actions.inventory.origin === 'w') await updateProductStock(client, { _id: actions.inventory.item_id, amount: actions.inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
+            // console.log('Updated order item in DB:', response);
+        }
 
-            // cancel write off stock
-            // if (actions.inventory.origin === 'cw') await updateProductStock(client, { _id: actions.inventory.item_id, amount: -1 * actions.inventory.amount, coating: actions.inventory.coating, color: actions.inventory.color }, actions.user_id);
+        if (actions.update_stock) {
+
+            // validate stock update data
+            if (!actions.update_stock.order_id || !actions.update_stock.item_id ||
+                actions.update_stock.index === undefined || actions.update_stock.amount === undefined) {
+                return { success: false, error: 'missing stock update data' };
+            }
+
+            // validate index
+            actions.update_stock.index = parseInt(actions.update_stock.index);
+            if (isNaN(actions.update_stock.index) || actions.update_stock.index < 0 || actions.update_stock.index > 1000) {
+                return { success: false, error: 'invalid stock update index' };
+            }
+
+            // validate amount
+            actions.update_stock.amount = parseInt(actions.update_stock.amount);
+            if (isNaN(actions.update_stock.amount) || actions.update_stock.amount < 0) {
+                return { success: false, error: 'invalid amount, must be non-negative number' };
+            }
+
+            // Start transaction for atomic stock update
+            await client.query('BEGIN');
+
+            try {
+                // find the order item by id
+                const itemQuery = `
+                SELECT js->'data'->'items' as items
+                FROM data 
+                WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
+                `;
+
+                const itemResult = await client.query(itemQuery, [actions.update_stock.order_id, 'ecommerce-order', sid]);
+
+                let items = itemResult.rows[0]?.items || [];
+                let targetItem = items[actions.update_stock.index];
+
+                if (!targetItem) {
+                    await client.query('ROLLBACK');
+                    return { success: false, error: 'item not found' };
+                }
+
+                // get current stock amount from product inventory with row lock to prevent race conditions
+                const productQuery = `
+                SELECT js->'data'->>'last_stock_writeoff' as last_stock_writeoff
+                FROM data 
+                WHERE _id = $1 AND ref = $2 AND sid = $3 
+                FOR UPDATE
+                LIMIT 1
+                `;
+
+                const productResult = await client.query(productQuery, [actions.update_stock.item_id, 'ecommerce-product', sid]);
+                const last_stock_writeoff = productResult.rows[0]?.last_stock_writeoff || 0;
+                let update_last_stock_writeoff = false;
+
+                // revert last stock writeoff if exists
+                if (last_stock_writeoff) {
+
+                    console.log('Reverting last stock writeoff:', last_stock_writeoff);
+
+                    await updateProductStock(client, {
+                        _id: actions.update_stock.item_id,
+                        amount: -1 * parseFloat(last_stock_writeoff),
+                        coating: actions.update_stock.coating,
+                        color: actions.update_stock.color
+                    }, actions.user_id);
+
+                    update_last_stock_writeoff = true;
+                }
+
+                // only proceed if there's an actual change
+                if (actions.update_stock.amount !== 0) {
+
+                    // apply stock change
+                    await updateProductStock(client, {
+                        _id: actions.update_stock.item_id,
+                        amount: actions.update_stock.amount,
+                        coating: actions.update_stock.coating,
+                        color: actions.update_stock.color
+                    }, actions.user_id);
+
+                    update_last_stock_writeoff = true;
+                }
+
+                if (update_last_stock_writeoff) {
+
+                    // update last_stock_writeoff in product
+                    const updateProductQuery = `
+                    UPDATE data 
+                    SET js = jsonb_set(js, '{data,last_stock_writeoff}', $1)
+                    WHERE _id = $2 AND ref = $3 AND sid = $4
+                    RETURNING _id
+                    `;
+
+                    const updateProductParams = [JSON.stringify(actions.update_stock.amount), actions.update_stock.item_id, 'ecommerce-product', sid];
+                    const updateProductResult = await client.query(updateProductQuery, updateProductParams);
+
+                    if (updateProductResult.rows.length === 0) {
+                        await client.query('ROLLBACK');
+                        return { success: false, error: 'Product not found or update failed' };
+                    }
+                }
+
+                // Commit transaction
+                await client.query('COMMIT');
+
+            } catch (error) {
+                await client.query('ROLLBACK');
+                throw error;
+            }
         }
 
         if (Array.isArray(actions.issue)) {

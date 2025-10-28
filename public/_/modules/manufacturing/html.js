@@ -1,4 +1,4 @@
-import { __html } from "../helpers/global.js";
+import { __html } from "../../helpers/global.js";
 
 export const getHtml = (response) => {
 

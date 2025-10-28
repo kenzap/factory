@@ -42,6 +42,7 @@ export class AddBundle {
         this.modal_cont = new bootstrap.Modal(this.modal);
 
         // render modal
+        this.modal.querySelector(".modal-dialog").classList.remove('modal-fullscreen');
         this.modal.querySelector(".modal-dialog").classList.add('modal-xl');
         this.modal.querySelector(".modal-title").innerHTML = `
             ${__html('Product bundles - %1$', this.title)}
@@ -69,12 +70,12 @@ export class AddBundle {
                                         </div>
                                     </div>
                                     <div class="col-md-2 form-cont d-none-" data-type="general">
-                                        <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                                        <input type="text" class="form-control border-0" id="productColor" autocomplete="off" placeholder="${__html('Color')}" value="${this.color}" required>
-                                    </div>
-                                    <div class="col-md-2 form-cont d-none-" data-type="general">
                                         <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
                                         <input type="text" class="form-control border-0" id="productCoating" autocomplete="off" placeholder="${__html('Coating')}" value="${this.coating}" required>
+                                    </div>
+                                    <div class="col-md-2 form-cont d-none-" data-type="general">
+                                        <label for="productColor" class="form-label d-none">${__html('Color')}</label>
+                                        <input type="text" class="form-control border-0" id="productColor" autocomplete="off" placeholder="${__html('Color')}" value="${this.color}" required>
                                     </div>
                                     <div class="col-md-2 form-cont d-none-" data-type="general">
                                         <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
@@ -185,8 +186,8 @@ export class AddBundle {
         if (this.firstLoad) theader.innerHTML = `
                 <tr>
                     <th>${__html('Title')}</th>
-                    <th>${__html('Color')}</th>
                     <th>${__html('Coating')}</th>
+                    <th>${__html('Color')}</th>
                     <th>${__html('Status')}</th>
                     <th>${__html('Qty')}</th>
                     <th></th>
@@ -200,11 +201,11 @@ export class AddBundle {
                 <td style="width:320px;" class="align-middle">
                     ${entry.title}
                 </td>
-                <td style="width:80px;" class="align-middle">
-                    ${entry.color || '-'}
-                </td>
                 <td style="width:120px;" class="align-middle">
                     ${entry.coating || '-'}
+                </td>
+                <td style="width:80px;" class="align-middle">
+                    ${entry.color || '-'}
                 </td>
                 <td class="align-middle">
                     <strong>${entry.qty}</strong>

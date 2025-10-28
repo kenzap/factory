@@ -50,7 +50,7 @@ export class OrderPane {
 
         // Initialize Tabulator
         this.table = new TabulatorFull("#order-table", {
-            height: "600px",
+            height: "auto",
             layout: "fitColumns",
             resizableColumns: true,
             movableColumns: true,

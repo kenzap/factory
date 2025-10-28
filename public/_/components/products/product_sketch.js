@@ -239,7 +239,7 @@ export class ProductSketch {
 
             let id = self.product.sketch.last.id;
 
-            this.product.product.input_fields = this.product.product.input_fields.filter(obj => obj.id != id);
+            self.product.input_fields = self.product.input_fields.filter(obj => obj.id != id);
 
             // log("annotation" + self.annotation);
         }

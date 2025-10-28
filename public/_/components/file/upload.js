@@ -54,9 +54,9 @@ export class FileUpload {
                             }
 
                             // file too big
-                            if (fl.files[0].size > 100000000) {
+                            if (fl.files[0].size > 200000000) {
 
-                                toast(__html(__("Please provide an image smaller than %1$ MB in size!", 10)));
+                                toast(__html(__("Please provide file smaller than %1$ MB in size!", 20)));
                                 return false;
                             }
 
@@ -89,9 +89,9 @@ export class FileUpload {
         }
 
         // Check file size (e.g., 10MB limit)
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        const maxSize = 20 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
-            toast(__html("File too large. Maximum size is 10MB"));
+            toast(__html("File too large. Maximum size is 20MB"));
             return;
         }
 

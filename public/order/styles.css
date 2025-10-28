@@ -173,6 +173,14 @@ body {
     font-size: 14px;
 }
 
+.tabulator .tabulator-tableholder{
+    overflow: visible!important;
+}
+
+.tabulator-table{
+    padding-bottom:300px!important;
+}
+
 .tabulator-col-title {
     font-weight: 600;
     text-align: left;

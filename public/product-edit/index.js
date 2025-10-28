@@ -18,7 +18,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
-/**
+/** 
  * Product editing page.
  * Allows user to change title, decription, status of the product.
  * Upload images and define price estimating formulas.
