@@ -919,13 +919,13 @@ class Manufacturing {
         }
     }
 
-    openWork(stage, order_id, product_id, product_name, color, coating, qty) {
+    openWork(type, order_id, product_id, product_name, color, coating, qty) {
 
         color = color || '';
         coating = coating || '';
         qty = qty || 0;
 
-        new PreviewWorkLog({ stage, order_id, product_id, product_name, color, coating, qty }, (response) => {
+        new PreviewWorkLog({ type, order_id, product_id, product_name, color, coating, qty }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;

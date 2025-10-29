@@ -16,17 +16,19 @@ async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dat
             js->'data'->'status' AS status,
             js->'data'->'product_id' AS product_id,
             js->'data'->'product_name' AS product_name,
+            js->'data'->'parent_coil_id' AS parent_coil_id,
             js->'data'->'color' AS color,
             js->'data'->'coating' AS coating,
             js->'data'->'width' AS width,
             js->'data'->'length' AS length,
             js->'data'->'thickness' AS thickness,
+            js->'data'->'parameters' AS parameters,
             js->'data'->'origin' AS origin,
             js->'data'->'date' AS date,
             js->'data'->'notes' AS notes,
             js->'data'->'price' AS price
         FROM data
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'type' = 'metal' AND js->'data'->>'status' = 'instock'
+        WHERE ref = $1 AND sid = $2 AND js->'data'->>'type' = 'metal' AND js->'data'->>'status' = 'instock' AND (js->'data'->>'length')::numeric > 0
     `;
 
     let params = ['supplylog', sid];
@@ -173,7 +175,7 @@ function getOrdersForCuttingApi(app) {
             const stock = await getMetalStock(filters);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units"]);
 
-            res.send({ success: true, settings, orders, stock, locale });
+            res.send({ success: true, settings, orders, stock, locale, user: req?.user });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

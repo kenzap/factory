@@ -58,7 +58,7 @@ async function getWorkLog(filters) {
             js->'data'->'coating' AS coating,
             js->'data'->'origin' AS origin,
             js->'data'->'user_id' AS user_id,
-            js->'data'->'stage' AS stage,
+            js->'data'->'type' AS type,
             js->'data'->'date' AS date,
             js->'data'->'time' AS time,
             js->'data'->'type' AS type
@@ -78,9 +78,9 @@ async function getWorkLog(filters) {
             query += ` AND js->'data'->>'user_id' = $${params.length + 1}`;
             params.push(filters.user_id);
         }
-        if (filters.stage) {
-            query += ` AND js->'data'->>'stage' = $${params.length + 1}`;
-            params.push(filters.stage);
+        if (filters.type) {
+            query += ` AND js->'data'->>'type' = $${params.length + 1}`;
+            params.push(filters.type);
         }
         if (filters.dateFrom) {
             query += ` AND js->'data'->>'date' >= $${params.length + 1}`;

@@ -33,7 +33,7 @@ async function getSupplyLog(filters) {
             js->'data'->'notes' AS notes,
             js->'data'->'price' AS price
         FROM data
-        WHERE ref = $1 AND sid = $2 
+        WHERE ref = $1 AND sid = $2 AND js->'data'->'document' IS NOT NULL
     `;
 
     let params = ['supplylog', sid];

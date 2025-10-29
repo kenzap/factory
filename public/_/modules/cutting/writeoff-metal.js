@@ -1,15 +1,18 @@
-import { createProductBundle } from "../../api/create_product_bundle.js";
-import { __html, getDimUnit, onClick, toast } from "../../helpers/global.js";
+import { execWriteoffAction } from "../../api/exec_writeoff_action.js";
+import { __html, getDimMUnit, getDimUnit, onClick, randomString, toast } from "../../helpers/global.js";
+import { Visualization } from "./cutting-visualization.js";
 
 export class WriteoffMetal {
 
-    constructor(coil, items, settings, cb) {
+    constructor(coil, items, settings, user, cb) {
 
         this.coil = coil;
 
         this.items = items || [];
 
         this.settings = settings || {};
+
+        this.user = user || {};
 
         this.sheets = [];
 
@@ -30,19 +33,14 @@ export class WriteoffMetal {
         this.modal.classList.add('writeoff');
         this.modal.querySelector(".modal-dialog").classList.remove('modal-fullscreen');
         this.modal.querySelector(".modal-dialog").classList.add('modal-xl');
-        this.modal.querySelector(".modal-title").innerHTML = `
-            ${this.coil.supplier} / ${this.coil.width} × ${this.coil.length} ${getDimUnit(this.settings)}
-        `;
-
-
         this.modal.querySelector(".modal-content").innerHTML = `
             <div class="vertical-text d-none">${this.coil.thickness ? this.coil.thickness + getDimUnit(this.settings) : ""}</div>
             <div class="modal-header bg-light border-0"> 
-            <h5 class="modal-title">
-                <i class="bi bi-scissors me-2"></i>
-                ${this.coil.supplier} / ${this.coil.width} × ${this.coil.length} ${getDimUnit(this.settings)}
-            </h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5 class="modal-title">
+                    <i class="bi bi-scissors me-2"></i>
+                    ${this.coil.supplier} / ${this.coil.width} × ${Number(this.coil.length).toLocaleString()} ${getDimUnit(this.settings)}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body bg-light p-1">
                 <div class="form-cont writeoff-cont container" style="min-height:300px;">
@@ -83,11 +81,11 @@ export class WriteoffMetal {
 
                             <div class="cutting-visualization bg-white- p-0 mt-0 rounded- border-0">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <div class="text-muted small">
-                                        Sheet: ${this.coil.width} × ${this.coil.length} ${getDimUnit(this.settings)}
+                                    <div class="text-muted small total-taken-length">
+                                       
                                     </div>
                                     <div class="text-muted small">
-                                        Scale: <span id="scaleDisplay">1:100</span>
+                                        ID: <span id="scaleDisplay-">${this.coil._id.substr(0, 3)}</span>
                                     </div>
                                 </div>
                                 
@@ -115,17 +113,17 @@ export class WriteoffMetal {
                                 <div class="mt-3">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <h6 class="small text-muted mb-2">${__html('Items to Cut')}</h6>
+                                            <h6 class="small text-muted mb-2">${__html('Items')}</h6>
                                             <div id="itemsList" class="small" style="max-height: 150px; overflow-y: auto;">
                                                 <!-- Items list will be populated here -->
                                             </div>
                                         </div>
                                         <div class="col-md-6">
-                                            <h6 class="small text-muted mb-2">${__html('Layout Statistics')}</h6>
+                                            <h6 class="small text-muted mb-2">${__html('Statistics')}</h6>
                                             <div id="layoutStats" class="small">
-                                                <div>Total items: <span id="totalItems">0</span></div>
-                                                <div>Material utilization: <span id="utilization">0%</span></div>
-                                                <div>Waste area: <span id="wasteArea">0</span> ${getDimUnit(this.settings)}²</div>
+                                                <div>${__html('Items')}: <span id="totalItems">0</span></div>
+                                                <div>${__html('Utilization')}: <span id="utilization">0%</span></div>
+                                                <div>${__html('Waste')}: <span id="wasteArea">0</span> ${getDimMUnit(this.settings)}²</div>
                                             </div>
                                         </div>
                                     </div>
@@ -165,250 +163,92 @@ export class WriteoffMetal {
         document.getElementById('resetLayout').addEventListener('click', this.renderLayout);
     }
 
-    initVisualization = () => {
-        const canvas = document.getElementById('cuttingCanvas');
-        const itemsGroup = document.getElementById('itemsGroup');
-        const labelsGroup = document.getElementById('labelsGroup');
-        const itemsList = document.getElementById('itemsList');
-        const layoutStats = document.getElementById('layoutStats');
-
-        this.CANVAS_HEIGHT = 400; // Reduced from 600 to 400
-        this.MARGIN = 0;
-        this.AVAILABLE_HEIGHT = this.CANVAS_HEIGHT - 2 * this.MARGIN; // 400px for sheet width
-
-        // Calculate scale based on sheet width fitting in available height
-        this.scale = this.AVAILABLE_HEIGHT / this.coil.width;
-
-        this.sheetWidth = this.coil.width * this.scale; // Will be ~400px
-        this.sheetHeight = this.coil.length * this.scale; // Can be very long
-        this.CANVAS_WIDTH = Math.max(600, this.sheetHeight + 2 * this.MARGIN); // Reduced from 800 to 600
-
-        // Update canvas dimensions
-        canvas.setAttribute('width', this.CANVAS_WIDTH);
-        canvas.setAttribute('height', this.CANVAS_HEIGHT);
-
-        // Update scale display
-        document.getElementById('scaleDisplay').textContent = `1:${Math.round(1 / this.scale)}`;
-
-        // Set sheet outline - rotated: width becomes height, length becomes width
-        const sheetOutline = document.getElementById('sheetOutline');
-        sheetOutline.setAttribute('width', this.sheetHeight); // length on X-axis
-        sheetOutline.setAttribute('height', this.sheetWidth); // width on Y-axis
-
-        // Update grid pattern to match new dimensions
-        const gridRect = canvas.querySelector('rect[fill="url(#grid)"]');
-        gridRect.setAttribute('width', this.sheetHeight);
-        gridRect.setAttribute('height', this.sheetWidth);
-
-        // Color palette for different items
-        this.colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
-
-        this.renderLayout();
-    }
-
-    packItems = (items) => {
-        const packed = [];
-        const sortedItems = [...items].sort((a, b) => (b.formula_width_calc * b.formula_length_calc) - (a.formula_width_calc * a.formula_length_calc));
-
-        // Track the maximum x position used to minimize length usage
-        let maxXUsed = 0;
-
-        sortedItems.forEach((item, index) => {
-            const width = parseFloat(item.formula_width_calc);
-            const length = parseFloat(item.formula_length_calc);
-            const qty = parseInt(item.qty);
-
-            for (let q = 0; q < qty; q++) {
-                let placed = false;
-                let bestX = 0, bestY = 0, bestRotated = false;
-                let minXExtent = this.coil.length; // Start with maximum possible length
-
-                // Try both normal and rotated orientations
-                const orientations = [
-                    { w: width, l: length, rotated: false },
-                    { w: length, l: width, rotated: true }
-                ];
-
-                for (const orientation of orientations) {
-                    // Check if the orientation fits within the coil dimensions
-                    if (orientation.w > this.coil.width || orientation.l > this.coil.length) continue;
-
-                    // Try to find the position that minimizes the extension of coil length usage
-                    for (let y = 0; y <= this.coil.width - orientation.w; y += 10) {
-                        for (let x = 0; x <= this.coil.length - orientation.l; x += 10) {
-                            const overlaps = packed.some(p =>
-                                x < p.x + p.length && x + orientation.l > p.x &&
-                                y < p.y + p.width && y + orientation.w > p.y
-                            );
-
-                            if (!overlaps) {
-                                const xExtent = x + orientation.l;
-                                // Prefer positions that don't extend the used length, or extend it minimally
-                                if (xExtent <= maxXUsed || xExtent < minXExtent) {
-                                    bestX = x;
-                                    bestY = y;
-                                    bestRotated = orientation.rotated;
-                                    minXExtent = xExtent;
-                                    placed = true;
-
-                                    // If we can fit within already used length, break immediately
-                                    if (xExtent <= maxXUsed) break;
-                                }
-                            }
-                        }
-                        // If we found a position within already used length, break
-                        if (placed && minXExtent <= maxXUsed) break;
-                    }
-                    // If we found a good position, break from orientation loop
-                    if (placed && minXExtent <= maxXUsed) break;
-                }
-
-                if (placed) {
-                    packed.push({
-                        ...item,
-                        x: bestX,
-                        y: bestY,
-                        width: bestRotated ? length : width,
-                        length: bestRotated ? width : length,
-                        rotated: bestRotated,
-                        color: this.colors[index % this.colors.length],
-                        instanceId: `${item.order_id}_${q}`
-                    });
-
-                    // Update the maximum x position used
-                    maxXUsed = Math.max(maxXUsed, bestX + (bestRotated ? width : length));
-                }
-            }
-        });
-
-        return packed;
-    }
-
-    renderLayout = () => {
-        const packedItems = this.packItems(this.items);
-        const itemsGroup = document.getElementById('itemsGroup');
-        const labelsGroup = document.getElementById('labelsGroup');
-        const itemsList = document.getElementById('itemsList');
-
-        // Clear previous render
-        itemsGroup.innerHTML = '';
-        labelsGroup.innerHTML = '';
-
-        // Render items
-        packedItems.forEach((item, index) => {
-            const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            rect.setAttribute('x', this.MARGIN + item.x * this.scale); // length position
-            rect.setAttribute('y', this.MARGIN + item.y * this.scale); // width position
-            rect.setAttribute('width', item.length * this.scale); // length as width
-            rect.setAttribute('height', item.width * this.scale); // width as height
-            rect.setAttribute('fill', item.color);
-            rect.setAttribute('stroke', '#333');
-            rect.setAttribute('stroke-width', '1');
-            rect.setAttribute('opacity', '0.7');
-            rect.setAttribute('title', `${item.title} (${item.width}×${item.length})${item.rotated ? ' - Rotated' : ''}`);
-
-            itemsGroup.appendChild(rect);
-
-            // Add text label if item is large enough
-            if (item.length * this.scale > 30 && item.width * this.scale > 20) {
-                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                text.setAttribute('x', this.MARGIN + item.x * this.scale + (item.length * this.scale) / 2);
-                text.setAttribute('y', this.MARGIN + item.y * this.scale + (item.width * this.scale) / 2);
-                text.setAttribute('text-anchor', 'middle');
-                text.setAttribute('dominant-baseline', 'middle');
-                text.setAttribute('font-size', '12');
-                text.setAttribute('fill', '#333');
-                text.textContent = item.width + '×' + item.length + (item.rotated ? ' ↻' : '');
-
-                labelsGroup.appendChild(text);
-            }
-        });
-
-        // Update items list
-        const itemCounts = {};
-        packedItems.forEach(item => {
-            const key = item.order_id;
-            itemCounts[key] = (itemCounts[key] || 0) + 1;
-        });
-
-        itemsList.innerHTML = Object.entries(itemCounts).map(([orderId, count]) => {
-            const item = this.items.find(i => i.order_id === orderId);
-            return `
-                    <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                        <span>${item.title}</span>
-                        <span class="text-muted">${count}×</span>
-                    </div>
-                `;
-        }).join('');
-
-        // Calculate statistics
-        const totalItemArea = packedItems.reduce((sum, item) => sum + (item.width * item.length), 0);
-        const sheetArea = this.coil.width * this.coil.length;
-        const utilization = ((totalItemArea / sheetArea) * 100).toFixed(1);
-        const wasteArea = (sheetArea - totalItemArea).toFixed(0);
-
-        document.getElementById('totalItems').textContent = packedItems.length;
-        document.getElementById('utilization').textContent = utilization + '%';
-        document.getElementById('wasteArea').textContent = wasteArea;
-    }
-
     init = () => {
 
-        this.initVisualization();
+        this.Visualization = new Visualization(this.coil, this.items, this.settings);
 
         this.listeners();
     }
 
-    statusBadge(entry) {
-
-        if (!entry.status) return `< span class= "item-status status-primary" > ${__html('Published')}</span > `;
-        if (entry.status == 'waiting') return `< span class= "item-status status-warning" > ${__html('Waiting')}</span > `;
-    }
-
     listeners = () => {
 
-        onClick('.btn-add-bundle-record', async (e) => {
+        onClick('.btn-confirm-writeoff', async (e) => {
+
             e.preventDefault();
 
-            const bundle_id = this.product_bundle?._id || this.product_bundle._id;
-            const color = document.querySelector('#productColor').value.trim();
-            const coating = document.querySelector('#productCoating').value.trim();
-            const qty = parseInt(document.querySelector('#qty').value.trim(), 10) || 1;
-            const orderId = this.orderId;
-
-            // console.log('Add bundle record:', { bundle_id, color, coating, qty, orderId });
-
-            if (!bundle_id) {
-                alert(__html('Please select a product'));
+            if (this.sheets.length === 0) {
+                alert(__html('No records added'));
                 return;
             }
 
+            // Check if any sheets don't have a type selected
+            const sheetsWithoutType = this.sheets.filter(sheet => !sheet.type);
+            if (sheetsWithoutType.length > 0) {
+                alert(__html('Please select a type (Order/Stock/Waste) for all sheets'));
+                return;
+            }
+
+            // Check if each group's total width matches coil width
+            const groups = [...new Set(this.sheets.map(sheet => sheet.group))];
+            for (const group of groups) {
+                const groupSheets = this.sheets.filter(sheet => sheet.group === group);
+                const groupTotalWidth = groupSheets.reduce((sum, sheet) => sum + sheet.width, 0);
+                if (groupTotalWidth !== this.coil.width) {
+                    alert(__html('Total sheet widths in group %1$ do not match coil width', group));
+                    return;
+                }
+            }
+
+            let total_length = this.getTotalWriteoffLength();
+
+            // console.log('Total length to write-off:', total_length); return;
+
+            const orderIds = [...new Set(this.items.map(item => item.order_id).filter(id => id))];
+
+            const record = {
+                title: this.coil.product_name,
+                qty: total_length,
+                product_id: this.coil.product_id,
+                product_name: this.coil.product_name,
+                color: this.coil.color,
+                coating: this.coil.coating,
+                supplier: this.coil.supplier,
+                thickness: this.coil.thickness,
+                parameters: this.coil.parameters,
+                coil_id: this.coil._id,
+                type: "metal",
+                origin: "c",
+                time: 0,
+                type: "cutting",
+                sheets: this.sheets,
+                user_id: this.user.id,
+                order_ids: orderIds,
+                items: this.items
+            }
+
+            console.log('Write-off record:', record);
+
+            // block ui button
+            e.currentTarget.disabled = true;
+            e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+
             // Create product bundle from the selected product
-            createProductBundle(
-                {
-                    product_id: this.product_id,
-                    product_color: this.color,
-                    product_coating: this.coating,
-                    bundle_id: bundle_id,
-                    bundle_color: color,
-                    bundle_coating: coating,
-                    bundle_qty: qty
-                }, (response) => {
+            execWriteoffAction(record, (response) => {
 
-                    if (!response.success) {
-                        alert(__html('Error: %1$', response.error));
-                        return;
-                    }
+                if (e.currentTarget) e.currentTarget.innerHTML = `<i class="bi bi-check-circle me-1"></i> ${__html('Confirm')}`;
 
-                    toast(__html('Changes applied'));
+                if (!response.success) {
+                    alert(__html('Error: %1$', response.error));
+                    return;
+                }
 
-                    // this.modal_cont.hide();
-                    this.data();
+                toast(__html('Changes applied'));
 
-                    response.orderId = this.orderId;
+                this.modal_cont.hide();
 
-                    this.cb(response);
-                });
+
+                this.cb(response);
+            });
         });
 
         onClick('.btn-add-sheet', (e) => {
@@ -419,9 +259,11 @@ export class WriteoffMetal {
             const length = document.getElementById('length').value;
             const qty = parseInt(document.getElementById('qty').value) || 1;
             const notes = document.getElementById('notes').value;
+            const group = randomString(6);
 
             // Add sheet multiple times based on qty
             for (let i = 0; i < qty; i++) {
+
                 // Calculate width per sheet, ensuring total matches coil.width
                 const widthPerSheet = Math.floor(this.coil.width / qty);
                 const remainder = this.coil.width % qty;
@@ -429,8 +271,9 @@ export class WriteoffMetal {
                 // Add sheets with calculated widths
                 const sheetWidth = i < remainder ? widthPerSheet + 1 : widthPerSheet;
                 this.sheets.push({
-                    width: sheetWidth,
-                    length: length,
+                    width: parseFloat(sheetWidth),
+                    length: parseFloat(length),
+                    group: group,
                     qty: 1, // Each individual sheet has qty of 1
                     notes: notes
                 });
@@ -440,6 +283,27 @@ export class WriteoffMetal {
 
             this.renderSheets();
         });
+
+        // Select all text in length input when focused
+        document.getElementById('length').addEventListener('focus', (e) => {
+            e.target.select();
+        });
+    }
+
+    getTotalWriteoffLength = () => {
+
+        // Calculate total length by taking one sheet from each group
+        const processedGroups = new Set();
+        let total_length = 0;
+
+        this.sheets.forEach(sheet => {
+            if (!processedGroups.has(sheet.group)) {
+                total_length += sheet.length;
+                processedGroups.add(sheet.group);
+            }
+        });
+
+        return total_length;
     }
 
     renderSheets = () => {
@@ -497,8 +361,13 @@ export class WriteoffMetal {
         // Add delete listeners
         onClick('.btn-delete-sheet', (e) => {
             const index = parseInt(e.currentTarget.getAttribute('data-index'), 10);
-            this.sheets.splice(index, 1);
+            const groupToRemove = this.sheets[index].group;
+            this.sheets = this.sheets.filter(sheet => sheet.group !== groupToRemove);
             this.renderSheets();
         });
+
+        // refresh total length display
+        let total_length = this.getTotalWriteoffLength();
+        document.querySelector('.total-taken-length').innerHTML = __html('Total: %1$ %2$', total_length.toLocaleString('en-US', { maximumFractionDigits: 0 }), getDimUnit(this.settings));
     }
 }

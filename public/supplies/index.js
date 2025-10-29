@@ -30,14 +30,14 @@ class Supplies {
             color: new URLSearchParams(window.location.search).get('color') || "",
             coating: new URLSearchParams(window.location.search).get('coating') || "",
             qty: new URLSearchParams(window.location.search).get('qty') || 0,
-            stage: new URLSearchParams(window.location.search).get('stage') || '',
+            type: new URLSearchParams(window.location.search).get('type') || '',
         }
 
         this.filters = {
             product: "",
             product_id: this.record.product_id || "",
             user_id: "",
-            stage: "",
+            type: "",
             dateFrom: "",
             dateTo: ""
         };
@@ -161,6 +161,8 @@ class Supplies {
                 coating: document.querySelector('#productCoating').value.trim(),
                 width: parseFloat(document.querySelector('#width').value.trim()),
                 length: parseFloat(document.querySelector('#length').value.trim()),
+                _width: parseFloat(document.querySelector('#width').value.trim()),
+                _length: parseFloat(document.querySelector('#length').value.trim()),
                 thickness: parseFloat(document.querySelector('#thickness').value.trim()),
                 qty: parseFloat(document.querySelector('#qty').value),
                 price: parseFloat(document.querySelector('#price').value),
@@ -346,7 +348,7 @@ class Supplies {
                     ${entry.supplier || ''}
                 </td>
                 <td style="width:160px;">
-                    <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry.document.id}</span>
+                    <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
                 </td>
                 <td class="text-end">
                     <button class="btn btn-delete-worklog text-danger" onclick="supplies.deleteEntry('${entry._id}')" title="Delete entry">
@@ -382,7 +384,7 @@ class Supplies {
     applyFilters() {
 
         const employeeFilter = document.getElementById('filterEmployee').value;
-        const stageFilter = document.getElementById('filterStage').value;
+        const typeFilter = document.getElementById('filterType').value;
         const filterStartDate = document.getElementById('filterStartDate').value;
         const productFilter = document.getElementById('productFilter').value;
         const filterEndDate = document.getElementById('filterEndDate').value;
@@ -390,7 +392,7 @@ class Supplies {
         this.filters = {
             product: productFilter,
             user_id: employeeFilter,
-            stage: stageFilter,
+            type: typeFilter,
             dateFrom: filterStartDate,
             dateTo: filterEndDate
         };
@@ -431,7 +433,7 @@ class Supplies {
         });
     }
 
-    getStageClass(stage) {
+    getStageClass(type) {
         const stageClasses = {
             'cutting': 'stage-cutting',
             'bending': 'stage-bending',
@@ -440,7 +442,7 @@ class Supplies {
             'coating': 'stage-coating',
             'finishing': 'stage-finishing'
         };
-        return stageClasses[stage] || 'bg-secondary';
+        return stageClasses[type] || 'bg-secondary';
     }
 
     deleteEntry(id) {

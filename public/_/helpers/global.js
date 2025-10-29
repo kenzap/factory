@@ -104,6 +104,16 @@ export const getDimUnit = (settings) => {
     }
 }
 
+export const getDimMUnit = (settings) => {
+
+    if (!settings || !settings.system_of_units) return " mm";
+    switch (settings.system_of_units) {
+        case "imperial": return " ft";
+        case "metric": return " m";
+
+    }
+}
+
 /**
  * Logs arguments to console if debug mode is enabled.
  * Debug mode is considered enabled if either sessionStorage or localStorage.

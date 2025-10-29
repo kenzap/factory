@@ -25,7 +25,7 @@ class WorkLog {
         this.filters = {
             product: "",
             user_id: "",
-            stage: "",
+            type: "",
             dateFrom: "",
             dateTo: ""
         };
@@ -37,7 +37,7 @@ class WorkLog {
             color: new URLSearchParams(window.location.search).get('color') || "",
             coating: new URLSearchParams(window.location.search).get('coating') || "",
             qty: new URLSearchParams(window.location.search).get('qty') || 0,
-            stage: new URLSearchParams(window.location.search).get('stage') || '',
+            type: new URLSearchParams(window.location.search).get('type') || '',
         }
 
         this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
@@ -115,7 +115,7 @@ class WorkLog {
                 { selector: '#qty', name: 'Quantity' },
                 { selector: '#productColor', name: 'Color' },
                 { selector: '#productCoating', name: 'Coating' },
-                { selector: '#stage', name: 'Stage' }
+                { selector: '#type', name: 'Type' }
             ];
 
             for (const field of requiredFields) {
@@ -152,7 +152,7 @@ class WorkLog {
                 coating: document.querySelector('#productCoating').value.trim(),
                 origin: document.querySelector('#origin').value,
                 time: parseInt(document.querySelector('#time').value) || 0,
-                stage: document.querySelector('#stage').value,
+                type: document.querySelector('#type').value,
                 user_id: this.user.id,
                 order_id: this.record.order_id ? this.record.order_id : '',
             }
@@ -218,10 +218,10 @@ class WorkLog {
     populateFilters() {
 
         const employeeSelect = document.getElementById('filterEmployee');
-        const stageSelect = document.getElementById('filterStage');
+        const typeSelect = document.getElementById('filterType');
         const dateFromInput = document.getElementById('filterStartDate');
         const dateToInput = document.getElementById('filterEndDate');
-        const stage = document.getElementById('stage');
+        const type = document.getElementById('type');
 
         // Populate employee filter
         if (this.users && this.users.length > 0) {
@@ -232,24 +232,24 @@ class WorkLog {
             if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;
         }
 
-        // Populate stage filter
+        // Populate type filter
 
-        const filterStage = `
-            <option value="" ${this.filters.stage === '' ? 'selected' : ''}>${__html('All')}</option>
+        const filterType = `
+            <option value="" ${this.filters.type === '' ? 'selected' : ''}>${__html('All')}</option>
             ${this.settings?.work_categories?.map(category =>
-            `<option value="${category.id}" ${this.filters.stage === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
+            `<option value="${category.id}" ${this.filters.type === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
         ).join('') || ''}
         `;
 
-        const recordStage = `
-            <option value="" ${this.record.stage === '' ? 'selected' : ''}>${__html('Select type')}</option>
+        const recordType = `
+            <option value="" ${this.record.type === '' ? 'selected' : ''}>${__html('Select type')}</option>
             ${this.settings?.work_categories?.map(category =>
-            `<option value="${category.id}" ${this.record.stage === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
+            `<option value="${category.id}" ${this.record.type === category.id ? 'selected' : ''}>${__html(category.name)}</option>`
         ).join('') || ''}
         `;
 
-        if (stageSelect) stageSelect.innerHTML = filterStage;
-        if (!stage.innerHTML) stage.innerHTML = recordStage;
+        if (typeSelect) typeSelect.innerHTML = filterType;
+        if (!type.innerHTML) type.innerHTML = recordType;
 
         // Populate date filters
         if (dateFromInput) dateFromInput.value = this.filters.dateFrom || '';
@@ -289,7 +289,7 @@ class WorkLog {
                         </div>
                     </th>
                     <th>
-                        <select class="form-select form-select-sm border-0 bg-transparent p-0" id="filterStage" onchange="workLog.applyFilters()"></select>
+                        <select class="form-select form-select-sm border-0 bg-transparent p-0" id="filterType" onchange="workLog.applyFilters()"></select>
                     </th>
                     <th>${__html('Qty')}</th>
                     <th>${__html('MIN')}</th>
@@ -340,8 +340,8 @@ class WorkLog {
                 </td>
                 <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
                 <td>
-                    <span class="badge ${this.getStageClass(entry.stage)} stage-badge">
-                    ${entry.stage.charAt(0).toUpperCase() + entry.stage.slice(1)}
+                    <span class="badge ${this.getTypeClass(entry.type)} stage-badge">
+                    ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}
                     </span>
                 </td>
                 <td><strong>${entry.qty}</strong></td>
@@ -359,7 +359,7 @@ class WorkLog {
     applyFilters() {
 
         const employeeFilter = document.getElementById('filterEmployee').value;
-        const stageFilter = document.getElementById('filterStage').value;
+        const typeFilter = document.getElementById('filterType').value;
         const filterStartDate = document.getElementById('filterStartDate').value;
         const productFilter = document.getElementById('productFilter').value;
         const filterEndDate = document.getElementById('filterEndDate').value;
@@ -367,7 +367,7 @@ class WorkLog {
         this.filters = {
             product: productFilter,
             user_id: employeeFilter,
-            stage: stageFilter,
+            type: typeFilter,
             dateFrom: filterStartDate,
             dateTo: filterEndDate
         };
@@ -408,7 +408,7 @@ class WorkLog {
         });
     }
 
-    getStageClass(stage) {
+    getTypeClass(type) {
         const stageClasses = {
             'cutting': 'stage-cutting',
             'bending': 'stage-bending',
@@ -417,7 +417,7 @@ class WorkLog {
             'coating': 'stage-coating',
             'finishing': 'stage-finishing'
         };
-        return stageClasses[stage] || 'bg-secondary';
+        return stageClasses[type] || 'bg-secondary';
     }
 
     deleteEntry(id) {

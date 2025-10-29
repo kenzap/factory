@@ -1,4 +1,5 @@
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
+import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { __html, formatDate, getDimUnit, hideLoader, onClick } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
@@ -54,6 +55,7 @@ class CuttingList {
             // hide UI loader
             hideLoader();
 
+            this.user = response.user;
             this.settings = response.settings;
             this.orders = response.orders;
             this.stock = response.stock;
@@ -78,27 +80,24 @@ class CuttingList {
                     <!-- Search Container -->
                     <div class="search-container d-flex align-items-center">
                         <div class="me-0">
-                            <input type="text" id="coatingSearch" class="form-control search-input" placeholder="${__html('Search orders (e.g., 4994 0043)...')}" style="width: 350px;">
+                            <input type="text" id="orderSearch" class="form-control search-input" placeholder="${__html('Search orders (e.g., 4994 0043)...')}" style="width: 350px;">
                         </div>
                     </div>
 
                     <!-- Filter Button Group -->
                     <div class="btn-group search-container ms-3 me-3" role="group" aria-label="Filter buttons">
-                        <input type="radio" class="btn-check" name="filterOptions" id="activeFilter" autocomplete="off" checked>
-                        <label class="btn btn-outline-light" for="activeFilter">${__html('Current')}</label>
-                        <input type="radio" class="btn-check" name="filterOptions" id="archiveFilter" autocomplete="off">
-                        <label class="btn btn-outline-light" for="archiveFilter">${__html('Archive')}</label>
+                        <input type="radio" class="btn-check" name="filterOptions" id="allFilter" autocomplete="off" checked>
+                        <label class="btn btn-outline-light" for="allFilter">${__html('All')}</label>
+                        <input type="radio" class="btn-check" name="filterOptions" id="pendingFilter" autocomplete="off">
+                        <label class="btn btn-outline-light" for="pendingFilter">${__html('Pending')}</label>
+                        <input type="radio" class="btn-check" name="filterOptions" id="completeFilter" autocomplete="off">
+                        <label class="btn btn-outline-light" for="completeFilter">${__html('Complete')}</label>
                     </div>
 
                     `,
-                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`
+                menu: `<button class="btn btn-outline-light sign-out"><i class="bi bi-power"></i> ${__html('Sign out')}</button>`,
+                user: this.user
             });
-
-            // init footer
-            // new Footer(response);
-
-            // init navigation blocks
-            this.initBlocks();
 
             // load page html 
             this.html();
@@ -107,78 +106,85 @@ class CuttingList {
         });
     }
 
-    initBlocks = () => {
-
-
-    }
-
     // load page
     html = () => {
 
         document.querySelector('#app').innerHTML = /*html*/`  
-            <div class="main-container">
-                <div class="stock-panel">
-                    <div class="stock-header d-none">
-                        <span>📦</span>
-                        <span>Available Stock</span>
-                    </div>
-                    <div class="stock-list bg-light pt-0" id="stockList">
+        <div class="main-container">
+            <div class="stock-panel">
+                <div class="stock-header d-none">
+                    <span>📦</span>
+                    <span>Available Stock</span>
+                </div>
+                <div class="stock-list bg-light pt-0" id="stockList">
 
-                    ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
-                        <div class="stock-item" data-coil="${coil._id}">
-                            <div class="vertical-text">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
-                            <div class="coil-info">
-                                <div class="coil-dimensions fs-5">${coil.width} × ${coil.length} ${getDimUnit(this.settings)}</div>
-                                <div class="coil-supplier">${coil.supplier} / <input type="text" class="editable-notes border-0 bg-transparent" value="${coil.notes}" data-coil-id="${coil.id}" style="width: auto; min-width: 50px;"></div>
+                ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
+                <div class="stock-item ${!coil.parent_coil_id ? "parent" : "child"}" data-coil="${coil._id}">
+                    <div class="vertical-text wmc">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
+                    <div class="coil-info">
+                        <div class="coil-header d-flex align-items-center flex-fill justify-content-between">
+                            <div class="coil-dimensions fs-5 wmc">${Number(coil.width).toLocaleString()} × ${Number(coil.length).toLocaleString()} ${getDimUnit(this.settings)}</div>
+                            <div class="coil-parameters">
+                                <div class="d-flex me-2">
+                                    <div class="form-check form-check-inline cbo m-0 p-0">
+                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="soft_${coil._id}" value="soft" data-index="0" data-field="type" ${coil?.parameters?.softness === 'soft' ? 'checked' : ''}>
+                                        <label class="form-check-label form-text mt-0 d-none" for="soft_${coil._id}">K</label>
+                                    </div>
+                                    <div class="form-check form-check-inline cbs m-0 p-0">
+                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="hard_${coil._id}" value="hard" data-index="0" data-field="type" ${coil?.parameters?.softness === 'hard' ? 'checked' : ''}>
+                                        <label class="form-check-label form-text mt-0 d-none" for="hard_${coil._id}">Z</label>
+                                    </div>
+                                    <div class="form-check form-check-inline cbw m-0 p-0">
+                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="unknown_${coil._id}" value="unknown" data-index="0" data-field="type" ${coil?.parameters?.softness === 'unknown' ? 'checked' : ''}>
+                                        <label class="form-check-label form-text mt-0 d-none" for="unknown_${coil._id}">X</label>
+                                    </div>
+                                </div> 
                             </div>
                         </div>
-                    `).join('') : `<div class="no-stock text-center py-4">${__html('No stock available')}</div>`}
-
-                    </div>
-                </div>    
-                <div class="orders-panel">
-                    <div id="archiveOrders" class="tab-content d-none">
-                    
-                    </div>
-                    <div id="waitingOrders" class="tab-content">
-                    ${this.orders && this.orders.length > 0 ? this.orders.map(order => `
-                        <div class="order-group">
-                            <div class="order-header">
-                                <span>${__html('Order #')}${order.id} - ${formatCompanyName(order) || 'N/A'} (${formatDate(order.due_date) || 'N/A'})</span>
-                                <span class="me-2">${__html('%1$ items', order.items ? order.items.length : 0)}</span>
-                            </div>
-                            <div class="order-items">
-                                ${order.items ? order.items.map(item => `
-                                <div class="order-item">
-                                    <input type="checkbox" class="checkbox" data-item="${order.id}-${item._id}">
-                                    <span class="item-id">${order.id}</span>
-                                    <span class="item-description">${item.title || 'N/A'}</span>
-                                    <span class="item-dimensions">${item.formula_width_calc || 0} × ${item.formula_length_calc || 0} ${getDimUnit(this.settings)}</span>
-                                    <span class="item-quantity">${item.qty || 1}</span>
-                                    ${this.formatStatus(item)}
-                                    <span class="ms-2">${item.progress || 0}</span>
-                                </div>
-                                `).join('') : ''}
-                            </div>
-                        </div>
-                    `).join('') : '<div class="no-orders">No orders available</div>'}
+                        <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
                     </div>
                 </div>
+                `).join('') : `<div class="no-stock text-center py-4">${__html('No stock available')}</div>`}
+
+                </div>
+            </div>    
+            <div class="orders-panel">
+                <div id="archiveOrders" class="tab-content d-none"></div>
+                <div id="waitingOrders" class="tab-content">
+                    ${this.orders && this.orders.length > 0 ? this.orders.map(order => `
+                    <div class="order-group">
+                        <div class="order-header">
+                            <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - ${formatCompanyName(order) || 'N/A'} (${formatDate(order.due_date) || 'N/A'})</span>
+                            <span class="me-2 form-text">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
+                        </div>
+                        <div class="order-items">
+                            ${order.items ? order.items.map((item, index) => `
+                            <div class="order-item">
+                                <input type="checkbox" class="checkbox" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
+                                <span class="item-id">${order.id}</span>
+                                <span class="item-description">${item.title || 'N/A'}</span>
+                                <span class="item-dimensions">
+                                    <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 
+                                    <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
+                                </span>
+                                <span class="item-quantity">${item.qty || 1}</span>
+                                ${this.formatStatus(item)}
+                                <span class="ms-2">${item.progress || 0}</span>
+                            </div>
+                            `).join('') : ''}
+                        </div>
+                    </div>
+                    `).join('') : '<div class="no-orders">No orders available</div>'}
+                </div>
             </div>
-        `;
+        </div>`;
     }
 
     formatStatus(item) {
-
-        // console.log(item.status);
-        if (item.status === 'waiting') {
-            return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
-        } else if (item.status === 'instock') {
-            return `<span class="item-status status-success">${__html('In Stock')}</span>`;
-        } else if (item.status === 'withdrawn') {
-            return `<span class="item-status status-danger">${__html('Withdrawn')}</span>`;
+        if (item.cut_date === undefined || item.cut_date === null) {
+            return `<span class="item-status status-warning">${__html('Pending')}</span>`;
         } else {
-            return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
+            return `<span class="item-status status-success">${__html('Complete')}</span>`;
         }
     }
 
@@ -186,31 +192,168 @@ class CuttingList {
     listeners = () => {
 
         // Search functionality
-        const searchInput = document.getElementById('coatingSearch');
-        const colorCards = document.querySelectorAll('.color-card');
-        const filterTabs = document.querySelectorAll('.filter-tab');
-        const coatingSections = document.querySelectorAll('.coating-section');
+        const searchInput = document.getElementById('orderSearch');
 
         searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase();
+            const searchTerm = this.value.toLowerCase().trim();
+            const orderGroups = document.querySelectorAll('.order-group');
 
-            colorCards.forEach(card => {
-                const colorCode = card.dataset.code.toLowerCase();
-                const colorType = card.dataset.type.toLowerCase();
+            if (searchTerm === '') {
+                // Show all order groups if search is empty
+                orderGroups.forEach(group => {
+                    group.style.display = 'block';
+                });
+            } else {
+                // Split search terms by whitespace and filter
+                const searchTerms = searchTerm.split(/\s+/).filter(term => term.length > 0);
 
-                if (colorCode.includes(searchTerm) || colorType.includes(searchTerm)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            });
+                orderGroups.forEach(group => {
+                    const orderIdElement = group.querySelector('.po');
+                    if (orderIdElement) {
+                        const orderId = orderIdElement.textContent.replace('#', '').toLowerCase();
+
+                        // Check if any search term matches the order ID
+                        const matches = searchTerms.some(term => orderId.includes(term));
+
+                        group.style.display = matches ? 'block' : 'none';
+                    }
+                });
+            }
         });
 
-        onClick('.stock-item', e => {
+        // Filter functionality
+        const allFilter = document.getElementById('allFilter');
+        const pendingFilter = document.getElementById('pendingFilter');
+        const completeFilter = document.getElementById('completeFilter');
+
+        const filterOrders = () => {
+            const orderGroups = document.querySelectorAll('.order-group');
+            orderGroups.forEach(group => {
+                const orderItems = group.querySelectorAll('.order-item');
+                let hasPending = false;
+                let hasComplete = false;
+                let allComplete = true;
+
+                orderItems.forEach(item => {
+                    const statusElement = item.querySelector('.item-status');
+                    if (statusElement) {
+                        if (statusElement.classList.contains('status-warning')) {
+                            hasPending = true;
+                            allComplete = false;
+                        } else if (statusElement.classList.contains('status-success')) {
+                            hasComplete = true;
+                        } else {
+                            allComplete = false;
+                        }
+                    } else {
+                        allComplete = false;
+                    }
+                });
+
+                let shouldShow = false;
+                if (allFilter.checked) {
+                    shouldShow = true;
+                } else if (pendingFilter.checked) {
+                    shouldShow = hasPending;
+                } else if (completeFilter.checked) {
+                    shouldShow = allComplete;
+                }
+
+                group.style.display = shouldShow ? 'block' : 'none';
+            });
+        };
+
+        allFilter.addEventListener('change', filterOrders);
+        pendingFilter.addEventListener('change', filterOrders);
+        completeFilter.addEventListener('change', filterOrders);
+
+        allFilter.checked = true;
+
+        // Editable dimension functionality
+        onClick('.editable-dimension', e => {
+            e.stopPropagation();
+
+            const span = e.target;
+            const orderId = span.dataset.orderId;
+            const itemIndex = parseInt(span.dataset.itemIndex);
+            const field = span.dataset.field;
+            const currentValue = span.textContent.replace(/,/g, ''); // Remove commas for editing
+
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.value = currentValue;
+            input.className = 'form-control form-control-sm d-inline-block';
+            input.style.width = '80px';
+            input.style.fontSize = 'inherit';
+
+            // Replace span with input
+            span.style.display = 'none';
+            span.parentNode.insertBefore(input, span);
+            input.focus();
+            input.select();
+
+            const saveValue = () => {
+                const newValue = parseFloat(input.value) || 0;
+
+                // Update the order data
+                const order = this.orders.find(o => o.id === orderId);
+                if (order && order.items[itemIndex]) {
+                    order.items[itemIndex][field] = newValue;
+
+                    // Update display
+                    span.textContent = newValue.toLocaleString();
+
+                    // Update checkbox data-width if it's width field
+                    if (field === 'formula_width_calc') {
+                        const checkbox = document.querySelector(`input[data-item="${orderId}-${itemIndex}"]`);
+                        if (checkbox) {
+                            checkbox.dataset.width = newValue;
+                        }
+                    }
+                }
+
+                // Remove input and show span
+                input.remove();
+                span.style.display = 'inline';
+            };
+
+            // Save on Enter or blur
+            input.addEventListener('keypress', e => {
+                if (e.key === 'Enter') {
+                    saveValue();
+                }
+            });
+
+            input.addEventListener('blur', saveValue);
+        });
+
+        onClick('.select-order', e => {
 
             e.preventDefault();
 
-            const coilId = e.currentTarget.dataset.coil;
+            const orderId = e.target.dataset.id;
+
+            // Check if any items for this order are currently selected (excluding items with width=0)
+            const orderItems = document.querySelectorAll(`.order-item input[type="checkbox"][data-item^="${orderId}-"]`);
+            const validItems = Array.from(orderItems).filter(checkbox => checkbox.dataset.width !== '0');
+            const checkedItems = validItems.filter(checkbox => checkbox.checked);
+
+            // If any are selected, deselect all; if none are selected, select all (excluding items with width=0)
+            const shouldSelect = checkedItems.length === 0;
+            validItems.forEach(checkbox => {
+                checkbox.checked = shouldSelect;
+            });
+        });
+
+        onClick('.wmc', e => {
+
+            e.preventDefault();
+
+            const clickedElement = e.target.closest('.stock-item');
+            const coilId = clickedElement ? clickedElement.dataset.coil : null;
+
+            console.log('Selected coil ID:', coilId);
 
             let coil = this.stock.find(c => c._id === coilId);
 
@@ -218,20 +361,31 @@ class CuttingList {
 
             // get selected items
             document.querySelectorAll('.order-item input[type="checkbox"]:checked').forEach(checkbox => {
-                const itemId = checkbox.dataset.item;
-                const [orderId, itmId] = itemId.split('-');
-                const order = this.orders.find(o => o.id === orderId);
+                let itemId = checkbox.dataset.item;
+                let [orderId, index] = itemId.split('-');
+                let order = this.orders.find(o => o.id === orderId);
 
-                console.log('Selected item:', itemId, orderId, itmId, order);
+                index = parseInt(index);
+
+                console.log('Selected item:', itemId, orderId, index, order);
+
                 if (order) {
-                    const item = order.items.find(i => i._id === itmId);
+                    const item = order.items.find((i, ii) => ii === index);
                     if (item) {
+                        // Get updated values from HTML elements
+                        const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
+                        const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
+
+                        const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
+                        const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
+
                         items.push({
+                            index: index,
                             order_id: order.id,
                             item_id: item._id,
                             title: item.title,
-                            formula_width_calc: item.formula_width_calc,
-                            formula_length_calc: item.formula_length_calc,
+                            formula_width_calc: formula_width_calc,
+                            formula_length_calc: formula_length_calc,
                             qty: item.qty
                         });
                     }
@@ -241,12 +395,71 @@ class CuttingList {
             console.log('Write off material from coil:', coil);
             console.log('Selected items:', items);
 
-            new WriteoffMetal(coil, items, this.settings, (updated) => {
+            new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
 
                 if (updated) {
                     this.init();
                 }
             });
+        });
+
+        // Editable notes functionality
+        onClick('.editable-notes', e => {
+            e.stopPropagation(); // Prevent triggering parent click events
+        });
+
+        document.addEventListener('change', e => {
+            if (e.target.classList.contains('editable-notes')) {
+                const coilId = e.target.dataset.coilId;
+                const newNotes = e.target.value;
+
+                // Find the coil in stock and update notes
+                const coil = this.stock.find(c => c._id === coilId);
+                if (coil) {
+                    coil.notes = newNotes;
+                    // Here you could add an API call to save the notes to the backend
+                    console.log('Notes updated for coil:', coilId, 'New notes:', newNotes);
+
+                    saveSupplylogValue({ _id: coilId, notes: newNotes }, (response) => {
+                        if (response.success) {
+                            console.log('Notes saved successfully for coil:', coilId);
+                        } else {
+                            console.error('Error saving notes for coil:', coilId);
+                        }
+                    });
+                }
+            }
+        });
+
+        document.addEventListener('keypress', e => {
+            if (e.target.classList.contains('editable-notes') && e.key === 'Enter') {
+                e.target.blur();
+            }
+        });
+
+        // Radio button change listener for coil types
+        document.addEventListener('change', e => {
+            if (e.target.classList.contains('form-check-input') && e.target.type === 'radio') {
+                const coilId = e.target.name.replace('type_', '');
+                const selectedType = e.target.value;
+
+                console.log('Coil type changed:', coilId, 'New type:', selectedType);
+
+                // Find the coil and update its type
+                const coil = this.stock.find(c => c._id === coilId);
+                if (coil) {
+                    coil.type = selectedType;
+
+                    // Save to backend
+                    saveSupplylogValue({ _id: coilId, sofftness: selectedType }, (response) => {
+                        if (response.success) {
+                            console.log('Coil type saved successfully:', coilId);
+                        } else {
+                            console.error('Error saving coil type:', coilId);
+                        }
+                    });
+                }
+            }
         });
     }
 }

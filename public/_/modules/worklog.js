@@ -41,8 +41,8 @@ export const getHtml = (record) => {
                             </select>
                         </div>
                         <div class="col-md-2">
-                            <label for="stage" class="form-label d-none">${__html('Stage')}</label>
-                            <select class="form-select  border-0" id="stage" required></select>
+                            <label for="type" class="form-label d-none">${__html('Type')}</label>
+                            <select class="form-select  border-0" id="type" required></select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
                             <button type="submit" class="btn btn-dark  border-0 btn-add-worklog-record w-100">
