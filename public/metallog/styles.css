@@ -1,0 +1,173 @@
+@import url("../_/helpers/global.css");
+
+body {
+    background-color: var(--gray-color-light);
+}
+
+.main-header {
+    background: white;
+    color: #333;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.work-log-table select{
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    width: 100%;
+}
+
+/* .table input, */
+
+.table select,
+.table th {
+    background-color: inherit;
+    border: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tr:hover td {
+    background-color: #ced4da;
+}
+
+.table td {
+    vertical-align: middle;
+    border-color: #f1f3f4;
+    background-color: transparent;
+    padding: 0px 8px;
+}
+
+.stage-badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+
+.stage-cutting { background-color: #dc3545; }
+.stage-bending { background-color: #fd7e14; }
+.stage-assembly { background-color: #6f42c1; }
+.stage-coating { background-color: #20c997; }
+.stage-welding { background-color: #0dcaf0; }
+.stage-finishing { background-color: #198754; }
+
+.delete-btn {
+    color: var(--danger-color);
+    border: none;
+    background: none;
+    font-size: 1.1rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.delete-btn:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.summary-cards {
+    margin-bottom: 2rem;
+    display: none; /* Hide the top summary cards */
+}
+
+.fixed-summary {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 2px solid var(--primary-color);
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    z-index: 5;
+}
+
+.summary-table {
+    margin: 0;
+}
+
+.summary-table th,
+.summary-table td {
+    background: #f8f9fa;
+    border: none;
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+
+.summary-table .summary-label {
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 0.75rem;
+}
+
+.summary-table .summary-value {
+    color: var(--primary-color);
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Adjust main content to account for fixed summary */
+body {
+    padding-bottom: 80px;
+}
+
+/* .document-tag {
+    background-color: #e7f3ff;
+    color: #0066cc;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    margin: 0.25rem;
+    display: inline-block;
+} */
+
+.time-badge {
+    background-color: #f8f9fa;
+    color: #6c757d;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        border-radius: 12px;
+    }
+    
+    .summary-cards .col-md-3 {
+        margin-bottom: 1rem;
+    }
+}
+
+/* parameters checkboxes */
+.cbo .form-check-input:checked {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+.cbo .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.cbs .form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.cbs .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}   
+
+.cbw .form-check-input:checked {
+    background-color: #ff6b6b;
+    border-color: #ff6b6b;
+}
+
+.cbw .form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25); 
+}
