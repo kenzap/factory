@@ -28,7 +28,9 @@ class Transactions {
             client: '',
             dateFrom: '',
             dateTo: '',
-            type: ''
+            type: '',
+            sort_by: 'id',
+            sort_dir: 'desc',
         };
 
         // connect to backend
@@ -68,8 +70,8 @@ class Transactions {
                         this.filters.sort_by = sorters[0].field; // column name
                         this.filters.sort_dir = sorters[0].dir;  // "asc" or "desc"
                     } else {
-                        this.filters.sort_by = null;
-                        this.filters.sort_dir = null;
+                        this.filters.sort_by = 'id';
+                        this.filters.sort_dir = 'desc';
                     }
 
                     // Make API call
@@ -255,6 +257,11 @@ class Transactions {
         this.firstLoad = false;
     }
 
+    generateReport = () => {
+        const reportUrl = `/debitor-report/?eid=${this.filters.client?.eid || ''}`;
+        window.open(reportUrl, '_blank');
+    }
+
     columns = () => {
         return [
             {
@@ -345,7 +352,9 @@ class Transactions {
                     // Handle value change
                     input.addEventListener('change', () => {
                         const currentPayment = cell.getValue() || {};
-                        cell.setValue({ ...currentPayment, date: input.value });
+                        const newDate = input.value ? new Date(input.value + 'T' + new Date().toTimeString().slice(0, 8)).toISOString() : '';
+                        console.log('New date value:', newDate);
+                        cell.setValue({ ...currentPayment, date: newDate });
                         document.body.removeChild(input);
                     });
 

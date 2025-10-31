@@ -65,6 +65,7 @@
 
 .tabulator-row.tabulator-selected { background-color: var(--cd-color-1) !important; }
 .tabulator-row.tabulator-selected .text-dark, .tabulator-row.tabulator-selected .tabulator-cell, .tabulator-row.tabulator-selected .form-text, .tabulator-row.tabulator-selected a{ color: #ffffff!important; }
+/* .tabulator .tabulator-tableholder .tabulator-table .tabulator-row.table-warning{ background-color: inherit !important; } */
 
 .toolbar {
     background: #f8f9fa;

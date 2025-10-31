@@ -27,7 +27,9 @@ class Orders {
             client: {},
             dateFrom: '',
             dateTo: '',
-            type: '' // Default to 'All'
+            type: '', // Default to 'All'
+            sort_by: 'id',
+            sort_dir: 'desc',
         };
 
         // connect to backend
@@ -48,7 +50,9 @@ class Orders {
             paginationSize: 250,
             selectableRows: 1,
             selectable: true,
+            // initialSort: [{ column: "id", dir: "desc" }],
             sortMode: "remote",
+            initialHeaderSortDirection: "desc",
             // Handle pagination requests
             ajaxURL: "/orders/",
             ajaxRequestFunc: (url, config, params) => {
@@ -67,8 +71,8 @@ class Orders {
                         this.filters.sort_by = sorters[0].field; // column name
                         this.filters.sort_dir = sorters[0].dir;  // "asc" or "desc"
                     } else {
-                        this.filters.sort_by = null;
-                        this.filters.sort_dir = null;
+                        this.filters.sort_by = 'id';
+                        this.filters.sort_dir = 'desc';
                     }
 
                     // Make API call
@@ -226,9 +230,11 @@ class Orders {
         });
 
         // Or if using event listeners
-        this.table.on("tableBuilt", function () {
-            log("Table built successfully!");
-        });
+        // this.table.on("tableBuilt", () => {
+        //     log("Table built successfully!");
+        //     // Set initial sort to show correct visual state
+        //     this.table.setSort("id", "desc");
+        // });
 
         // Or if using event listeners
         this.table.on("dataLoaded", function () {
@@ -250,6 +256,11 @@ class Orders {
                 title: "ID",
                 field: "id",
                 width: 80,
+                sorter: "number",
+                headerSortStartingDir: "desc",
+                sorterParams: {
+                    dir: "desc"
+                },
                 formatter: (cell) => {
                     const value = cell.getValue();
                     return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;

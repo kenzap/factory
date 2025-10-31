@@ -22,7 +22,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 COALESCE(js->'data'->>'name', '') as name, 
                 COALESCE(js->'data'->>'notes', '') as notes,
                 COALESCE(js->'data'->>'operator', '') as operator,
-                COALESCE(js->'data'->'price'->>'total', '') as total,
+                COALESCE(js->'data'->'price'->>'grand_total', '') as total,
                 COALESCE(js->'meta'->>'created', '') as created,
                 COALESCE(js->'data'->>'created', '') as created2,
                 js->'data'->'invoice' as invoice,
@@ -115,9 +115,9 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
             FROM data 
             WHERE ref = $1 AND sid = $2 ` +
-            (filters.client?.eid ? ` AND (js->'data'->>'eid' = $3 OR unaccent(js->'data'->>'name') ILIKE unaccent($4))` : '') +
-            (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 5 : 3}` : '') +
-            (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 6 : 5) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
+            (filters.client?.eid ? ` AND js->'data'->>'eid' = $3` : '') +
+            (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 4 : 3}` : '') +
+            (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 5 : 4) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
             (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
 
         const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
