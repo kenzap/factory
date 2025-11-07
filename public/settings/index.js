@@ -11,7 +11,7 @@ import { TabTemplates } from "../_/modules/settings/tab_templates.js";
 import { getHtml } from "../_/modules/settings/tabs.js";
 import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
 
-/**
+/** 
  * Settings page of the dashboard.
  * Loads HTMLContent from ui/settings.js file.
  * Renders settings options in tabbed view.

@@ -5,9 +5,14 @@ const { Client } = pkg;
 export const sid = 1002170; // Default space ID
 export const locale = "lv"; // Default locale
 
-export function __html(key) {
+export function __html(locales, key) {
     // This function should return the HTML for the given key
     // For now, it just returns the key itself
+    locales = locales || {};
+    if (locales.values && locales.values[key]) {
+        return locales.values[key];
+    }
+
     return key;
 }
 

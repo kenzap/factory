@@ -1,5 +1,6 @@
+import { __html, getLocale, sid } from '../_/helpers/index.js';
 // import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, sid } from '../_/helpers/index.js';
+import { getDbConnection } from '../_/helpers/index.js';
 
 /**
  * execDebitorReport
@@ -26,7 +27,7 @@ async function execDebitorReport(data) {
                 js->'data'->>'name' as name,
                 ROUND(SUM((js->'data'->'price'->>'grand_total')::numeric), 2) as total_amount_due,
                 ROUND(SUM((js->'data'->'payment'->>'amount')::numeric), 2) as total_amount_paid,
-                ROUND(SUM((js->'data'->'price'->>'grand_total')::numeric) - SUM((js->'data'->'payment'->>'amount')::numeric), 2) as outstanding_balance,
+                ROUND(SUM((js->'data'->'payment'->>'amount')::numeric) - SUM((js->'data'->'price'->>'grand_total')::numeric), 2) as outstanding_balance,
                 COUNT(*) as order_count
             FROM data
             WHERE ref = $1 AND sid = $2
@@ -50,10 +51,10 @@ async function execDebitorReport(data) {
         //         "id": "42484",
         //         "_id": "a099c001ab2c922cec80eb0768b76f01ffc3bf07",
         //         "eid": "3b85e2bea7499a8f4fce6cf35b9e522951eadb59",
-        //         "name": "Verum SIA",
+        //         "name": "Company SIA",
         //         "draft": false,
         //         "notes": "",
-        //         "phone": "+37129463346",
+        //         "phone": "+371000000",
         //         "price": {
         //             "total": 9.28,
         //             "tax_calc": "",
@@ -97,6 +98,10 @@ function execDebitorReportApi(app) {
         const data = _req.body;
         // data.user_id = _req.user.id;
 
+        const locale = await getLocale(_req.headers.locale);
+
+        console.log('execDebitorReportApi', locale);
+
         const report = await execDebitorReport(data);
 
         // Generate HTML report
@@ -116,13 +121,13 @@ function execDebitorReportApi(app) {
                 </style>
             </head>
             <body>
-                <div class="date">Bank debitor report for ${today}</div>
+                <div class="date">${__html(locale, 'Report')} - ${today}</div>
                 <table>
                     <thead>
                         <tr>
                         <th>Nr</th>
-                        <th>Name</th>
-                        <th>Outstanding Balance</th>
+                        <th>${__html(locale, 'Client')}</th>
+                        <th>${__html(locale, 'Amount')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -151,15 +156,15 @@ function execDebitorReportApi(app) {
                     </tbody>
                     <tfoot>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
-                            <td colspan="2" class="form-text">Total Positive Balances</td>
+                            <td colspan="2" class="form-text">${__html(locale, 'Debit')}</td>
                             <td class="amount">€${positiveTotal.toFixed(2)}</td>
                         </tr>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
-                            <td colspan="2" class="form-text">Total Negative Balances</td>
+                            <td colspan="2" class="form-text">${__html(locale, 'Credit')}</td>
                             <td class="amount">€${negativeTotal.toFixed(2)}</td>
                         </tr>
                         <tr style="font-weight: bold; background-color: #e9e9e9;">
-                            <td colspan="2" class="form-text">Net Total</td>
+                            <td colspan="2" class="form-text">${__html(locale, 'Total')}</td>
                             <td class="amount">€${(positiveTotal + negativeTotal).toFixed(2)}</td>
                         </tr>
                     </tfoot>

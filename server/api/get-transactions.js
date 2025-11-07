@@ -14,7 +14,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
 
     let orders = { records: [], total: 0 };
 
-    // Get orders
+    // transactions query
     let query = `
         SELECT _id, 
                 COALESCE(js->'data'->>'id', '') as id, 
@@ -32,43 +32,66 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
 
+    // transactions summary query
+    let query_summary = `
+            SELECT
+                COUNT(*) as total,
+                SUM(CASE WHEN js->'data'->'price'->>'grand_total' IS NOT NULL AND js->'data'->'price'->>'grand_total' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_amount,
+                SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
+                SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
+            FROM data
+            WHERE ref = $1 AND sid = $2 `;
+
     const params = ['ecommerce-order', sid];
 
     // if (filters.client?.name && filters.client.name.trim() !== '') {
     //     query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
+    //     query_summary += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
     //     params.push(`%${filters.client.name.trim()}%`);
     // }
 
     if (filters.client?.eid) {
-        query += ` AND js->'data'->>'eid' = $${params.length + 1}`;
+        query += ` AND (js->'data'->>'eid' = $${params.length + 1} OR LOWER(js->'data'->>'name') = LOWER($${params.length + 2})) `;
+        query_summary += ` AND (js->'data'->>'eid' = $${params.length + 1} OR LOWER(js->'data'->>'name') = LOWER($${params.length + 2})) `;
         params.push(`${filters.client.eid.trim()}`);
+        params.push(`${filters.client.name.trim()}`);
     }
 
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {
-        query += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
+        // query += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
+        // query_summary += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
+        query += ` AND js->'data'->'waybill'->>'date' >= $${params.length + 1}`;
+        query_summary += ` AND js->'data'->'waybill'->>'date' >= $${params.length + 1}`;
         params.push(filters.dateFrom.trim());
     }
 
     if (filters.dateTo && filters.dateTo.trim() !== '') {
-        query += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
+        // query += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
+        // query_summary += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
+        query += ` AND js->'data'->'waybill'->>'date' <= $${params.length + 1}`;
+        query_summary += ` AND js->'data'->'waybill'->>'date' <= $${params.length + 1}`;
         params.push(filters.dateTo.trim());
     }
 
     if (typeof filters.draft === 'boolean') {
         query += ` AND js->'data'->'draft' = $${params.length + 1}`;
+        query_summary += ` AND js->'data'->'draft' = $${params.length + 1}`;
         params.push(filters.draft);
     }
 
     if (filters.type && filters.type == 'paid') {
         query += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
+        query_summary += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
     }
 
     if (filters.type && filters.type == 'unpaid') {
         query += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric = 0`;
+        query_summary += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric = 0`;
     }
 
     if (filters.type && filters.type == 'transaction') {
         query += ` AND (js->'data'->'transaction')::boolean = true`;
+        query_summary += ` AND (js->'data'->'transaction')::boolean = true`;
     }
 
     // Apply pagination
@@ -105,32 +128,17 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         await db.connect();
 
         const result = await db.query(query, params);
-
-        // Get total count for pagination
-        const countQuery = `
-            SELECT
-                COUNT(*) as total,
-                SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
-                SUM(CASE WHEN js->'data'->>'total' IS NOT NULL AND js->'data'->>'total' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_amount,
-                SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
-            FROM data 
-            WHERE ref = $1 AND sid = $2 ` +
-            (filters.client?.eid ? ` AND js->'data'->>'eid' = $3` : '') +
-            (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 4 : 3}` : '') +
-            (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 5 : 4) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
-            (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
-
         const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
-        const countResult = await db.query(countQuery, countParams);
+        const countResult = await db.query(query_summary, countParams);
 
         console.log(countResult.rows)
 
         orders.records = result.rows;
         orders.total = parseInt(countResult.rows[0].total);
         orders.summary = {
-            total: parseFloat(countResult.rows[0].total_amount),
-            paid: parseFloat(countResult.rows[0].total_paid),
-            waybill: parseFloat(countResult.rows[0].total_waybill)
+            total: parseFloat(countResult.rows[0].total_amount) || 0,
+            paid: parseFloat(countResult.rows[0].total_paid) || 0,
+            waybill: parseFloat(countResult.rows[0].total_waybill) || 0
         };
 
     } finally {

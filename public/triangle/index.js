@@ -7,7 +7,7 @@ import { Session } from "../_/modules/session.js";
 /**
  * Right-Angled Triangle Calculator
  * Shows triangle calculations and allows editing values.
- * 
+ *  
  * @version 1.0
  */
 class Triangle {

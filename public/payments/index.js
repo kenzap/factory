@@ -13,7 +13,7 @@ import { Session } from "/_/modules/session.js";
 /**
  * Transaction Log
  * 
- * @version 1.0
+ * @version 1.0 
  */
 class Transactions {
 
@@ -26,7 +26,7 @@ class Transactions {
         this.filters = {
             for: "transactions",
             client: '',
-            dateFrom: '',
+            dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
             type: '',
             sort_by: 'id',
@@ -154,7 +154,7 @@ class Transactions {
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('From:')}</label>
-                        <input type="date" class="form-control border-0" id="dateFrom">
+                        <input type="date" class="form-control border-0" id="dateFrom" value="${this.filters.dateFrom ? new Date(this.filters.dateFrom).toISOString().split('T')[0] : ''}">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('To:')}</label>
@@ -206,6 +206,8 @@ class Transactions {
     // init page listeners
     listeners = () => {
 
+        let self = this;
+
         if (!this.firstLoad) return;
 
         // Filter event listeners
@@ -250,8 +252,8 @@ class Transactions {
 
         bus.on('table:refresh', (value) => {
             log('Refreshing table data...', value);
-            this.filters.client = { name: value.name, eid: value._id };
-            this.table.setPage(1);
+            self.filters.client = { name: value.name, eid: value._id };
+            self.table.setPage(1);
         });
 
         this.firstLoad = false;
@@ -274,7 +276,7 @@ class Transactions {
                 },
                 formatter: (cell) => {
                     const value = cell.getValue();
-                    if (!value) return `<span class="item-status status-danger">${__html('transaction')}</span>`;
+                    if (!value) return `<span class="item-status status-danger">${__html('Transaction')}</span>`;
                     return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                 }
             },
@@ -310,7 +312,7 @@ class Transactions {
                 }
             },
             {
-                title: __html("Payment"),
+                title: __html("Date Paid"),
                 field: "payment",
                 width: 128,
                 headerSort: false,
@@ -575,7 +577,7 @@ class Transactions {
         const newRow = {
             id: '',
             name: self.filters.client?.name || '',
-            eid: self.filters.client?._id || '',
+            eid: self.filters.client?.eid || '',
             total: 0,
             transaction: true,
             payment: {
@@ -590,6 +592,9 @@ class Transactions {
                 date: '',
                 number: ''
             },
+            price: {
+                grand_total: 0
+            },
             operator: ''
         };
 
@@ -603,7 +608,7 @@ class Transactions {
 
                 toast('Changes applied');
                 this.table.redraw(); // Redraw table to reflect changes
-                this.editedRows.clear(); // Clear edited rows after saving
+                if (this.editedRows) this.editedRows.clear(); // Clear edited rows after saving
                 this.table.setPage(1)
             } else {
                 toast('Error saving data: ' + response.error);
@@ -692,9 +697,9 @@ class Transactions {
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
                                 <td class="p-1 pe-3"><i class="bi bi-hash"></i> ${this.orders.total}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${this.orders.summary.total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${this.orders.summary.paid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${this.orders.summary.waybill.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${this.orders.summary?.total?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${this.orders.summary?.paid?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${this.orders.summary?.waybill?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
                             </tr>
                         </table>
                     `;

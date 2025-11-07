@@ -11,7 +11,7 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-.work-log-table select{
+.work-log-table select{ 
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;

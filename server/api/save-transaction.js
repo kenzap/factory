@@ -29,6 +29,8 @@ async function saveTransaction(data) {
             // Check if this is an insertion (transaction: true)
             if (item.transaction === true) {
 
+                console.log('Inserting new transaction', item);
+
                 // Insert new record
                 const query = `
                     INSERT INTO data (_id, pid, ref, sid, js)
@@ -39,6 +41,7 @@ async function saveTransaction(data) {
                 item._id = makeId();
                 item.created = Date.now() / 1000;
                 item.updated = Date.now() / 1000;
+                item.payment = { amount: 0, date: new Date().toISOString() };
 
                 const params = [
                     item._id,
