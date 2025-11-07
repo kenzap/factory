@@ -25,7 +25,7 @@ class Transactions {
         this.selectedRows = [];
         this.filters = {
             for: "transactions",
-            client: '',
+            client: {},
             dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
             type: '',
@@ -212,8 +212,8 @@ class Transactions {
 
         // Filter event listeners
         // document.getElementById('clientFilter').addEventListener('change', () => this.applyFilters());
-        document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = new Date(e.currentTarget.value + 'T00:00:00').toISOString(); this.table.setPage(1); });
-        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = new Date(e.currentTarget.value + 'T23:59:59').toISOString(); this.table.setPage(1); });
+        document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = e.currentTarget.value ? new Date(e.currentTarget.value + 'T00:00:00').toISOString() : ''; this.table.setPage(1); });
+        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value ? new Date(e.currentTarget.value + 'T23:59:59').toISOString() : ''; this.table.setPage(1); });
         document.getElementById('typeFilter').addEventListener('change', (e) => { this.filters.type = e.currentTarget.value; this.table.setPage(1); });
 
         // Clear date input on backspace

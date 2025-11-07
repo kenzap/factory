@@ -167,7 +167,7 @@ class Home {
                     },
                     {
                         text: __html('Metal'),
-                        link: link('/warehouse/metal/'),
+                        link: link('/metallog/'),
                         target: '_blank',
                     }
                 ],

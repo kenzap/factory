@@ -25,7 +25,7 @@ class Orders {
         this.filters = {
             for: "orders",
             client: {},
-            dateFrom: '',
+            dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
             type: '', // Default to 'All'
             sort_by: 'id',
@@ -203,8 +203,8 @@ class Orders {
         if (!this.firstLoad) return;
 
         // Filter event listeners
-        document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = e.currentTarget.value; this.table.setPage(1); });
-        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value; this.table.setPage(1); });
+        document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = e.currentTarget.value ? new Date(e.currentTarget.value + 'T00:00:00').toISOString() : ''; this.table.setPage(1); });
+        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value ? new Date(e.currentTarget.value + 'T00:00:00').toISOString() : ''; this.table.setPage(1); });
         document.getElementById('typeFilter').addEventListener('change', (e) => { this.filters.type = e.currentTarget.value; this.table.setPage(1); });
 
         // Button event listeners
