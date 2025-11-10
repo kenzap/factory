@@ -594,6 +594,7 @@ export function removeField(waybill, fieldName) {
 export function getManufacturingDate(order) {
 
     console.log(order.items);
+
     // Extract manufacturing date from order
     if (!order?.items && order.items.length == 0) return '';
 

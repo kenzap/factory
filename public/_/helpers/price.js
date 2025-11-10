@@ -181,8 +181,6 @@ export const getTotalsHTML = (settings, order) => {
                 vat_text = "PVN (143.1 pants): ";
             }
 
-
-
             // No VAT (reverse charge)
             item_total_0 += makeNumber(item.total);
         } else {

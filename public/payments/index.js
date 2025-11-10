@@ -2,6 +2,7 @@ import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getTransactions } from "../_/api/get_transactions.js";
 import { saveTransaction } from "../_/api/save_transaction.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
+import { PreviewReport } from "../_/components/payments/preview_report.js";
 import { Locale } from "../_/modules/locale.js";
 import { __html, hideLoader, log, priceFormat, toast } from "/_/helpers/global.js";
 import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
@@ -26,7 +27,7 @@ class Transactions {
         this.filters = {
             for: "transactions",
             client: {},
-            dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
+            dateFrom: new Date(new Date().getFullYear(), 0, 1).toISOString(),
             dateTo: '',
             type: '',
             sort_by: 'id',
@@ -154,7 +155,7 @@ class Transactions {
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('From:')}</label>
-                        <input type="date" class="form-control border-0" id="dateFrom" value="${this.filters.dateFrom ? new Date(this.filters.dateFrom).toISOString().split('T')[0] : ''}">
+                        <input type="date" class="form-control border-0" id="dateFrom" value="${this.filters.dateFrom ? new Date(new Date(this.filters.dateFrom).getTime() - new Date(this.filters.dateFrom).getTimezoneOffset() * 60000).toISOString().split('T')[0] : ''}">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('To:')}</label>
@@ -178,9 +179,23 @@ class Transactions {
                             <button class="btn btn-outline-dark d-flex align-items-center" id="saveBtn">
                                 <i class="bi bi-check-circle d-flex me-1"></i> ${__html('Save')}
                             </button>
-                            <button class="btn btn-outline-dark d-flex align-items-center" id="reportBtn">
-                                <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-dark dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" id="debitorReportBtn">
+                                    <i class="bi bi-person-lines-fill me-2"></i>${__html('Debitors')}
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="#" id="waybillReportBtn">
+                                    <i class="bi bi-truck me-2"></i>${__html('Waybills')}
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" id="exportCsvBtn">
+                                    <i class="bi bi-filetype-csv me-2"></i>${__html('Export')}
+                                    </a></li>
+                                </ul>
+                            </div>
                             <button class="btn btn-outline-dark d-flex align-items-center" id="addBtn">
                                 <i class="bi bi-plus-circle d-flex me-1"></i> ${__html('Add')}
                             </button>
@@ -237,7 +252,8 @@ class Transactions {
         document.getElementById('refreshBtn').addEventListener('click', () => this.table.setPage(1));
         document.getElementById('saveBtn').addEventListener('click', () => this.save());
         document.getElementById('addBtn').addEventListener('click', () => this.add());
-        document.getElementById('reportBtn').addEventListener('click', () => this.generateReport());
+        document.getElementById('debitorReportBtn').addEventListener('click', () => this.generateDebitorReport());
+        document.getElementById('waybillReportBtn').addEventListener('click', () => this.generateWaybillReport());
         document.getElementById('deleteBtn').addEventListener('click', () => this.delete());
 
         // Or if using event listeners
@@ -259,9 +275,30 @@ class Transactions {
         this.firstLoad = false;
     }
 
-    generateReport = () => {
-        const reportUrl = `/debitor-report/?eid=${this.filters.client?.eid || ''}`;
-        window.open(reportUrl, '_blank');
+    generateDebitorReport = () => {
+
+        new PreviewReport(`/report/debitors/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
+            if (!response.success) {
+                toast(__html('Error opening report'));
+                return;
+            }
+        });
+
+        // const reportUrl = `/report/debitors/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`;
+        // window.open(reportUrl, '_blank', 'debitorReport');
+    }
+
+    generateWaybillReport = () => {
+
+        new PreviewReport(`/report/waybills/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
+            if (!response.success) {
+                toast(__html('Error opening report'));
+                return;
+            }
+        });
+
+        // const reportUrl = `/report/waybills/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}`;
+        // window.open(reportUrl, '_blank', 'waybillReport');
     }
 
     columns = () => {

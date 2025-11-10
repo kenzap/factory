@@ -25,7 +25,7 @@ const livereloadMiddleware = connectLivereload();
 
 function conditionalLivereload(req, res, next) {
     // Skip injection for PDF route or based on some flag
-    if (req.path.startsWith('/document/') || req.path.startsWith('/api/')) {
+    if (req.path.startsWith('/document/') || req.path.startsWith('/api/') || req.path.startsWith('/report/')) {
         return next();
     }
     return livereloadMiddleware(req, res, next);

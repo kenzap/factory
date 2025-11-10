@@ -1,6 +1,6 @@
-import { __html, getLocale, sid } from '../_/helpers/index.js';
-// import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection } from '../_/helpers/index.js';
+import { chromium } from 'playwright';
+import { authenticateToken } from '../_/helpers/auth.js';
+import { __html, getDbConnection, getLocale, sid } from '../_/helpers/index.js';
 
 /**
  * execDebitorReport
@@ -21,7 +21,7 @@ async function execDebitorReport(data) {
         await db.connect();
 
         // Query to get all debitors grouped by eid where payment amount < grand_total
-        const query = `
+        let query = `
             SELECT
                 js->'data'->>'eid' as eid,
                 js->'data'->>'name' as name,
@@ -37,12 +37,35 @@ async function execDebitorReport(data) {
                 AND js->'data'->'price'->>'grand_total' != ''
             GROUP BY js->'data'->>'eid', js->'data'->>'name'
             HAVING ROUND(SUM((js->'data'->'payment'->>'amount')::numeric), 2) != ROUND(SUM((js->'data'->'price'->>'grand_total')::numeric), 2)
-            ORDER BY outstanding_balance DESC
         `;
 
-        // AND js->'data'->'waybill'->>'date' IS NOT NULL
+        const queryParams = ['ecommerce-order', sid];
+        let paramIndex = 3;
 
-        const result = await db.query(query, ['ecommerce-order', sid]);
+        // Filter by client eid if provided
+        if (data.eid) {
+            query += ` AND js->'data'->>'eid' = $${paramIndex}`;
+            queryParams.push(data.eid);
+            paramIndex++;
+        }
+
+        // Filter by date if provided
+        if (data.from || data.to) {
+            if (data.from) {
+                query += ` AND (js->'data'->'waybill'->>'date')::date >= $${paramIndex}`;
+                queryParams.push(data.from);
+                paramIndex++;
+            }
+            if (data.to) {
+                query += ` AND (js->'data'->'waybill'->>'date')::date <= $${paramIndex}`;
+                queryParams.push(data.to);
+                paramIndex++;
+            }
+        }
+
+        query += ` ORDER BY js->'data'->>'name'`;
+
+        const result = await db.query(query, queryParams);
         if (result.rows) response = result.rows || [];
 
         // database js column structure example
@@ -93,35 +116,48 @@ async function execDebitorReport(data) {
 // Simple API route
 function execDebitorReportApi(app) {
 
-    app.get('/debitor-report/', async (_req, res) => { //  authenticateToken,
+    app.get('/report/debitors/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
-        // data.user_id = _req.user.id;
 
         const locale = await getLocale(_req.headers.locale);
-
-        console.log('execDebitorReportApi', locale);
-
         const report = await execDebitorReport(data);
 
         // Generate HTML report
-        const today = new Date().toLocaleDateString();
+        const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Europe/Riga' });
+
+        let reportDate = today;
+        if (data.from || data.to) {
+            const fromStr = data.from ? new Date(data.from).toLocaleDateString('en-GB', { timeZone: 'Europe/Riga' }) : null;
+            const toStr = data.to ? new Date(data.to).toLocaleDateString('en-GB', { timeZone: 'Europe/Riga' }) : null;
+
+            reportDate = data.from && data.to
+                ? fromStr === toStr ? fromStr : `${fromStr} - ${toStr}`
+                : data.from ? `${__html(locale, 'From')} ${fromStr}` : `${__html(locale, 'To')} ${toStr}`;
+        }
+
+        // Generate HTML report
         let htmlReport = `
             <html>
             <head>
                 <title>Debitor Report</title>
-                <style>
+                <style> 
                     @page { size: A4; margin: 0.24in; }
                     body { font-family: Arial, sans-serif; margin: 0; max-width: 210mm; padding: 20px; box-sizing: border-box; }
                     table { border-collapse: collapse; width: 100%; font-size:0.8rem; }
                     th, td { border: 1px solid #ddd; padding: 4px; text-align: left; }
                     th { background-color: #f2f2f2; }
                     .amount { text-align: right; }
-                    .date { text-align: left; margin-bottom: 8px; }
+                    .header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+                    .report-title { text-align: left; }
+                    .report-date { text-align: right; }
                 </style>
             </head>
             <body>
-                <div class="date">${__html(locale, 'Report')} - ${today}</div>
+                <div class="header">
+                    <div class="report-title">${__html(locale, 'Report')}</div>
+                    <div class="report-date">${reportDate}</div>
+                </div>
                 <table>
                     <thead>
                         <tr>
@@ -173,10 +209,45 @@ function execDebitorReportApi(app) {
             </html>
         `;
 
-        console.log('execDebitorReport', report);
+        // Check if user wants HTML output
+        const format = _req.query.format || 'html';
 
-        res.setHeader('Content-Type', 'text/html');
-        res.send(htmlReport);
+        if (format === 'pdf') {
+
+            // Generate PDF using Playwright
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage();
+
+            await page.setContent(htmlReport, { waitUntil: 'networkidle' });
+            await page.waitForSelector('table', { timeout: 5000 });
+            await page.waitForTimeout(200);
+
+            // DEBUG: Take a screenshot to see what's actually rendered
+            await page.screenshot({ path: '/app/server/document/pdf/debug-screenshot.png', fullPage: true });
+
+            // CRITICAL: Use print media emulation for PDF
+            await page.emulateMedia({ media: 'print' });
+
+            const doc_path = '/app/server/document/pdf/report-debitors.pdf';
+            const pdfBuffer = await page.pdf({
+                path: doc_path,
+                // width: '100px',
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
+            });
+
+            await browser.close();
+
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', 'filename="report-debitors.pdf"');
+            res.send(pdfBuffer);
+
+        } else {
+
+            res.setHeader('Content-Type', 'text/html');
+            res.send(htmlReport);
+        }
     });
 }
 
