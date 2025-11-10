@@ -363,9 +363,9 @@ class Supplies {
     supplyStatusBadge(entry) {
 
         if (!entry.status) return ``;
-        if (entry.status == 'waiting') return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
-        if (entry.status == 'instock') return `<span class="item-status status-success">${__html('In stock')}</span>`;
-        if (entry.status == 'withdrawn') return `<span class="item-status status-secondary">${__html('Withdrawn')}</span>`;
+        if (entry.status == 'ordered') return `<span class="item-status status-warning">${__html('Ordered')}</span>`;
+        if (entry.status == 'available') return `<span class="item-status status-success">${__html('Available')}</span>`;
+        if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('used')}</span>`;
     }
 
     renderProductName(entry) {

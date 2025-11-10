@@ -22,7 +22,7 @@ import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 //     "price": 5,
 //     "width": 1250,
 //     "length": 80000,
-//     "status": "instock",
+//     "status": "available",
 //     "coating": "Polyester",
 //     "created": 1761583721,
 //     "updated": 1761583721,
@@ -86,7 +86,7 @@ async function execWriteoffAction(data) {
             record.length = sheet.length; // current length that can be written off
             record.parent_coil_id = record.coil_id;
             record.qty = 1;
-            record.status = "instock";
+            record.status = "available";
             record.type = "metal";
             record.notes = `${record.coil_id.substr(0, 3)}`.trim();
 

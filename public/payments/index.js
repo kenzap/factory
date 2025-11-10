@@ -283,9 +283,6 @@ class Transactions {
                 return;
             }
         });
-
-        // const reportUrl = `/report/debitors/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`;
-        // window.open(reportUrl, '_blank', 'debitorReport');
     }
 
     generateWaybillReport = () => {
@@ -296,9 +293,6 @@ class Transactions {
                 return;
             }
         });
-
-        // const reportUrl = `/report/waybills/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}`;
-        // window.open(reportUrl, '_blank', 'waybillReport');
     }
 
     columns = () => {

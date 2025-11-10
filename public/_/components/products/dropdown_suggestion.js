@@ -10,7 +10,38 @@ export class DropdownSuggestion {
     }
 
     init() {
+        this.datalist = null;
+        this.createDatalist();
 
+        this.input.addEventListener("focus", () => {
+            if (!this.datalist || !this.datalist.parentNode) {
+                this.createDatalist();
+            }
+        });
+
+        this.input.addEventListener("input", (e) => {
+            const selectedValue = e.target.value;
+            if (this.suggestions.includes(selectedValue)) {
+                if (this.cb) this.cb(selectedValue);
+            }
+        });
+
+        this.input.addEventListener("blur", () => {
+            this.cb(this.input.value);
+            this.removeDatalist();
+        });
+
+        this.input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                this.cb(this.input.value);
+                this.removeDatalist();
+            } else if (e.key === "Escape") {
+                this.removeDatalist();
+            }
+        });
+    }
+
+    createDatalist() {
         const datalist = document.createElement("datalist");
         datalist.id = "suggestions-" + Math.random().toString(36).substring(2, 11);
         datalist.style.backgroundColor = "beige";
@@ -22,47 +53,19 @@ export class DropdownSuggestion {
             const option = document.createElement("option");
             option.value = suggestion;
             option.style.backgroundColor = "beige";
-            // option.style.color = "#fff!important";
             option.style.padding = "4px 8px";
-
-            // console.log('Adding suggestion:', suggestion);
             datalist.appendChild(option);
-        });
-
-        this.input.addEventListener("input", (e) => {
-            // This triggers when user selects from datalist
-            const selectedValue = e.target.value;
-            if (this.suggestions.includes(selectedValue)) {
-
-                // this.productSelected(suggestion, cell);
-                if (this.cb) this.cb(selectedValue);
-            }
         });
 
         this.input.setAttribute("list", datalist.id);
         document.body.appendChild(datalist);
+        this.datalist = datalist;
+    }
 
-        this.input.addEventListener("blur", () => {
-            this.cb(this.input.value);
-            if (datalist.parentNode) {
-                document.body.removeChild(datalist);
-            }
-        });
-
-        this.input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                // this.productSelected(suggestion, cell);
-                this.cb(this.input.value);
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
-
-            } else if (e.key === "Escape") {
-
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
-            }
-        });
+    removeDatalist() {
+        if (this.datalist && this.datalist.parentNode) {
+            document.body.removeChild(this.datalist);
+            this.datalist = null;
+        }
     }
 }

@@ -70,9 +70,9 @@ export const getHtml = (record) => {
                             <label for="status" class="form-label d-none">${__html('Status')}</label>
                             <div class="position-relative">
                                 <select class="form-select border-0" id="status" required>
-                                    <option value="waiting">${__html('Waiting')}</option>
-                                    <option value="instock" selected>${__html('In stock')}</option>
-                                    <option value="withdrawn">${__html('Withdrawn')}</option>
+                                    <option value="ordered">${__html('Ordered')}</option>
+                                    <option value="available" selected>${__html('Available')}</option>
+                                    <option value="used">${__html('Used')}</option>
                                 </select>
                             </div>
                         </div>

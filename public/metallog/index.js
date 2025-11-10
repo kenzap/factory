@@ -63,7 +63,7 @@ class MetalLog {
 
         if (document.querySelector('.supplies-log')) return;
 
-        document.querySelector('#app').innerHTML = getHtml(this.record);
+        document.querySelector('#app').innerHTML = getHtml(this.record, this.records);
 
         // hide summary if viewed in iframe
         if (this.mini) {
@@ -79,11 +79,11 @@ class MetalLog {
 
     listeners() {
 
+        let self = this;
+
         // Product search
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
-
             this.product = product;
-
             console.log('Product search selected:', product);
         });
 
@@ -92,7 +92,6 @@ class MetalLog {
             input: '#productColor',
             suggestions: this.colorSuggestions
         }, (suggestion) => {
-
             console.log('Suggestion selected:', suggestion);
         });
 
@@ -101,7 +100,6 @@ class MetalLog {
             input: '#productCoating',
             suggestions: this.coatingSuggestions
         }, (suggestion) => {
-
             console.log('Suggestion selected:', suggestion);
         });
 
@@ -112,11 +110,11 @@ class MetalLog {
 
             // Validate required fields
             let requiredFields = [
-                { selector: '#productColor', name: 'Color' },
-                { selector: '#productCoating', name: 'Coating' },
-                { selector: '#width', name: 'Width' },
-                { selector: '#length', name: 'Length' },
-                { selector: '#thickness', name: 'Thickness' }
+                { selector: '#productColor', name: __html('Color') },
+                { selector: '#productCoating', name: __html('Coating') },
+                { selector: '#width', name: __html('Width') },
+                { selector: '#length', name: __html('Length') },
+                { selector: '#thickness', name: __html('Thickness') }
             ];
 
             let type = 'metal';
@@ -124,7 +122,7 @@ class MetalLog {
             for (const field of requiredFields) {
                 const element = document.querySelector(field.selector);
                 if (!element || !element.value.trim()) {
-                    toast(`${field.name} is required`);
+                    toast(__html('Field required: %1$', field.name));
                     element?.focus();
                     return;
                 }
@@ -138,6 +136,16 @@ class MetalLog {
                 return;
             }
 
+            if (this.colorSuggestions.indexOf(document.querySelector('#productColor').value.trim()) === -1) {
+                toast('Invalid color selected');
+                return;
+            }
+
+            if (this.coatingSuggestions.indexOf(document.querySelector('#productCoating').value.trim()) === -1) {
+                toast('Invalid coating selected');
+                return;
+            }
+
             const record = {
                 type: type,
                 product_id: this.record.product_id ? this.record.product_id : '',
@@ -147,9 +155,9 @@ class MetalLog {
                 color: document.querySelector('#productColor').value.trim(),
                 coating: document.querySelector('#productCoating').value.trim(),
                 width: parseFloat(document.querySelector('#width').value.trim()),
-                length: parseFloat(document.querySelector('#length').value.trim()),
+                length: parseFloat(document.querySelector('#length').value.trim()) * 1000,
                 _width: parseFloat(document.querySelector('#width').value.trim()),
-                _length: parseFloat(document.querySelector('#length').value.trim()),
+                _length: parseFloat(document.querySelector('#length').value.trim()) * 1000,
                 thickness: parseFloat(document.querySelector('#thickness').value.trim()),
                 qty: qtyValue,
                 price: parseFloat(document.querySelector('#price').value),
@@ -168,7 +176,6 @@ class MetalLog {
 
                 if (response.success) {
 
-                    console.log('Record created:', response);
                     this.data(); // Refresh data
                 } else {
                     console.error('Error:', response.error);
@@ -214,20 +221,23 @@ class MetalLog {
         document.addEventListener('change', e => {
             if (e.target.classList.contains('editable-notes')) {
                 const coilId = e.target.dataset.coilId;
-                const newNotes = e.target.value;
+                const field = e.target.dataset.field;
+                const newValue = e.target.value;
 
-                // Find the coil in stock and update notes
-                const coil = this.records.find(c => c._id === coilId);
+                // Find the coil in stock and update the specific field
+                const coil = self.records.find(c => c._id === coilId);
                 if (coil) {
-                    coil.notes = newNotes;
-                    // Here you could add an API call to save the notes to the backend
-                    console.log('Notes updated for coil:', coilId, 'New notes:', newNotes);
+                    coil[field] = newValue;
+                    console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
 
-                    saveSupplylogValue({ _id: coilId, notes: newNotes }, (response) => {
+                    // Create update object with the specific field
+                    const updateData = { _id: coilId, [field]: newValue };
+
+                    saveSupplylogValue(updateData, (response) => {
                         if (response.success) {
-                            console.log('Notes saved successfully for coil:', coilId);
+                            console.log(`${field} saved successfully for coil:`, coilId);
                         } else {
-                            console.error('Error saving notes for coil:', coilId);
+                            console.error(`Error saving ${field} for coil:`, coilId);
                         }
                     });
                 }
@@ -264,6 +274,64 @@ class MetalLog {
                 }
             }
         });
+
+        // supplier suggestions
+        // Supplier autocomplete functionality
+        // document.addEventListener('DOMContentLoaded', function () {
+
+        const supplierInput = document.getElementById('supplier');
+        const suggestionsDiv = document.getElementById('supplierSuggestions');
+
+        supplierInput.addEventListener('input', (e) => {
+            const query = e.currentTarget.value.toLowerCase().trim();
+
+            if (query.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            console.log('Supplier input:', self.records);
+
+            // Get unique suppliers from records
+            const suppliers = [...new Set(
+                self.records
+                    .filter(record => record.supplier && record.supplier.toLowerCase().includes(query))
+                    .map(record => record.supplier)
+            )];
+
+            console.log('Supplier suggestions:', suppliers);
+
+            if (suppliers.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            // Build suggestions HTML
+            const suggestionsHTML = suppliers
+                .slice(0, 10) // limit to first 10 suggestions
+                .map(supplier => `<a href="#" class="dropdown-item" data-supplier="${supplier}">${supplier}</a>`)
+                .join('');
+
+            suggestionsDiv.innerHTML = suggestionsHTML;
+            suggestionsDiv.style.display = 'block';
+        });
+
+        // Handle suggestion clicks
+        suggestionsDiv.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (e.target.classList.contains('dropdown-item')) {
+                supplierInput.value = e.target.dataset.supplier;
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // Hide suggestions when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!supplierInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+        // });
     }
 
     async data() {
@@ -367,53 +435,74 @@ class MetalLog {
             let coatingHeader = '';
             if (lastCoating !== coating) {
                 // Calculate total length for this coating group
-                const totalLength = entries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0);
+                const totalLength = Math.round(entries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
+
+                // Calculate total price for this coating group
+                const totalPrice = entries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
+                    return sum + (area * parseFloat(entry.price || 0));
+                }, 0);
+
+                // Calculate total area for this coating group
+                const totalArea = entries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
+                    return sum + area;
+                }, 0);
 
                 coatingHeader = `
                 <tr>
                     <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
-                        ${coating} ${totalLength.toLocaleString()} ${getDimUnit(this.settings)}
+                        ${coating} ${totalLength.toLocaleString()} t/m | ${totalArea.toFixed(2)} m² | ${priceFormat(this.settings, totalPrice)}
                     </td>
                 </tr>
             `;
                 lastCoating = coating;
             }
 
-            return coatingHeader + entries.map(entry => `
+            return coatingHeader + entries.map((entry, i) => `
             <tr>
-                <td style="width:80px;" >
+                <td style="width:80px;" class="align-middle">
                     ${entry.color || '-'}
                 </td>
-                <td style="width:80px;">
+                <td style="width:80px;" class="align-middle">
                     ${this.supplyStatusBadge(entry)}
                 </td>
-                <td style="width:80px;">
+                <td style="width:80px;" class="align-middle">
                     ${entry.thickness} ${getDimUnit(this.settings)}
                 </td>
-                <td style="width:120px;" class="d-none">
+                <td style="width:120px;" class="d-none align-middle">
                     ${entry.coating || '-'}
                 </td>
-                <td style="width:500px;" ><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
-                <td><strong>${entry.qty}</strong></td>
-                <td style="width:80px;" class="text-truncate">
-                    ${entry.supplier || ''}
+                <td style="width:500px;" class="align-middle"><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
+                <td class="align-middle"><strong>${entry.qty}</strong></td>
+                <td style="width:80px;" class="text-truncate align-middle">
+                    <input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.supplier}" data-coil-id="${entry._id}" data-field="supplier" placeholder="">
                 </td>
-                  <td style="width:160px;">
+                  <td style="width:160px;" class="align-middle">
                     ${this.renderParameters(entry)}
                 </td>
-                <td style="width:160px;">
+                <td style="width:160px;" class="align-middle">
                     ${priceFormat(this.settings, entry?.price,)}
                 </td>
-                <td style="width:160px;">
-                    <div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.notes}" data-coil-id="${entry._id}" placeholder=""></div>
+                <td style="width:160px;" class="align-middle">
+                    <div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.notes}" data-field="notes" data-coil-id="${entry._id}" placeholder=""></div>
                 </td>
-                <td style="width:160px;">
+                <td style="width:160px;" class="align-middle">
                     <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
                 </td>
-                <td class="text-end">
-                    <button class="btn btn-delete-worklog text-danger" onclick="supplies.deleteEntry('${entry._id}')" title="Delete entry">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                <td class="text-end align-middle">
+                    <div class="dropdown tableActionsCont py-1">
+                        <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                            <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                        </svg>
+                        <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
+                            ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                            ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                            ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry('${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                        </ul>
+                    </div>
                 </td>
             </tr>`).join('');
 
@@ -423,9 +512,11 @@ class MetalLog {
     supplyStatusBadge(entry) {
 
         if (!entry.status) return ``;
-        if (entry.status == 'waiting') return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
-        if (entry.status == 'instock') return `<span class="item-status status-success">${__html('In stock')}</span>`;
-        if (entry.status == 'withdrawn') return `<span class="item-status status-secondary">${__html('Withdrawn')}</span>`;
+        if (entry.status == 'ordered') return `<span class="item-status status-warning">${__html('Ordered')}</span>`;
+        if (entry.status == 'available') return `<span class="item-status status-success">${__html('Available')}</span>`;
+        if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('Used')}</span>`;
+
+        return `<span class="item-status status-success">${__html('Available')}</span>`;
     }
 
     renderProductName(entry) {
@@ -487,15 +578,27 @@ class MetalLog {
 
         const entriesToShow = this.filteredEntries.length > 0 ? this.filteredEntries : this.records;
         const totalEntries = entriesToShow.length;
-        const totalQuantity = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.qty || 0), 0);
-        const totalTime = entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.time || 0), 0);
-        const uniqueProducts = new Set(entriesToShow.map(entry => entry.product_id)).size;
 
-        // Update new fixed bottom summary
-        document.getElementById('summaryEntries').textContent = totalEntries;
-        document.getElementById('summaryProducts').textContent = uniqueProducts;
-        document.getElementById('totalQuantity').textContent = totalQuantity;
-        document.getElementById('summaryTime').textContent = totalTime.toLocaleString();
+        // Calculate total length in t/m (convert from mm to m and divide by 1000 for t/m)
+        const totalLength = Math.round(entriesToShow.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000);
+
+        // Calculate total area in m²
+        const totalArea = entriesToShow.reduce((sum, entry) => {
+            const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+            return sum + area;
+        }, 0);
+
+        // Calculate total cost
+        const totalCost = entriesToShow.reduce((sum, entry) => {
+            const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+            return sum + (area * parseFloat(entry.price || 0));
+        }, 0);
+
+        // Update fixed bottom summary
+        document.getElementById('s1').textContent = totalEntries;
+        document.getElementById('s2').textContent = `${totalLength.toLocaleString()} t/m`;
+        document.getElementById('s3').textContent = `${totalArea.toFixed(2)} m²`;
+        document.getElementById('s4').textContent = priceFormat(this.settings, totalCost);
 
         // hide summary if viewed in iframe
         if (this.mini) document.querySelector('.fixed-summary').style.display = 'none';
@@ -523,6 +626,33 @@ class MetalLog {
             'finishing': 'stage-finishing'
         };
         return stageClasses[type] || 'bg-secondary';
+    }
+
+    updateStatus(coilId, newValue) {
+        if (confirm('Update status?')) {
+
+            const field = "status";
+
+            // Find the coil in stock and update the specific field
+            const coil = this.records.find(c => c._id === coilId);
+            if (coil) {
+                coil[field] = newValue;
+                console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
+
+                // Create update object with the specific field
+                const updateData = { _id: coilId, [field]: newValue };
+
+                saveSupplylogValue(updateData, (response) => {
+                    if (response.success) {
+
+                        toast('Changes applied');
+                        this.data();
+                    } else {
+                        console.error(`Error saving ${field} for coil:`, coilId);
+                    }
+                });
+            }
+        }
     }
 
     deleteEntry(id) {

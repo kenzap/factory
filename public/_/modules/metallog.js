@@ -30,11 +30,11 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2 form-cont d-none-" data-type="general">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__html('Color')}" value="${record.color}" required>
+                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__html('Color')}" value="${record.color}" autocomplete="off" required>
                         </div>
                         <div class="col-md-2 form-cont d-none-" data-type="general">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__html('Coating')}" value="${record.coating}" required>
+                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__html('Coating')}" value="${record.coating}" autocomplete="off" required>
                         </div>
                         <div class="col-md-2 form-cont d-none" data-type="general">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
@@ -54,15 +54,18 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2 form-cont d-none-" data-type="general">
                             <label for="supplier" class="form-label d-none">${__html('Supplier')}</label>
-                            <input type="text" class="form-control border-0" id="supplier" placeholder="${__html('Company AB')}" value="">
+                            <div class="position-relative">
+                                <input type="text" class="form-control border-0" id="supplier" placeholder="${__html('Company AB')}" value="" autocomplete="off">
+                                <div id="supplierSuggestions" class="dropdown-menu position-absolute w-100" style="max-height: 200px; overflow-y: auto; display: none; z-index: 1000;"></div>
+                            </div>
                         </div>
                         <div class="col-md-2 form-cont d-none-" data-type="general">
                             <label for="status" class="form-label d-none">${__html('Status')}</label>
                             <div class="position-relative">
                                 <select class="form-select border-0" id="status" required>
-                                    <option value="waiting">${__html('Waiting')}</option>
-                                    <option value="instock" selected>${__html('In stock')}</option>
-                                    <option value="withdrawn">${__html('Withdrawn')}</option>
+                                    <option value="ordered">${__html('Ordered')}</option>
+                                    <option value="available" selected>${__html('Available')}</option>
+                                    <option value="used">${__html('Used')}</option>
                                 </select>
                             </div>
                         </div>
@@ -96,19 +99,19 @@ export const getHtml = (record) => {
     </div>
 
     <!-- Fixed Bottom Summary -->
-    <div class="fixed-summary d-none">
+    <div class="fixed-summary">
         <div class="container-fluid">
             <table class="table summary-table mb-0">
                 <tbody>
                     <tr>
                         <td></td>
-                        <td><span class="summary-label">${__html('Records:')}</span> <span class="summary-value" id="summaryEntries">0</span></td>
+                        <td><span class="summary-label">${__html('Records:')}</span> <span class="summary-value" id="s1">0</span></td>
                         <td></td>
-                        <td><span class="summary-label">${__html('Products:')}</span> <span class="summary-value" id="summaryProducts">0</span></td>
+                        <td><span class="summary-label d-none">${__html('Products:')}</span> <span class="summary-value" id="s2">0</span></td>
                         <td></td>
-                        <td><span class="summary-label">${__html('Quantity:')}</span> <span class="summary-value" id="totalQuantity">0</span></td>
+                        <td><span class="summary-label d-none">${__html('Quantity:')}</span> <span class="summary-value" id="s3">0</span></td>
                         <td></td>
-                        <td><span class="summary-label">${__html('Time:')}</span> <span class="summary-value" id="summaryTime">0</span></td>
+                        <td><span class="summary-label d-none">${__html('Time:')}</span> <span class="summary-value" id="s4">0</span></td>
                         <td></td>
                         <td class="summary-value" id="summaryTime"></td>
                         <td></td>

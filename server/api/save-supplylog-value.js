@@ -28,6 +28,18 @@ async function saveSupplylogValue(data) {
             response = result.rows[0] || {};
         }
 
+        if (data.supplier !== undefined) {
+            query = `UPDATE data SET js = jsonb_set(jsonb_set(js, '{data,supplier}', $1), '{data,updated}', $2) WHERE _id = $3 AND ref = $4 RETURNING _id`;
+            result = await db.query(query, [JSON.stringify(data.supplier), JSON.stringify(data.updated), data._id, 'supplylog']);
+            response = result.rows[0] || {};
+        }
+
+        if (data.status !== undefined) {
+            query = `UPDATE data SET js = jsonb_set(jsonb_set(js, '{data,status}', $1), '{data,updated}', $2) WHERE _id = $3 AND ref = $4 RETURNING _id`;
+            result = await db.query(query, [JSON.stringify(data.status), JSON.stringify(data.updated), data._id, 'supplylog']);
+            response = result.rows[0] || {};
+        }
+
         if (data.sofftness !== undefined) {
 
             console.log('Saving sofftness value:', data.sofftness, data._id);
