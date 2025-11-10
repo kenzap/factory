@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { updateProductStock } from '../_/helpers/product.js';
 
 /**
  * Create supply record
@@ -44,6 +45,8 @@ async function createSupplyRecord(data) {
 
         response = result.rows[0] || {};
 
+        await updateProductStock(db, { coating: data.coating, color: data.color, amount: data.qty, _id: data.product_id }, data.user_id);
+
     } finally {
         await db.end();
     }
@@ -59,11 +62,11 @@ function createSupplyRecordApi(app) {
         // console.log('/api/create-worklog-record/ _req.body', _req.body);
 
         const data = _req.body;
-        const response = await createSupplyRecord(data);
+        const supply = await createSupplyRecord(data);
 
         // console.log('/api/create-worklog-record/ response', response);
 
-        res.json({ success: true, response });
+        res.json({ success: true, supply });
     });
 }
 

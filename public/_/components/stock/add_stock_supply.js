@@ -7,7 +7,6 @@ export class AddStockSupply {
         this.product_id = o.product_id;
         this.product_name = o.product_name;
         this.coating = o.coating;
-
         this.cb = cb;
 
         this.view();

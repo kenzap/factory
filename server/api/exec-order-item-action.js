@@ -161,7 +161,7 @@ async function execOrderItemAction(actions) {
 
                     await updateProductStock(client, {
                         _id: actions.update_stock.item_id,
-                        amount: -1 * parseFloat(last_stock_writeoff),
+                        amount: parseFloat(last_stock_writeoff),
                         coating: actions.update_stock.coating,
                         color: actions.update_stock.color
                     }, actions.user_id);
@@ -175,7 +175,7 @@ async function execOrderItemAction(actions) {
                     // apply stock change
                     await updateProductStock(client, {
                         _id: actions.update_stock.item_id,
-                        amount: actions.update_stock.amount,
+                        amount: -1 * actions.update_stock.amount,
                         coating: actions.update_stock.coating,
                         color: actions.update_stock.color
                     }, actions.user_id);

@@ -1,7 +1,7 @@
 
 import { sid } from './index.js';
 
-export const setProductStock = async (client, inventory, user_id) => {
+export const setProductStock = async (db, inventory, user_id) => {
 
     console.log('setProductStock', inventory);
 
@@ -23,7 +23,7 @@ export const setProductStock = async (client, inventory, user_id) => {
                 WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
             `;
 
-    const varResult = await client.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
+    const varResult = await db.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
     let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
@@ -57,7 +57,7 @@ export const setProductStock = async (client, inventory, user_id) => {
         `;
 
     const updateParams = [JSON.stringify(var_price), inventory._id, 'ecommerce-product', sid];
-    const updateResult = await client.query(updateQuery, updateParams);
+    const updateResult = await db.query(updateQuery, updateParams);
 
     if (updateResult.rows.length === 0) {
         throw new Error('Product not found or update failed');
@@ -66,7 +66,7 @@ export const setProductStock = async (client, inventory, user_id) => {
     return updateResult.rows[0];
 }
 
-export const updateProductStock = async (client, inventory, user_id) => {
+export const updateProductStock = async (db, inventory, user_id) => {
 
     console.log('updateProductStock', inventory);
 
@@ -88,7 +88,7 @@ export const updateProductStock = async (client, inventory, user_id) => {
                 WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
             `;
 
-    const varResult = await client.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
+    const varResult = await db.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
     let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
@@ -98,7 +98,7 @@ export const updateProductStock = async (client, inventory, user_id) => {
 
             // console.log('Updated var_price:', v);
 
-            v.stock = (v.stock || 0) - inventory.amount;
+            v.stock = (v.stock || 0) + inventory.amount;
 
             // console.log('Updated var_price:', v);
         }
@@ -115,7 +115,7 @@ export const updateProductStock = async (client, inventory, user_id) => {
         `;
 
     const updateParams = [JSON.stringify(var_price), inventory._id, 'ecommerce-product', sid];
-    const updateResult = await client.query(updateQuery, updateParams);
+    const updateResult = await db.query(updateQuery, updateParams);
 
     if (updateResult.rows.length === 0) {
         throw new Error('Product not found or update failed');

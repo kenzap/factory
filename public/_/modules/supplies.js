@@ -9,7 +9,7 @@ export const getHtml = (record) => {
             <div class="card-body- border-0 mb-4">
                 <form id="supplyEntryForm">
                     <div class="row g-3">
-                        <div class="col-md-2">
+                        <div class="col-md-2 d-none">
                             <label for="type" class="form-label d-none">${__html('Product')}</label>
                             <div class="position-relative">
                                 <select class="form-select supply-select-type border-0" id="type" required>
@@ -76,7 +76,7 @@ export const getHtml = (record) => {
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-1 form-cont d-none" data-type="general">
+                        <div class="col-md-3 form-cont d-none" data-type="general">
                             <label for="notes" class="form-label d-none">${__html('Notes')}</label>
                             <input type="text" class="form-control border-0" id="notes" placeholder="${__html('Notes..')}" value="">
                         </div>

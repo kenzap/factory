@@ -11,20 +11,20 @@ import { setProductStock } from '../_/helpers/product.js';
 */
 async function saveStockAmount(data) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     let response = null;
 
     try {
 
-        await client.connect();
+        await db.connect();
 
         if (!data) return { success: false, error: 'no data provided' };
 
-        response = await setProductStock(client, data, data.user_id)
+        response = await setProductStock(db, data, data.user_id)
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;

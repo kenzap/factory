@@ -365,7 +365,7 @@ class Supplies {
         if (!entry.status) return ``;
         if (entry.status == 'ordered') return `<span class="item-status status-warning">${__html('Ordered')}</span>`;
         if (entry.status == 'available') return `<span class="item-status status-success">${__html('Available')}</span>`;
-        if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('used')}</span>`;
+        if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('Used')}</span>`;
     }
 
     renderProductName(entry) {
