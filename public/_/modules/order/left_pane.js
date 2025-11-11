@@ -32,8 +32,8 @@ export class LeftPane {
         <div class="bg-light bg-gradient">
             <div class="top-content">
                 <!-- Order ID Section -->
-                <div class="form-section">
-                    <h6><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
+                <div class="form-section p-0 pb-3 border-0">
+                    <h6 class="d-none"><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
@@ -43,7 +43,7 @@ export class LeftPane {
                         </div>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-sm" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}" tabindex="0">
+                        <input type="text" class="form-control form-control-ss" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}" tabindex="0">
                     </div>
                     <div class="mb-2">
                         <client-order-search></client-order-search>
@@ -52,30 +52,30 @@ export class LeftPane {
                         <client-address-search></client-address-search>
                     </div>
                     <div class="mb-2">
-                        <textarea class="form-control form-control-sm" id="notes" rows="3" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
+                        <textarea class="form-control form-control-ss" id="notes" rows="1" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
                     </div>
                 </div>
                 
                 <!-- Contact Information -->
-                <div class="form-section">
+                <div class="form-section p-0 pb-3 border-0">
                     <h6><i class="bi bi-telephone me-2"></i>${__html('Contact')}</h6>
                     <contact-order-search></contact-order-search>
-                    <div class="input-group input-group-sm mb-2">
+                    <div class="input-group input-group-ss mb-2">
                         <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}" tabindex="5">
                         <button class="btn btn-outline-success whatsapp-btn po" type="button" id="whatsappBtn">
                             <i class="bi bi-whatsapp"></i>
                         </button>
                     </div>
                     <div class="mb-2">
-                        <input id="contactEmail" type="text" class="form-control form-control-sm" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}" tabindex="6">
+                        <input id="contactEmail" type="text" class="form-control form-control-ss" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}" tabindex="6">
                     </div>
                 </div>
                 
                 <!-- Due Date -->
-                <div class="form-section">
+                <div class="form-section p-0 pb-3 border-0">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
-                    <div class="input-group input-group-sm mb-2">
-                        <input type="datetime-local" class="form-control form-control-sm" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}" tabindex="7">
+                    <div class="input-group input-group-ss mb-2">
+                        <input type="datetime-local" class="form-control form-control-ss" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}" tabindex="7">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -83,29 +83,39 @@ export class LeftPane {
                 </div>
                 
                 <!-- Document Types -->
-                <div class="form-section">
+                <div class="form-section p-0 pb-3 border-0">
                     <h6><i class="bi bi-file-earmark-text me-2"></i>${__html('Documents')}</h6>
-                    <div class="btn-group-toggle d-flex flex-wrap gap-1" data-bs-toggle="buttons">
-                        <button class="btn ${this.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-sm document-btn" data-type="waybill">${this.order?.waybill?.number ? this.order?.waybill?.number : __html('Waybill')}</button>
-                        <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'}  btn-sm document-btn" data-type="invoice">${this.order?.invoice?.number ? __html('INV %1$', this.order?.invoice?.number) : __html('Invoice')}</button>
-                        <button class="btn btn-outline-primary btn-sm document-btn" data-type="invoiceEU">${__html('Invoice EU')}</button>
-                        <button class="btn btn-outline-primary btn-sm document-btn" data-type="receipt">${__html('Receipt')}</button>
-                        <button class="btn btn-outline-secondary btn-sm document-btn" data-type="draft">${__html('Draft')}</button>
-                        <button class="btn btn-outline-primary btn-sm document-btn" data-type="bill">${__html('Bill')}</button>
-                        <button class="btn btn-outline-info btn-sm document-btn" data-type="production-slip">${__html('Production Slip')}</button>
-                        <button class="btn btn-outline-info btn-sm document-btn" data-type="packing-slip">${__html('Packing Slip')}</button>
+                    <div class="btn-group-toggle d-flex flex-nowrap gap-1 overflow-hidden-" data-bs-toggle="buttons">
+                        <div class="d-flex align-items-center justify-content-between w-100 h-100 overflow-hidden-">
+                            <div class="d-flex flex-nowrap overflow-hidden-">
+                                <button class="btn ${this.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${this.order?.waybill?.number ? this.order?.waybill?.number : __html('Waybill')}</button>
+                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${this.order?.invoice?.number ? __html('INV %1$', this.order?.invoice?.number) : __html('Invoice')}</button>
+                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
+                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
+                            </div>
+                            <div class="dropdown flex-shrink-0">
+                                <svg id="docActions" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po mb-1" viewBox="0 0 16 16">
+                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                </svg>
+                                <ul class="dropdown-menu">
+                                    <li><button class="dropdown-item document-btn mb-1" data-type="packing-slip">${__html('Packing Slip')}</button></li>
+                                    <li><button class="dropdown-item document-btn mb-1" data-type="invoice-eu">${__html('Invoice EU')}</button></li>
+                                    <li><button class="dropdown-item document-btn mb-1" data-type="production-slip-detailed">${__html('Production Slip')}</button></li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="bottom-content">
+            <div class="pt-0 bottom-content">
                 <!-- Totals Summary -->
-                <div class="form-section">
+                <div class="form-section p-0 pb-3">
                     <h6><i class="bi bi-calculator me-2"></i>${__html('Summary')}</h6>
                     <order-summary class="mb-1"></order-summary>
                 </div>
                 
                 <!-- Save Button -->
-                <div class="form-section">
+                <div class="form-section p-0">
                     <button class="btn ${this.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
                         <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save') : __html('Create')}
                     </button>
@@ -194,19 +204,25 @@ export class LeftPane {
             const type = event.target.dataset.type;
 
             event.target.disabled = true;
-            event.target.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
 
             if (!type) return;
 
             switch (type) {
                 case 'waybill':
                     new PreviewDocument(type, this.order);
+                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
                     break;
                 case 'invoice':
                     new PreviewDocument(type, this.order);
+                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
+                    break;
+                case 'quotation':
+                    new PreviewDocument(type, this.order);
+                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
                 case 'production-slip':
                     new PreviewDocument(type, this.order);
+                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
             }
         });

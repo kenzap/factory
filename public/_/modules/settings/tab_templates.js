@@ -225,6 +225,18 @@ export class TabTemplates {
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="form-group row mb-3 mt-1">
+                            <label class="col-sm-3 col-form-label">${__html('Quotation template.')}</label>
+                            <div class="col-sm-9">
+                                <div id="quotation_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>
+                                <textarea id="quotation_document_template-" type="text" class="form-control d-none" name="quotation_document_template" data-type="textarea" rows="20"></textarea>
+                                <p class="form-text">${__html('Production slip template with dynamic fields.')}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="form-group row mb-3 mt-1">
                             <label class="col-sm-3 col-form-label">${__html('Package slip template.')}</label>
                             <div class="col-sm-9">
                                 <div id="package_slip_document_template" class="html-editor inp" data-type="editor" style="min-height:400px;"></div>

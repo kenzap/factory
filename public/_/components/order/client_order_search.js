@@ -6,7 +6,7 @@ import { bus } from "../../modules/bus.js";
  * A client search component that provides autocomplete functionality for searching clients.
  * Example, in the orders journal.
  * 
- * @class ClientSearch
+ * @class ClientSearch 
  */
 export class ClientOrderSearch {
 
@@ -30,13 +30,13 @@ export class ClientOrderSearch {
 
         document.querySelector('client-order-search').innerHTML = `
             <div class="autocomplete-container position-relative">
-                <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${attr(this.order?.name || '')}" data-_id="${this.order?.eid || ''}" tabindex="1" >
+                <div class="input-group input-group-ss autocomplete-container position-relative mb-2">       
+                    <input type="text" class="form-control form-control-ss d-none-" id="clientFilter" placeholder="${__html('Search client...')}" autocomplete="off" value="${attr(this.order?.name || '')}" data-_id="${this.order?.eid || ''}" tabindex="1" >
                     <button class="btn btn-outline-primary edit-client-btn po" type="button" id="editClientBtn" >
                         <i class="bi bi-arrow-right"></i>
                     </button>
                 </div>
-                <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
+                <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-ss d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
             `;
     }

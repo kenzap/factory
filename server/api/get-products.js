@@ -67,7 +67,7 @@ async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0
 
     if (filters.for == 'stock') {
         query += `
-            ORDER BY js->'data'->>'priority' DESC
+            ORDER BY js->'data'->>'priority' DESC, js->'data'->'locales'->$3->>'title' ASC
             LIMIT $${params.length - 1} OFFSET $${params.length}
         `;
     }

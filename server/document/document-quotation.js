@@ -1,45 +1,53 @@
 import { chromium } from 'playwright';
-// import { authenticateToken } from '../_/helpers/auth.js';
-import { getDocumentData, getProductionItemsTable, parseDocument } from '../_/helpers/document.js';
+import { authenticateToken } from '../_/helpers/auth.js';
+import { getDocumentData, getWaybillItemsTable, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
 import { send_email } from '../_/helpers/email.js';
-import { __html, getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
 
 /**
- * Production slip PDF Document Generator
+ * Waybill PDF Document Generator
  * 
  * @version 1.0
  * @date 2025-08-06
  * @param {string} lang - Language code for product titles and categories
  * @returns {Promise<string>} - XML string of products
 */
-async function viewProductionSlip(_id, user, lang) {
+async function viewInvoice(_id, user, lang) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-        const locale = await getLocale(db, sid, lang);
+        const locale = await getLocale(lang);
 
-        let data = await getDocumentData(db, "production_slip", _id, user, locale);
+        let data = await getDocumentData(db, "quotation", _id, user, locale);
 
         data.lang = lang;
 
-        let invoice = data.settings?.document_template || "";
+        data.user = user;
 
-        data.production_items_table = getProductionItemsTable(data.settings, data.order);
+        let quotation = data.settings?.document_template || "";
 
-        return parseDocument(invoice, data);
+        // data.order.invoice = await getInvoiceNextNumber(db, data.order, data.settings, user);
+
+        data.invoice_items_table = getWaybillItemsTable(data.settings, data.order, locale);
+
+        data.invoice_totals = getWaybillTotals(data.settings, data.order);
+
+        // console.log(`Invoice next number:`, data.order.invoice);
+
+        return parseDocument(quotation, data);
 
     } finally {
         await db.end();
     }
 }
 
-// API route for product export
-function viewProductionSlipApi(app) {
+// API route for product export 
+function viewInvoiceApi(app) {
 
-    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
-    app.get('/document/production-slip/', async (req, res) => {
+    app.get('/document/quotation/', authenticateToken, async (req, res) => {
+        // app.get('/document/invoice/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
@@ -47,10 +55,10 @@ function viewProductionSlipApi(app) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
-            console.log('/document/production-slip/', req.user);
+            console.log('/document/quotation/', req.user);
 
-            // Generate HTML for waybill
-            const html = await viewProductionSlip(id, req.user, lang);
+            // Generate HTML for invoice
+            const html = await viewInvoice(id, req.user, lang);
 
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
@@ -69,11 +77,11 @@ function viewProductionSlipApi(app) {
             if (process.env.NODE_ENV === 'development') {
                 const fs = await import('fs');
                 const path = await import('path');
-                const screenshotPath = path.join(process.cwd(), '/public/production-slip-screenshot.png');
+                const screenshotPath = path.join(process.cwd(), '/public/quotation-screenshot.png');
                 await fs.promises.writeFile(screenshotPath, screenshotBuffer);
             }
 
-            const doc_path = '/app/server/document/pdf/production-slip-' + req.query.id + '.pdf';
+            const doc_path = '/app/server/document/pdf/quotation-' + req.query.id + '.pdf';
 
             await page.emulateMedia({ media: 'screen' });
             const pdfBuffer = await page.pdf({
@@ -90,13 +98,13 @@ function viewProductionSlipApi(app) {
             if (req.query.email) {
 
                 const body = `
-                    <h1>Production slip for order #${req.query.id}</h1>
-                    <p>Attached is the production slip document.</p>
+                    <h1>Invoice for order #${req.query.id}</h1>
+                    <p>Attached is the invoice document for your order.</p>
                 `;
 
                 // req.query.email = "pavel";
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Production slip for order #%1$", req.query.id), body, [doc_path]);
+                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Invoice for order #%1$", req.query.id), body, [doc_path]);
                 res.send({ success: true, message: 'email sent' });
 
                 // Clean up the PDF file after sending email
@@ -117,7 +125,7 @@ function viewProductionSlipApi(app) {
                 res.send(html);
             } else {
                 res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
-                res.setHeader('Content-Disposition', 'filename="waybill.pdf"');
+                res.setHeader('Content-Disposition', 'filename="invoice.pdf"');
                 res.setHeader('Content-Length', pdfBuffer.length);
                 res.send(pdfBuffer);
             }
@@ -129,4 +137,4 @@ function viewProductionSlipApi(app) {
     });
 }
 
-export default viewProductionSlipApi;
+export default viewInvoiceApi;

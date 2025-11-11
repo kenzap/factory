@@ -491,18 +491,7 @@ class MetalLog {
                     <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
                 </td>
                 <td class="text-end align-middle">
-                    <div class="dropdown tableActionsCont py-1">
-                        <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
-                            <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                        </svg>
-                        <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
-                            ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
-                            ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
-                            ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry('${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
-                        </ul>
-                    </div>
+                    ${this.supplyActions(entry, i)}
                 </td>
             </tr>`).join('');
 
@@ -517,6 +506,23 @@ class MetalLog {
         if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('Used')}</span>`;
 
         return `<span class="item-status status-success">${__html('Available')}</span>`;
+    }
+
+    supplyActions(entry, i) {
+
+        return `
+            <div class="dropdown tableActionsCont py-1">
+                <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                </svg>
+                <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
+                    ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry('${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                </ul>
+            </div>`;
     }
 
     renderProductName(entry) {

@@ -41,21 +41,24 @@ async function execWaybillsReport(data) {
 
         // Filter by client eid if provided
         if (data.eid) {
-            query += ` AND js->'data'->>'eid' = $${paramIndex}`;
+            // query += ` AND js->'data'->>'eid' = $${paramIndex}`;
+            query += ` AND (js->'data'->>'eid' = $${paramIndex} OR LOWER(js->'data'->>'name') = LOWER($${paramIndex + 1})) `;
             queryParams.push(data.eid);
-            paramIndex++;
+            queryParams.push(data.name || '');
+            paramIndex += 2;
         }
 
         // Filter by date if provided
+        // Filter by date if provided
         if (data.from || data.to) {
-            if (data.from) {
-                query += ` AND (js->'data'->'waybill'->>'date')::date >= $${paramIndex}`;
-                queryParams.push(data.from);
+            if (data.from && data.from.trim() !== '') {
+                query += ` AND js->'data'->'waybill'->>'date' >= $${paramIndex}`;
+                queryParams.push(data.from); // Extract date part only
                 paramIndex++;
             }
-            if (data.to) {
-                query += ` AND (js->'data'->'waybill'->>'date')::date <= $${paramIndex}`;
-                queryParams.push(data.to);
+            if (data.to && data.to.trim() !== '') {
+                query += ` AND js->'data'->'waybill'->>'date' <= $${paramIndex}`;
+                queryParams.push(data.to); // Extract date part only
                 paramIndex++;
             }
         }

@@ -8,7 +8,6 @@ import { LeftPane } from "../_/modules/order/left_pane.js";
 import { OrderPane } from "../_/modules/order/order_pane.js";
 import { Session } from "../_/modules/session.js";
 
-
 /**
  * Order Create/Edit Page
  * 

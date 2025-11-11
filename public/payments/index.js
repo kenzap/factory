@@ -277,7 +277,7 @@ class Transactions {
 
     generateDebitorReport = () => {
 
-        new PreviewReport(`/report/debitors/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
+        new PreviewReport(`/report/debitors/?eid=${this.filters.client?.eid || ''}&name=${this.filters.client?.name || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
             if (!response.success) {
                 toast(__html('Error opening report'));
                 return;
@@ -287,7 +287,7 @@ class Transactions {
 
     generateWaybillReport = () => {
 
-        new PreviewReport(`/report/waybills/?eid=${this.filters.client?.eid || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
+        new PreviewReport(`/report/waybills/?eid=${this.filters.client?.eid || ''}&name=${this.filters.client?.name || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
             if (!response.success) {
                 toast(__html('Error opening report'));
                 return;
@@ -364,7 +364,6 @@ class Transactions {
                     input.type = 'date';
                     input.className = 'form-control';
                     const payment = cell.getValue() || {};
-                    input.value = payment.date || '';
 
                     // Position the input over the cell
                     const cellElement = cell.getElement();
@@ -381,6 +380,9 @@ class Transactions {
                     document.body.appendChild(input);
                     input.focus();
                     input.click(); // Trigger date picker
+                    input.value = payment.date && payment.date !== '0000-00-00' ? new Date(payment.date).toISOString().split('T')[0] : '';
+
+                    console.log('Cell edited value', input.value, " | ", payment.date);
 
                     // Handle value change
                     input.addEventListener('change', () => {
@@ -399,10 +401,23 @@ class Transactions {
                             }
                         }, 100);
                     });
+
+                    // Handle Enter key
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const currentPayment = cell.getValue() || {};
+                            const newDate = input.value ? new Date(input.value + 'T' + new Date().toTimeString().slice(0, 8)).toISOString() : '';
+                            console.log('New date value:', newDate);
+                            cell.setValue({ ...currentPayment, date: newDate });
+                            document.body.removeChild(input);
+                        }
+                    });
                 },
                 cellEdited: (cell) => {
                     const rowData = cell.getRow().getData();
                     const rowId = rowData.id;
+
+                    console.log('Cell edited');
 
                     // Initialize editedRows array if it doesn't exist
                     if (!this.editedRows) {
@@ -509,6 +524,15 @@ class Transactions {
                                 document.body.removeChild(input);
                             }
                         }, 100);
+                    });
+
+                    // Handle Enter key
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            const currentPayment = cell.getValue() || {};
+                            cell.setValue({ ...currentPayment, amount: input.value });
+                            document.body.removeChild(input);
+                        }
                     });
                 },
                 cellEdited: (cell) => {

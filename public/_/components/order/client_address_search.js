@@ -29,10 +29,10 @@ export class ClientAddressSearch {
 
         document.querySelector('client-address-search').innerHTML = `
             <div class="autocomplete-container position-relative">
-                <div class="input-group input-group-sm autocomplete-container position-relative mb-2">       
-                    <input type="text" class="form-control form-control-sm" id="address" autocomplete="nope" placeholder="${__html('Address')}" value="${attr(this.order.address || '')}" tabindex="2">
+                <div class="input-group input-group-ss autocomplete-container position-relative mb-2">       
+                    <input type="text" class="form-control form-control-ss" id="address" autocomplete="nope" placeholder="${__html('Address')}" value="${attr(this.order.address || '')}" tabindex="2">
                 </div>
-                <div id="addressSuggestion" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
+                <div id="addressSuggestion" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-ss d-none" style="max-height: 300px; overflow-y: auto; z-index: 1000;"></div>
             </div>
             `;
     }

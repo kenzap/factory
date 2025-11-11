@@ -60,16 +60,16 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {
         // query += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
         // query_summary += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
-        query += ` AND js->'data'->'waybill'->>'date' >= $${params.length + 1}`;
-        query_summary += ` AND js->'data'->'waybill'->>'date' >= $${params.length + 1}`;
+        query += ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
+        query_summary += ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
         params.push(filters.dateFrom.trim());
     }
 
     if (filters.dateTo && filters.dateTo.trim() !== '') {
         // query += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
         // query_summary += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
-        query += ` AND js->'data'->'waybill'->>'date' <= $${params.length + 1}`;
-        query_summary += ` AND js->'data'->'waybill'->>'date' <= $${params.length + 1}`;
+        query += ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
+        query_summary += ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
         params.push(filters.dateTo.trim());
     }
 

@@ -1,6 +1,7 @@
 import { createSupplyRecord } from "../_/api/create_supply_record.js";
 import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getSupplyLog } from "../_/api/get_supply_log.js";
+import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
 import { __html, hideLoader, onChange, onClick, toast, unescape } from "../_/helpers/global.js";
@@ -300,7 +301,7 @@ class Supplies {
         `;
 
         let lastDate = null;
-        tbody.innerHTML = entriesToShow.map(entry => {
+        tbody.innerHTML = entriesToShow.map((entry, i) => {
 
             const entryDate = new Date(entry.date).toDateString();
             const today = new Date().toDateString();
@@ -351,9 +352,7 @@ class Supplies {
                     <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
                 </td>
                 <td class="text-end">
-                    <button class="btn btn-delete-worklog text-danger" onclick="supplies.deleteEntry('${entry._id}')" title="Delete entry">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    ${this.supplyActions(entry, i)}
                 </td>
             </tr>
         `;
@@ -366,6 +365,23 @@ class Supplies {
         if (entry.status == 'ordered') return `<span class="item-status status-warning">${__html('Ordered')}</span>`;
         if (entry.status == 'available') return `<span class="item-status status-success">${__html('Available')}</span>`;
         if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('Used')}</span>`;
+    }
+
+    supplyActions(entry, i) {
+
+        return `
+            <div class="dropdown tableActionsCont py-1">
+                <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                </svg>
+                <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
+                    ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="supplies.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="supplies.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="supplies.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="supplies.deleteEntry('${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                </ul>
+            </div>`;
     }
 
     renderProductName(entry) {
@@ -443,6 +459,33 @@ class Supplies {
             'finishing': 'stage-finishing'
         };
         return stageClasses[type] || 'bg-secondary';
+    }
+
+    updateStatus(coilId, newValue) {
+        if (confirm('Update status?')) {
+
+            const field = "status";
+
+            // Find the coil in stock and update the specific field
+            const coil = this.records.find(c => c._id === coilId);
+            if (coil) {
+                coil[field] = newValue;
+                console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
+
+                // Create update object with the specific field
+                const updateData = { _id: coilId, [field]: newValue };
+
+                saveSupplylogValue(updateData, (response) => {
+                    if (response.success) {
+
+                        toast('Changes applied');
+                        this.data();
+                    } else {
+                        console.error(`Error saving ${field} for coil:`, coilId);
+                    }
+                });
+            }
+        }
     }
 
     deleteEntry(id) {

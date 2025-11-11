@@ -22,48 +22,50 @@ async function execDebitorReport(data) {
 
         // Query to get all debitors grouped by eid where payment amount < grand_total
         let query = `
-            SELECT
+                SELECT
                 js->'data'->>'eid' as eid,
                 js->'data'->>'name' as name,
-                ROUND(SUM((js->'data'->'price'->>'grand_total')::numeric), 2) as total_amount_due,
-                ROUND(SUM((js->'data'->'payment'->>'amount')::numeric), 2) as total_amount_paid,
-                ROUND(SUM((js->'data'->'payment'->>'amount')::numeric) - SUM((js->'data'->'price'->>'grand_total')::numeric), 2) as outstanding_balance,
+                ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as total_amount_due,
+                ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
+                ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as outstanding_balance,
                 COUNT(*) as order_count
-            FROM data
-            WHERE ref = $1 AND sid = $2
-                AND js->'data'->'price'->'grand_total' IS NOT NULL
-                AND js->'data'->'payment'->'amount' IS NOT NULL
-                AND js->'data'->'payment'->>'amount' != ''
-                AND js->'data'->'price'->>'grand_total' != ''
-            GROUP BY js->'data'->>'eid', js->'data'->>'name'
-            HAVING ROUND(SUM((js->'data'->'payment'->>'amount')::numeric), 2) != ROUND(SUM((js->'data'->'price'->>'grand_total')::numeric), 2)
-        `;
+                FROM data
+                WHERE ref = $1 AND sid = $2
+
+                `;
 
         const queryParams = ['ecommerce-order', sid];
         let paramIndex = 3;
 
         // Filter by client eid if provided
         if (data.eid) {
-            query += ` AND js->'data'->>'eid' = $${paramIndex}`;
+            // query += ` AND js->'data'->>'eid' = $${paramIndex}`;
+            query += ` AND (js->'data'->>'eid' = $${paramIndex} OR LOWER(js->'data'->>'name') = LOWER($${paramIndex + 1})) `;
             queryParams.push(data.eid);
-            paramIndex++;
+            queryParams.push(data.name || '');
+            paramIndex += 2;
         }
 
         // Filter by date if provided
         if (data.from || data.to) {
-            if (data.from) {
-                query += ` AND (js->'data'->'waybill'->>'date')::date >= $${paramIndex}`;
-                queryParams.push(data.from);
+            if (data.from && data.from.trim() !== '') {
+                // query += ` AND js->'data'->'waybill'->>'date' >= $${paramIndex}`;
+                query += ` AND (js->'data'->'waybill'->>'date' >= $${paramIndex} OR js->'data'->'payment'->>'date' >= $${paramIndex})`;
+                queryParams.push(data.from); // Extract date part only
                 paramIndex++;
             }
-            if (data.to) {
-                query += ` AND (js->'data'->'waybill'->>'date')::date <= $${paramIndex}`;
-                queryParams.push(data.to);
+            if (data.to && data.to.trim() !== '') {
+                // query += ` AND js->'data'->'waybill'->>'date' <= $${paramIndex}`;
+                query += ` AND (js->'data'->'waybill'->>'date' <= $${paramIndex} OR js->'data'->'payment'->>'date' <= $${paramIndex})`;
+                queryParams.push(data.to); // Extract date part only
                 paramIndex++;
             }
         }
 
-        query += ` ORDER BY js->'data'->>'name'`;
+        query += `
+                GROUP BY js->'data'->>'eid', js->'data'->>'name'
+                HAVING ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) != ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2)
+                ORDER BY js->'data'->>'name'`;
 
         const result = await db.query(query, queryParams);
         if (result.rows) response = result.rows || [];
@@ -118,7 +120,7 @@ function execDebitorReportApi(app) {
 
     app.get('/report/debitors/', authenticateToken, async (_req, res) => {
 
-        const data = _req.body;
+        const data = _req.query;
 
         const locale = await getLocale(_req.headers.locale);
         const report = await execDebitorReport(data);

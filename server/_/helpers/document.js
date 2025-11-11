@@ -135,9 +135,9 @@ export async function updateInvoiceNumber(db, order) {
     return response.rows[0] ? response.rows[0]._id : null;
 }
 
-export function getWaybillItemsTable(settings, order) {
+export function getWaybillItemsTable(settings, order, locale) {
 
-    // console.log("getWaybillItemsTable", order.items);
+    console.log("getWaybillItemsTable locale", locale);
 
     let table = `
             <!-- Items Table -->
@@ -145,15 +145,15 @@ export function getWaybillItemsTable(settings, order) {
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col">${__html("Product")}</th>
-                        <th scope="col">${__html("Price")}</th>
-                        ${order.discount ? `<th scope="col"><div class="text-start">${__html("Discount")}</div></th>` : ``}
-                        ${order.discount ? `<th scope="col"><div class="text-start">${__html("Price")} - %</div></th>` : ``}
-                        <th scope="col">${__html("Qty")}</th>
-                        <th scope="col">${__html("Unit")}</th>
-                        <th scope="col"><div class="${order.vat_status == "0" ? "text-end" : "text-start"}">${__html("Total")}</div></th>
-                        <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}">${__html("Tax")} / ${__html("Code")}</th>
-                        <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end">${__html("Total with tax")}</div></th>
+                        <th scope="col">${__html(locale, "Product")}</th>
+                        <th scope="col">${__html(locale, "Price")}</th>
+                        ${order.discount ? `<th scope="col"><div class="text-start">${__html(locale, "Discount")}</div></th>` : ``}
+                        ${order.discount ? `<th scope="col"><div class="text-start">${__html(locale, "Price")} - %</div></th>` : ``}
+                        <th scope="col">${__html(locale, "Qty")}</th>
+                        <th scope="col">${__html(locale, "Unit")}</th>
+                        <th scope="col"><div class="${order.vat_status == "0" ? "text-end" : "text-start"}">${__html(locale, "Price")}</div></th>
+                        <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}">${__html(locale, "Tax")} / ${__html(locale, "Code")}</th>
+                        <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end">${__html(locale, "Total")}</div></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -171,7 +171,7 @@ export function getWaybillItemsTable(settings, order) {
                 ${order.discount ? `<th scope="col"><div class="text-start">-${Math.round(100 - item.discount * 100)}%</div></th>` : ``}
                 ${order.discount ? `<th scope="col"><div class="text-start">${Math.round(item.priced * 100) / 100}</div></th>` : ``}
                 <td>${item.qty}</td>
-                <td>${item.unit || __html("pc")}</td>
+                <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
                 <td class="${order.vat_status == "0" ? "text-end" : "text-start"}">${priceFormat(settings, item.total)}</td>
                 <td class="${order.vat_status == "0" ? "d-none" : "d-none"}">${item.tax_id}</td>
                 <td class="${order.vat_status == "0" ? "d-none" : ""}">${item.tax_id.length == 4 ? "ANM / " + item.tax_id : settings.tax_percent + "%"}</td>
@@ -345,7 +345,9 @@ export const getWaybillTotals = (settings, order) => {
         </div>`;
 }
 
-export function getProductionItemsTable(settings, order) {
+export function getProductionItemsTable(settings, order, locale) {
+
+    console.log("getProductionItemsTable locale", locale);
 
     let groups = settings.groups || [];
 
@@ -375,9 +377,9 @@ export function getProductionItemsTable(settings, order) {
                 <thead class="table-secondary">
                     <tr>
                         <th scope="col"></th>
-                        <th scope="col">${__html(group.name)}</th>
-                        <th scope="col">${__html("Qty")}</th>
-                        <th scope="col">${__html("Unit")}</th>
+                        <th scope="col">${__html(locale, group.name)}</th>
+                        <th scope="col">${__html(locale, "Qty")}</th>
+                        <th scope="col">${__html(locale, "Unit")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -395,7 +397,7 @@ export function getProductionItemsTable(settings, order) {
                                 ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                             </td>
                             <td>${item.qty}</td>
-                            <td>${item.unit || __html("pc")}</td>
+                            <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
                         </tr>
                     `;
                     itemIndex++;
@@ -424,9 +426,9 @@ export function getProductionItemsTable(settings, order) {
             <thead class="table-secondary">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">${__html("Product")}</th>
-                    <th scope="col">${__html("Qty")}</th>
-                    <th scope="col">${__html("Unit")}</th>
+                    <th scope="col">${__html(locale, "Product")}</th>
+                    <th scope="col">${__html(locale, "Qty")}</th>
+                    <th scope="col">${__html(locale, "Unit")}</th>
                 </tr>
             </thead>
             <tbody>
@@ -442,10 +444,9 @@ export function getProductionItemsTable(settings, order) {
                         <td>
                             <div>${item.title} ${item.coating} ${item.color}</div>
                             ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
-                            <div>${item._id}</div>
                         </td>
                         <td>${item.qty}</td>
-                        <td>${item.unit || __html("pc")}</td>
+                        <td>${item.unit ? item.unit : __html(locale, "pc")}</td>
                     </tr>
                 `;
                 itemIndex++;
@@ -778,7 +779,7 @@ export const parseDocument = (document, data) => {
     document = data.entity.reg_address
         ? document.replace(/\{\{client_reg_address\}\}/g, data.entity.reg_address)
         : removeField(document, 'client_reg_address');
-    // order.invoice = { number: "test" };
+
     document = data.order?.invoice?.number
         ? document.replace(/\{\{invoice_number\}\}/g, data.order?.invoice?.number)
         : removeField(document, 'invoice_number');

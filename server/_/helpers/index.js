@@ -60,8 +60,8 @@ export const getLocale = async (locale) => {
 
     if (!locale) locale = process.env.LOCALE || 'en'; // Default to 'en' if not set
 
-    const client = getDbConnection();
-    await client.connect();
+    const db = getDbConnection();
+    await db.connect();
 
     let response = { values: {} };
 
@@ -76,14 +76,14 @@ export const getLocale = async (locale) => {
             LIMIT 1
         `;
 
-        const result = await client.query(query, ['locale-ecommerce', sid, locale]);
+        const result = await db.query(query, ['locale-ecommerce', sid, locale]);
         if (result.rows.length > 0) {
 
             response.values = result.rows[0].locale || {};
         }
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;
