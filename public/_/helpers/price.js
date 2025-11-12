@@ -36,7 +36,7 @@ export const getPrice = (settings, item) => {
 
             const item_price = item.var_price.find(o => o.parent === item.coating && o.title === item.color);
 
-            console.log('getPrice variable item_price:', item);
+            // console.log('getPrice variable item_price:', item);
 
             obj.price = item_price ? item_price.price : 0;
             obj.total = obj.price * item.qty || 1;
@@ -355,8 +355,8 @@ export const calculateItemTotal = (qty, price, adj, discount) => {
 
     // console.log('calculateItemTotal', qty, price, adj, discount);
 
-    const basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
-    const adjustedPrice = basePrice + (adj || 0);
+    const basePrice = (parseFloat(qty) || 0) * ((parseFloat(price) || 0) + (adj || 0));
+    // const adjustedPrice = basePrice + (adj || 0);
 
     // Handle discount with % sign - extract numeric value
     let discountValue = discount || 0;
@@ -364,8 +364,8 @@ export const calculateItemTotal = (qty, price, adj, discount) => {
         discountValue = parseFloat(discountValue.replace('%', '')) || 0;
     }
 
-    const discountAmount = adjustedPrice * (discountValue / 100);
-    const finalPrice = adjustedPrice - discountAmount;
+    const discountAmount = basePrice * (discountValue / 100);
+    const finalPrice = basePrice - discountAmount;
 
     // console.log('Final price calculation:', {
     //     basePrice,

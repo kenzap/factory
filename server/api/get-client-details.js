@@ -36,7 +36,8 @@ async function getClientDetails(id) {
             js->'data'->>'phone' as phone,
             js->'data'->'contacts' as contacts,
             js->'data'->'drivers' as drivers,
-            js->'data'->'addresses' as addresses
+            js->'data'->'addresses' as addresses,
+            js->'data'->'discounts' as discounts
         FROM data 
         WHERE ref = $1 AND sid = $2 AND _id = $3
     `;

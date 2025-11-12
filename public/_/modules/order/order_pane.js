@@ -1,7 +1,7 @@
 // import { getProductSuggestions } from "../../api/get_product_suggestions.js";
 import { updateCalculations } from "../../components/order/order_calculations.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
-import { __html, onClick } from "../../helpers/global.js";
+import { __html, onClick, priceFormat } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { bus } from "../bus.js";
@@ -13,6 +13,8 @@ export class OrderPane {
         this.settings = settings;
         this.order = order;
         this.order.items = this.order.items || [];
+
+        console.log('Initializing OrderPane with order:', this.order);
 
         // check if header is already present
         this.init();
@@ -48,6 +50,8 @@ export class OrderPane {
     }
 
     table = () => {
+
+        let self = this;
 
         // Initialize Tabulator
         this.table = new TabulatorFull("#order-table", {
@@ -119,6 +123,7 @@ export class OrderPane {
                     width: 400,
                     editorParams: {
                         settings: this.settings,
+                        discounts: this.order.discounts || {},
                         navigateToNextCell: this.navigateToNextCell
                     },
                 },
@@ -162,18 +167,25 @@ export class OrderPane {
                     headerSort: false,
                     editorParams: { step: 0.01 },
                     width: 80,
-                    formatter: "money",
-                    formatterParams: { symbol: "€", precision: 2 },
+                    formatter: function (cell) {
+                        return cell.getValue() ? '<span class="calculated-field">' + priceFormat(self.settings, cell.getValue()) + '</span>' : '';
+                    }
+                    // formatter: "money",
+                    // formatterParams: { symbol: "€", precision: 2 },
                 },
                 {
                     title: __html("Price"),
                     field: "price",
-                    editor: this.numberEditor,
                     headerSort: false,
-                    editorParams: { min: 0, step: 0.01 },
                     width: 100,
-                    formatter: "money",
-                    formatterParams: { symbol: "€", precision: 2 },
+                    formatter: function (cell) {
+                        // return '<span class="calculated-field"> ok </span>';
+                        const row = cell.getRow().getData();
+                        const price = parseFloat(row.price) || 0;
+                        const adj = parseFloat(row.adj) || 0;
+                        const total = price + adj;
+                        return '<span class="calculated-field">' + priceFormat(self.settings, total) + '</span>';
+                    },
                 },
                 {
                     title: __html("Discount"),
@@ -196,7 +208,7 @@ export class OrderPane {
                     headerSort: false,
                     width: 100,
                     formatter: function (cell) {
-                        return '<span class="calculated-field">€' + (cell.getValue().toFixed(2) || '0.00') + '</span>';
+                        return '<span class="calculated-field">' + priceFormat(self.settings, cell.getValue()) + '</span>';
                     }
                 },
                 {
@@ -432,25 +444,40 @@ export class OrderPane {
 
         const currentRow = currentCell.getRow();
         const currentColumn = currentCell.getColumn();
-        const columns = this.table.getColumns().filter(col => col.getField() !== 'actions' && col.getField() !== 'area' && col.getField() !== 'total');
-        const currentColumnIndex = columns.findIndex(col => col.getField() === currentColumn.getField());
+        const columns = this.table.getColumns().filter(col => col.getField() !== 'actions');
+        const editableColumns = columns.filter(col => {
+            // Check if column has an editor (is editable)
+            const colDef = col.getDefinition();
+            return colDef.editor && colDef.field !== 'area' && colDef.field !== 'total' && colDef.field !== 'price';
+        });
+        const currentColumnIndex = editableColumns.findIndex(col => col.getField() === currentColumn.getField());
 
-        if (currentColumnIndex < columns.length - 2) {
-            // Move to next column in same row
-            const nextColumn = columns[currentColumnIndex + 1];
+        if (currentColumnIndex < editableColumns.length - 1) {
+            // Move to next editable column in same row
+            const nextColumn = editableColumns[currentColumnIndex + 1];
             const nextCell = currentRow.getCell(nextColumn.getField());
-            nextCell.edit();
+            try {
+                nextCell.edit();
+            } catch (error) {
+                console.warn('Cannot edit cell:', nextColumn.getField(), error);
+            }
         } else {
-            // Move to first column of next row, or create new row if at end
+            // Move to first editable column of next row, or create new row if at end
             const rows = this.table.getRows();
             const currentRowIndex = rows.findIndex(row => row === currentRow);
 
             if (currentRowIndex < rows.length - 1) {
                 // Move to next row
                 const nextRow = rows[currentRowIndex + 1];
-                const firstColumn = columns[1];
-                const nextCell = nextRow.getCell(firstColumn.getField());
-                nextCell.edit();
+                const firstEditableColumn = editableColumns[0];
+                if (firstEditableColumn) {
+                    const nextCell = nextRow.getCell(firstEditableColumn.getField());
+                    try {
+                        nextCell.edit();
+                    } catch (error) {
+                        console.warn('Cannot edit cell:', firstEditableColumn.getField(), error);
+                    }
+                }
             } else {
 
                 // Add new row and move to first cell
@@ -532,102 +559,4 @@ export class OrderPane {
 
         return input;
     }
-
-    // // New method to search products from backend
-    // searchProductSuggestionsFromBackend = (s, cell, callback) => {
-
-    //     // const columns = this.table.getColumns()
-    //     const rowData = cell.getRow().getData();
-    //     const color = rowData.color;
-    //     const coating = rowData.coating;
-
-    //     // console.log('Searching backend for products with term:', color, coating, s);
-
-    //     getProductSuggestions({ s, color, coating }, (response) => {
-
-    //         this.productSuggestions = response.suggestions; // .map(suggestion => suggestion.title + " " + suggestion.sdesc);
-
-    //         callback(this.productSuggestions);
-
-    //         // console.log('Product suggestions from backend:', response.suggestions);
-    //     });
-    // }
-
-    // Helper method to update datalist options
-    // updateProductDatalist = (datalist, suggestions) => {
-
-    //     console.log('Updating product datalist with suggestions:', suggestions);
-
-    //     datalist.innerHTML = '';
-    //     suggestions.forEach(suggestion => {
-    //         const option = document.createElement("option");
-    //         option.value = suggestion;
-
-    //         // console.log('Adding suggestion to datalist:', suggestion);
-    //         datalist.appendChild(option);
-    //     });
-    // }
-
-    // // Function to calculate square footage
-    // calculatearea = (width, length) => {
-    //     if (width && length) {
-    //         return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
-    //     }
-    //     return 0;
-    // }
-
-    // // Function to update calculations for a row
-    // updateCalculations = (cell) => {
-
-    //     console.log('Updating calculations for cell:', cell.getField());
-
-    //     const row = cell.getRow();
-    //     const data = row.getData();
-    //     const cellField = cell.getField();
-
-    //     let coating = data.coating || "";
-    //     let color = data.color || "";
-    //     let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
-
-    //     // update product price in the row
-    //     if (data._id) {
-
-    //         price = getPrice(this.settings, { ...data, coating: coating, color: color });
-
-    //         row.update({
-    //             price: price.price,
-    //         });
-    //     }
-
-    //     // calculate price based on the product's formula
-    //     if (cellField == "title" && data._id) {
-
-    //         row.update({
-    //             product: data.title,
-    //             width: price.formula_width_calc || "",
-    //             length: price.formula_length_calc || "",
-    //         });
-    //     }
-
-    //     // Calculate square footage
-    //     const area = this.calculatearea(data.formula_width_calc, data.formula_length_calc);
-    //     console.log('Calculated area:', area);
-
-    //     row.update({ area: area });
-
-    //     // Calculate total price
-    //     const total = calculateItemTotal(
-    //         data.qty,
-    //         data.price,
-    //         data.adj,
-    //         data.discount
-    //     );
-    //     row.update({ total: total });
-
-    //     this.syncItems();
-
-    //     bus.emit('order:table:refreshed');
-
-    //     console.log('Updating', row.getData());
-    // }
 }

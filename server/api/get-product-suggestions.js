@@ -31,6 +31,7 @@ async function getProductSuggestions(filters) {
                 js->'data'->'input_fields' as input_fields,
                 js->'data'->'calc_price' as calc_price,
                 js->'data'->'cad_files' as cad_files,
+                js->'data'->'group' as group,
                 js->'data'->'tax_id' as tax_id
             FROM data 
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0'

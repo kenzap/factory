@@ -12,7 +12,7 @@ let productSuggestions = [];
  */
 export const productEditor = (cell, onRendered, success, cancel, editorParams) => {
 
-    // console.log('editorParams.settings:', editorParams.settings);
+    // console.log('editorParams.discounts:', editorParams.discounts);
 
     const container = document.createElement("div");
     container.style.position = "relative";
@@ -40,8 +40,8 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     largePreview.style.position = "fixed";
     largePreview.style.top = "20px";
     largePreview.style.right = "20px";
-    largePreview.style.width = "400px";
-    largePreview.style.height = "400px";
+    largePreview.style.width = "450px";
+    largePreview.style.height = "450px";
     largePreview.style.backgroundColor = "white";
     largePreview.style.border = "2px solid #ddd";
     largePreview.style.borderRadius = "8px";
@@ -94,9 +94,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     };
 
     const updateDropdown = (suggestions) => {
+        // Preserve selectedIndex when dropdown is being refreshed
+        const currentSelectedIndex = selectedIndex;
+
         dropdown.innerHTML = '';
         options = [];
-        selectedIndex = -1;
 
         if (suggestions.length > 0) {
             suggestions.forEach((suggestion, index) => {
@@ -130,9 +132,10 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
                 // Handle image load errors
                 optionImage.onerror = () => {
-                    largeImage.onerror = null; // Prevent infinite loop
+                    optionImage.onerror = null; // Prevent infinite loop
                     optionImage.style.display = "none";
                 };
+                optionImage.style.display = "block";
 
                 const optionText = document.createElement("span");
                 optionText.textContent = suggestion.title + " " + suggestion.sdesc;
@@ -149,14 +152,17 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                     largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
-                        largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
+                        largeImage.style.display = "none";
+                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
+                    largeImage.style.display = "block";
                     largePreview.style.display = "block";
                 });
 
                 option.addEventListener("mouseleave", (e) => {
                     e.preventDefault();
-                    selectedIndex = -1;
+                    // Don't reset selectedIndex on mouseleave to preserve keyboard navigation
+                    // selectedIndex = -1;
                     updateSelectedOption();
 
                     // Hide large preview image
@@ -165,7 +171,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
                 option.addEventListener("click", () => {
                     // console.log('Suggestion clicked:', suggestion);
-                    productSelected(suggestion, cell, editorParams.settings);
+                    productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
 
                     // input.value = suggestion.title + " " + suggestion.sdesc;
                     // dropdown.style.display = "none";
@@ -184,8 +190,18 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 dropdown.appendChild(option);
                 options.push(option);
             });
+
+            // Restore selectedIndex if it's still valid
+            if (currentSelectedIndex >= 0 && currentSelectedIndex < options.length) {
+                selectedIndex = currentSelectedIndex;
+            } else {
+                selectedIndex = -1;
+            }
+
+            updateSelectedOption();
             dropdown.style.display = "block";
         } else {
+            selectedIndex = -1;
             dropdown.style.display = "none";
         }
     };
@@ -244,8 +260,10 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                     largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
-                        largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
+                        largeImage.style.display = "none";
+                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
+                    largeImage.style.display = "block";
                     largePreview.style.display = "block";
                 }
             }
@@ -262,7 +280,8 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                     largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
-                        largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
+                        largeImage.style.display = "none";
+                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
                     largePreview.style.display = "block";
                 }
@@ -280,7 +299,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 dropdown.style.display = "none";
                 largePreview.style.display = "none";
                 const suggestion = productSuggestions[selectedIndex];
-                productSelected(suggestion, cell, editorParams.settings);
+                productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
                 success(selectedSuggestion);
                 setTimeout(() => {
                     editorParams.navigateToNextCell(cell);
@@ -334,7 +353,7 @@ const searchProductSuggestionsFromBackend = (s, cell, callback) => {
     });
 }
 
-const productSelected = (suggestion, cell, settings) => {
+const productSelected = (suggestion, cell, settings, discounts) => {
 
     // this.syncItems(suggestion, cell);
 
@@ -343,8 +362,12 @@ const productSelected = (suggestion, cell, settings) => {
     let updatedData = { ...rowData, ...suggestion };
 
     updatedData.title = updatedData.title.trim();
+    updatedData.formula_width_calc = updatedData.formula_width || "";
+    updatedData.formula_length_calc = updatedData.formula_length || "";
+    updatedData.discount = discounts[updatedData.group] || 0;
 
-    // console.log('updateCalculations settings:', settings);
+    // console.log('updatedData: ', updatedData, discounts);
+    // console.log('group: ', updatedData.group);
 
     // Update the row with all suggestion properties
     cell.getRow().update(updatedData);

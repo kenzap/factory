@@ -4,6 +4,7 @@ import { saveClient } from "../../api/save_client.js";
 import { verifyClient } from "../../api/verify_client.js";
 import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
+import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
 import { __html, attr, onClick, toast } from "../../helpers/global.js";
 import { isEmail, isPhone } from "../../helpers/validation.js";
@@ -11,9 +12,10 @@ import { bus } from "../../modules/bus.js";
 
 export class ClientPane {
 
-    constructor(order) {
+    constructor(settings, order) {
 
         this.firstLoad = true;
+        this.settings = settings;
         this.order = order;
         this.client = { _id: this.order.eid ? this.order.eid : null, drivers: [], addresses: [], contacts: [] };
 
@@ -45,6 +47,7 @@ export class ClientPane {
                 this.client.contacts = this.client.contacts || [];
 
                 this.order.vat_status = this.client.vat_status || '0';
+                this.order.discounts = this.client.discounts || {};
                 this.order.entity = this.client.entity || 'company';
 
                 // console.log('Client data after fetch:', this.order);
@@ -142,6 +145,9 @@ export class ClientPane {
             <!-- Construction Addresses -->
             <client-addresses></client-addresses>
 
+            <!-- Construction Addresses -->
+            <client-discounts></client-discounts>
+
             <!-- Save Button -->
             <div class="text-end">
                 <div class="btn-group" role="group">
@@ -161,6 +167,8 @@ export class ClientPane {
 
         new ClientAddresses(this.client);
 
+        new ClientDiscounts(this.settings, this.client);
+
         // Add event listeners or any additional initialization here
         this.listeners();
     }
@@ -170,7 +178,7 @@ export class ClientPane {
         if (!this.firstLoad) return;
 
         // Add event listeners for buttons and other interactive elements
-        onClick('#saveClientBtn', this.save);
+        onClick('#saveClientBtn', () => { this.save(false) });
 
         // From the client side
         bus.clear('client:search:refresh');
@@ -342,6 +350,7 @@ export class ClientPane {
             bank_acc,
             reg_address,
             notes,
+            discounts: this.client.discounts || {},
             drivers: this.client.drivers,
             addresses: this.client.addresses,
             contacts: this.client.contacts

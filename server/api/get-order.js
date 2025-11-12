@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
+import { getClientDiscounts } from '../_/helpers/order.js';
 
 /**
  * Kenzap Factory Get Clients
@@ -12,7 +13,7 @@ import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index
 */
 async function getOrderDetails(id) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     let data = {};
 
@@ -46,15 +47,15 @@ async function getOrderDetails(id) {
 
     try {
 
-        await client.connect();
+        await db.connect();
 
-        const result = await client.query(query, ['ecommerce-order', sid, id]);
+        const result = await db.query(query, ['ecommerce-order', sid, id]);
         if (result.rows) data = result.rows[0] || {};
 
         // console.log('getOrderDetails result', result.rows);
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return data;
@@ -66,9 +67,10 @@ function getOrderApi(app) {
     app.post('/api/get-order/', authenticateToken, async (_req, res) => {
 
         const locale = await getLocale(_req.headers.locale);
-        const order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
+        let order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
+        order.discounts = await getClientDiscounts(order.eid);
 
-        res.json({ success: true, order, settings: await getSettings(), locale });
+        res.json({ success: true, order, settings: await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "groups", "price", "tax_auto_rate", "tax_calc", "tax_display", "tax_percent", "tax_rate"]), locale });
     });
 }
 

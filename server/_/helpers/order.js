@@ -1,6 +1,34 @@
-import { sid } from './index.js';
+import { getDbConnection, sid } from './index.js';
 
-// const { Client } = pkg;
+export async function getClientDiscounts(eid) {
+
+    const db = getDbConnection();
+
+    let discounts = {};
+
+    // Querry 
+    const query = `
+        SELECT 
+            js->'data'->'discounts' as discounts
+        FROM data 
+        WHERE ref = $1 AND sid = $2 AND _id = $3
+    `;
+
+    try {
+        await db.connect();
+
+        const result = await db.query(query, ['3dfactory-entity', sid, eid]);
+
+        if (result.rows && result.rows[0]) {
+            discounts = result.rows[0].discounts || {};
+        }
+
+    } finally {
+        await db.end();
+    }
+
+    return discounts;
+}
 
 // logging
 export async function getNextOrderId(client) {

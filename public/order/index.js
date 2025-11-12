@@ -60,7 +60,7 @@ class OrderEdit {
             new LeftPane(this.settings, this.order);
 
             if (this.order.id && this.firstLoad) new OrderPane(this.settings, this.order);
-            if (!this.order.id && this.firstLoad) new ClientPane(this.order);
+            if (!this.order.id && this.firstLoad) new ClientPane(this.settings, this.order);
 
             this.firstLoad = false;
         });

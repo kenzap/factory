@@ -160,7 +160,7 @@ export class LeftPane {
         // Order list table button
         onClick('#editClientBtn', () => {
 
-            new ClientPane(this.order);
+            new ClientPane(this.settings, this.order);
         });
 
         // Order list table button
