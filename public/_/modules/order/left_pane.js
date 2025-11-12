@@ -367,7 +367,7 @@ export class LeftPane {
         // Calculate totals based on the order items and settings
         // this.order.price = getTotals(this.settings, this.order);
 
-        console.log('Order summary updated:', this.order.price);
+        // console.log('Order summary updated:', this.order.price);
 
         // const order = this.order;
 
@@ -377,7 +377,7 @@ export class LeftPane {
 
         let totals = getTotalsHTML(this.settings, this.order);
 
-        console.log('Order totals:', totals.price);
+        // console.log('Order totals:', totals.price);
 
         this.order.price = totals.price;
 
@@ -452,6 +452,11 @@ export class LeftPane {
 
             if (response.order.id) this.order.id = response.order.id;
             if (response.order._id) this.order._id = response.order._id;
+
+            // Update URL to include the order ID
+            const currentUrl = new URL(window.location);
+            currentUrl.searchParams.set('id', response.order.id);
+            window.history.replaceState({}, '', currentUrl);
 
             toast("Order saved", "success");
 

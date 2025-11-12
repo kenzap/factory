@@ -131,14 +131,6 @@ export class ProductSearch {
                         this.productSelected(suggestion);
 
                         input.value = suggestion.title + " " + suggestion.sdesc;
-                        // dropdown.style.display = "none";
-
-                        // Immediately update the cell value before navigating
-                        // success(suggestion.title + " " + suggestion.sdesc);
-
-                        // setTimeout(() => {
-                        //     this.navigateToNextCell(cell);
-                        // }, 10);
                     });
 
                     dropdown.appendChild(option);

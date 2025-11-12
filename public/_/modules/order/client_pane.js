@@ -241,18 +241,18 @@ export class ClientPane {
                             </div>`
                     }
 
-                    if (response.client.pvnStatus === 'active' && entity.dataset.entity === 'company') {
-
-                        document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
-
-                        this.save();
-                    }
-
                     if (response.client.pvnStatus === 'active') {
 
                         if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
                         if (response.client.pvnStatus) this.client.vat_status = response.client.pvnStatus || '';
-                        if (response.client.adress_full) this.client.reg_address = response.client.adress_full || '';
+                        if (response.client.adress_full) { this.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = this.client.reg_address; }
+                    }
+
+                    if (response.client.pvnStatus === 'active' && entity.dataset.entity === 'company') {
+
+                        document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
+
+                        this.save(true);
                     }
 
                     toast(__html('Client details verified'), 'success');
@@ -350,7 +350,7 @@ export class ClientPane {
         return clientData;
     }
 
-    save = () => {
+    save = (silent = false) => {
 
         const clientData = this.getValidatedClientData();
 
@@ -360,7 +360,7 @@ export class ClientPane {
 
             console.log('Saved successfully', response);
 
-            toast('Updated');
+            if (!silent) toast('Updated');
 
             this.order.vat_status = clientData.vat_status;
             this.order.entity = clientData.entity;

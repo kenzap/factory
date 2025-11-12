@@ -1,7 +1,8 @@
-import { getProductSuggestions } from "../../api/get_product_suggestions.js";
-import { __html, FILES, onClick } from "../../helpers/global.js";
+// import { getProductSuggestions } from "../../api/get_product_suggestions.js";
+import { updateCalculations } from "../../components/order/order_calculations.js";
+import { productEditor } from "../../components/order/order_product_editor.js";
+import { __html, onClick } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
-import { calculateItemTotal, getPrice } from "../../helpers/price.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { bus } from "../bus.js";
 
@@ -24,7 +25,7 @@ export class OrderPane {
         this.coatingSuggestions = getCoatings(this.settings);
         this.colorSuggestions = getColors(this.settings);
         this.discountSuggestions = [5, 7, 10, 15, 20, 25, 30, 50];
-        this.productSuggestions = [];
+        // this.productSuggestions = [];
 
         this.view();
 
@@ -38,7 +39,7 @@ export class OrderPane {
         // Add fade effect to indicate loading/disabled state
         document.querySelector('.right-pane').innerHTML = /*html*/`
             <div class="table-container">
-                <button id="add-order-row" class="btn btn-primary btn-sm btn-add-row">
+                <button id="add-order-row" class="btn btn-outline-primary btn-sm btn-add-row">
                     <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
                 </button>
                 <div id="order-table"></div>
@@ -113,12 +114,13 @@ export class OrderPane {
                 {
                     title: __html("Product"),
                     field: "title",
-                    editor: this.productEditor,
+                    editor: productEditor,
                     headerSort: false,
                     width: 400,
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
+                    editorParams: {
+                        settings: this.settings,
+                        navigateToNextCell: this.navigateToNextCell
+                    },
                 },
                 {
                     title: __html("W (mm)"),
@@ -127,9 +129,6 @@ export class OrderPane {
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 68,
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("L (mm)"),
@@ -138,9 +137,6 @@ export class OrderPane {
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 68,
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("F (m²)"),
@@ -158,9 +154,6 @@ export class OrderPane {
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
                     width: 60,
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("Adj"),
@@ -171,9 +164,6 @@ export class OrderPane {
                     width: 80,
                     formatter: "money",
                     formatterParams: { symbol: "€", precision: 2 },
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("Price"),
@@ -184,9 +174,6 @@ export class OrderPane {
                     width: 100,
                     formatter: "money",
                     formatterParams: { symbol: "€", precision: 2 },
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("Discount"),
@@ -202,9 +189,6 @@ export class OrderPane {
                     editorParams: {
                         suggestions: this.discountSuggestions
                     },
-                    // cellEdited: (cell) => {
-                    //     this.updateCalculations(cell.getRow());
-                    // }
                 },
                 {
                     title: __html("Total"),
@@ -220,10 +204,13 @@ export class OrderPane {
                     field: "note",
                     headerSort: false,
                     width: 200,
-                    editor: "textarea",
                     formatter: function (cell) {
                         return '<span class="form-text">' + cell.getValue() + '</span>';
-                    }
+                    },
+                    editor: this.suggestionEditor,
+                    editorParams: {
+                        suggestions: this.discountSuggestions
+                    },
                 },
                 {
                     title: "",
@@ -258,7 +245,7 @@ export class OrderPane {
         // Load existing order items into the table
         if (this.order.items && this.order.items.length > 0) {
 
-            console.log('Loading existing order items into the table:', this.order.items);
+            // console.log('Loading existing order items into the table:', this.order.items);
             // this.table.setData(this.order.items);
         }
 
@@ -281,7 +268,7 @@ export class OrderPane {
             }
 
             // You can perform specific actions based on the field or value
-            this.updateCalculations(cell);
+            updateCalculations(cell, this.settings);
             this.syncItems();
         });
 
@@ -354,6 +341,12 @@ export class OrderPane {
         onClick('#add-order-row', () => {
             this.addRow();
         });
+
+
+        bus.on('order:table:sync:items', (id) => {
+
+            this.syncItems();
+        });
     }
 
     addRow = () => {
@@ -384,10 +377,12 @@ export class OrderPane {
         });
 
         // start editing color cell of the new row
-        const newRow = this.table.getRows()[this.table.getRows().length - 1];
-        const firstColumn = this.table.getColumns()[1];
-        const firstCell = newRow.getCell(firstColumn.getField());
-        firstCell.edit();
+        setTimeout(() => {
+            const newRow = this.table.getRows()[this.table.getRows().length - 1];
+            const firstColumn = this.table.getColumns()[1];
+            const firstCell = newRow.getCell(firstColumn.getField());
+            firstCell.edit();
+        }, 50);
     }
 
     // Enhanced number editor with Enter key handling
@@ -433,6 +428,8 @@ export class OrderPane {
     // Custom navigation function
     navigateToNextCell = (currentCell) => {
 
+        // console.log('Navigating to next cell from:', currentCell.getField());
+
         const currentRow = currentCell.getRow();
         const currentColumn = currentCell.getColumn();
         const columns = this.table.getColumns().filter(col => col.getField() !== 'actions' && col.getField() !== 'area' && col.getField() !== 'total');
@@ -457,6 +454,7 @@ export class OrderPane {
             } else {
 
                 // Add new row and move to first cell
+                console.log('At end of table, adding new row.');
                 this.addRow();
             }
         }
@@ -491,9 +489,6 @@ export class OrderPane {
             // This triggers when user selects from datalist
             const selectedValue = e.target.value;
             if (editorParams.suggestions.includes(selectedValue)) {
-
-                // this.productSelected(suggestion, cell);
-
                 // console.log('S:Suggestion selected:', selectedValue);
                 // Navigate to next cell after a short delay
                 setTimeout(() => {
@@ -514,12 +509,11 @@ export class OrderPane {
 
         input.addEventListener("keydown", (e) => {
             if (e.key === "Enter") {
-                // this.productSelected(suggestion, cell);
                 success(input.value);
                 if (datalist.parentNode) {
                     document.body.removeChild(datalist);
                 }
-                // console.log('Suggestion entered:', input.value);
+
                 // Navigate to next cell after a short delay
                 setTimeout(() => {
                     this.navigateToNextCell(cell);
@@ -539,351 +533,101 @@ export class OrderPane {
         return input;
     }
 
-    // Custom editor for product field with search suggestions  
-    productEditor = (cell, onRendered, success, cancel, editorParams) => {
-        const container = document.createElement("div");
-        container.style.position = "relative";
-        container.style.display = "flex";
-        container.style.alignItems = "center";
-        container.style.gap = "8px";
+    // // New method to search products from backend
+    // searchProductSuggestionsFromBackend = (s, cell, callback) => {
 
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = cell.getValue() || "";
-        input.className = "form-control form-control-sm";
-        input.style.flex = "1";
+    //     // const columns = this.table.getColumns()
+    //     const rowData = cell.getRow().getData();
+    //     const color = rowData.color;
+    //     const coating = rowData.coating;
 
-        const imagePreview = document.createElement("img");
-        imagePreview.style.width = "32px";
-        imagePreview.style.height = "32px";
-        imagePreview.style.objectFit = "cover";
-        imagePreview.style.border = "1px solid #ddd";
-        imagePreview.style.borderRadius = "4px";
-        imagePreview.src = "https://cdn.skarda.design/8e0729adbf79275c11a83d69df75f0c09061780a-polyester-2h3-1500.webp"; // Set default image source if needed
-        imagePreview.style.display = "none"; // Initially hidden
+    //     // console.log('Searching backend for products with term:', color, coating, s);
 
-        const dropdown = document.createElement("div");
-        dropdown.style.position = "absolute";
-        dropdown.style.top = "100%";
-        dropdown.style.left = "0";
-        dropdown.style.right = "0";
-        dropdown.style.backgroundColor = "white";
-        dropdown.style.border = "1px solid var(--bs-border-color);";
-        dropdown.style.borderRadius = "4px";
-        dropdown.style.maxHeight = "320px";
-        dropdown.style.overflowY = "auto";
-        dropdown.style.zIndex = "1000";
-        dropdown.style.display = "none";
+    //     getProductSuggestions({ s, color, coating }, (response) => {
 
-        container.appendChild(input);
-        container.appendChild(imagePreview);
-        container.appendChild(dropdown);
+    //         this.productSuggestions = response.suggestions; // .map(suggestion => suggestion.title + " " + suggestion.sdesc);
 
-        let searchTimeout;
-        let selectedIndex = -1;
-        let options = [];
+    //         callback(this.productSuggestions);
 
-        const updateSelectedOption = () => {
-            options.forEach((option, index) => {
-                if (index === selectedIndex) {
-                    option.style.backgroundColor = "#007bff";
-                    option.style.color = "white";
-                    option.scrollIntoView({ block: "nearest" });
-                } else {
-                    option.style.backgroundColor = "white";
-                    option.style.color = "black";
-                }
-            });
-        };
-
-        const updateDropdown = (suggestions) => {
-            dropdown.innerHTML = '';
-            options = [];
-            selectedIndex = -1;
-
-            if (suggestions.length > 0) {
-                suggestions.forEach((suggestion, index) => {
-                    const option = document.createElement("div");
-                    option.style.padding = "8px 12px";
-                    option.style.cursor = "pointer";
-                    option.style.borderBottom = "1px solid #eee";
-                    option.style.backgroundColor = "white";
-                    option.style.display = "flex";
-                    option.style.alignItems = "center";
-                    option.style.gap = "8px";
-
-                    const optionImage = document.createElement("img");
-                    optionImage.style.width = "42px";
-                    optionImage.style.height = "42px";
-                    optionImage.style.objectFit = "cover";
-                    optionImage.style.objectPosition = "center";
-                    optionImage.style.borderRadius = "4px";
-                    optionImage.style.backgroundColor = "#f8f9fa";
-                    optionImage.style.transition = "transform 0.2s ease";
-                    optionImage.src = FILES + "/" + suggestion._id + "-250.webp";
-
-                    // Add hover effect to scale image
-                    optionImage.addEventListener("mouseenter", () => {
-                        optionImage.style.transform = "scale(1.2)";
-                    });
-
-                    optionImage.addEventListener("mouseleave", () => {
-                        optionImage.style.transform = "scale(1)";
-                    });
-
-                    // Handle image load errors
-                    optionImage.onerror = () => {
-                        optionImage.style.display = "none";
-                    };
-
-                    const optionText = document.createElement("span");
-                    optionText.textContent = suggestion.title + " " + suggestion.sdesc;
-                    optionText.style.flex = "1";
-
-                    option.appendChild(optionImage);
-                    option.appendChild(optionText);
-
-                    option.addEventListener("mouseenter", (e) => {
-                        selectedIndex = index;
-                        updateSelectedOption();
-                    });
-
-                    option.addEventListener("mouseleave", (e) => {
-                        e.preventDefault();
-                        selectedIndex = -1;
-                        updateSelectedOption();
-                    });
-
-                    option.addEventListener("click", () => {
-                        // console.log('Suggestion clicked:', suggestion);
-                        this.productSelected(suggestion, cell);
-
-                        // input.value = suggestion.title + " " + suggestion.sdesc;
-                        // dropdown.style.display = "none";
-
-                        // Immediately update the cell value before navigating
-                        success(suggestion.title + " " + suggestion.sdesc);
-
-                        setTimeout(() => {
-                            this.navigateToNextCell(cell);
-                        }, 10);
-                    });
-
-                    dropdown.appendChild(option);
-                    options.push(option);
-                });
-                dropdown.style.display = "block";
-            } else {
-                dropdown.style.display = "none";
-            }
-        };
-
-        input.addEventListener("input", (e) => {
-            const searchTerm = e.target.value;
-
-            // Clear previous timeout to debounce the search
-            clearTimeout(searchTimeout);
-
-            // Debounce search requests (300ms delay)
-            searchTimeout = setTimeout(() => {
-                if (searchTerm.length >= 1) {
-                    this.searchProductSuggestionsFromBackend(searchTerm, cell, (suggestions) => {
-                        updateDropdown(suggestions);
-                    });
-                } else {
-                    updateDropdown(this.productSuggestions);
-                }
-            }, 300);
-        });
-
-        input.addEventListener("focus", () => {
-            updateDropdown(this.productSuggestions);
-        });
-
-        input.addEventListener("blur", (e) => {
-            // Delay hiding dropdown to allow clicks on options
-            setTimeout(() => {
-                if (!dropdown.contains(e.relatedTarget)) {
-                    dropdown.style.display = "none";
-                    // this.productSuggestions = [];
-                    clearTimeout(searchTimeout);
-                    success(input.value);
-                }
-            }, 150);
-        });
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "ArrowDown") {
-                e.preventDefault();
-                e.stopPropagation(); // Add this to prevent table navigation
-                if (dropdown.style.display === "block" && options.length > 0) {
-                    selectedIndex = selectedIndex < options.length - 1 ? selectedIndex + 1 : 0;
-                    updateSelectedOption();
-                }
-            } else if (e.key === "ArrowUp") {
-                e.preventDefault();
-                e.stopPropagation(); // Add this to prevent table navigation
-                if (dropdown.style.display === "block" && options.length > 0) {
-                    selectedIndex = selectedIndex > 0 ? selectedIndex - 1 : options.length - 1;
-                    updateSelectedOption();
-                }
-            } else if (e.key === "Enter") {
-                e.preventDefault();
-                e.stopPropagation(); // Add this to prevent table navigation
-                clearTimeout(searchTimeout);
-
-                if (selectedIndex >= 0 && selectedIndex < options.length) {
-
-                    // Select the highlighted option
-                    const selectedSuggestion = options[selectedIndex].textContent;
-                    input.value = selectedSuggestion;
-                    dropdown.style.display = "none";
-                    const suggestion = this.productSuggestions[selectedIndex];
-                    this.productSelected(suggestion, cell);
-                    success(selectedSuggestion);
-                    setTimeout(() => {
-                        this.navigateToNextCell(cell);
-                    }, 10);
-                } else {
-
-                    // No option selected, just accept current input value
-                    dropdown.style.display = "none";
-                    this.productSuggestions = [];
-                    success(input.value);
-                    setTimeout(() => {
-                        this.navigateToNextCell(cell);
-                    }, 10);
-                }
-            } else if (e.key === "Escape") {
-                e.preventDefault();
-                e.stopPropagation(); // Add this to prevent table navigation
-                clearTimeout(searchTimeout);
-                dropdown.style.display = "none";
-                this.productSuggestions = [];
-                cancel();
-            }
-        });
-
-        onRendered(() => {
-            input.focus();
-        });
-
-        return container;
-    }
-
-    productSelected = (suggestion, cell) => {
-
-        // this.syncItems(suggestion, cell);
-
-        // Map suggestion values to current row
-        const rowData = cell.getRow().getData();
-        let updatedData = { ...rowData, ...suggestion };
-
-        updatedData.title = updatedData.title.trim();
-
-        // console.log('Product selected:', updatedData);
-
-        // Update the row with all suggestion properties
-        cell.getRow().update(updatedData);
-
-        // Update calculations after mapping the suggestion data
-        this.updateCalculations(cell);
-    }
-
-    // New method to search products from backend
-    searchProductSuggestionsFromBackend = (s, cell, callback) => {
-
-        // const columns = this.table.getColumns()
-        const rowData = cell.getRow().getData();
-        const color = rowData.color;
-        const coating = rowData.coating;
-
-        // console.log('Searching backend for products with term:', color, coating, s);
-
-        getProductSuggestions({ s, color, coating }, (response) => {
-
-            this.productSuggestions = response.suggestions; // .map(suggestion => suggestion.title + " " + suggestion.sdesc);
-
-            callback(this.productSuggestions);
-
-            // console.log('Product suggestions from backend:', response.suggestions);
-        });
-    }
+    //         // console.log('Product suggestions from backend:', response.suggestions);
+    //     });
+    // }
 
     // Helper method to update datalist options
-    updateProductDatalist = (datalist, suggestions) => {
+    // updateProductDatalist = (datalist, suggestions) => {
 
-        console.log('Updating product datalist with suggestions:', suggestions);
+    //     console.log('Updating product datalist with suggestions:', suggestions);
 
-        datalist.innerHTML = '';
-        suggestions.forEach(suggestion => {
-            const option = document.createElement("option");
-            option.value = suggestion;
+    //     datalist.innerHTML = '';
+    //     suggestions.forEach(suggestion => {
+    //         const option = document.createElement("option");
+    //         option.value = suggestion;
 
-            // console.log('Adding suggestion to datalist:', suggestion);
-            datalist.appendChild(option);
-        });
-    }
+    //         // console.log('Adding suggestion to datalist:', suggestion);
+    //         datalist.appendChild(option);
+    //     });
+    // }
 
-    // Function to calculate square footage
-    calculatearea = (width, length) => {
-        if (width && length) {
-            return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
-        }
-        return 0;
-    }
+    // // Function to calculate square footage
+    // calculatearea = (width, length) => {
+    //     if (width && length) {
+    //         return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
+    //     }
+    //     return 0;
+    // }
 
-    // Function to update calculations for a row
-    updateCalculations = (cell) => {
+    // // Function to update calculations for a row
+    // updateCalculations = (cell) => {
 
-        console.log('Updating calculations for cell:', cell.getField());
+    //     console.log('Updating calculations for cell:', cell.getField());
 
-        const row = cell.getRow();
-        const data = row.getData();
-        const cellField = cell.getField();
+    //     const row = cell.getRow();
+    //     const data = row.getData();
+    //     const cellField = cell.getField();
 
-        let coating = data.coating || "";
-        let color = data.color || "";
-        let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
+    //     let coating = data.coating || "";
+    //     let color = data.color || "";
+    //     let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
 
-        // update product price in the row
-        if (data._id) {
+    //     // update product price in the row
+    //     if (data._id) {
 
-            price = getPrice(this.settings, { ...data, coating: coating, color: color });
+    //         price = getPrice(this.settings, { ...data, coating: coating, color: color });
 
-            row.update({
-                price: price.price,
-            });
-        }
+    //         row.update({
+    //             price: price.price,
+    //         });
+    //     }
 
-        // calculate price based on the product's formula
-        if (cellField == "title" && data._id) {
+    //     // calculate price based on the product's formula
+    //     if (cellField == "title" && data._id) {
 
-            row.update({
-                product: data.title,
-                width: price.formula_width_calc || "",
-                length: price.formula_length_calc || "",
-            });
-        }
+    //         row.update({
+    //             product: data.title,
+    //             width: price.formula_width_calc || "",
+    //             length: price.formula_length_calc || "",
+    //         });
+    //     }
 
-        // Calculate square footage
-        const area = this.calculatearea(data.formula_width_calc, data.formula_length_calc);
-        console.log('Calculated area:', area);
+    //     // Calculate square footage
+    //     const area = this.calculatearea(data.formula_width_calc, data.formula_length_calc);
+    //     console.log('Calculated area:', area);
 
-        row.update({ area: area });
+    //     row.update({ area: area });
 
-        // Calculate total price
-        const total = calculateItemTotal(
-            data.qty,
-            data.price,
-            data.adj,
-            data.discount
-        );
-        row.update({ total: total });
+    //     // Calculate total price
+    //     const total = calculateItemTotal(
+    //         data.qty,
+    //         data.price,
+    //         data.adj,
+    //         data.discount
+    //     );
+    //     row.update({ total: total });
 
-        this.syncItems();
+    //     this.syncItems();
 
-        bus.emit('order:table:refreshed');
+    //     bus.emit('order:table:refreshed');
 
-        console.log('Updating', row.getData());
-    }
+    //     console.log('Updating', row.getData());
+    // }
 }

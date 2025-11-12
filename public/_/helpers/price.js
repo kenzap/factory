@@ -143,7 +143,7 @@ export const getTotalsHTML = (settings, order) => {
 
     const tax_coef = (settings.tax_percent / 100) + 1;
 
-    console.log('order.items', order.items);
+    // console.log('order.items', order.items);
     // Calculate totals for different VAT categories
     // todo: standardize with peppol document format scheme 
     order.items.forEach(item => {
@@ -403,6 +403,7 @@ export const calculate = (expression) => {
     try {
         return new Function(`return (${sanitizedExpression});`)();
     } catch (error) {
+
         console.log("Expression:" + expression);
         console.log("Sanitized:" + sanitizedExpression);
         console.error('Error evaluating expression:', error);
