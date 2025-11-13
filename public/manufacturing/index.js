@@ -194,8 +194,8 @@ class Manufacturing {
                         mostRecentIsuDate = isuDate;
                     }
                 }
-                if (item.inventory && item.inventory.mnf_date) {
-                    const mnfDate = new Date(item.inventory.mnf_date);
+                if (item.inventory && item.inventory.rdy_date) {
+                    const mnfDate = new Date(item.inventory.rdy_date);
                     if (!mostRecentMnfDate || mnfDate > mostRecentMnfDate) {
                         mostRecentMnfDate = mnfDate;
                     }
@@ -232,7 +232,7 @@ class Manufacturing {
             const dueDate = new Date(order.due_date);
             const now = new Date();
             order.isOverdue = dueDate < now;
-            order.isReady = this.isOrderReady(order);// order.mnf_date.length;
+            order.isReady = this.isOrderReady(order);
             order.isIssued = this.isOrderIssued(order);
             order.isToday = dueDate.getDate() === now.getDate()
 
@@ -260,8 +260,8 @@ class Manufacturing {
 
         order.items.forEach(item => {
 
-            if (!item.inventory || !item.inventory.mnf_date) return false;
-            if (item.inventory.mnf_date) c++;
+            if (!item.inventory || !item.inventory.rdy_date) return false;
+            if (item.inventory.rdy_date) c++;
         });
 
         return c === order.items.length;
@@ -415,7 +415,7 @@ class Manufacturing {
                                         </td>
                                         <td><div class="stock-${item.coating}-${item.color}-${item._id}"><span>&nbsp;</span></div></td>
                                         <td>
-                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.amount}" style="width: 80px;">
+                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
                                             
@@ -448,8 +448,6 @@ class Manufacturing {
             targetCard.parentNode.insertBefore(subRow, targetCard.nextSibling);
 
             this.refreshButtons(order._id);
-
-            this.getStock(order._id);
 
             this.getBundles(order._id);
 
@@ -528,7 +526,7 @@ class Manufacturing {
                                 if (matchingBundle) {
                                     bundleId = matchingBundle.inventory._id
                                     bundleInventory = matchingBundle.inventory || bundleItem.inventory;
-                                    bundleAmount = matchingBundle.inventory?.amount || bundleItem.inventory?.amount || 0;
+                                    bundleAmount = matchingBundle.inventory?.writeoff_amount || bundleItem.inventory?.writeoff_amount || 0;
                                     bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
                                 }
                             }
@@ -573,6 +571,8 @@ class Manufacturing {
                     });
                 });
             }
+
+            this.getStock(order._id);
 
             this.refreshButtons(order._id);
         });
@@ -714,12 +714,14 @@ class Manufacturing {
         // reset action buttons
         document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = ``;
 
+        // console.log('Refreshing buttons for order', order);
+
         // refresh row button state
         let counter = { mnf: 0, isu: 0 };
         this.orders = this.orders.map((o, i) => {
             if (o._id === order._id) {
                 o.items.forEach((item, j) => {
-                    if (item.inventory?.mnf_date) counter.mnf++;
+                    if (item.inventory?.rdy_date) counter.mnf++;
                     if (item.inventory?.isu_date) counter.isu++;
 
                     let sel = `.action-items-col[data-order-id="${o._id}"][data-item-i="${j}"]`;
@@ -824,7 +826,7 @@ class Manufacturing {
         if (!item) return '';
 
         return `
-        ${item?.inventory?.mnf_date ?
+        ${item?.inventory?.rdy_date ?
                 `
                     <button class="btn btn-sm btn-outline-danger btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
                     <button class="btn btn-sm btn-outline-success btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',true)" > ${__html('Issue')}</button>
@@ -846,7 +848,7 @@ class Manufacturing {
 
         if (this.inQuery) return;
 
-        let msg = isIssue ? __html('Issue order %1$?', orderId) : __html('Cancel order %1$?', orderId);
+        let msg = isIssue ? __html('Issue order #%1$?', orderId) : __html('Cancel issuing the order #%1$?', orderId);
 
         if (confirm(msg)) {
 
@@ -879,7 +881,7 @@ class Manufacturing {
                     }
 
                     // mark as issued if not already
-                    if (isIssue && item.inventory && item.inventory.mnf_date && !item.inventory.isu_date) {
+                    if (isIssue && item.inventory && item.inventory.rdy_date && !item.inventory.isu_date) {
 
                         // update current state
                         item.inventory.isu_date = new Date().toISOString();
@@ -908,7 +910,7 @@ class Manufacturing {
                     this.refreshButtons(order._id);
 
                     // Update UI or perform any other actions based on response
-                    toast(__html('Record updated'));
+                    // toast(__html('Record updated'));
                 });
 
                 // toast(__html('Order updated'));
@@ -1049,11 +1051,15 @@ class Manufacturing {
     // Additional methods for item management
     async issueItem(order_id, item_i, isIssue = true) {
 
+        // console.log('Issuing item A', order_id, item_i, isIssue);
+
         if (this.inQuery) return;
 
         this.inQuery = true;
 
         try {
+
+            // console.log('Issuing item B', order_id, item_i, isIssue);
 
             const order = this.orders.find(o => o._id === order_id);
 
@@ -1087,7 +1093,7 @@ class Manufacturing {
 
                 this.refreshButtons(order._id);
 
-                toast(__html('Record updated'));
+                // toast(__html('Record updated'));
             });
 
         } catch (error) {
@@ -1099,7 +1105,7 @@ class Manufacturing {
         if (confirm('Cancel?')) {
             try {
                 await this.delay(300);
-                toast('Record updated');
+                // toast('Record updated');
                 // Update UI to reflect the change
                 const button = document.querySelector(`button[onclick *= "${itemId}"]`);
                 if (button && button.textContent === 'Atcelt') {

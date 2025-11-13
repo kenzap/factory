@@ -20,7 +20,7 @@ export const updateCalculations = (cell, settings) => {
     let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
 
     // update product price in the row
-    if (data._id) {
+    if (data._id && !data.input_fields_values) {
 
         // console.log('getPrice settings:', settings);
         price = getPrice(settings, { ...data, coating: coating, color: color });
@@ -31,7 +31,7 @@ export const updateCalculations = (cell, settings) => {
     }
 
     // calculate price based on the product's formula
-    if (cellField == "title" && data._id) {
+    if (cellField == "title" && data._id && !data.input_fields_values) {
 
         row.update({
             product: data.title,
@@ -44,7 +44,7 @@ export const updateCalculations = (cell, settings) => {
     const area = calculatearea(data.formula_width_calc, data.formula_length_calc);
     // console.log('Calculated area:', area);
 
-    row.update({ area: area });
+    if (!data.input_fields_values) row.update({ area: area });
 
     // Calculate total price
     const total = calculateItemTotal(

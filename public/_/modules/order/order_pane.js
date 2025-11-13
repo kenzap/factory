@@ -1,6 +1,7 @@
 // import { getProductSuggestions } from "../../api/get_product_suggestions.js";
 import { updateCalculations } from "../../components/order/order_calculations.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
+import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { __html, onClick, priceFormat } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
@@ -27,7 +28,6 @@ export class OrderPane {
         this.coatingSuggestions = getCoatings(this.settings);
         this.colorSuggestions = getColors(this.settings);
         this.discountSuggestions = [5, 7, 10, 15, 20, 25, 30, 50];
-        // this.productSuggestions = [];
 
         this.view();
 
@@ -62,6 +62,8 @@ export class OrderPane {
             sortable: false,
             sorter: false,
             data: this.order.items,
+            rowHeight: 28, // Reduce row height from default 38px
+            headerHeight: 30, // Optionally reduce header height too
             columns: [
                 {
                     title: __html("CM"),
@@ -126,6 +128,57 @@ export class OrderPane {
                         discounts: this.order.discounts || {},
                         navigateToNextCell: this.navigateToNextCell
                     },
+                    // formatter: function (cell) {
+                    //     const value = cell.getValue() || '';
+                    //     const row = cell.getRow().getData();
+
+                    //     if (row.input_fields_values) return /*html*/`
+                    //         <div class="d-flex align-items-center">
+                    //             <span class="flex-grow-1">${value}</span>
+                    //             <i class="bi bi-link-45deg text-primary ms-2 fs-5 po product-edit-icon" 
+                    //                style="cursor:pointer;position:absolute;right:1px;z-index:10;" 
+                    //                data-row-index="${cell.getRow().getPosition()}"></i>
+                    //         </div>
+                    //     `;
+
+                    //     if (!row.input_fields_values) return value;
+                    // },
+                },
+                {
+                    title: "",
+                    field: "sketch",
+                    headerSort: false,
+                    width: 40,
+                    formatter: function (cell) {
+                        const value = cell.getValue() || '';
+                        const row = cell.getRow().getData();
+                        if (row.input_fields_values) return /*html*/`
+                            <div class="d-flex align-items-center">
+                                <span class="flex-grow-1">${value}</span>
+                                <i class="bi bi-link-45deg text-primary fs-5 po product-edit-icon" 
+                                   style="cursor:pointer;z-index:10;" 
+                                   data-row-index="${cell.getRow().getPosition()}"></i>
+                            </div>
+                        `;
+
+                        if (!row.input_fields_values) return value;
+                    },
+                    cellClick: function (e, cell) {
+                        if (e.target.classList.contains('product-edit-icon')) {
+                            e.preventDefault();
+                            console.log('Edit sketch icon clicked for row:', cell.getRow().getData());
+                            // cell.edit();
+                            sketchEditor(cell, self.settings, self.order, (data) => {
+
+                                // Sync items and trigger refresh
+                                self.syncItems();
+
+                                bus.emit('order:table:refreshed');
+                                // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
+                                console.log('Updated sketch from editor:', data);
+                            });
+                        }
+                    }
                 },
                 {
                     title: __html("W (mm)"),
@@ -240,14 +293,31 @@ export class OrderPane {
                                     <li><a class="dropdown-item po set-cm" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('CM')}</a></li>
                                     <li><a class="dropdown-item po set-colors" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('Colors')}</a></li>
                                     <li><a class="dropdown-item po set-coatings" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('Coatings')}</a></li>
+                                    <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-link-45deg"></i> ${__html('Sketch')}</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item po delete-row" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
                                 </ul>
                             </div>`;
                     },
                     cellClick: function (e, cell) {
+
                         if (e.target.classList.contains('delete-row')) {
                             cell.getRow().delete();
+                        }
+
+                        if (e.target.classList.contains('view-sketch')) {
+
+                            console.log('View sketch for row:', cell.getRow().getData());
+
+                            sketchEditor(cell, self.settings, self.order, (data) => {
+
+                                // Sync items and trigger refresh
+                                self.syncItems();
+
+                                bus.emit('order:table:refreshed');
+                                // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
+                                console.log('Updated sketch from editor:', data);
+                            });
                         }
                     }
                 }
@@ -353,7 +423,6 @@ export class OrderPane {
         onClick('#add-order-row', () => {
             this.addRow();
         });
-
 
         bus.on('order:table:sync:items', (id) => {
 

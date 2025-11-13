@@ -13,13 +13,13 @@ import { updateProductStock } from '../_/helpers/product.js';
 */
 async function execOrderItemAction(actions) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     let response = null;
 
     try {
 
-        await client.connect();
+        await db.connect();
 
         if (!actions) return { success: false, error: 'no data provided' };
 
@@ -44,14 +44,18 @@ async function execOrderItemAction(actions) {
             const item = actions.update_item.item;
             const index = actions.update_item.index;
 
+            // update item ready status
+            if (item.inventory.origin == 'c') item.inventory.ready = null;
+            if (item.inventory.origin == 'w' || item.inventory.origin == 'm') { item.inventory.rdy_date = new Date().toISOString(); item.inventory.rdy_user = actions.user_id; }
+
             // find the order item by id
             const itemQuery = `
-            SELECT js->'data'->'items' as items
-            FROM data 
-            WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
-            `;
+                SELECT js->'data'->'items' as items
+                FROM data 
+                WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
+                `;
 
-            const itemResult = await client.query(itemQuery, [actions.update_item.order_id, 'ecommerce-order', sid]);
+            const itemResult = await db.query(itemQuery, [actions.update_item.order_id, 'ecommerce-order', sid]);
 
             let items = itemResult.rows[0]?.items || [];
             let targetItem = items[index];
@@ -76,16 +80,16 @@ async function execOrderItemAction(actions) {
             // console.log('Updated main item:', items[index]);
 
             const updateQuery = `
-            UPDATE data
-            SET js = jsonb_set(
-                js,
-                '{data,items}',
-                $4::jsonb,
-                true
-            )
-            WHERE _id = $1 AND ref = $2 AND sid = $3
-            RETURNING _id
-            `;
+                UPDATE data
+                SET js = jsonb_set(
+                    js,
+                    '{data,items}',
+                    $4::jsonb,
+                    true
+                )
+                WHERE _id = $1 AND ref = $2 AND sid = $3
+                RETURNING _id
+                `;
 
             const updateParams = [
                 actions.update_item.order_id,
@@ -94,7 +98,7 @@ async function execOrderItemAction(actions) {
                 JSON.stringify(items)
             ];
 
-            const updateResult = await client.query(updateQuery, updateParams);
+            const updateResult = await db.query(updateQuery, updateParams);
             response = updateResult.rows[0] || {};
 
             // console.log('Updated order item in DB:', response);
@@ -121,36 +125,36 @@ async function execOrderItemAction(actions) {
             }
 
             // Start transaction for atomic stock update
-            await client.query('BEGIN');
+            await db.query('BEGIN');
 
             try {
                 // find the order item by id
                 const itemQuery = `
-                SELECT js->'data'->'items' as items
-                FROM data 
-                WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
-                `;
+                    SELECT js->'data'->'items' as items
+                    FROM data 
+                    WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
+                    `;
 
-                const itemResult = await client.query(itemQuery, [actions.update_stock.order_id, 'ecommerce-order', sid]);
+                const itemResult = await db.query(itemQuery, [actions.update_stock.order_id, 'ecommerce-order', sid]);
 
                 let items = itemResult.rows[0]?.items || [];
                 let targetItem = items[actions.update_stock.index];
 
                 if (!targetItem) {
-                    await client.query('ROLLBACK');
+                    await db.query('ROLLBACK');
                     return { success: false, error: 'item not found' };
                 }
 
                 // get current stock amount from product inventory with row lock to prevent race conditions
                 const productQuery = `
-                SELECT js->'data'->>'last_stock_writeoff' as last_stock_writeoff
-                FROM data 
-                WHERE _id = $1 AND ref = $2 AND sid = $3 
-                FOR UPDATE
-                LIMIT 1
-                `;
+                    SELECT js->'data'->>'last_stock_writeoff' as last_stock_writeoff
+                    FROM data 
+                    WHERE _id = $1 AND ref = $2 AND sid = $3 
+                    FOR UPDATE
+                    LIMIT 1
+                    `;
 
-                const productResult = await client.query(productQuery, [actions.update_stock.item_id, 'ecommerce-product', sid]);
+                const productResult = await db.query(productQuery, [actions.update_stock.item_id, 'ecommerce-product', sid]);
                 const last_stock_writeoff = productResult.rows[0]?.last_stock_writeoff || 0;
                 let update_last_stock_writeoff = false;
 
@@ -159,7 +163,7 @@ async function execOrderItemAction(actions) {
 
                     console.log('Reverting last stock writeoff:', last_stock_writeoff);
 
-                    await updateProductStock(client, {
+                    await updateProductStock(db, {
                         _id: actions.update_stock.item_id,
                         amount: parseFloat(last_stock_writeoff),
                         coating: actions.update_stock.coating,
@@ -173,9 +177,9 @@ async function execOrderItemAction(actions) {
                 if (actions.update_stock.amount !== 0) {
 
                     // apply stock change
-                    await updateProductStock(client, {
+                    await updateProductStock(db, {
                         _id: actions.update_stock.item_id,
-                        amount: -1 * actions.update_stock.amount,
+                        amount: -1 * parseFloat(actions.update_stock.amount),
                         coating: actions.update_stock.coating,
                         color: actions.update_stock.color
                     }, actions.user_id);
@@ -187,26 +191,26 @@ async function execOrderItemAction(actions) {
 
                     // update last_stock_writeoff in product
                     const updateProductQuery = `
-                    UPDATE data 
-                    SET js = jsonb_set(js, '{data,last_stock_writeoff}', $1)
-                    WHERE _id = $2 AND ref = $3 AND sid = $4
-                    RETURNING _id
-                    `;
+                        UPDATE data 
+                        SET js = jsonb_set(js, '{data,last_stock_writeoff}', $1)
+                        WHERE _id = $2 AND ref = $3 AND sid = $4
+                        RETURNING _id
+                        `;
 
                     const updateProductParams = [JSON.stringify(actions.update_stock.amount), actions.update_stock.item_id, 'ecommerce-product', sid];
-                    const updateProductResult = await client.query(updateProductQuery, updateProductParams);
+                    const updateProductResult = await db.query(updateProductQuery, updateProductParams);
 
                     if (updateProductResult.rows.length === 0) {
-                        await client.query('ROLLBACK');
+                        await db.query('ROLLBACK');
                         return { success: false, error: 'Product not found or update failed' };
                     }
                 }
 
                 // Commit transaction
-                await client.query('COMMIT');
+                await db.query('COMMIT');
 
             } catch (error) {
-                await client.query('ROLLBACK');
+                await db.query('ROLLBACK');
                 throw error;
             }
         }
@@ -232,7 +236,7 @@ async function execOrderItemAction(actions) {
                     WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
                 `;
 
-                const itemResult = await client.query(itemQuery, [issueAction.order_id, 'ecommerce-order', sid]);
+                const itemResult = await db.query(itemQuery, [issueAction.order_id, 'ecommerce-order', sid]);
 
                 let i = issueAction.index;
                 let items = itemResult.rows[0]?.items || [];
@@ -268,13 +272,13 @@ async function execOrderItemAction(actions) {
                     JSON.stringify(items)
                 ];
 
-                const updateResult = await client.query(updateQuery, updateParams);
+                const updateResult = await db.query(updateQuery, updateParams);
                 response = updateResult.rows[0] || {};
             }
         }
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;

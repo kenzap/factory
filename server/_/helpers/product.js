@@ -3,7 +3,7 @@ import { sid } from './index.js';
 
 export const setProductStock = async (db, inventory, user_id) => {
 
-    console.log('setProductStock', inventory);
+    // console.log('setProductStock', inventory);
 
     // validate inventory data
     if (!inventory || !inventory._id || !inventory.amount || !inventory.coating || !inventory.color) {
@@ -46,7 +46,7 @@ export const setProductStock = async (db, inventory, user_id) => {
         });
     }
 
-    console.log('Updated var_price:', var_price);
+    // console.log('Updated var_price:', var_price);
 
     // update product stock
     const updateQuery = `
@@ -68,7 +68,7 @@ export const setProductStock = async (db, inventory, user_id) => {
 
 export const updateProductStock = async (db, inventory, user_id) => {
 
-    console.log('updateProductStock', inventory);
+    // console.log('updateProductStock', inventory);
 
     // validate inventory data
     if (!inventory || !inventory._id || !inventory.amount || !inventory.coating || !inventory.color) {
@@ -98,7 +98,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
 
             // console.log('Updated var_price:', v);
 
-            v.stock = (v.stock || 0) + inventory.amount;
+            v.stock = (parseFloat(v.stock) || 0) + inventory.amount;
 
             // console.log('Updated var_price:', v);
         }

@@ -58,14 +58,28 @@ export class Inventory {
      */
     syncInventoryState(e, order, cb) {
 
+        // console.log('syncInventoryState A');
+
         // const order = orders.find(o => o._id === _id);
         if (!order) return;
 
         // Determine if this is a bundle item or regular item
-        const isBundle = e.target.dataset.source === "bundle";
-        const { item, index } = this.getItemData(e, order);
+        let isBundle = e.target.dataset.source === "bundle";
+        let { item, index } = this.getItemData(e, order);
 
-        // console.log('execOrderItemAction itemData', item);
+        console.log('syncInventoryState itemData', item);
+
+        // Update writeoff amount based on source (item or bundle)
+        if (isBundle && item.bundle_items && Array.isArray(item.bundle_items)) {
+            // Handle bundle item writeoff amount update
+            const bundleItem = item.bundle_items.find(b => b.inventory && b.inventory._id === e.target.dataset.id);
+            if (bundleItem) {
+                bundleItem.inventory.writeoff_amount = parseInt(e.target.value) || 0;
+            }
+        } else {
+            // Handle regular item writeoff amount update
+            item.inventory.writeoff_amount = parseInt(e.target.value) || 0;
+        }
 
         // Update item data back to order state
         const actions = {
@@ -90,13 +104,14 @@ export class Inventory {
 
         // Add stock update action if there are any changes for bundled products
         if (actions.update_item && isBundle && item.bundle_items && Array.isArray(item.bundle_items)) {
+
+            console.log('syncInventoryState bundle item', item.bundle_items);
             const bundleItem = item.bundle_items.find(b => b.inventory && b.inventory._id === e.target.dataset.id);
             if (bundleItem) {
                 actions.update_stock = {
                     order_id: order._id,
                     item_id: bundleItem.inventory._id,
                     index: index,
-                    // checked: bundleItem.inventory.checked || false,
                     coating: bundleItem.inventory.coating || '',
                     color: bundleItem.inventory.color || '',
                     amount: parseInt(e.target.value) || 0,
@@ -135,6 +150,9 @@ export class Inventory {
             const item = order.items[index];
             if (!item.inventory) item.inventory = {};
 
+            // set date item ready date by default
+            item.inventory.rdy_date = new Date().toISOString();
+
             if (type === "w" && e.target.checked) {
                 item.inventory.origin = 'w';
                 // Uncheck the manufactured checkbox
@@ -156,6 +174,8 @@ export class Inventory {
                     item.inventory.origin = 'm';
                 } else {
                     item.inventory.origin = 'c';
+                    item.inventory.rdy_date = null;
+                    item.inventory.writeoff_amount = 0;
                 }
             }
         } else if (source === "bundle") {
@@ -182,6 +202,8 @@ export class Inventory {
                 // Find or create the bundle item
                 let bundleItem = parentItem.bundle_items.find(b => b.inventory && b.inventory._id === bundleId);
 
+                console.log('syncCheckboxState bundleItem', bundleItem);
+
                 if (!bundleItem) {
                     // Create new bundle item entry
                     bundleItem = {
@@ -189,7 +211,7 @@ export class Inventory {
                             _id: bundleId,
                             color: color,
                             coating: coating,
-                            amount: 0,
+                            writeoff_amount: 0,
                             origin: 'c',
                             checked: false
                         }
@@ -199,14 +221,18 @@ export class Inventory {
 
                 // Update the bundle item state
                 bundleItem.inventory.checked = e.target.checked;
+                bundleItem.inventory.rdy_date = new Date().toISOString();
 
                 // Update the amount if checkbox is checked
                 if (e.target.checked) {
                     const expectedAmount = parseFloat(e.target.dataset.amount) || 0;
-                    bundleItem.inventory.amount = expectedAmount;
+                    bundleItem.inventory.writeoff_amount = expectedAmount;
                     bundleItem.inventory.origin = 'w';
+                    bundleItem.inventory.color = color;
+                    bundleItem.inventory.coating = coating;
                 } else {
-                    bundleItem.inventory.amount = 0;
+                    bundleItem.inventory.writeoff_amount = 0;
+                    bundleItem.inventory.rdy_date = null;
                 }
             }
         }
@@ -228,48 +254,49 @@ export class Inventory {
         const type = e.target.dataset.type;
         const index = parseInt(e.target.dataset.i);
 
+        console.log('updateWriteoffAmount source', source);
+
         if (source === "item") {
 
             // Handle main item writeoff amount
-            let writeoffAmount = document.querySelector(`.writeoff-amount[data-source="item"][data-order-id="${order._id}"][data-i="${index}"]`);
+            let wa = document.querySelector(`.writeoff-amount[data-source="item"][data-order-id="${order._id}"][data-i="${index}"]`);
             let checkboxW = document.querySelector(`.action-ns input[data-source="item"][data-type="w"][data-i="${index}"]`);
             let checkboxM = document.querySelector(`.action-ns input[data-source="item"][data-type="m"][data-i="${index}"]`);
 
-            if (writeoffAmount && checkboxW && checkboxM) {
+            if (wa && checkboxW && checkboxM) {
                 if (checkboxW.checked) {
-                    writeoffAmount.classList.remove('d-none');
-                    if (parseInt(writeoffAmount.value) === 0) {
-                        writeoffAmount.value = order.items[index].qty || 0;
-                    }
+                    wa.classList.remove('d-none');
+                    wa.value = order.items[index].qty || 0;
                 } else if (checkboxM.checked) {
-                    writeoffAmount.classList.add('d-none');
-                    writeoffAmount.value = 0;
+                    wa.classList.add('d-none');
+                    wa.value = 0;
                 } else {
-                    writeoffAmount.classList.add('d-none');
-                    writeoffAmount.value = 0;
+                    wa.classList.add('d-none');
+                    wa.value = 0;
                 }
+
+                order.items[index].inventory.writeoff_amount = parseInt(wa.value) || 0;
 
                 // Trigger change event for writeoff amount
-                writeoffAmount.dispatchEvent(new Event('change'));
+                wa.dispatchEvent(new Event('change'));
             }
         } else if (source === "bundle") {
-            // Handle bundle item writeoff amount
-            let bundleWriteoffAmount = e.target.closest('tr').querySelector('.writeoff-amount[data-source="bundle"]');
 
-            if (bundleWriteoffAmount && e.target.checked) {
-                bundleWriteoffAmount.classList.remove('d-none');
+            // Handle bundle item writeoff amount
+            let bwa = e.target.closest('tr').querySelector('.writeoff-amount[data-source="bundle"]');
+
+            if (bwa && e.target.checked) {
+                bwa.classList.remove('d-none');
                 const expectedAmount = parseFloat(e.target.dataset.amount) || 0;
-                if (parseInt(bundleWriteoffAmount.value) === 0) {
-                    bundleWriteoffAmount.value = expectedAmount;
-                }
-            } else if (bundleWriteoffAmount) {
-                bundleWriteoffAmount.classList.add('d-none');
-                bundleWriteoffAmount.value = 0;
+                bwa.value = expectedAmount;
+            } else if (bwa) {
+                bwa.classList.add('d-none');
+                bwa.value = 0;
             }
 
             // Trigger change event for bundle writeoff amount
-            if (bundleWriteoffAmount) {
-                bundleWriteoffAmount.dispatchEvent(new Event('change'));
+            if (bwa) {
+                bwa.dispatchEvent(new Event('change'));
             }
         }
     }

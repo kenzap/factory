@@ -10,14 +10,14 @@ import { getDbConnection, log, sid } from '../_/helpers/index.js';
 */
 async function getProductStock(products) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     let response = [];
 
     // get product stock
     try {
 
-        await client.connect();
+        await db.connect();
 
         // Collect all product IDs
         const productIds = products.map(product => product._id);
@@ -41,42 +41,43 @@ async function getProductStock(products) {
             // Assume all products use the same locale
             const locale = process.env.LOCALE || 'en';
             const params = ['ecommerce-product', sid, locale, productIds];
-            const result = await client.query(query, params);
+            const result = await db.query(query, params);
 
             // Filter var_price by coating and color if provided in input products
-            response = result.rows.map(row => {
-                const inputProduct = products.find(p => p._id === row._id);
-                let filteredVarPrice = row.var_price;
+            response = products.map(inputProduct => {
+                const row = { ...result.rows.find(r => r._id === inputProduct._id) };
+                if (!row) return null;
 
-                if (inputProduct && (inputProduct.coating || inputProduct.color)) {
-                    filteredVarPrice = (row.var_price || []).filter(vp => {
+                let filteredVarPrice = row.var_price || [];
 
-                        const matchesCoating = inputProduct.coating ? (vp.parent === inputProduct.coating || (inputProduct.coating === '-' && vp.parent === "-")) : true;
-                        const matchesColor = inputProduct.color ? vp.title === inputProduct.color : true;
+                if (inputProduct.coating || inputProduct.color) {
+                    filteredVarPrice = filteredVarPrice.filter(vp => {
+
+                        const matchesCoating = vp.parent === inputProduct.coating;
+                        const matchesColor = vp.title === inputProduct.color;
                         return matchesCoating && matchesColor;
                     });
                 }
 
-                // console.log('Filtered var_price:', row.var_price);
-
                 if (filteredVarPrice.length) {
                     row.stock = filteredVarPrice[0].stock || 0; // Assuming stock is in the first variation
                     row.hash = (filteredVarPrice[0]?.parent || '') + filteredVarPrice[0].title + row._id;
-                    row.color = inputProduct.color || '';
-                    row.coating = inputProduct.coating || '';
-                    row.bundled_products = row.bundled_products || [];
                 }
+
+                row.color = inputProduct.color || '';
+                row.coating = inputProduct.coating || '';
+                row.bundled_products = row.bundled_products || [];
 
                 delete row.var_price;
 
                 return {
                     ...row
                 };
-            });
+            }).filter(item => item !== null);
         }
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;

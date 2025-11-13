@@ -78,9 +78,10 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         query += ` AND js->'data'->'inventory'->>'isu_date' IS NOT NULL AND js->'data'->'inventory'->>'isu_date' != ''`;
     }
 
-    if (filters.type == 'manufactured') {
-        query += ` AND js->'data'->'inventory'->>'mnf_date' IS NOT NULL AND js->'data'->'inventory'->>'mnf_date' != ''`;
-    }
+    // detect mnf_date dated based on items.inventory.rdy_date
+    // if (filters.type == 'manufactured') {
+    //     query += ` AND js->'data'->'inventory'->>'mnf_date' IS NOT NULL AND js->'data'->'inventory'->>'mnf_date' != ''`;
+    // }
 
     // Apply pagination
     const limit = filters.limit || 250;

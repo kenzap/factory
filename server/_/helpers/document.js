@@ -601,8 +601,8 @@ export function getManufacturingDate(order) {
 
     let latestDate = null;
     for (const orderItem of order.items) {
-        if (orderItem?.inventory?.mnf_date) {
-            const currentDate = new Date(orderItem.inventory.mnf_date);
+        if (orderItem?.inventory?.rdy_date) {
+            const currentDate = new Date(orderItem.inventory.rdy_date);
             if (!latestDate || currentDate > latestDate) {
                 latestDate = currentDate;
             }

@@ -177,8 +177,17 @@ body {
     overflow: visible!important;
 } */
 
-.tabulator-table{
-    padding-bottom:300px!important;
+#order-table{
+    height: calc(100vh - 80px)!important;  
+}
+
+.tabulator {
+    height: calc(100vh - 200px);
+    overflow: auto;
+}
+
+.tabulator-table {
+    height: 100%;
 }
 
 .tabulator-col-title {
@@ -192,7 +201,7 @@ body {
 
 .tabulator .tabulator-header .tabulator-col .tabulator-col-content,
 .tabulator-row .tabulator-cell{
-    padding: 8px;
+    padding: 4px;
 }
 
 .tabulator-cell input, .tabulator-cell select {
@@ -234,6 +243,10 @@ body {
     padding: 4px 8px!important;
     box-shadow: none;
     /* border: 0!important; */
+}
+
+.tabulator-row{
+    min-height: auto;
 }
 
 /* Remove number input arrows */
