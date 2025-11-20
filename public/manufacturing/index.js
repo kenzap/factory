@@ -848,76 +848,79 @@ class Manufacturing {
 
         if (this.inQuery) return;
 
-        let msg = isIssue ? __html('Issue order #%1$?', orderId) : __html('Cancel issuing the order #%1$?', orderId);
-
-        if (confirm(msg)) {
-
-            this.inQuery = true;
-
-            try {
-
-                let actions = {
-                    issue: []
-                };
-
-                // TODO: go through all order items
-                const order = this.orders.find(o => o.id === orderId);
-
-                order.items.forEach((item, i) => {
-
-                    // cancel issue
-                    if (!isIssue) {
-
-                        // update current state
-                        item.inventory.isu_date = null
-
-                        // action for db
-                        actions.issue.push({
-                            order_id: order._id,
-                            isu_date: item.inventory.isu_date,
-                            index: i,
-                            item_id: item._id
-                        });
-                    }
-
-                    // mark as issued if not already
-                    if (isIssue && item.inventory && item.inventory.rdy_date && !item.inventory.isu_date) {
-
-                        // update current state
-                        item.inventory.isu_date = new Date().toISOString();
-
-                        // action for db
-                        actions.issue.push({
-                            order_id: order._id,
-                            isu_date: item.inventory.isu_date,
-                            index: i,
-                            item_id: item._id
-                        });
-                    }
-                });
-
-                execOrderItemAction(actions, (response) => {
-
-                    this.inQuery = false;
-
-                    if (!response.success) {
-                        toast(__html('Error updating item status'));
-                        return;
-                    }
-
-                    // this.renderOrders();
-
-                    this.refreshButtons(order._id);
-
-                    // Update UI or perform any other actions based on response
-                    // toast(__html('Record updated'));
-                });
-
-                // toast(__html('Order updated'));
-            } catch (error) {
-                console.error('Error issuing order:', error);
-                toast('Kļūda izsniegšanas procesā');
+        // Only show confirmation for cancellation
+        if (!isIssue) {
+            let msg = __html('Cancel issuing the order #%1$?', orderId);
+            if (!confirm(msg)) {
+                return;
             }
+        }
+
+        this.inQuery = true;
+
+        try {
+
+            let actions = {
+                issue: []
+            };
+
+            // TODO: go through all order items
+            const order = this.orders.find(o => o.id === orderId);
+
+            order.items.forEach((item, i) => {
+
+                // cancel issue
+                if (!isIssue) {
+
+                    // update current state
+                    item.inventory.isu_date = null
+
+                    // action for db
+                    actions.issue.push({
+                        order_id: order._id,
+                        isu_date: item.inventory.isu_date,
+                        index: i,
+                        item_id: item._id
+                    });
+                }
+
+                // mark as issued if not already
+                if (isIssue && item.inventory && item.inventory.rdy_date && !item.inventory.isu_date) {
+
+                    // update current state
+                    item.inventory.isu_date = new Date().toISOString();
+
+                    // action for db
+                    actions.issue.push({
+                        order_id: order._id,
+                        isu_date: item.inventory.isu_date,
+                        index: i,
+                        item_id: item._id
+                    });
+                }
+            });
+
+            execOrderItemAction(actions, (response) => {
+
+                this.inQuery = false;
+
+                if (!response.success) {
+                    toast(__html('Error updating item status'));
+                    return;
+                }
+
+                // this.renderOrders();
+
+                this.refreshButtons(order._id);
+
+                // Update UI or perform any other actions based on response
+                // toast(__html('Record updated'));
+            });
+
+            // toast(__html('Order updated'));
+        } catch (error) {
+            console.error('Error issuing order:', error);
+            toast('Kļūda izsniegšanas procesā');
         }
     }
 

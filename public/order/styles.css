@@ -232,17 +232,36 @@ body {
     overflow: visible;
 }
 
+.tabulator-row .tabulator-cell.tabulator-editing{
+    box-shadow: none;
+    border: 0;
+    border-radius: 0;
+}
+
 .tabulator-row .tabulator-cell.tabulator-editing[tabulator-field="cm"]{
     border: 0;
 }
 
-.tabulator-row .tabulator-cell.tabulator-editing checkbox,
+.tabulator-row .tabulator-cell.tabulator-editing input.form-control,
+.tabulator-row .tabulator-cell.tabulator-editing select.form-select,
 .tabulator-row .tabulator-cell.tabulator-editing input{
     display: flex;
     align-items: center;
     padding: 4px 8px!important;
-    box-shadow: none;
+    box-shadow: none!important;
+    outline: none!important;
     /* border: 0!important; */
+}
+
+.tabulator-row .tabulator-cell.tabulator-editing input[type="checkbox"]{
+    margin:0!important;
+    height: 20px!important;
+    /* padding:8px; */
+}
+
+.tabulator-row .tabulator-cell svg{
+    margin-bottom: 4px!important;
+    margin-left: 2px!important;
 }
 
 .tabulator-row{

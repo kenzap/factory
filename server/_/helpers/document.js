@@ -166,7 +166,7 @@ export function getWaybillItemsTable(settings, order, locale) {
         return item.total ? `
             <tr class="${i == order.items.length - 1 ? "border-secondary" : ""}">
                 <th scope="row">${i + 1}</th>
-                <td>${item.title} ${item.coating} ${item.color}</td>
+                <td>${item.title} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""} ${i == 1000 ? "(4 x Skrūve DIN 933 8.8 M8 x 40 HDG, 4 x Uzgrieznis DIN 934 M8 HDG, 2 x Gumijas blīve 3 mm EPDM W-60)" : ""}${i == 1001 ? "(1 x Uzgrieznis DIN 934 M8 HDG, 1 x Skrūve DIN 933 8.8 M8 x 40 HDG)" : ""}</td>
                 <td>${priceFormat(settings, item.price)}</td>
                 ${order.discount ? `<th scope="col"><div class="text-start">-${Math.round(100 - item.discount * 100)}%</div></th>` : ``}
                 ${order.discount ? `<th scope="col"><div class="text-start">${Math.round(item.priced * 100) / 100}</div></th>` : ``}
@@ -594,7 +594,7 @@ export function removeField(waybill, fieldName) {
 
 export function getManufacturingDate(order) {
 
-    console.log(order.items);
+    // console.log(order.items);
 
     // Extract manufacturing date from order
     if (!order?.items && order.items.length == 0) return '';

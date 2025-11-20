@@ -50,13 +50,16 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     }
 
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {
-        query += ` AND js->'data'->>'created' >= $${params.length + 1}`;
-        params.push(new Date(filters.dateFrom.trim()).getTime());
+        // query += ` AND (js->'meta'->>'created' >= $${params.length + 1} OR js->'data'->>'date' >= $${params.length + 1})`;
+        query += ` AND (js->'data'->>'date' >= $${params.length + 1})`;
+        params.push(Math.round(new Date(filters.dateFrom.trim()).getTime() / 1000));
     }
 
     if (filters.dateTo && filters.dateTo.trim() !== '') {
-        query += ` AND js->'data'->>'created' <= $${params.length + 1}`;
-        params.push(new Date(filters.dateTo.trim()).getTime());
+        // query += ` AND (js->'meta'->>'created' <= $${params.length + 1} OR js->'data'->>'date' <= $${params.length + 1})`;
+        query += ` AND (js->'data'->>'date' <= $${params.length + 1})`;
+        params.push(Math.round(new Date(filters.dateTo.trim()).getTime() / 1000));
+        console.log('filters.dateTo', filters.dateTo, Math.round(new Date(filters.dateTo.trim()).getTime() / 1000));
     }
 
     if (filters.type == 'draft') {

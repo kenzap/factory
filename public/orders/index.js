@@ -9,7 +9,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
-/**
+/** 
  * Orders Journal
  * 
  * @version 1.0

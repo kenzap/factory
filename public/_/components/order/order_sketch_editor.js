@@ -29,7 +29,7 @@ export const sketchEditor = (cell, settings, order, cb) => {
 
     modal_cont.show();
 
-    window.addEventListener('message', (event) => {
+    const messageHandler = (event) => {
 
         modal_cont.hide();
 
@@ -44,6 +44,8 @@ export const sketchEditor = (cell, settings, order, cb) => {
                 // Update the current row with the sketch data
                 const currentRowData = cell.getRow().getData();
                 const updatedRowData = { ...currentRowData };
+
+                updatedRowData.sketch_attached = true;
 
                 // Update price and total from sketch data
                 if (data.price) {
@@ -100,5 +102,9 @@ export const sketchEditor = (cell, settings, order, cb) => {
                 // updateExtra(locid, "");
                 break;
         }
-    }, true);
+
+        window.removeEventListener('message', messageHandler, true);
+    };
+
+    window.addEventListener('message', messageHandler, true);
 }

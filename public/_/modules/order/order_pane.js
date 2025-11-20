@@ -83,12 +83,15 @@ export class OrderPane {
                     },
                     width: 80,
                     cellEdited: (cell) => {
+
                         // Match entered value with suggestions (case-insensitive)
                         const enteredValue = cell.getValue();
                         if (enteredValue) {
+
                             const matchedSuggestion = this.colorSuggestions.find(suggestion =>
                                 suggestion.toLowerCase() === enteredValue.toLowerCase()
                             );
+
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {
                                 cell.setValue(matchedSuggestion);
                             }
@@ -108,9 +111,11 @@ export class OrderPane {
                         // Match entered value with suggestions (case-insensitive)
                         const enteredValue = cell.getValue();
                         if (enteredValue) {
+
                             const matchedSuggestion = this.coatingSuggestions.find(suggestion =>
                                 suggestion.toLowerCase() === enteredValue.toLowerCase()
                             );
+
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {
                                 cell.setValue(matchedSuggestion);
                             }
@@ -152,7 +157,7 @@ export class OrderPane {
                     formatter: function (cell) {
                         const value = cell.getValue() || '';
                         const row = cell.getRow().getData();
-                        if (row.input_fields_values) return /*html*/`
+                        if (row.sketch_attached) return /*html*/`
                             <div class="d-flex align-items-center">
                                 <span class="flex-grow-1">${value}</span>
                                 <i class="bi bi-link-45deg text-primary fs-5 po product-edit-icon" 
@@ -161,7 +166,7 @@ export class OrderPane {
                             </div>
                         `;
 
-                        if (!row.input_fields_values) return value;
+                        if (!row.sketch_attached) return value;
                     },
                     cellClick: function (e, cell) {
                         if (e.target.classList.contains('product-edit-icon')) {
@@ -172,8 +177,10 @@ export class OrderPane {
 
                                 // Sync items and trigger refresh
                                 self.syncItems();
+                                self.refreshTable();
+                                // self.table.redraw(true);
 
-                                bus.emit('order:table:refreshed');
+                                bus.emit('order:table:refreshed', self.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -282,17 +289,21 @@ export class OrderPane {
                     field: "actions",
                     headerSort: false,
                     width: 80,
-                    formatter: function (cell, formatterParams, onRendered) {
+                    formatter: function (cell) {
                         const i = cell.getRow().getPosition();
+                        const currentRowData = cell.getRow().getData();
+                        const currentCoating = currentRowData.coating || '';
+                        const currentColor = currentRowData.color || '';
+
                         return /*html*/`
                             <div class="dropdown tableActionsCont">
                                 <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
                                 <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
-                                    <li><a class="dropdown-item po set-cm" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('CM')}</a></li>
-                                    <li><a class="dropdown-item po set-colors" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('Colors')}</a></li>
-                                    <li><a class="dropdown-item po set-coatings" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('Coatings')}</a></li>
+                                    <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('CM')}</a></li>
+                                    <li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${currentColor}</a></li>
+                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${currentCoating}</a></li>
                                     <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-link-45deg"></i> ${__html('Sketch')}</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item po delete-row" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
@@ -305,6 +316,80 @@ export class OrderPane {
                             cell.getRow().delete();
                         }
 
+                        if (e.target.classList.contains('update-cm')) {
+                            e.preventDefault();
+                            const currentRowData = cell.getRow().getData();
+                            const currentCM = currentRowData.cm;
+                            if (currentCM !== null && currentCM !== undefined) {
+                                // Update CM for all rows
+                                const allRows = self.table.getRows();
+                                allRows.forEach(row => {
+                                    row.update({ cm: currentCM });
+                                });
+                                // Sync items after update
+                                self.syncItems();
+
+                                self.refreshTable();
+
+                                bus.emit('order:table:refreshed', self.order);
+                            }
+                        }
+
+                        if (e.target.classList.contains('update-coating')) {
+
+                            e.preventDefault();
+                            const currentRowData = cell.getRow().getData();
+                            const currentCoating = currentRowData.coating;
+
+                            if (currentCoating && currentCoating !== '-') {
+
+                                // Update coating for all rows except those with '-'
+                                const allRows = self.table.getRows();
+                                allRows.forEach(row => {
+                                    const rowData = row.getData();
+                                    if (rowData.coating !== '-') {
+                                        row.update({ coating: currentCoating });
+                                    }
+                                });
+
+                                // Sync items after update
+                                self.syncItems();
+
+                                allRows.forEach(row => {
+                                    const firstCell = row.getCells()[2]; // Get any cell from the row
+                                    updateCalculations(firstCell, self.settings, self.order);
+                                });
+
+                                self.syncItems();
+                                self.refreshTable();
+                            }
+                        }
+
+                        if (e.target.classList.contains('update-color')) {
+
+                            e.preventDefault();
+                            const currentRowData = cell.getRow().getData();
+                            const currentColor = currentRowData.color;
+                            if (currentColor && currentColor !== '-') {
+
+                                // Update color for all rows except those with '-'
+                                const allRows = self.table.getRows();
+                                allRows.forEach(row => {
+                                    const rowData = row.getData();
+                                    if (rowData.color !== '-') {
+                                        row.update({ color: currentColor });
+                                    }
+                                });
+
+                                // Sync items after update
+                                self.syncItems();
+                                self.refreshTable();
+                                // self.table.redraw(true);
+
+                                bus.emit('order:table:refreshed', self.order);
+                            }
+                        }
+
                         if (e.target.classList.contains('view-sketch')) {
 
                             console.log('View sketch for row:', cell.getRow().getData());
@@ -313,8 +398,10 @@ export class OrderPane {
 
                                 // Sync items and trigger refresh
                                 self.syncItems();
+                                self.refreshTable();
+                                // self.table.redraw(true);
 
-                                bus.emit('order:table:refreshed');
+                                bus.emit('order:table:refreshed', self.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -334,15 +421,12 @@ export class OrderPane {
         // Add event listener for row deletion
         this.table.on("rowDeleted", (row) => {
             this.syncItems();
-            bus.emit('order:table:refreshed');
+            bus.emit('order:table:refreshed', this.order);
         });
 
         // Add event listener to track any cell value changes
         this.table.on("cellEdited", (cell) => {
             const row = cell.getRow();
-            const field = cell.getField();
-            const newValue = cell.getValue();
-            const rowData = row.getData();
 
             // Check if this is the last row and automatically add a new one
             if (this.table.getRows().length === 0) {
@@ -350,8 +434,10 @@ export class OrderPane {
             }
 
             // You can perform specific actions based on the field or value
-            updateCalculations(cell, this.settings);
+            updateCalculations(cell, this.settings, this.order);
+
             this.syncItems();
+            this.refreshTable();
         });
 
         if (this.order.items.length === 0) setTimeout(() => { this.addRow() }, 100);
@@ -417,6 +503,21 @@ export class OrderPane {
         });
     }
 
+    refreshTable = () => {
+
+        // Preserve scroll position during redraw
+        const scrollLeft = document.querySelector('#order-table .tabulator-tableholder').scrollLeft;
+        this.table.redraw(true);
+        setTimeout(() => {
+            document.querySelector('#order-table .tabulator-tableholder').scrollLeft = scrollLeft;
+        }, 0);
+
+        bus.emit('order:table:refreshed', this.order);
+
+        // // Force a redraw of the table to reflect any changes
+        // this.table.redraw(true);
+    }
+
     listeners = () => {
 
         // Add new row button functionality
@@ -427,6 +528,15 @@ export class OrderPane {
         bus.on('order:table:sync:items', (id) => {
 
             this.syncItems();
+        });
+
+        bus.on('client:updated', (client) => {
+
+            console.log('Client updated:', client);
+
+            this.order.discounts = client.discounts || [];
+
+            this.refreshTable();
         });
     }
 
@@ -488,9 +598,9 @@ export class OrderPane {
                 e.preventDefault();
                 success(input.value ? parseFloat(input.value) : "");
                 // Navigate to next cell after a short delay
-                setTimeout(() => {
-                    this.navigateToNextCell(cell);
-                }, 10);
+                // setTimeout(() => {
+                this.navigateToNextCell(cell);
+                // }, 25);
             } else if (e.key === "Escape") {
                 cancel();
             } else if (e.key === "Tab") {
@@ -520,15 +630,30 @@ export class OrderPane {
             return colDef.editor && colDef.field !== 'area' && colDef.field !== 'total' && colDef.field !== 'price';
         });
         const currentColumnIndex = editableColumns.findIndex(col => col.getField() === currentColumn.getField());
+        const currentRowIndex = this.table.getRows().findIndex(row => row === currentRow);
+
+        // console.log('Current column index:', currentColumnIndex, ' row index', currentRowIndex);
 
         if (currentColumnIndex < editableColumns.length - 1) {
             // Move to next editable column in same row
             const nextColumn = editableColumns[currentColumnIndex + 1];
-            const nextCell = currentRow.getCell(nextColumn.getField());
-            try {
-                nextCell.edit();
-            } catch (error) {
-                console.warn('Cannot edit cell:', nextColumn.getField(), error);
+            // Refresh row reference to avoid stale references
+            const freshRows = this.table.getRows();
+            const freshRow = freshRows[currentRowIndex];
+
+            // console.log('Moving to next column:', nextColumn.getField(), ' freshRow:', freshRow);
+
+            // const nextCell = freshRow.getCell(nextColumn);
+
+            if (freshRow) {
+                const nextCell = freshRow.getCell(nextColumn.getField());
+                if (nextCell) {
+                    try {
+                        nextCell.edit();
+                    } catch (error) {
+                        console.warn('Cannot edit cell:', nextColumn.getField(), error);
+                    }
+                }
             }
         } else {
             // Move to first editable column of next row, or create new row if at end
@@ -538,13 +663,15 @@ export class OrderPane {
             if (currentRowIndex < rows.length - 1) {
                 // Move to next row
                 const nextRow = rows[currentRowIndex + 1];
-                const firstEditableColumn = editableColumns[0];
-                if (firstEditableColumn) {
+                const firstEditableColumn = editableColumns[1];
+                if (firstEditableColumn && nextRow) {
                     const nextCell = nextRow.getCell(firstEditableColumn.getField());
-                    try {
-                        nextCell.edit();
-                    } catch (error) {
-                        console.warn('Cannot edit cell:', firstEditableColumn.getField(), error);
+                    if (nextCell) {
+                        try {
+                            nextCell.edit();
+                        } catch (error) {
+                            console.warn('Cannot edit cell:', firstEditableColumn.getField(), error);
+                        }
                     }
                 }
             } else {
@@ -574,24 +701,48 @@ export class OrderPane {
             const option = document.createElement("option");
             option.value = suggestion;
             option.style.backgroundColor = "beige";
-            // option.style.color = "#fff!important";
             option.style.padding = "4px 8px";
-
-            // console.log('Adding suggestion:', suggestion);
             datalist.appendChild(option);
         });
 
+
+        let lastKeyPressed = '';
+
+        input.addEventListener("keydown", (e) => {
+            lastKeyPressed = e.key;
+
+            console.log('Key pressed in suggestion editor:', lastKeyPressed);
+        });
+
+        // Detect when user selects from datalist
         input.addEventListener("input", (e) => {
-            // This triggers when user selects from datalist
             const selectedValue = e.target.value;
-            if (editorParams.suggestions.includes(selectedValue)) {
-                // console.log('S:Suggestion selected:', selectedValue);
-                // Navigate to next cell after a short delay
-                setTimeout(() => {
-                    this.navigateToNextCell(cell);
-                }, 10);
+            if (editorParams.suggestions.includes(selectedValue) && lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
+                console.log('User selected from datalist:', selectedValue);
+                // Handle the selection here
+                success(selectedValue);
+                this.navigateToNextCell(cell);
+                if (datalist.parentNode) {
+                    document.body.removeChild(datalist);
+                }
             }
         });
+
+        // input.addEventListener("input", (e) => {
+        //     // This triggers when user selects from datalist
+
+        //     const selectedValue = e.target.value;
+        //     if (editorParams.suggestions.includes(selectedValue)) {
+        //         // console.log('S:Suggestion selected:', selectedValue);
+        //         // Don't navigate if user pressed backspace or delete
+        //         if (lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
+        //             // Navigate to next cell after a short delay
+        //             // setTimeout(() => {
+        //             // this.navigateToNextCell(cell);
+        //             // }, 25);
+        //         }
+        //     }
+        // });
 
         input.setAttribute("list", datalist.id);
         document.body.appendChild(datalist);
@@ -604,16 +755,23 @@ export class OrderPane {
         });
 
         input.addEventListener("keydown", (e) => {
+
             if (e.key === "Enter") {
+
                 success(input.value);
+
+                // e.preventDefault();
+
+                this.navigateToNextCell(cell);
+
                 if (datalist.parentNode) {
                     document.body.removeChild(datalist);
                 }
 
                 // Navigate to next cell after a short delay
-                setTimeout(() => {
-                    this.navigateToNextCell(cell);
-                }, 10);
+                // setTimeout(() => {
+
+                // }, 25);
             } else if (e.key === "Escape") {
                 cancel();
                 if (datalist.parentNode) {

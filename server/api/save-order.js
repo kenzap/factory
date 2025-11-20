@@ -27,16 +27,19 @@ async function saveOrder(data) {
 
             data.id = await getNextOrderId(client);
             data._id = makeId();
+            data.date = new Date().toISOString();
         }
+
+        if (!data.date) data.date = new Date().toISOString();
 
         // Get orders
         let query = `
-        INSERT INTO data (_id, pid, ref, sid, js)
-        VALUES ($1, $2, $3, $4, $5)
-        ON CONFLICT (_id)
-        DO UPDATE SET
-            js = EXCLUDED.js
-        RETURNING _id, js->'data'->>'id' as "id"`;
+            INSERT INTO data (_id, pid, ref, sid, js)
+            VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (_id)
+            DO UPDATE SET
+                js = EXCLUDED.js
+            RETURNING _id, js->'data'->>'id' as "id"`;
 
         const params = [data._id, 0, 'ecommerce-order', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 

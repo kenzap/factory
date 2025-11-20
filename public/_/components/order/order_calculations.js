@@ -4,10 +4,10 @@ import { bus } from "../../modules/bus.js";
 /**
  * A client search component that provides autocomplete functionality for searching clients.
  * Example, in the orders journal.
- * 
- * @class ClientSearch 
+ *  
+ * @class ClientSearch  
  */
-export const updateCalculations = (cell, settings) => {
+export const updateCalculations = (cell, settings, order) => {
 
     // console.log('Updating calculations for cell:', cell.getField());
 
@@ -19,7 +19,7 @@ export const updateCalculations = (cell, settings) => {
     let color = data.color || "";
     let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
 
-    // update product price in the row
+    // update product price in the row | based on sketch data
     if (data._id && !data.input_fields_values) {
 
         // console.log('getPrice settings:', settings);
@@ -30,21 +30,58 @@ export const updateCalculations = (cell, settings) => {
         });
     }
 
-    // calculate price based on the product's formula
+    // update product price when formula_length = L | no sketch data
+    // console.log('Data before calculation:', data);
+    if (data._id && ((data.formula_length === "L" || data.formula_width === "W"))) {
+
+        // data.input_fields[0].default = data.length || 0;
+
+        if (!data.input_fields_values) { data.input_fields_values = {}; }
+        if (data.formula_width) data.input_fields_values.inputW = data.formula_width_calc || 0;
+        if (data.formula_length) data.input_fields_values.inputL = data.formula_length_calc || 0;
+
+        if (!data.input_fields) { data.input_fields = []; }
+        if (data.formula_width) {
+            const existingW = data.input_fields.find(field => field.label === "W");
+            if (existingW) {
+                existingW.default = data.input_fields_values.inputW;
+            } else {
+                data.input_fields.push({ label: "W", default: data.input_fields_values.inputW });
+            }
+        }
+        if (data.formula_length) {
+            const existingL = data.input_fields.find(field => field.label === "L");
+            if (existingL) {
+                existingL.default = data.input_fields_values.inputL;
+            } else {
+                data.input_fields.push({ label: "L", default: data.input_fields_values.inputL });
+            }
+        }
+
+        price = getPrice(settings, { ...data, coating: coating, color: color, input_fields: data.input_fields, input_fields_values: data.input_fields_values });
+
+        // console.log('getPrice (formula_length = L):', price);
+
+        row.update({
+            price: price.price,
+        });
+    }
+
+    // update product width and length in the row
     if (cellField == "title" && data._id && !data.input_fields_values) {
 
         row.update({
             product: data.title,
-            width: price.formula_width_calc || "",
-            length: price.formula_length_calc || "",
+            width: isNaN(price.formula_width_calc) ? "" : price.formula_width_calc || "",
+            length: isNaN(price.formula_length_calc) ? "" : price.formula_length_calc || "",
         });
     }
 
     // Calculate square footage
     const area = calculatearea(data.formula_width_calc, data.formula_length_calc);
-    // console.log('Calculated area:', area);
+    console.log('Calculated area:', area);
 
-    if (!data.input_fields_values) row.update({ area: area });
+    if (!data.sketch_attached) row.update({ area: isNaN(area) ? "" : area });
 
     // Calculate total price
     const total = calculateItemTotal(
@@ -56,7 +93,7 @@ export const updateCalculations = (cell, settings) => {
     row.update({ total: total });
 
     bus.emit('order:table:sync:items');
-    bus.emit('order:table:refreshed');
+    // bus.emit('order:table:refreshed', order);
 
     // console.log('Updating', row.getData());
 }

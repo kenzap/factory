@@ -40,8 +40,12 @@ async function getProductSuggestions(filters) {
     let params = ['ecommerce-product', sid, locale];
 
     if (filters.s && filters.s.trim() !== '') {
-        query += ` AND unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4)`;
-        params.push(`%${filters.s}%`);
+        const keywords = filters.s.trim().split(/\s+/);
+        const conditions = keywords.map((_, index) => {
+            params.push(`%${keywords[index]}%`);
+            return `unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($${params.length})`;
+        });
+        query += ` AND (${conditions.join(' AND ')})`;
     }
 
     query += `

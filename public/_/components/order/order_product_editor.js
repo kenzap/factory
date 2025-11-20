@@ -207,7 +207,9 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     };
 
     input.addEventListener("input", (e) => {
-        const searchTerm = e.target.value;
+        const searchTerm = e.target.value.trim();
+
+        console.log('Searching for products with term:', searchTerm);
 
         // Clear previous timeout to debounce the search
         clearTimeout(searchTimeout);

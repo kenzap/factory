@@ -3,7 +3,7 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { __attr, __html, log, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotalsHTML } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
@@ -229,11 +229,12 @@ export class LeftPane {
 
         // Due date input focus handler
         document.getElementById('due_date').addEventListener('focus', (event) => {
-            // Format the current date if empty
 
+            // Format the current date if empty
             if (!event.target.value) {
                 this.formatDueDate();
             }
+
             // Trigger the browser's native date picker
             event.target.showPicker();
 
@@ -287,7 +288,11 @@ export class LeftPane {
         });
 
         // Refresh totals
-        bus.on('order:table:refreshed', () => {
+        bus.on('order:table:refreshed', (order) => {
+
+            console.log('LeftPane, order:table:refreshed:', order);
+
+            this.order = order;
 
             this.summary();
         });
@@ -350,7 +355,7 @@ export class LeftPane {
 
         if (date) return;
 
-        // log('Formatting due date:', date);
+        log('Formatting due date:', date);
 
         const now = new Date();
         now.setDate(now.getDate() + 2); // two days ahead
@@ -367,7 +372,7 @@ export class LeftPane {
         // Calculate totals based on the order items and settings
         // this.order.price = getTotals(this.settings, this.order);
 
-        // console.log('Order summary updated:', this.order.price);
+        console.log('Order summary updated:', this.order);
 
         // const order = this.order;
 
@@ -414,14 +419,23 @@ export class LeftPane {
         const due_date = document.getElementById('due_date').value;
         const notes = document.getElementById('notes').value;
 
-        // console.log(draft)
-
+        console.log('due_date', due_date);
 
         // Validate required fields
-        const date = new Date(due_date);
-        const due_date_utc = date.toISOString();
+        let due_date_utc = null;
+        if (due_date && due_date.trim() !== '') {
+            const date = new Date(due_date);
+            if (!isNaN(date.getTime())) {
+                due_date_utc = date.toISOString();
+            }
+        }
 
-        // console.log('Time Zone:', due_date_utc);
+        console.log('due_date_utc', due_date_utc);
+
+        // Filter out empty items (no price or product name)
+        this.order.items = (this.order.items || []).filter(item => {
+            return item && (item.price > 0 || (item.name && item.name.trim().length > 0));
+        });
 
         // Collect other necessary data and send it to the server
         const orderData = {
