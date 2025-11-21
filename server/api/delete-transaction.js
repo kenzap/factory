@@ -57,7 +57,7 @@ function deleteTransactionApi(app) {
 
     app.post('/api/delete-transaction/', authenticateToken, async (_req, res) => {
 
-        console.log('delete ', _req.body);
+        // console.log('delete ', _req.body);
 
         const response = await deleteTransaction(_req.body.data);
 

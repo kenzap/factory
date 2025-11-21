@@ -68,7 +68,7 @@ body {
     background: rgba(255, 255, 255, 0.95);
     border-radius: 0px;
     /* backdrop-filter: blur(10px); */
-    margin-bottom: 2px;
+    margin-bottom: 1px;
     transition: all 0.3s ease;
     cursor: pointer;
 }
@@ -80,27 +80,27 @@ body {
 
 .status-urgent {
     border-left: 8px solid var(--base-color);
-    background: linear-gradient(90deg, rgba(231, 76, 60, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: rgba(231, 76, 60, 0.4);
 }
 
 .status-manufacturing {
     border-left: 8px solid var(--primary-color);
-    background: linear-gradient(90deg, rgba(23, 162, 184, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: rgba(23, 162, 184, 0.4);
 }
 
 .status-today {
     border-left: 8px solid var(--base-color-6);
-    background: linear-gradient(90deg, rgba(243, 156, 18, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: rgba(243, 156, 18, 0.4);
 }
 
 .status-ready {
     border-left: 8px solid var(--base-color-4);
-    background: linear-gradient(90deg, rgba(39, 174, 96, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: rgba(39, 174, 96, 0.4);
 }
 
 .status-issued {
     border-left: 8px solid #6c757d;
-    background: linear-gradient(90deg, rgba(108, 117, 125, 0.25) 0%, rgba(255, 255, 255, 0.9) 100%);
+    background: rgba(108, 117, 125, 0.4);
 }
 
 .order-id {

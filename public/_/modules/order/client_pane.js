@@ -1,4 +1,5 @@
 import { deleteClient } from "../../api/delete_client.js";
+import { getBankDetails } from "../../api/get_bank_details.js";
 import { getClientDetails } from "../../api/get_client_details.js";
 import { saveClient } from "../../api/save_client.js";
 import { verifyClient } from "../../api/verify_client.js";
@@ -6,7 +7,7 @@ import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
-import { __html, attr, onClick, toast } from "../../helpers/global.js";
+import { __html, attr, onChange, onClick, toast } from "../../helpers/global.js";
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 
@@ -99,7 +100,7 @@ export class ClientPane {
             <!-- Client Details -->
             <div class="row mb-4">
                 <div class="col-md-6 mb-3">
-                    <label for="reg_number" class="form-label">${__html('Registration Number')} <span class="ms-2 po verify_company">⇄</span></label>
+                    <label for="reg_number" class="form-label">${__html('Registration Number')} <span class="ms-2 po verify_company"><i class="bi bi-arrow-left-right"></i></span> <span class="ms-2 po verify_company_locally"><i class="bi bi-search"></i></span></label>
                     <input type="text" class="form-control" id="reg_number" value="${this.client.reg_number || this.client.reg_num || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
@@ -200,6 +201,7 @@ export class ClientPane {
             }
         });
 
+        // remove cient
         onClick('#removeClientBtn', () => {
             if (confirm(__html('Delete client?'))) {
                 // Call the API to remove the client
@@ -268,6 +270,31 @@ export class ClientPane {
                     toast(__html('Failed to verify client details'), 'error');
                 }
             });
+        });
+
+        // Verify company details in local registry
+        onClick('.verify_company_locally', () => {
+            window.open("https://company.lursoft.lv/" + document.getElementById('reg_number').value.trim(), '_blank');
+        });
+
+        // on
+        onChange('#bank_acc', (event) => {
+
+            const bankAcc = event.target.value.trim();
+
+            if (bankAcc.length < 10) return;
+
+            // Extract bank code and prepend it
+            const code = bankAcc.substr(4, 4) + bankAcc.substr(0, 2);
+
+            getBankDetails({ code }, (response) => {
+                if (response && response.success && response.data) {
+
+                    console.log('Bank details fetched:', response.data);
+                    document.getElementById('bank_name').value = response.data.name || '';
+                }
+            });
+            // event.target.value = bankCode;
         });
 
         // Handle Enter key as Tab for all input and textarea fields
