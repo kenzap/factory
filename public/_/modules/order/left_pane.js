@@ -1,3 +1,4 @@
+import { deleteTransaction } from "../../api/delete_transaction.js";
 import { saveOrder } from "../../api/save_order.js";
 import { ClientAddressSearch } from "../../components/order/client_address_search.js";
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
@@ -35,11 +36,13 @@ export class LeftPane {
                 <div class="form-section p-0 pb-3 border-0">
                     <h6 class="d-none"><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''}>
-                            <label class="form-check-label" for="draft">
-                                ${__html('Estimate')}
-                            </label>
+                        <div class="draft-check-cnt">
+                            <div class="form-check p-0 mb-0 d-flex align-items-center">
+                                <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''} style="accent-color: #333;">
+                                <label class="form-check-label" for="draft">
+                                    ${__html('Estimate')}
+                                </label>
+                            </div>
                         </div>
                     </div>
                     <div class="mb-2">
@@ -116,12 +119,25 @@ export class LeftPane {
                 
                 <!-- Save Button -->
                 <div class="form-section p-0">
-                    <button class="btn ${this.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
-                        <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save') : __html('Create')}
-                    </button>
-                </div>
-            </div>
-        </div>`;
+
+                    ${this.order.id ? /*html*/`
+                        <div class="btn-group w-100" role="group">
+                            <button class="btn btn-outline-primary btn-lg- px-3 flex-grow-1" id="saveOrderBtn">
+                                <i class="bi bi-floppy fs-5- me-2"></i> ${__html('Save')}
+                            </button>
+                            <button class="btn btn-outline-danger btn-lg- px-3" id="deleteOrderBtn" style="flex: 0 0 auto;">
+                                <i class="bi bi-trash fs-5"></i>
+                            </button>
+                        </div>
+                    ` : /*html*/`
+                        <button class="btn ${this.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
+                            <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save') : __html('Create')}
+                        </button>
+                    `}
+                    
+                </div >
+            </div >
+        </div > `;
 
         this.clientOrderSearch = new ClientOrderSearch(this.order);
 
@@ -155,6 +171,31 @@ export class LeftPane {
             console.log('Save Order button clicked');
 
             this.save();
+        });
+
+        // Save button
+        onClick('#deleteOrderBtn', () => {
+
+            // Handle save order logic here
+            console.log('deleteOrderBtn', this.order._id);
+
+            if (!confirm(__html('Delete record?'))) return;
+
+            // Remove from db
+            deleteTransaction([{ _id: this.order._id }], (response) => {
+
+                if (response.success) {
+
+                    toast('Successfully removed');
+
+                    // Reload current page data
+                    window.location.href = '/order/';
+                    // this.table.setPage(currentPage);
+
+                } else {
+                    toast('Error deleting rows: ' + response.error);
+                }
+            });
         });
 
         // Order list table button

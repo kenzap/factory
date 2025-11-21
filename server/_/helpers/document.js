@@ -166,7 +166,7 @@ export function getWaybillItemsTable(settings, order, locale) {
         return item.total ? `
             <tr class="${i == order.items.length - 1 ? "border-secondary" : ""}">
                 <th scope="row">${i + 1}</th>
-                <td>${item.title} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""} ${i == 1000 ? "(4 x Skrūve DIN 933 8.8 M8 x 40 HDG, 4 x Uzgrieznis DIN 934 M8 HDG, 2 x Gumijas blīve 3 mm EPDM W-60)" : ""}${i == 1001 ? "(1 x Uzgrieznis DIN 934 M8 HDG, 1 x Skrūve DIN 933 8.8 M8 x 40 HDG)" : ""}</td>
+                <td>${item.title} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""} ${item.formula_width_calc && item.formula_length_calc ? `(${priceFormat(settings, item.price / (item.formula_length_calc / 1000))} par t/m)` : ""} ${i == 1000 ? "(4 x Skrūve DIN 933 8.8 M8 x 40 HDG, 4 x Uzgrieznis DIN 934 M8 HDG, 2 x Gumijas blīve 3 mm EPDM W-60)" : ""}${i == 1001 ? "(1 x Uzgrieznis DIN 934 M8 HDG, 1 x Skrūve DIN 933 8.8 M8 x 40 HDG)" : ""}</td>
                 <td>${priceFormat(settings, item.price)}</td>
                 ${order.discount ? `<th scope="col"><div class="text-start">-${Math.round(100 - item.discount * 100)}%</div></th>` : ``}
                 ${order.discount ? `<th scope="col"><div class="text-start">${Math.round(item.priced * 100) / 100}</div></th>` : ``}
@@ -347,24 +347,40 @@ export const getWaybillTotals = (settings, order) => {
 
 export function getProductionItemsTable(settings, order, locale) {
 
-    console.log("getProductionItemsTable locale", locale);
+    // console.log("getProductionItemsTable locale", locale);
 
-    let groups = settings.groups || [];
+    let groups = settings.groups ? JSON.parse(settings.groups) : [];
 
-    if (!Array.isArray(groups)) groups = [];
+    // console.log("getProductionItemsTable groups", groups);
+    // console.log("getProductionItemsTable locale", order.items);
+
+    // if (!Array.isArray(groups)) groups = [];
 
     let tableContent = '';
     let itemIndex = 1;
 
+    console.log("getProductionItemsTable order.items", order.items);
+
     groups.forEach(group => {
+
+        // console.log("getProductionItemsTable group", order.items);
 
         // Filter order items that belong to this group
         const groupItems = order.items.filter(item =>
             group.id == item?.group
         );
 
-        // Sort group items alphabetically by product name
+        // Sort group items by priority first (with default 1000), then alphabetically by product name
         groupItems.sort((a, b) => {
+            const priorityA = a.priority !== '' ? a.priority : 1000;
+            const priorityB = b.priority !== '' ? b.priority : 1000;
+
+            // First sort by priority
+            if (priorityA !== priorityB) {
+                return priorityA - priorityB;
+            }
+
+            // If priorities are equal, sort alphabetically by product name
             const nameA = (a.title || '').toLowerCase();
             const nameB = (b.title || '').toLowerCase();
             return nameA.localeCompare(nameB);
@@ -379,6 +395,7 @@ export function getProductionItemsTable(settings, order, locale) {
                         <th scope="col"></th>
                         <th scope="col">${__html(locale, group.name)}</th>
                         <th scope="col">${__html(locale, "Qty")}</th>
+                        <th scope="col">${__html(locale, "t/m")}</th>
                         <th scope="col">${__html(locale, "Unit")}</th>
                     </tr>
                 </thead>
@@ -393,10 +410,11 @@ export function getProductionItemsTable(settings, order, locale) {
                         <tr class="${i == groupItems.length - 1 ? "border-secondary" : ""}">
                             <th scope="row">${itemIndex}</th>
                             <td>
-                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color}</div>
+                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""}</div>
                                 ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                             </td>
                             <td>${item.qty}</td>
+                            <td>${item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : ""}</td>
                             <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
                         </tr>
                     `;
@@ -428,6 +446,7 @@ export function getProductionItemsTable(settings, order, locale) {
                     <th scope="col"></th>
                     <th scope="col">${__html(locale, "Product")}</th>
                     <th scope="col">${__html(locale, "Qty")}</th>
+                    <th scope="col">${__html(locale, "t/m")}</th>
                     <th scope="col">${__html(locale, "Unit")}</th>
                 </tr>
             </thead>
@@ -446,6 +465,7 @@ export function getProductionItemsTable(settings, order, locale) {
                             ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                         </td>
                         <td>${item.qty}</td>
+                        <td>${item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : ""}</td>
                         <td>${item.unit ? item.unit : __html(locale, "pc")}</td>
                     </tr>
                 `;

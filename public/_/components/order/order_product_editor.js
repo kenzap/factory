@@ -85,9 +85,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
             if (index === selectedIndex) {
                 option.style.backgroundColor = "#007bff";
                 option.style.color = "white";
+                option.querySelector(".text-sdesc").style.color = "white";
                 option.scrollIntoView({ block: "nearest" });
             } else {
                 option.style.backgroundColor = "white";
+                option.querySelector(".text-sdesc").style.color = 'var(--gray-color)';
                 option.style.color = "black";
             }
         });
@@ -137,9 +139,25 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 };
                 optionImage.style.display = "block";
 
-                const optionText = document.createElement("span");
-                optionText.textContent = suggestion.title + " " + suggestion.sdesc;
+                const optionText = document.createElement("div");
                 optionText.style.flex = "1";
+                optionText.style.display = "flex";
+                optionText.style.flexDirection = "column";
+
+                const titleSpan = document.createElement("span");
+                titleSpan.textContent = suggestion.title;
+                titleSpan.style.fontWeight = "500";
+                titleSpan.style.fontSize = "14px";
+
+                const sdescSpan = document.createElement("span");
+                sdescSpan.classList.add("text-sdesc");
+                sdescSpan.textContent = suggestion.sdesc;
+                sdescSpan.style.fontSize = "12px";
+                sdescSpan.style.color = 'var(--gray-color)';
+                sdescSpan.style.marginTop = "2px";
+
+                optionText.appendChild(titleSpan);
+                optionText.appendChild(sdescSpan);
 
                 option.appendChild(optionImage);
                 option.appendChild(optionText);
@@ -180,7 +198,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                     largePreview.style.display = "none";
 
                     // Immediately update the cell value before navigating
-                    success(suggestion.title + " " + suggestion.sdesc);
+                    success(suggestion.title);
 
                     setTimeout(() => {
                         editorParams.navigateToNextCell(cell);
@@ -296,11 +314,13 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
             if (selectedIndex >= 0 && selectedIndex < options.length) {
 
                 // Select the highlighted option
-                const selectedSuggestion = options[selectedIndex].textContent;
+                const suggestion = productSuggestions[selectedIndex];
+
+                const selectedSuggestion = suggestion.title;
                 input.value = selectedSuggestion;
                 dropdown.style.display = "none";
                 largePreview.style.display = "none";
-                const suggestion = productSuggestions[selectedIndex];
+
                 productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
                 success(selectedSuggestion);
                 setTimeout(() => {

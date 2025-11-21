@@ -38,7 +38,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 COUNT(*) as total,
                 SUM(CASE WHEN js->'data'->'price'->>'grand_total' IS NOT NULL AND js->'data'->'price'->>'grand_total' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_amount,
                 SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
-                SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
+                SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_waybill
             FROM data
             WHERE ref = $1 AND sid = $2 `;
 
@@ -50,9 +50,12 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
     //     params.push(`%${filters.client.name.trim()}%`);
     // }
 
+    let chunk = null;
+
     if (filters.client?.eid) {
-        query += ` AND (js->'data'->>'eid' = $${params.length + 1} OR LOWER(js->'data'->>'name') = LOWER($${params.length + 2})) `;
-        query_summary += ` AND (js->'data'->>'eid' = $${params.length + 1} OR LOWER(js->'data'->>'name') = LOWER($${params.length + 2})) `;
+        chunk = ` AND (js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`;
+        query += chunk;
+        query_summary += chunk
         params.push(`${filters.client.eid.trim()}`);
         params.push(`${filters.client.name.trim()}`);
     }
@@ -60,38 +63,49 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {
         // query += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
         // query_summary += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
-        query += ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
-        query_summary += ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
+        chunk = ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
         params.push(filters.dateFrom.trim());
     }
 
     if (filters.dateTo && filters.dateTo.trim() !== '') {
         // query += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
         // query_summary += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
-        query += ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
-        query_summary += ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
+        chunk = ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
+
+        // const endDate = new Date(filters.dateTo.trim());
+        // endDate.setDate(endDate.getDate() + 1);
+        // params.push(endDate.toISOString());
+
         params.push(filters.dateTo.trim());
     }
 
     if (typeof filters.draft === 'boolean') {
-        query += ` AND js->'data'->'draft' = $${params.length + 1}`;
-        query_summary += ` AND js->'data'->'draft' = $${params.length + 1}`;
+        chunk = ` AND js->'data'->'draft' = $${params.length + 1}`;
+        query += chunk;
+        query_summary += chunk
         params.push(filters.draft);
     }
 
     if (filters.type && filters.type == 'paid') {
-        query += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
-        query_summary += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
+        chunk = ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
+        query += chunk;
+        query_summary += chunk
     }
 
     if (filters.type && filters.type == 'unpaid') {
-        query += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric = 0`;
-        query_summary += ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric = 0`;
+        chunk = ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric = 0`;
+        query += chunk;
+        query_summary += chunk
     }
 
     if (filters.type && filters.type == 'transaction') {
-        query += ` AND (js->'data'->'transaction')::boolean = true`;
-        query_summary += ` AND (js->'data'->'transaction')::boolean = true`;
+        chunk = ` AND (js->'data'->'transaction')::boolean = true`;
+        query += chunk;
+        query_summary += chunk
     }
 
     // Apply pagination
@@ -131,7 +145,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
         const countResult = await db.query(query_summary, countParams);
 
-        console.log(countResult.rows)
+        // console.log(countResult.rows)
 
         orders.records = result.rows;
         orders.total = parseInt(countResult.rows[0].total);

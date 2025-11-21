@@ -204,7 +204,7 @@ class Orders {
 
         // Filter event listeners
         document.getElementById('dateFrom').addEventListener('change', (e) => { this.filters.dateFrom = e.currentTarget.value ? new Date(e.currentTarget.value + 'T00:00:00').toISOString() : ''; this.table.setPage(1); });
-        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value ? new Date(e.currentTarget.value + 'T00:00:00').toISOString() : ''; this.table.setPage(1); });
+        document.getElementById('dateTo').addEventListener('change', (e) => { this.filters.dateTo = e.currentTarget.value ? new Date(e.currentTarget.value + 'T23:59:59').toISOString() : ''; this.table.setPage(1); });
         document.getElementById('typeFilter').addEventListener('change', (e) => { this.filters.type = e.currentTarget.value; this.table.setPage(1); });
 
         // Button event listeners

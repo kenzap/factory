@@ -152,7 +152,7 @@ export class ClientPane {
             <div class="text-end">
                 <div class="btn-group" role="group">
                     <button class="btn btn-outline-primary btn-lg px-3" id="saveClientBtn">
-                        <i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save Client')}
+                        <i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save')}
                     </button>
                     <button class="btn btn-outline-danger btn-lg px-3" id="removeClientBtn">
                         <i class="bi bi-trash fs-5"></i>
