@@ -9,13 +9,11 @@ import { getTotalsHTML } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
+import { state } from "../../modules/order/state.js";
 
 export class LeftPane {
 
-    constructor(settings, order) {
-
-        this.settings = settings;
-        this.order = order;
+    constructor() {
 
         // check if header is already present
         this.init();
@@ -34,11 +32,11 @@ export class LeftPane {
             <div class="top-content">
                 <!-- Order ID Section -->
                 <div class="form-section p-0 pb-3 border-0">
-                    <h6 class="d-none"><i class="bi bi-hash me-2"></i>${this.order.id ? __html('Edit Order') : __html('New Order')}</h6>
+                    <h6 class="d-none"><i class="bi bi-hash me-2"></i>${state.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
                         <div class="draft-check-cnt">
                             <div class="form-check p-0 mb-0 d-flex align-items-center">
-                                <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${this.order.draft ? 'checked' : ''} style="accent-color: #333;">
+                                <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${state.order.draft ? 'checked' : ''} style="accent-color: #333;">
                                 <label class="form-check-label" for="draft">
                                     ${__html('Estimate')}
                                 </label>
@@ -46,7 +44,7 @@ export class LeftPane {
                         </div>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-ss" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${this.order.id || ''}" data-_id="${this.order._id || ''}" tabindex="0">
+                        <input type="text" class="form-control form-control-ss" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${state.order.id || ''}" data-_id="${state.order._id || ''}" tabindex="0">
                     </div>
                     <div class="mb-2">
                         <client-order-search></client-order-search>
@@ -55,7 +53,7 @@ export class LeftPane {
                         <client-address-search></client-address-search>
                     </div>
                     <div class="mb-2">
-                        <textarea class="form-control form-control-ss" id="notes" rows="1" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${this.order.notes || ""}</textarea>
+                        <textarea class="form-control form-control-ss" id="notes" rows="1" autocomplete="nope" placeholder="${__attr('Order notes...')}" tabindex="3">${state.order.notes || ""}</textarea>
                     </div>
                 </div>
                 
@@ -64,13 +62,13 @@ export class LeftPane {
                     <h6><i class="bi bi-telephone me-2"></i>${__html('Contact')}</h6>
                     <contact-order-search></contact-order-search>
                     <div class="input-group input-group-ss mb-2">
-                        <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${this.order.phone || ""}" tabindex="5">
+                        <input id="contactPhone"  type="tel" class="form-control" autocomplete="nope" placeholder="${__attr('Phone number')}" value="${state.order.phone || ""}" tabindex="5">
                         <button class="btn btn-outline-success whatsapp-btn po" type="button" id="whatsappBtn">
                             <i class="bi bi-whatsapp"></i>
                         </button>
                     </div>
                     <div class="mb-2">
-                        <input id="contactEmail" type="text" class="form-control form-control-ss" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${this.order.email || ""}" tabindex="6">
+                        <input id="contactEmail" type="text" class="form-control form-control-ss" autocomplete="nope" placeholder="${__attr('Contact email')}" value="${state.order.email || ""}" tabindex="6">
                     </div>
                 </div>
                 
@@ -78,7 +76,7 @@ export class LeftPane {
                 <div class="form-section p-0 pb-3 border-0">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
                     <div class="input-group input-group-ss mb-2">
-                        <input type="datetime-local" class="form-control form-control-ss" id="due_date" value="${toLocalDateTime(this.order.due_date) || ''}" tabindex="7">
+                        <input type="datetime-local" class="form-control form-control-ss" id="due_date" value="${toLocalDateTime(state.order.due_date) || ''}" tabindex="7">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -91,10 +89,10 @@ export class LeftPane {
                     <div class="btn-group-toggle d-flex flex-nowrap gap-1 overflow-hidden-" data-bs-toggle="buttons">
                         <div class="d-flex align-items-center justify-content-between w-100 h-100 overflow-hidden-">
                             <div class="d-flex flex-nowrap overflow-hidden-">
-                                <button class="btn ${this.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${this.order?.waybill?.number ? this.order?.waybill?.number : __html('Waybill')}</button>
-                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${this.order?.invoice?.number ? __html('INV %1$', this.order?.invoice?.number) : __html('Invoice')}</button>
-                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
-                                <button class="btn ${this.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
+                                <button class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
+                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV %1$', state.order?.invoice?.number) : __html('Invoice')}</button>
+                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
+                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
                             </div>
                             <div class="dropdown flex-shrink-0">
                                 <svg id="docActions" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po mb-1" viewBox="0 0 16 16">
@@ -120,7 +118,7 @@ export class LeftPane {
                 <!-- Save Button -->
                 <div class="form-section p-0">
 
-                    ${this.order.id ? /*html*/`
+                    ${state.order.id ? /*html*/`
                         <div class="btn-group w-100" role="group">
                             <button class="btn btn-outline-primary btn-lg- px-3 flex-grow-1" id="saveOrderBtn">
                                 <i class="bi bi-floppy fs-5- me-2"></i> ${__html('Save')}
@@ -130,8 +128,8 @@ export class LeftPane {
                             </button>
                         </div>
                     ` : /*html*/`
-                        <button class="btn ${this.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
-                            <i class="bi bi-floppy me-2"></i>${this.order.id ? __html('Save') : __html('Create')}
+                        <button class="btn ${state.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
+                            <i class="bi bi-floppy me-2"></i>${state.order.id ? __html('Save') : __html('Create')}
                         </button>
                     `}
                     
@@ -139,13 +137,13 @@ export class LeftPane {
             </div >
         </div > `;
 
-        this.clientOrderSearch = new ClientOrderSearch(this.order);
+        state.clientOrderSearch = new ClientOrderSearch(state.order);
 
-        this.clientAddressSearch = new ClientAddressSearch(this.order);
+        state.clientAddressSearch = new ClientAddressSearch(state.order);
 
-        this.clientContactSearch = new ClientContactSearch(this.order);
+        state.clientContactSearch = new ClientContactSearch(state.order);
 
-        this.formatDueDate(this.order.due_date);
+        this.formatDueDate(state.order.due_date);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -177,12 +175,12 @@ export class LeftPane {
         onClick('#deleteOrderBtn', () => {
 
             // Handle save order logic here
-            console.log('deleteOrderBtn', this.order._id);
+            console.log('deleteOrderBtn', state.order._id);
 
             if (!confirm(__html('Delete record?'))) return;
 
             // Remove from db
-            deleteTransaction([{ _id: this.order._id }], (response) => {
+            deleteTransaction([{ _id: state.order._id }], (response) => {
 
                 if (response.success) {
 
@@ -201,13 +199,13 @@ export class LeftPane {
         // Order list table button
         onClick('#editClientBtn', () => {
 
-            new ClientPane(this.settings, this.order);
+            new ClientPane(state.settings, state.order);
         });
 
         // Order list table button
         onClick('#orderPane', () => {
 
-            new OrderPane(this.settings, this.order);
+            new OrderPane(state.settings, state.order);
         });
 
         // Add event listener for order ID input
@@ -215,9 +213,9 @@ export class LeftPane {
         //     if (event.key === 'Enter') {
         //         event.preventDefault();
 
-        //         this.order.id = document.getElementById('orderId').value;
+        //         state.order.id = document.getElementById('orderId').value;
 
-        //         bus.emit('order:updated', this.order.id);
+        //         bus.emit('order:updated', state.order.id);
         //     }
         // });
 
@@ -250,19 +248,19 @@ export class LeftPane {
 
             switch (type) {
                 case 'waybill':
-                    new PreviewDocument(type, this.order);
+                    new PreviewDocument(type, state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
                     break;
                 case 'invoice':
-                    new PreviewDocument(type, this.order);
+                    new PreviewDocument(type, state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
                     break;
                 case 'quotation':
-                    new PreviewDocument(type, this.order);
+                    new PreviewDocument(type, state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
                 case 'production-slip':
-                    new PreviewDocument(type, this.order);
+                    new PreviewDocument(type, state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
             }
@@ -294,17 +292,17 @@ export class LeftPane {
             element.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
 
-                    // console.log('Enter key pressed on:', this.order.id, element.value);
+                    // console.log('Enter key pressed on:', state.order.id, element.value);
                     // event.preventDefault();
                     // return;
 
-                    if (element.id === 'orderId') if (element.value != this.order.id && element.value > 0) window.location.href = '/order/?id=' + element.value; // bus.emit('order:updated', element.value);
-                    if (element.id === 'orderId') if (element.value != this.order.id && element.value == 0) window.location.href = '/order/';
+                    if (element.id === 'orderId') if (element.value != state.order.id && element.value > 0) window.location.href = '/order/?id=' + element.value; // bus.emit('order:updated', element.value);
+                    if (element.id === 'orderId') if (element.value != state.order.id && element.value == 0) window.location.href = '/order/';
                     if (element.id === 'due_date') { simulateClick(document.querySelector('.order-table-btn')); return; }
 
                     event.preventDefault();
 
-                    console.log('Enter key pressed, moving to next input', element.value, this.order.id);
+                    console.log('Enter key pressed, moving to next input', element.value, state.order.id);
 
                     // Find all focusable elements with tabindex consideration
                     const focusableElements = Array.from(document.querySelectorAll('.left-pane input, .left-pane textarea'))
@@ -333,7 +331,7 @@ export class LeftPane {
 
             console.log('LeftPane, order:table:refreshed:', order);
 
-            this.order = order;
+            // state.order = order;
 
             this.summary();
         });
@@ -343,11 +341,11 @@ export class LeftPane {
 
             console.log('Client updated:', client);
 
-            // this.clientOrderSearch.data();
-            this.clientAddressSearch.data();
-            this.clientContactSearch.data();
+            // state.clientOrderSearch.data();
+            state.clientAddressSearch.data();
+            state.clientContactSearch.data();
 
-            this.order.vat_status = client.vat_status || '0';
+            state.order.vat_status = client.vat_status || '0';
 
             if (document.getElementById('clientFilter').value != client.legal_name && client.legal_name.length) {
                 document.getElementById('clientFilter').value = client.legal_name;
@@ -361,9 +359,9 @@ export class LeftPane {
 
             console.log('LeftPane removed received:', data);
 
-            // this.clientOrderSearch.data();
-            this.clientAddressSearch.data();
-            this.clientContactSearch.data();
+            // state.clientOrderSearch.data();
+            state.clientAddressSearch.data();
+            state.clientContactSearch.data();
 
             console.log("LeftPane data called");
         });
@@ -371,12 +369,12 @@ export class LeftPane {
         bus.clear('contact:search:refresh');
         bus.on('contact:search:refresh', (data) => {
 
-            this.order.eid = data._id;
+            state.order.eid = data._id;
 
             console.log('LeftPane contact search received:', data);
-            // this.clientOrderSearch.data();
-            this.clientAddressSearch.data();
-            this.clientContactSearch.data();
+            // state.clientOrderSearch.data();
+            state.clientAddressSearch.data();
+            state.clientContactSearch.data();
         });
 
 
@@ -411,21 +409,21 @@ export class LeftPane {
 
 
         // Calculate totals based on the order items and settings
-        // this.order.price = getTotals(this.settings, this.order);
+        // state.order.price = getTotals(state.settings, state.order);
 
-        console.log('Order summary updated:', this.order);
+        console.log('Order summary updated:', state.order);
 
-        // const order = this.order;
+        // const order = state.order;
 
         // if (!order.price) {
         //     order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
         // }
 
-        let totals = getTotalsHTML(this.settings, this.order);
+        let totals = getTotalsHTML(state.settings, state.order);
 
         // console.log('Order totals:', totals.price);
 
-        this.order.price = totals.price;
+        state.order.price = totals.price;
 
         document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
 
@@ -433,15 +431,15 @@ export class LeftPane {
         // document.querySelector('order-summary').innerHTML = /*html*/`
         //     <div class="d-flex justify-content-between">
         //         <span>${__html('Subtotal')}</span>
-        //         <span id="subtotal">${priceFormat(this.settings, order.price.total)}</span>
+        //         <span id="subtotal">${priceFormat(state.settings, order.price.total)}</span>
         //     </div>
         //     <div class="d-flex justify-content-between">
-        //         <span>${this.settings.tax_display + " " + this.settings.tax_percent}%</span>
-        //         <span id="vat_rate">${priceFormat(this.settings, order.price.tax_total)}</span>
+        //         <span>${state.settings.tax_display + " " + state.settings.tax_percent}%</span>
+        //         <span id="vat_rate">${priceFormat(state.settings, order.price.tax_total)}</span>
         //     </div>
         //     <div class="d-flex justify-content-between">
         //         <span>${__html('Total')}</span>
-        //         <span id="totalAmount">${priceFormat(this.settings, order.price.grand_total)}</span>
+        //         <span id="totalAmount">${priceFormat(state.settings, order.price.grand_total)}</span>
         //     </div>`;
     }
 
@@ -460,7 +458,7 @@ export class LeftPane {
         const due_date = document.getElementById('due_date').value;
         const notes = document.getElementById('notes').value;
 
-        console.log('due_date', due_date);
+        // console.log('due_date', due_date);
 
         // Validate required fields
         let due_date_utc = null;
@@ -471,10 +469,10 @@ export class LeftPane {
             }
         }
 
-        console.log('due_date_utc', due_date_utc);
+        // console.log('due_date_utc', due_date_utc);
 
         // Filter out empty items (no price or product name)
-        this.order.items = (this.order.items || []).filter(item => {
+        state.order.items = (state.order.items || []).filter(item => {
             return item && (item.price > 0 || (item.name && item.name.trim().length > 0));
         });
 
@@ -491,10 +489,10 @@ export class LeftPane {
             email: contactEmail,
             due_date: due_date_utc,
             notes,
-            items: this.order.items || [], // Assuming items are stored in this.order.items
-            price: this.order.price || {},
-            vat_status: this.order.vat_status || '0',
-            entity: this.order.entity || 'company',
+            items: state.order.items || [], // Assuming items are stored in state.order.items
+            price: state.order.price || {},
+            vat_status: state.order.vat_status || '0',
+            entity: state.order.entity || 'company',
             // Add more fields as necessary
         };
 
@@ -505,8 +503,8 @@ export class LeftPane {
 
             console.log('Order saved successfully:', response.order);
 
-            if (response.order.id) this.order.id = response.order.id;
-            if (response.order._id) this.order._id = response.order._id;
+            if (response.order.id) state.order.id = response.order.id;
+            if (response.order._id) state.order._id = response.order._id;
 
             // Update URL to include the order ID
             const currentUrl = new URL(window.location);

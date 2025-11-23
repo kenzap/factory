@@ -54,6 +54,12 @@ export const sketchEditor = (cell, settings, order, cb) => {
                 if (data.total) {
                     updatedRowData.total = parseFloat(data.total);
                 }
+                if (data.coating) {
+                    updatedRowData.coating = data.coating;
+                }
+                if (data.color) {
+                    updatedRowData.color = data.color;
+                }
                 if (data.qty) {
                     updatedRowData.qty = parseFloat(data.qty);
                 }

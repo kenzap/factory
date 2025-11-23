@@ -28,7 +28,7 @@ export class Header {
         if (this.response.locale) window.i18n = { state: { locale: { values: this.response.locale.values } } };
 
         // create header
-        if (!document.querySelector("#header")) {
+        if (!document.querySelector("#header") && !this.response.hidden) {
 
             // Insert the header HTML into the document body as the first element
             document.body.insertAdjacentHTML('afterbegin', this.html());

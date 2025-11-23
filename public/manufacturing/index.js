@@ -161,10 +161,10 @@ class Manufacturing {
             // session
             new Session();
             new Header({
-                hidden: false,
+                hidden: true,
                 title: __html('Manufacturing'),
                 icon: 'card-text',
-                style: 'navbar-light',
+                style: 'navbar-dark bg-dark',
                 user: response?.user,
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
             });
@@ -734,7 +734,7 @@ class Manufacturing {
         // issue order button
         if (counter.mnf == order.items.length && counter.isu != order.items.length) {
             document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
-                    <button class="btn action-btn btn-outline-success text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', true)">
+                    <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', true)">
                         <i class="bi bi-check-circle me-1"></i> ${__html('Issue')}
                     </button>
                 `;
@@ -828,8 +828,8 @@ class Manufacturing {
         return `
         ${item?.inventory?.rdy_date ?
                 `
-                    <button class="btn btn-sm btn-outline-danger btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
-                    <button class="btn btn-sm btn-outline-success btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',true)" > ${__html('Issue')}</button>
+                    <button class="btn btn-sm btn-outline-dark btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
+                    <button class="btn btn-sm btn-outline-dark btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',true)" > ${__html('Issue')}</button>
                 `: ``
             }
         `;
@@ -1112,7 +1112,7 @@ class Manufacturing {
                 // Update UI to reflect the change
                 const button = document.querySelector(`button[onclick *= "${itemId}"]`);
                 if (button && button.textContent === 'Atcelt') {
-                    button.className = 'btn btn-sm btn-success';
+                    button.className = 'btn btn-sm btn-dark';
                     button.textContent = 'Izsniegt';
                     button.onclick = () => this.issueItem(itemId);
                 }

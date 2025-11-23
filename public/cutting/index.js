@@ -50,6 +50,7 @@ class Cutting {
                 title: __html('Metal Cutting'),
                 icon: 'gear-fill',
                 style: 'navbar-dark bg-dark',
+                user: response?.user,
                 controls: `     
                     <!-- Search Container -->
                     <div class="search-container d-flex align-items-center">

@@ -5,17 +5,14 @@ import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { __html, onClick, priceFormat } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
+import { state } from "../../modules/order/state.js";
 import { bus } from "../bus.js";
 
 export class OrderPane {
 
-    constructor(settings, order) {
+    constructor() {
 
-        this.settings = settings;
-        this.order = order;
-        this.order.items = this.order.items || [];
-
-        console.log('Initializing OrderPane with order:', this.order);
+        console.log('Initializing OrderPane with order:', state.order, state.settings);
 
         // check if header is already present
         this.init();
@@ -25,8 +22,8 @@ export class OrderPane {
 
         // Sample suggestions for different fields
         this.cmSuggestions = [true, false];
-        this.coatingSuggestions = getCoatings(this.settings);
-        this.colorSuggestions = getColors(this.settings);
+        this.coatingSuggestions = getCoatings(state.settings);
+        this.colorSuggestions = getColors(state.settings);
         this.discountSuggestions = [5, 7, 10, 15, 20, 25, 30, 50];
 
         this.view();
@@ -61,7 +58,7 @@ export class OrderPane {
             movableColumns: true,
             sortable: false,
             sorter: false,
-            data: this.order.items,
+            data: state.order.items || [],
             rowHeight: 28, // Reduce row height from default 38px
             headerHeight: 30, // Optionally reduce header height too
             columns: [
@@ -129,8 +126,8 @@ export class OrderPane {
                     headerSort: false,
                     width: 400,
                     editorParams: {
-                        settings: this.settings,
-                        discounts: this.order.discounts || {},
+                        settings: state.settings,
+                        discounts: state.order.discounts || {},
                         navigateToNextCell: this.navigateToNextCell
                     },
                     // formatter: function (cell) {
@@ -173,14 +170,14 @@ export class OrderPane {
                             e.preventDefault();
                             console.log('Edit sketch icon clicked for row:', cell.getRow().getData());
                             // cell.edit();
-                            sketchEditor(cell, self.settings, self.order, (data) => {
+                            sketchEditor(cell, state.settings, state.order, (data) => {
 
                                 // Sync items and trigger refresh
                                 self.syncItems();
                                 self.refreshTable();
                                 // self.table.redraw(true);
 
-                                bus.emit('order:table:refreshed', self.order);
+                                bus.emit('order:table:refreshed', state.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -228,10 +225,8 @@ export class OrderPane {
                     editorParams: { step: 0.01 },
                     width: 80,
                     formatter: function (cell) {
-                        return cell.getValue() ? '<span class="calculated-field">' + priceFormat(self.settings, cell.getValue()) + '</span>' : '';
+                        return cell.getValue() ? '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>' : '';
                     }
-                    // formatter: "money",
-                    // formatterParams: { symbol: "€", precision: 2 },
                 },
                 {
                     title: __html("Price"),
@@ -239,12 +234,11 @@ export class OrderPane {
                     headerSort: false,
                     width: 100,
                     formatter: function (cell) {
-                        // return '<span class="calculated-field"> ok </span>';
                         const row = cell.getRow().getData();
                         const price = parseFloat(row.price) || 0;
                         const adj = parseFloat(row.adj) || 0;
                         const total = price + adj;
-                        return '<span class="calculated-field">' + priceFormat(self.settings, total) + '</span>';
+                        return '<span class="calculated-field">' + priceFormat(state.settings, total) + '</span>';
                     },
                 },
                 {
@@ -268,7 +262,7 @@ export class OrderPane {
                     headerSort: false,
                     width: 100,
                     formatter: function (cell) {
-                        return '<span class="calculated-field">' + priceFormat(self.settings, cell.getValue()) + '</span>';
+                        return '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>';
                     }
                 },
                 {
@@ -279,10 +273,10 @@ export class OrderPane {
                     formatter: function (cell) {
                         return '<span class="form-text">' + cell.getValue() + '</span>';
                     },
-                    editor: this.suggestionEditor,
-                    editorParams: {
-                        suggestions: this.discountSuggestions
-                    },
+                    editor: this.textEditor,
+                    // editorParams: {
+                    //     suggestions: this.discountSuggestions
+                    // },
                 },
                 {
                     title: "",
@@ -331,7 +325,7 @@ export class OrderPane {
 
                                 self.refreshTable();
 
-                                bus.emit('order:table:refreshed', self.order);
+                                bus.emit('order:table:refreshed', state.order);
                             }
                         }
 
@@ -357,7 +351,7 @@ export class OrderPane {
 
                                 allRows.forEach(row => {
                                     const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    updateCalculations(firstCell, self.settings, self.order);
+                                    updateCalculations(firstCell, state.settings, state.order);
                                 });
 
                                 self.syncItems();
@@ -386,7 +380,7 @@ export class OrderPane {
                                 self.refreshTable();
                                 // self.table.redraw(true);
 
-                                bus.emit('order:table:refreshed', self.order);
+                                bus.emit('order:table:refreshed', state.order);
                             }
                         }
 
@@ -394,14 +388,14 @@ export class OrderPane {
 
                             console.log('View sketch for row:', cell.getRow().getData());
 
-                            sketchEditor(cell, self.settings, self.order, (data) => {
+                            sketchEditor(cell, state.settings, state.order, (data) => {
 
                                 // Sync items and trigger refresh
                                 self.syncItems();
                                 self.refreshTable();
                                 // self.table.redraw(true);
 
-                                bus.emit('order:table:refreshed', self.order);
+                                bus.emit('order:table:refreshed', state.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -412,16 +406,16 @@ export class OrderPane {
         });
 
         // Load existing order items into the table
-        if (this.order.items && this.order.items.length > 0) {
+        if (state.order.items && state.order.items.length > 0) {
 
-            // console.log('Loading existing order items into the table:', this.order.items);
-            // this.table.setData(this.order.items);
+            // console.log('Loading existing order items into the table:', state.order.items);
+            // this.table.setData(state.order.items);
         }
 
         // Add event listener for row deletion
         this.table.on("rowDeleted", (row) => {
             this.syncItems();
-            bus.emit('order:table:refreshed', this.order);
+            bus.emit('order:table:refreshed', state.order);
         });
 
         // Add event listener to track any cell value changes
@@ -434,13 +428,13 @@ export class OrderPane {
             }
 
             // You can perform specific actions based on the field or value
-            updateCalculations(cell, this.settings, this.order);
+            updateCalculations(cell, state.settings, state.order);
 
             this.syncItems();
             this.refreshTable();
         });
 
-        if (this.order.items.length === 0) setTimeout(() => { this.addRow() }, 100);
+        if (state.order?.items?.length === 0) setTimeout(() => { this.addRow() }, 100);
     }
 
     syncItems = () => {
@@ -494,11 +488,11 @@ export class OrderPane {
         // },
 
         // Sync the order items with the table data
-        this.order.items = this.table.getData().map(item => {
+        state.order.items = this.table.getData().map(item => {
             return {
                 ...item,
                 // area: (parseFloat(item.width) * parseFloat(item.length) / 1000000).toFixed(3),
-                // total: getPrice(this.settings, item).total.toFixed(2)
+                // total: getPrice(state.settings, item).total.toFixed(2)
             };
         });
     }
@@ -506,13 +500,17 @@ export class OrderPane {
     refreshTable = () => {
 
         // Preserve scroll position during redraw
-        const scrollLeft = document.querySelector('#order-table .tabulator-tableholder').scrollLeft;
+        const scrollElement = document.querySelector('#order-table .tabulator-tableholder');
+        const scrollLeft = scrollElement ? scrollElement.scrollLeft : 0;
         this.table.redraw(true);
         setTimeout(() => {
-            document.querySelector('#order-table .tabulator-tableholder').scrollLeft = scrollLeft;
+            const scrollElementAfter = document.querySelector('#order-table .tabulator-tableholder');
+            if (scrollElementAfter) {
+                scrollElementAfter.scrollLeft = scrollLeft;
+            }
         }, 0);
 
-        bus.emit('order:table:refreshed', this.order);
+        bus.emit('order:table:refreshed', state.order);
 
         // // Force a redraw of the table to reflect any changes
         // this.table.redraw(true);
@@ -534,7 +532,7 @@ export class OrderPane {
 
             console.log('Client updated:', client);
 
-            this.order.discounts = client.discounts || [];
+            // state.order.discounts = client.discounts || [];
 
             this.refreshTable();
         });
@@ -574,46 +572,6 @@ export class OrderPane {
             const firstCell = newRow.getCell(firstColumn.getField());
             firstCell.edit();
         }, 50);
-    }
-
-    // Enhanced number editor with Enter key handling
-    numberEditor = (cell, onRendered, success, cancel, editorParams) => {
-
-        const input = document.createElement("input");
-        input.type = "number";
-        input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
-        input.className = "form-control form-control-sm";
-
-        // Apply editor params
-        if (editorParams.min !== undefined) input.min = editorParams.min;
-        if (editorParams.max !== undefined) input.max = editorParams.max;
-        if (editorParams.step !== undefined) input.step = editorParams.step;
-
-        input.addEventListener("blur", () => {
-            success(input.value ? parseFloat(input.value) : "");
-        });
-
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                success(input.value ? parseFloat(input.value) : "");
-                // Navigate to next cell after a short delay
-                // setTimeout(() => {
-                this.navigateToNextCell(cell);
-                // }, 25);
-            } else if (e.key === "Escape") {
-                cancel();
-            } else if (e.key === "Tab") {
-                success(input.value ? parseFloat(input.value) : "");
-            }
-        });
-
-        onRendered(() => {
-            input.focus();
-            input.select();
-        });
-
-        return input;
     }
 
     // Custom navigation function
@@ -681,6 +639,81 @@ export class OrderPane {
                 this.addRow();
             }
         }
+    }
+
+    textEditor = (cell, onRendered, success, cancel, editorParams) => {
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = cell.getValue() || "";
+        input.className = "form-control form-control-sm";
+
+        input.addEventListener("blur", () => {
+            success(input.value);
+        }
+        );
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                success(input.value);
+                // Navigate to next cell after a short delay
+                // setTimeout(() => {
+                this.navigateToNextCell(cell);
+                // }, 25);
+            } else if (e.key === "Escape") {
+                cancel();
+            } else if (e.key === "Tab") {
+                success(input.value);
+            }
+        });
+
+        onRendered(() => {
+            input.focus();
+            input.select();
+        });
+
+        return input;
+    }
+
+    // Enhanced number editor with Enter key handling
+    numberEditor = (cell, onRendered, success, cancel, editorParams) => {
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
+        input.className = "form-control form-control-sm";
+
+        // Apply editor params
+        if (editorParams.min !== undefined) input.min = editorParams.min;
+        if (editorParams.max !== undefined) input.max = editorParams.max;
+        if (editorParams.step !== undefined) input.step = editorParams.step;
+
+        input.addEventListener("blur", () => {
+            success(input.value ? parseFloat(input.value) : "");
+        });
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                success(input.value ? parseFloat(input.value) : "");
+                // Navigate to next cell after a short delay
+                // setTimeout(() => {
+                this.navigateToNextCell(cell);
+                // }, 25);
+            } else if (e.key === "Escape") {
+                cancel();
+            } else if (e.key === "Tab") {
+                success(input.value ? parseFloat(input.value) : "");
+            }
+        });
+
+        onRendered(() => {
+            input.focus();
+            input.select();
+        });
+
+        return input;
     }
 
     // Generic editor for suggestion fields

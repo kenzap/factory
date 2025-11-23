@@ -10,15 +10,15 @@ import { ClientDrivers } from "../../components/order/client_drivers.js";
 import { __html, attr, onChange, onClick, toast } from "../../helpers/global.js";
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
+import { state } from "../../modules/order/state.js";
 
 export class ClientPane {
 
-    constructor(settings, order) {
+    constructor() {
 
         this.firstLoad = true;
-        this.settings = settings;
-        this.order = order;
-        this.client = { _id: this.order.eid ? this.order.eid : null, drivers: [], addresses: [], contacts: [] };
+
+        state.client = { _id: state.order.eid ? state.order.eid : null, drivers: [], addresses: [], contacts: [] };
 
         // check if header is already present
         this.init();
@@ -33,25 +33,25 @@ export class ClientPane {
 
     data = () => {
 
-        // console.log('Fetching client details for ID:', this.client);
+        // console.log('Fetching client details for ID:', state.client);
 
-        if (!this.client._id) return;
+        if (!state.client._id) return;
 
-        getClientDetails(this.client._id, (response) => {
+        getClientDetails(state.client._id, (response) => {
             if (response && response.data) {
 
                 // console.log('Client data fetched:', response.data);
                 // Update client data with the response
-                this.client = response.data;
-                this.client.drivers = this.client.drivers || [];
-                this.client.addresses = this.client.addresses || [];
-                this.client.contacts = this.client.contacts || [];
+                state.client = response.data;
+                state.client.drivers = state.client.drivers || [];
+                state.client.addresses = state.client.addresses || [];
+                state.client.contacts = state.client.contacts || [];
 
-                this.order.vat_status = this.client.vat_status || '0';
-                this.order.discounts = this.client.discounts || {};
-                this.order.entity = this.client.entity || 'company';
+                state.order.vat_status = state.client.vat_status || '0';
+                state.order.discounts = state.client.discounts || {};
+                state.order.entity = state.client.entity || 'company';
 
-                // console.log('Client data after fetch:', this.order);
+                // console.log('Client data after fetch:', state.order);
             }
 
             // Refresh the view with client data
@@ -61,7 +61,7 @@ export class ClientPane {
 
     view = () => {
 
-        console.log('Rendering client pane for client:', this.client);
+        console.log('Rendering client pane for client:', state.client);
 
         // Add fade effect to indicate loading/disabled state
         // document.querySelector('.right-pane').style.opacity = '0.5';
@@ -72,26 +72,26 @@ export class ClientPane {
             <alert-notification></alert-notification>
 
             <!-- Right Pane -->
-            <h4 class="mb-4"><client-badge><i class="bi ${this.client.entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i></client-badge>${__html('Client Information')}<verified-badge></verified-badge></h4>
+            <h4 class="mb-4"><client-badge><i class="bi ${state.client.entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i></client-badge>${__html('Client Information')}<verified-badge></verified-badge></h4>
             
             <!-- Client Type -->
             <div class="row mb-3">
                 <div class="col-12">
                     <h6>${__html('Client Type')}</h6>
                     <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="entity" id="individual_anm" data-entity="individual" data-vat_status="1" autocomplete="off" ${this.client.entity === 'individual' && this.client.vat_status === '1' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="individual_anm" data-entity="individual" data-vat_status="1" autocomplete="off" ${state.client.entity === 'individual' && state.client.vat_status === '1' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="individual_anm">${__html('Fiziskā ANM')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="individual" data-entity="individual" data-vat_status="0" autocomplete="off" ${this.client.entity === 'individual' && this.client.vat_status === '0' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="individual" data-entity="individual" data-vat_status="0" autocomplete="off" ${state.client.entity === 'individual' && state.client.vat_status === '0' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="individual">${__html('Fiziskā')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company_anm" data-entity="company" data-vat_status="1" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '1' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company_anm" data-entity="company" data-vat_status="1" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '1' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company_anm">${__html('Juridiskā ANM')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company" data-entity="company" data-vat_status="0" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '0' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company" data-entity="company" data-vat_status="0" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '0' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company">${__html('Juridiskā')}</label>
 
-                        <input type="radio" class="btn-check" name="entity" id="company_export" data-entity="company" data-vat_status="2" autocomplete="off" ${this.client.entity === 'company' && this.client.vat_status === '2' ? 'checked' : ''}>
+                        <input type="radio" class="btn-check" name="entity" id="company_export" data-entity="company" data-vat_status="2" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '2' ? 'checked' : ''}>
                         <label class="btn btn-outline-primary btn-sm" for="company_export">${__html('Juridiskā Ārzemes')}</label>
                     </div>
                 </div>
@@ -101,39 +101,39 @@ export class ClientPane {
             <div class="row mb-4">
                 <div class="col-md-6 mb-3">
                     <label for="reg_number" class="form-label">${__html('Registration Number')} <span class="ms-2 po verify_company"><i class="bi bi-arrow-left-right"></i></span> <span class="ms-2 po verify_company_locally"><i class="bi bi-search"></i></span></label>
-                    <input type="text" class="form-control" id="reg_number" value="${this.client.reg_number || this.client.reg_num || ''}">
+                    <input type="text" class="form-control" id="reg_number" value="${state.client.reg_number || state.client.reg_num || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="vat_number" class="form-label">${__html('VAT Number')}</label>
-                    <input type="text" class="form-control" id="vat_number" value="${this.client.vat_number || ''}">
+                    <input type="text" class="form-control" id="vat_number" value="${state.client.vat_number || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="legal_name" class="form-label">${__html('Company Name')}</label>
-                    <input type="text" class="form-control" id="legal_name" value="${attr(this.client.legal_name || this.client.name || '')}">
+                    <input type="text" class="form-control" id="legal_name" value="${attr(state.client.legal_name || state.client.name || '')}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank_name" class="form-label">${__html('Bank Name')}</label>
-                    <input type="text" class="form-control" id="bank_name" value="${(attr(this.client.bank_name || ''))}">
+                    <input type="text" class="form-control" id="bank_name" value="${(attr(state.client.bank_name || ''))}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank_acc" class="form-label">${__html('Bank Account')}</label>
-                    <input type="text" class="form-control" id="bank_acc" value="${this.client.bank_acc || ''}">
+                    <input type="text" class="form-control" id="bank_acc" value="${state.client.bank_acc || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="reg_address" class="form-label">${__html('Registration Address')}</label>
-                    <input type="text" class="form-control" id="reg_address" value="${this.client.reg_address || ''}" >
+                    <input type="text" class="form-control" id="reg_address" value="${state.client.reg_address || ''}" >
                 </div>
                 <div class="col-12 mb-3">
                     <label for="client_notes" class="form-label">${__html('Internal Note')}</label>
-                    <textarea class="form-control" id="client_notes" rows="3" >${this.client.notes || ''}</textarea>
+                    <textarea class="form-control" id="client_notes" rows="3" >${state.client.notes || ''}</textarea>
                 </div>
                 <div class="col-md-6 mb-3 d-none">
                     <label for="clientPhoneRight" class="form-label">${__html('Phone Number')}</label>
-                    <input type="tel" class="form-control" id="clientPhoneRight" value="${attr(this.client.phone || '')}" >
+                    <input type="tel" class="form-control" id="clientPhoneRight" value="${attr(state.client.phone || '')}" >
                 </div>
                 <div class="col-md-6 mb-3 d-none">
                     <label for="email" class="form-label">${__html('Email')}</label>
-                    <input type="email" class="form-control" id="email" value="${attr(this.client.email || '')}">
+                    <input type="email" class="form-control" id="email" value="${attr(state.client.email || '')}">
                 </div>
             </div>
             
@@ -162,13 +162,13 @@ export class ClientPane {
             </div>
         <client-pane>`;
 
-        new ClientContacts(this.client);
+        new ClientContacts(state.client);
 
-        new ClientDrivers(this.client);
+        new ClientDrivers(state.client);
 
-        new ClientAddresses(this.client);
+        new ClientAddresses(state.client);
 
-        new ClientDiscounts(this.settings, this.client);
+        new ClientDiscounts(state.settings, state.client);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -191,12 +191,12 @@ export class ClientPane {
 
             if (!data._id) {
 
-                this.client = { _id: null, drivers: [], addresses: [], name: data.name };
+                state.client = { _id: null, drivers: [], addresses: [], name: data.name };
                 this.view();
             }
 
             if (data._id) {
-                this.client._id = data._id;
+                state.client._id = data._id;
                 this.data();
             }
         });
@@ -205,15 +205,15 @@ export class ClientPane {
         onClick('#removeClientBtn', () => {
             if (confirm(__html('Delete client?'))) {
                 // Call the API to remove the client
-                deleteClient({ id: this.client._id }, (response) => {
+                deleteClient({ id: state.client._id }, (response) => {
 
-                    toast(__html('Client removed'), 'success');
+                    toast('Successfully removed');
 
-                    bus.emit('client:removed', { _id: this.client._id });
+                    bus.emit('client:removed', { _id: state.client._id });
 
-                    // console.log('Client removed:', response);
                     // Optionally, redirect or clear the view
-                    this.client = { _id: null, drivers: [], addresses: [] };
+                    state.client = { _id: null, drivers: [], addresses: [] };
+
                     this.view();
                 });
             }
@@ -225,9 +225,8 @@ export class ClientPane {
             verifyClient(document.getElementById('reg_number').value.trim(), (response) => {
                 if (response && response.success) {
 
-                    console.log('Client verification response:', response);
+                    // console.log('Client verification response:', response);
 
-                    // document.getElementById('reg_number').value = response.reg_number || '';
                     document.getElementById('vat_number').value = response.client.pvncode || '';
 
                     // entity
@@ -254,8 +253,8 @@ export class ClientPane {
                     if (response.client.pvnStatus === 'active') {
 
                         if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
-                        if (response.client.pvnStatus) this.client.vat_status = response.client.pvnStatus || '';
-                        if (response.client.adress_full) { this.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = this.client.reg_address; }
+                        if (response.client.pvnStatus) state.client.vat_status = response.client.pvnStatus || '';
+                        if (response.client.adress_full) { state.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = state.client.reg_address; }
                     }
 
                     if (response.client.pvnStatus === 'active' && entity.dataset.entity === 'company') {
@@ -304,7 +303,7 @@ export class ClientPane {
 
                     event.preventDefault();
 
-                    console.log('Enter key pressed, moving to next input', element.value, this.order.id);
+                    console.log('Enter key pressed, moving to next input', element.value, state.order.id);
 
                     // Find all focusable elements with tabindex consideration
                     const focusableElements = Array.from(document.querySelectorAll('.right-pane input, .right-pane textarea'))
@@ -364,7 +363,7 @@ export class ClientPane {
         }
 
         const clientData = {
-            _id: this.client._id || null,
+            _id: state.client._id || null,
             entity: entity.dataset.entity,
             vat_status: entity.dataset.vat_status,
             reg_number,
@@ -377,10 +376,10 @@ export class ClientPane {
             bank_acc,
             reg_address,
             notes,
-            discounts: this.client.discounts || {},
-            drivers: this.client.drivers,
-            addresses: this.client.addresses,
-            contacts: this.client.contacts
+            discounts: state.client.discounts || {},
+            drivers: state.client.drivers,
+            addresses: state.client.addresses,
+            contacts: state.client.contacts
         };
 
         return clientData;
@@ -394,20 +393,19 @@ export class ClientPane {
 
         saveClient(clientData, (response) => {
 
-            console.log('Saved successfully', response);
+            // console.log('Saved successfully', response);
 
             if (!silent) toast('Updated');
 
-            this.order.vat_status = clientData.vat_status;
-            this.order.entity = clientData.entity;
-            this.client._id = response.data._id;
             clientData._id = response.data._id;
 
+            state.order.vat_status = clientData.vat_status;
+            state.order.entity = clientData.entity;
+
+            state.client._id = response.data._id;
+            state.client = { ...state.client, ...clientData };
+
             bus.emit('client:updated', clientData);
-
-            // this.init();
         });
-
-        // console.log('Saving client data...', clientData);
     }
 }

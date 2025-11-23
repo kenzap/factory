@@ -6,6 +6,7 @@ import { Modal } from "../_/modules/modal.js";
 import { ClientPane } from "../_/modules/order/client_pane.js";
 import { LeftPane } from "../_/modules/order/left_pane.js";
 import { OrderPane } from "../_/modules/order/order_pane.js";
+import { state } from "../_/modules/order/state.js";
 import { Session } from "../_/modules/session.js";
 
 /**
@@ -22,8 +23,8 @@ class OrderEdit {
         const urlParams = new URLSearchParams(window.location.search);
 
         // initialize order and settings
-        this.settings = {};
-        this.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : "", eid: null };
+        // state.settings = {};
+        state.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : "", eid: null };
         this.firstLoad = true;
 
         // connect to backend
@@ -37,7 +38,7 @@ class OrderEdit {
 
         new Modal();
 
-        getOrder(this.order.id, (response) => {
+        getOrder(state.order.id, (response) => {
 
             console.log(response);
 
@@ -50,17 +51,17 @@ class OrderEdit {
             // hide UI loader
             hideLoader();
 
-            this.settings = response.settings;
-            this.order = response.order;
+            state.settings = response.settings;
+            state.order = response.order;
 
-            if (!this.order.id) this.order.id = "";
+            if (!state.order.id) state.order.id = "";
 
             // session
             new Session();
-            new LeftPane(this.settings, this.order);
+            new LeftPane();
 
-            if (this.order.id && this.firstLoad) new OrderPane(this.settings, this.order);
-            if (!this.order.id && this.firstLoad) new ClientPane(this.settings, this.order);
+            if (state.order.id && this.firstLoad) new OrderPane();
+            if (!state.order.id && this.firstLoad) new ClientPane();
 
             this.firstLoad = false;
         });
@@ -71,7 +72,7 @@ class OrderEdit {
 
         bus.on('order:updated', (id) => {
 
-            this.order.id = id;
+            state.order.id = id;
 
             this.init();
         });
