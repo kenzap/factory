@@ -30,6 +30,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             js->'data'->'invoice' as invoice,
             js->'data'->'payment' as payment,
             js->'data'->'waybill' as waybill,
+            js->'data'->'date' as date,
             COALESCE(js->'meta'->>'created', '') as created,
             COALESCE(js->'data'->>'created', '') as created2
             ${filters.items === true ? `, js->'data'->'items' as items` : ''}
@@ -47,11 +48,6 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
     const params = ['ecommerce-order', sid];
 
-    // if (filters.client?.name && filters.db.name.trim() !== '') {
-    //     query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;
-    //     params.push(`%${filters.client.name.trim()}%`);
-    // }
-
     let chunk = null;
 
     if (filters.client?.eid) {
@@ -63,8 +59,6 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     }
 
     if (filters.dateFrom && filters.dateFrom.trim() !== '') {
-        // query += ` AND (js->'meta'->>'created' >= $${params.length + 1} OR js->'data'->>'date' >= $${params.length + 1})`;
-        // params.push(Math.round(new Date(filters.dateFrom.trim()).getTime() / 1000));
         chunk = ` AND (js->'data'->>'date' >= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
@@ -73,19 +67,10 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
     // Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
     if (filters.dateTo && filters.dateTo.trim() !== '') {
-        // query += ` AND (js->'meta'->>'created' <= $${params.length + 1} OR js->'data'->>'date' <= $${params.length + 1})`;
-        // params.push(Math.round(new Date(filters.dateTo.trim()).getTime() / 1000));
         chunk = ` AND (js->'data'->>'date' <= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
-
-        // const endDate = new Date(filters.dateTo.trim());
-        // endDate.setDate(endDate.getDate() + 1);
-        // params.push(endDate.toISOString());
-
         params.push(filters.dateTo.trim());
-
-        // console.log('filters.dateTo', filters.dateTo, Math.round(new Date(filters.dateTo.trim()).getTime() / 1000));
     }
 
     if (filters.type == 'draft') {
@@ -109,16 +94,43 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         params.push(parseInt(twoMonthsAgo.getTime()));
     }
 
-    if (filters.type == 'issued') {
-        chunk = ` AND js->'data'->'inventory'->>'isu_date' IS NOT NULL AND js->'data'->'inventory'->>'isu_date' != ''`;
+    if (filters.type == 'manufacturing') {
+        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND NOT EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
+               AND item->'inventory'->>'isu_date' != ''
+        )`;
         query += chunk;
         query_summary += chunk
     }
 
-    // detect mnf_date dated based on items.inventory.rdy_date
-    // if (filters.type == 'manufactured') {
-    //     query += ` AND js->'data'->'inventory'->>'mnf_date' IS NOT NULL AND js->'data'->'inventory'->>'mnf_date' != ''`;
-    // }
+    if (filters.type == 'ready') {
+        chunk = ` AND NOT EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'rdy_date' IS NULL 
+               OR item->'inventory'->>'rdy_date' = ''
+        ) AND NOT EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
+               AND item->'inventory'->>'isu_date' != ''
+        ) AND jsonb_array_length(js->'data'->'items') > 0`;
+        query += chunk;
+        query_summary += chunk
+    }
+
+    if (filters.type == 'issued') {
+        chunk = ` AND EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
+               AND item->'inventory'->>'isu_date' != ''
+        ) AND jsonb_array_length(js->'data'->'items') > 0`;
+        query += chunk;
+        query_summary += chunk;
+    }
 
     // Apply pagination
     const limit = filters.limit || 250;
@@ -153,33 +165,14 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
         await db.connect();
 
-        // console.log('getOrders query', query);
-        // console.log('getOrders params', params);
-
         const result = await db.query(query, params);
 
         orders.records = result.rows;
 
         if (filters.for === 'orders' || filters.for === 'transactions') {
 
-            // Get total count for pagination
-            // const countQuery = `
-            // SELECT
-            //     COUNT(*) as total,
-            //     SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
-            //     SUM(CASE WHEN js->'data'->>'total' IS NOT NULL AND js->'data'->>'total' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_amount,
-            //     SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->>'total')::numeric ELSE 0 END) as total_waybill
-            // FROM data 
-            // WHERE ref = $1 AND sid = $2 ` +
-            //     (filters.client?.eid ? ` AND (js->'data'->>'eid' = $3 OR unaccent(js->'data'->>'name') ILIKE unaccent($4))` : '') +
-            //     (filters.dateFrom && filters.dateFrom.trim() !== '' ? ` AND js->'data'->>'created' >= $${filters.client?.eid ? 5 : 3}` : '') +
-            //     (filters.dateTo && filters.dateTo.trim() !== '' ? ` AND js->'data'->>'created' <= $${filters.client?.eid ? (filters.dateFrom && filters.dateFrom.trim() !== '' ? 6 : 5) : (filters.dateFrom && filters.dateFrom.trim() !== '' ? 4 : 3)}` : '') +
-            //     (filters.type == 'draft' ? ` AND (js->'data'->'draft')::boolean = true` : '');
-
             const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
             const countResult = await db.query(query_summary, countParams);
-
-            // console.log(countResult.rows)
 
             orders.total = parseInt(countResult.rows[0].total);
             orders.summary = {

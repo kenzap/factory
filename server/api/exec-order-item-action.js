@@ -25,6 +25,8 @@ async function execOrderItemAction(actions) {
 
         if (actions.update_item) {
 
+            console.log('Updating order item:', actions.update_item);
+
             // validate update item data
             if (actions.update_item.order_id === undefined || actions.update_item.index === undefined || actions.update_item.item === undefined) {
                 return { success: false, error: 'no update item data provided' };
@@ -45,8 +47,8 @@ async function execOrderItemAction(actions) {
             const index = actions.update_item.index;
 
             // update item ready status
-            if (item.inventory.origin == 'c') item.inventory.ready = null;
-            if (item.inventory.origin == 'w' || item.inventory.origin == 'm') { item.inventory.rdy_date = new Date().toISOString(); item.inventory.rdy_user = actions.user_id; }
+            if (item.inventory && item.inventory.origin == 'c') item.inventory.ready = null;
+            if (item.inventory && (item.inventory.origin == 'w' || item.inventory.origin == 'm')) { item.inventory.rdy_date = new Date().toISOString(); item.inventory.rdy_user = actions.user_id; }
 
             // find the order item by id
             const itemQuery = `

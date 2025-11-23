@@ -166,8 +166,9 @@ class Orders {
                         <select class="form-select border-0" id="typeFilter">
                             <option value="">${__html('All')}</option>
                             <option value="draft">${__html('Estimates')}</option>
+                            <option value="manufacturing">${__html('Manufacturing')}</option>
+                            <option value="ready">${__html('Ready')}</option>
                             <option value="issued">${__html('Issued')}</option>
-                            <option value="manufactured">${__html('Manufactured')}</option>
                         </select>
                     </div>
                     <div class="col-md-6 d-flex justify-content-end">
@@ -268,13 +269,13 @@ class Orders {
             },
             {
                 title: __html("Date"),
-                field: "created",
+                field: "date",
                 width: 120,
                 formatter: (cell) => {
                     const value = cell.getValue();
-                    const row = cell.getRow().getData();
-                    const timestamp = value || row.created2;
-                    const date = new Date(timestamp * 1000);
+                    // const row = cell.getRow().getData();
+                    // const timestamp = value || row.date;
+                    const date = new Date(value);
                     return `<span>${date.toLocaleDateString()}</span>`;
                 }
             },
@@ -490,9 +491,9 @@ class Orders {
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
                                 <td class="p-1 pe-3"><i class="bi bi-hash"></i> ${this.orders.total}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${this.orders.summary.total.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${this.orders.summary.paid.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${this.orders.summary.waybill.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i>${priceFormat(this.settings, this.orders.summary.total)} </td>
+                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i>${priceFormat(this.settings, this.orders.summary.paid)}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i>${priceFormat(this.settings, this.orders.summary.waybill)}</td>
                             </tr>
                         </table>
                     `;

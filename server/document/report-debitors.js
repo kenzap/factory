@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { __html, getDbConnection, getLocale, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, getLocale, getSettings, priceFormat, sid } from '../_/helpers/index.js';
 
 /**
  * execDebitorReport
@@ -22,17 +22,16 @@ async function execDebitorReport(data) {
 
         // Query to get all debitors grouped by eid where payment amount < grand_total
         let query = `
-                SELECT
+            SELECT
                 js->'data'->>'eid' as eid,
                 js->'data'->>'name' as name,
-                ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as total_amount_due,
-                ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
-                ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as outstanding_balance,
-                COUNT(*) as order_count
-                FROM data
-                WHERE ref = $1 AND sid = $2
-
-                `;
+            ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as total_amount_due,
+            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
+            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as outstanding_balance,
+            COUNT(*) as order_count
+            FROM data
+            WHERE ref = $1 AND sid = $2 AND (js->'data' ? 'payment' OR js->'data' ? 'waybill') 
+            `;
 
         const queryParams = ['ecommerce-order', sid];
         let paramIndex = 3;
@@ -62,9 +61,9 @@ async function execDebitorReport(data) {
             }
         }
 
-        query += `
+        // HAVING ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) != ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2)
+        query += ` 
                 GROUP BY js->'data'->>'eid', js->'data'->>'name'
-                HAVING ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) != ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2)
                 ORDER BY js->'data'->>'name'`;
 
         const result = await db.query(query, queryParams);
@@ -124,6 +123,8 @@ function execDebitorReportApi(app) {
 
         const locale = await getLocale(_req.headers.locale);
         const report = await execDebitorReport(data);
+        const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "groups"]);
+
 
         // Generate HTML report
         const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Europe/Riga' });
@@ -172,13 +173,16 @@ function execDebitorReportApi(app) {
                 `;
 
         report.forEach((debitor, index) => {
-            htmlReport += `
+
+            debitor.outstanding_balance != 0 ? htmlReport += `
                             <tr>
                                 <td>${index + 1}</td>
                                 <td>${debitor.name}</td>
-                                <td class="amount">€${debitor.outstanding_balance}</td>
+                                <td class="amount">${priceFormat(settings, debitor.outstanding_balance)}</td>
                             </tr>
-                `;
+                `
+                :
+                '';
         });
 
         // Calculate totals separately
@@ -195,15 +199,15 @@ function execDebitorReportApi(app) {
                     <tfoot>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
                             <td colspan="2" class="form-text">${__html(locale, 'Debit')}</td>
-                            <td class="amount">€${positiveTotal.toFixed(2)}</td>
+                            <td class="amount">${priceFormat(settings, positiveTotal)}</td>
                         </tr>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
                             <td colspan="2" class="form-text">${__html(locale, 'Credit')}</td>
-                            <td class="amount">€${negativeTotal.toFixed(2)}</td>
+                            <td class="amount">${priceFormat(settings, negativeTotal)}</td>
                         </tr>
                         <tr style="font-weight: bold; background-color: #e9e9e9;">
                             <td colspan="2" class="form-text">${__html(locale, 'Total')}</td>
-                            <td class="amount">€${(positiveTotal + negativeTotal).toFixed(2)}</td>
+                            <td class="amount">${priceFormat(settings, (positiveTotal + negativeTotal))}</td>
                         </tr>
                     </tfoot>
                 </table>

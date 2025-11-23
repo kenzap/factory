@@ -691,7 +691,10 @@ class Transactions {
         // Prepare data for saving
         const saveData = editedData.map(row => ({
             _id: row._id,
-            payment: row.payment,
+            payment: {
+                ...row.payment,
+                amount: parseFloat(row.payment.amount) || 0
+            },
         }));
 
         log('Saving data:', saveData);

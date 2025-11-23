@@ -176,6 +176,8 @@ class Manufacturing {
 
             document.getElementById('loadingIndicator').style.display = 'none';
             document.getElementById('ordersContainer').style.display = 'block';
+
+            // this.searchOrders(e.target.value, '');
         });
     }
 
@@ -257,6 +259,8 @@ class Manufacturing {
 
     isOrderReady(order) {
         let c = 0;
+
+        // console.log(order)
 
         order.items.forEach(item => {
 
@@ -383,9 +387,9 @@ class Manufacturing {
                                         <td class="d-none">${i + 1}</td>
                                         <td>
                                             <div class="work-buttons">
-                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('markup', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
                                                 <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('stamping', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
                                                 <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                             </div>
                                         </td>
@@ -1001,6 +1005,13 @@ class Manufacturing {
             this.refreshButtons(order._id);
         });
 
+        // Auto-expand details if only one order is shown
+        if (orders.length === 1) {
+            setTimeout(() => {
+                this.loadOrderDetails(orders[0].id);
+            }, 100);
+        }
+
         // Scroll to top after rendering filtered orders
         window.scrollTo({ top: 0, behavior: 'instant' });
     }
@@ -1008,6 +1019,10 @@ class Manufacturing {
     refreshOrders() {
         document.getElementById('loadingIndicator').style.display = 'block';
         document.getElementById('ordersContainer').style.display = 'none';
+
+        document.querySelector('#companySearch').value = '';
+        document.querySelector('#orderSearch').value = '';
+
         this.loadOrders();
     }
 

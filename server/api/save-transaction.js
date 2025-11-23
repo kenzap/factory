@@ -42,6 +42,7 @@ async function saveTransaction(data) {
                 item.created = Date.now() / 1000;
                 item.updated = Date.now() / 1000;
                 item.payment = { amount: 0, date: new Date().toISOString() };
+                item.date = new Date().toISOString();
 
                 const params = [
                     item._id,

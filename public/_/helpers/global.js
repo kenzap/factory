@@ -296,6 +296,11 @@ export const priceFormat = function (settings, price) {
 
     price = (Math.round(parseFloat(price) * 100) / 100).toFixed(2);
 
+    // Add comma separators for large numbers
+    const parts = price.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    price = parts.join('.');
+
     switch (settings.currency_symb_loc) {
         case 'left': price = settings.currency_symb + price; break;
         case 'right': price = price + settings.currency_symb; break;
