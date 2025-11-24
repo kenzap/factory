@@ -23,7 +23,6 @@ class OrderEdit {
         const urlParams = new URLSearchParams(window.location.search);
 
         // initialize order and settings
-        // state.settings = {};
         state.order = { _id: null, id: urlParams.get('id') ? urlParams.get('id') : "", eid: null };
         this.firstLoad = true;
 

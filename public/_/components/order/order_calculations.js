@@ -25,6 +25,11 @@ export const updateCalculations = (cell, settings, order) => {
         // console.log('getPrice settings:', settings);
         price = getPrice(settings, { ...data, coating: coating, color: color });
 
+        // Apply adjustment to the calculated price if adj exists
+        if (data.adj && !isNaN(data.adj) && !isNaN(data.formula_length_calc)) {
+            price.price = price.price + (data.adj * data.formula_length_calc / 1000);
+        }
+
         row.update({
             price: price.price,
         });
@@ -60,6 +65,10 @@ export const updateCalculations = (cell, settings, order) => {
 
         price = getPrice(settings, { ...data, coating: coating, color: color, input_fields: data.input_fields, input_fields_values: data.input_fields_values });
 
+        // Apply adjustment to the calculated price if adj exists
+        if (data.adj && !isNaN(data.adj) && !isNaN(data.formula_length_calc)) {
+            price.price = price.price + (data.adj * data.formula_length_calc / 1000);
+        }
         // console.log('getPrice (formula_length = L):', price);
 
         row.update({
@@ -86,9 +95,10 @@ export const updateCalculations = (cell, settings, order) => {
     // Calculate total price
     const total = calculateItemTotal(
         data.qty,
-        data.price,
+        price.price,
         data.adj,
-        data.discount
+        data.discount,
+        data.formula_length_calc
     );
     row.update({ total: total });
 

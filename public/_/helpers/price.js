@@ -349,12 +349,20 @@ export const getTotals = (settings, order) => {
  * // Using percentage string format
  * calculateItemTotal(1, 100, 0, "15%"); // Returns 85.00
  */
-export const calculateItemTotal = (qty, price, adj, discount) => {
+export const calculateItemTotal = (qty, price, adj, discount, length) => {
 
     // console.log('calculateItemTotal', qty, price, adj, discount);
 
-    const basePrice = (parseFloat(qty) || 0) * ((parseFloat(price) || 0) + (adj || 0));
-    // const adjustedPrice = basePrice + (adj || 0);
+    let basePrice;
+
+    basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
+
+    // If length is provided and not 0, calculate price per meter
+    // if (length && parseFloat(length) !== 0) {
+    //     basePrice = (parseFloat(qty) || 0) * ((parseFloat(price) || 0) + (parseFloat(adj) || 0) * (parseFloat(length) / 1000 || 0));
+    // } else {
+    //     basePrice = (parseFloat(qty) || 0) * ((parseFloat(price) || 0) + (parseFloat(adj) || 0) * parseFloat(qty) || 0);
+    // }
 
     // Handle discount with % sign - extract numeric value
     let discountValue = discount || 0;

@@ -1,4 +1,3 @@
-// import { getProductSuggestions } from "../../api/get_product_suggestions.js";
 import { updateCalculations } from "../../components/order/order_calculations.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
 import { sketchEditor } from "../../components/order/order_sketch_editor.js";
@@ -130,21 +129,6 @@ export class OrderPane {
                         discounts: state.order.discounts || {},
                         navigateToNextCell: this.navigateToNextCell
                     },
-                    // formatter: function (cell) {
-                    //     const value = cell.getValue() || '';
-                    //     const row = cell.getRow().getData();
-
-                    //     if (row.input_fields_values) return /*html*/`
-                    //         <div class="d-flex align-items-center">
-                    //             <span class="flex-grow-1">${value}</span>
-                    //             <i class="bi bi-link-45deg text-primary ms-2 fs-5 po product-edit-icon" 
-                    //                style="cursor:pointer;position:absolute;right:1px;z-index:10;" 
-                    //                data-row-index="${cell.getRow().getPosition()}"></i>
-                    //         </div>
-                    //     `;
-
-                    //     if (!row.input_fields_values) return value;
-                    // },
                 },
                 {
                     title: "",
@@ -236,9 +220,10 @@ export class OrderPane {
                     formatter: function (cell) {
                         const row = cell.getRow().getData();
                         const price = parseFloat(row.price) || 0;
-                        const adj = parseFloat(row.adj) || 0;
-                        const total = price + adj;
-                        return '<span class="calculated-field">' + priceFormat(state.settings, total) + '</span>';
+                        // const adj = parseFloat(row.adj) || 0;
+                        // const length = parseFloat(row.formula_length_calc) || 0;
+                        // const total = length ? price + (adj * (length / 1000)) : price + adj;
+                        return '<span class="calculated-field">' + priceFormat(state.settings, price) + '</span>';
                     },
                 },
                 {
@@ -274,9 +259,6 @@ export class OrderPane {
                         return '<span class="form-text">' + cell.getValue() + '</span>';
                     },
                     editor: this.textEditor,
-                    // editorParams: {
-                    //     suggestions: this.discountSuggestions
-                    // },
                 },
                 {
                     title: "",

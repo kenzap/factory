@@ -88,10 +88,10 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     if (filters.for && filters.for === 'manufacturing') {
         const twoMonthsAgo = new Date();
         twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL AND js->'meta'->>'created' >= $${params.length + 1} `;
+        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL AND js->'data'->>'date' >= $${params.length + 1} `;
         query += chunk;
         query_summary += chunk
-        params.push(parseInt(twoMonthsAgo.getTime()));
+        params.push(twoMonthsAgo);
     }
 
     if (filters.type == 'manufacturing') {

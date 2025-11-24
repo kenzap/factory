@@ -120,7 +120,7 @@ export class LeftPane {
 
                     ${state.order.id ? /*html*/`
                         <div class="btn-group w-100" role="group">
-                            <button class="btn btn-outline-primary btn-lg- px-3 flex-grow-1" id="saveOrderBtn">
+                            <button class="btn btn-outline-primary btn-lg- px-3 flex-grow-1" data-action="update" id="saveOrderBtn">
                                 <i class="bi bi-floppy fs-5- me-2"></i> ${__html('Save')}
                             </button>
                             <button class="btn btn-outline-danger btn-lg- px-3" id="deleteOrderBtn" style="flex: 0 0 auto;">
@@ -128,7 +128,7 @@ export class LeftPane {
                             </button>
                         </div>
                     ` : /*html*/`
-                        <button class="btn ${state.order.id ? 'btn-success' : 'btn-primary'} w-100" id="saveOrderBtn">
+                        <button class="btn ${state.order.id ? 'btn-success' : 'btn-primary'} w-100" data-action="create" id="saveOrderBtn">
                             <i class="bi bi-floppy me-2"></i>${state.order.id ? __html('Save') : __html('Create')}
                         </button>
                     `}
@@ -163,10 +163,19 @@ export class LeftPane {
     listeners = () => {
 
         // Save button
-        onClick('#saveOrderBtn', () => {
+        onClick('#saveOrderBtn', e => {
+
+            e.preventDefault();
 
             // Handle save order logic here
             console.log('Save Order button clicked');
+
+            // Show loading state
+            const saveBtn = document.getElementById('saveOrderBtn');
+            this.originalButtonHTML = saveBtn.innerHTML;
+
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="spinner-border me-2" role="status" aria-hidden="true" style="width: 1rem; height: 1rem;"></span>Loading...';
 
             this.save();
         });
@@ -510,6 +519,13 @@ export class LeftPane {
             const currentUrl = new URL(window.location);
             currentUrl.searchParams.set('id', response.order.id);
             window.history.replaceState({}, '', currentUrl);
+
+            // Store reference to restore later
+            const saveBtn = document.getElementById('saveOrderBtn');
+            if (saveBtn.dataset.action === 'update') {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = this.originalButtonHTML;
+            }
 
             toast("Order saved", "success");
 
