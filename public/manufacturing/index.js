@@ -761,7 +761,7 @@ class Manufacturing {
             });
 
             document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
-                <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
+                <button class="btn action-btn btn-outline-dark border-0 text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
                     </i> ${toLocalUserDate(mostRecentIssueDate)} ${toLocalUserTime(mostRecentIssueDate)}
                 </button>
             `;

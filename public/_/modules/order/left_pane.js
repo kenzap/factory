@@ -480,7 +480,7 @@ export class LeftPane {
 
         // console.log('due_date_utc', due_date_utc);
 
-        // Filter out empty items (no price or product name)
+        // Filter out empty items (no price or product name) 
         state.order.items = (state.order.items || []).filter(item => {
             return item && (item.price > 0 || (item.name && item.name.trim().length > 0));
         });

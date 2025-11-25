@@ -108,7 +108,8 @@ export class ClientPane {
                     <input type="text" class="form-control" id="vat_number" value="${state.client.vat_number || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="legal_name" class="form-label">${__html('Company Name')}</label>
+                    <label id="label-company-name" for="legal_name" class="form-label">${__html('Company Name')}</label>
+                    <label id="label-legal-name" for="legal_name" class="form-label d-none">${__html('Full Name')}</label>
                     <input type="text" class="form-control" id="legal_name" value="${attr(state.client.legal_name || state.client.name || '')}">
                 </div>
                 <div class="col-md-6 mb-3">
@@ -180,6 +181,19 @@ export class ClientPane {
 
         // Add event listeners for buttons and other interactive elements
         onClick('#saveClientBtn', () => { this.save(false) });
+
+        onChange('input[name="entity"]', (event) => {
+
+            const entity = event.target.dataset.entity;
+
+            if (entity == "individual") {
+                document.getElementById('label-company-name').classList.add('d-none');
+                document.getElementById('label-legal-name').classList.remove('d-none');
+            } else {
+                document.getElementById('label-company-name').classList.remove('d-none');
+                document.getElementById('label-legal-name').classList.add('d-none');
+            }
+        });
 
         // From the client side
         bus.clear('client:search:refresh');
@@ -346,19 +360,41 @@ export class ClientPane {
             return false;
         }
 
+        // Clear previous validation states
+        document.querySelectorAll('.right-pane .is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+
+        let hasErrors = false;
+
         // Perform validation checks
-        if (entity.dataset.entity == "company") if (!reg_number) {
-            alert('Fill in registration number.');
-            return false;
+        if (entity.dataset.entity == "company" && !reg_number) {
+            document.getElementById('reg_number').classList.add('is-invalid');
+            hasErrors = true;
         }
 
-        if (email) if (!isEmail(email)) {
-            alert('Enter a valid email address.');
-            return false;
+        if (email && !isEmail(email)) {
+            document.getElementById('email').classList.add('is-invalid');
+            hasErrors = true;
         }
 
-        if (clientPhoneRight) if (!isPhone(clientPhoneRight)) {
-            alert('Enter a valid phone number.');
+        if (clientPhoneRight && !isPhone(clientPhoneRight)) {
+            document.getElementById('clientPhoneRight').classList.add('is-invalid');
+            hasErrors = true;
+        }
+
+        if (!legal_name) {
+            document.getElementById('legal_name').classList.add('is-invalid');
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            // Scroll to first invalid field
+            const firstInvalidField = document.querySelector('.right-pane .is-invalid');
+            if (firstInvalidField) {
+                firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstInvalidField.focus();
+            }
             return false;
         }
 

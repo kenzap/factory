@@ -88,10 +88,20 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     if (filters.for && filters.for === 'manufacturing') {
         const twoMonthsAgo = new Date();
         twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL AND js->'data'->>'date' >= $${params.length + 1} `;
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 1);
+        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL AND js->'data'->>'date' >= $${params.length + 1} 
+        AND EXISTS (    
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE (item->'inventory'->>'isu_date' IS NULL 
+               OR item->'inventory'->>'isu_date' = ''
+               OR item->'inventory'->>'isu_date' >= $${params.length + 2})
+        ) `;
         query += chunk;
         query_summary += chunk
         params.push(twoMonthsAgo);
+        params.push(oneWeekAgo);
     }
 
     if (filters.type == 'manufacturing') {

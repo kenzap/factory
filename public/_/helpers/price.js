@@ -43,6 +43,15 @@ export const getPrice = (settings, item) => {
             obj.formula_width_calc = item.formula_width;
             obj.formula_length_calc = item.formula_length;
 
+            // Apply adjustment to the calculated price if adj exists
+            if (item.adj && !isNaN(item.adj) && !isNaN(item.formula_length_calc)) {
+                obj.price = obj.price + (item.adj * item.formula_length_calc / 1000);
+            }
+
+            if (item.adj && !item.formula_length_calc) {
+                obj.price = obj.price + item.adj;
+            }
+
             break;
         case 'formula':
         default:
@@ -102,6 +111,10 @@ export const getPrice = (settings, item) => {
                 obj.total = obj.price * item.qty;
                 obj.formula_width_calc = calculate(obj.formula_width_calc);
                 obj.formula_length_calc = calculate(obj.formula_length_calc);
+            }
+
+            if (item.adj && !item.formula_length_calc) {
+                obj.price = obj.price + item.adj;
             }
 
             // make final calculations
