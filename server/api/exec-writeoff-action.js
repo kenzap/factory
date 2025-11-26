@@ -179,7 +179,11 @@ async function execWriteoffAction(data) {
                 console.log('itemUpdated:', itemUpdated);
 
                 if (itemUpdated) {
-                    items_db[index].cut_date = new Date().toISOString();
+
+                    if (!items_db[index].inventory) { items_db[index].inventory = {}; }
+                    items_db[index].inventory.wrt_date = new Date().toISOString();
+                    items_db[index].inventory.wrt_user = data.user_id;
+
                     // items_db[index].formula_width_calc = itemUpdated.formula_width_calc
                     // items_db[index].formula_length_calc = itemUpdated.formula_length_calc;
                     items_db[index].width_writeoff = itemUpdated.formula_width_calc
@@ -234,6 +238,7 @@ async function createWorkLog(data) {
         await db.connect();
 
         if (!record) return { success: false, error: 'no data provided' };
+        if (!record.type) return { success: false, error: 'no worklog type provided' };
 
         if (!record._id) {
 
@@ -243,6 +248,7 @@ async function createWorkLog(data) {
         record.created = Math.floor(Date.now() / 1000);
         record.updated = Math.floor(Date.now() / 1000);
         record.date = new Date().toISOString();
+
 
         // delete record.items;
 

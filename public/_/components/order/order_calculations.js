@@ -7,9 +7,9 @@ import { bus } from "../../modules/bus.js";
  *  
  * @class ClientSearch  
  */
-export const updateCalculations = (cell, settings, order) => {
+export const updateCalculations = (cell, settings) => {
 
-    // console.log('Updating calculations for cell:', cell.getField());
+    console.log('Updating calculations for cell:', cell.getField());
 
     const row = cell.getRow();
     const data = row.getData();
@@ -24,11 +24,6 @@ export const updateCalculations = (cell, settings, order) => {
 
         // console.log('getPrice settings:', settings);
         price = getPrice(settings, { ...data, coating: coating, color: color });
-
-        // Apply adjustment to the calculated price if adj exists
-        if (data.adj && !isNaN(data.adj) && !isNaN(data.formula_length_calc)) {
-            price.price = price.price + (data.adj * data.formula_length_calc / 1000);
-        }
 
         row.update({
             price: price.price,
@@ -65,14 +60,9 @@ export const updateCalculations = (cell, settings, order) => {
 
         price = getPrice(settings, { ...data, coating: coating, color: color, input_fields: data.input_fields, input_fields_values: data.input_fields_values });
 
-        // Apply adjustment to the calculated price if adj exists
-        if (data.adj && !isNaN(data.adj) && !isNaN(data.formula_length_calc)) {
-            price.price = price.price + (data.adj * data.formula_length_calc / 1000);
-        }
-        // console.log('getPrice (formula_length = L):', price);
-
         row.update({
             price: price.price,
+            // price_length: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : price.price / (price.formula_length_calc / 1000) || "",
         });
     }
 
@@ -81,16 +71,19 @@ export const updateCalculations = (cell, settings, order) => {
 
         row.update({
             product: data.title,
-            width: isNaN(price.formula_width_calc) ? "" : price.formula_width_calc || "",
-            length: isNaN(price.formula_length_calc) ? "" : price.formula_length_calc || "",
+            width: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : data.formula_width_calc || "",
+            length: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : data.formula_length_calc || "",
         });
     }
 
     // Calculate square footage
-    const area = calculatearea(data.formula_width_calc, data.formula_length_calc);
-    console.log('Calculated area:', area);
+    const area = calculateArea(data.formula_width_calc, data.formula_length_calc);
+    const price_length = calculatePriceLength(data, price);
+
+    console.log('Calculated area:', price_length);
 
     if (!data.sketch_attached) row.update({ area: isNaN(area) ? "" : area });
+    if (!data.sketch_attached) row.update({ price_length: isNaN(price_length) ? "" : price_length });
 
     // Calculate total price
     const total = calculateItemTotal(
@@ -100,18 +93,27 @@ export const updateCalculations = (cell, settings, order) => {
         data.discount,
         data.formula_length_calc
     );
-    row.update({ total: total });
+    row.update({ discount: parseFloat(data.discount), total: total });
 
     bus.emit('order:table:sync:items');
-    // bus.emit('order:table:refreshed', order);
 
+    bus.emit('order:table:refreshed');
+
+    // bus.emit('order:table:refreshed', order);
     // console.log('Updating', row.getData());
 }
 
 // Function to calculate square footage
-const calculatearea = (width, length) => {
+const calculateArea = (width, length) => {
     if (width && length) {
         return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
+    }
+    return 0;
+}
+
+const calculatePriceLength = (data, price) => {
+    if (data.formula_length_calc && !isNaN(data.formula_length_calc)) {
+        return (price.price / (data.formula_length_calc / 1000)).toFixed(2); // Price per meter
     }
     return 0;
 }

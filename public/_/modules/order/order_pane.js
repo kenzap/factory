@@ -190,7 +190,16 @@ export class OrderPane {
                     headerSort: false,
                     width: 68,
                     formatter: function (cell) {
-                        return '<span class="calculated-field">' + (cell.getValue() || '0.000') + '</span>';
+                        return '<span>' + (cell.getValue() || '0.000') + '</span>';
+                    }
+                },
+                {
+                    title: __html("%1$ (t/m)", state.settings.currency_symb),
+                    field: "price_length",
+                    headerSort: false,
+                    width: 68,
+                    formatter: function (cell) {
+                        return cell.getValue() ? '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>' : '';
                     }
                 },
                 {
@@ -213,20 +222,6 @@ export class OrderPane {
                     }
                 },
                 {
-                    title: __html("Price"),
-                    field: "price",
-                    headerSort: false,
-                    width: 100,
-                    formatter: function (cell) {
-                        const row = cell.getRow().getData();
-                        const price = parseFloat(row.price) || 0;
-                        // const adj = parseFloat(row.adj) || 0;
-                        // const length = parseFloat(row.formula_length_calc) || 0;
-                        // const total = length ? price + (adj * (length / 1000)) : price + adj;
-                        return '<span class="calculated-field">' + priceFormat(state.settings, price) + '</span>';
-                    },
-                },
-                {
                     title: __html("Discount"),
                     field: "discount",
                     editor: this.numberEditor,
@@ -239,6 +234,17 @@ export class OrderPane {
                     headerSort: false,
                     editorParams: {
                         suggestions: this.discountSuggestions
+                    },
+                },
+                {
+                    title: __html("Price"),
+                    field: "price",
+                    headerSort: false,
+                    width: 100,
+                    formatter: function (cell) {
+                        const row = cell.getRow().getData();
+                        const price = parseFloat(row.price) || 0;
+                        return '<span class="calculated-field">' + priceFormat(state.settings, price) + '</span>';
                     },
                 },
                 {
@@ -333,7 +339,7 @@ export class OrderPane {
 
                                 allRows.forEach(row => {
                                     const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    updateCalculations(firstCell, state.settings, state.order);
+                                    updateCalculations(firstCell, state.settings);
                                 });
 
                                 self.syncItems();
@@ -402,15 +408,16 @@ export class OrderPane {
 
         // Add event listener to track any cell value changes
         this.table.on("cellEdited", (cell) => {
-            const row = cell.getRow();
 
             // Check if this is the last row and automatically add a new one
             if (this.table.getRows().length === 0) {
                 this.addRow();
             }
 
+            console.log('Cell edited:', cell.getField(), cell.getValue());
+
             // You can perform specific actions based on the field or value
-            updateCalculations(cell, state.settings, state.order);
+            updateCalculations(cell, state.settings);
 
             this.syncItems();
             this.refreshTable();
@@ -484,18 +491,15 @@ export class OrderPane {
         // Preserve scroll position during redraw
         const scrollElement = document.querySelector('#order-table .tabulator-tableholder');
         const scrollLeft = scrollElement ? scrollElement.scrollLeft : 0;
-        this.table.redraw(true);
-        setTimeout(() => {
-            const scrollElementAfter = document.querySelector('#order-table .tabulator-tableholder');
-            if (scrollElementAfter) {
-                scrollElementAfter.scrollLeft = scrollLeft;
-            }
-        }, 0);
+        this.table.redraw(false);
+        // setTimeout(() => {
+        //     const scrollElementAfter = document.querySelector('#order-table .tabulator-tableholder');
+        //     if (scrollElementAfter) {
+        //         scrollElementAfter.scrollLeft = scrollLeft;
+        //     }
+        // }, 0);
 
-        bus.emit('order:table:refreshed', state.order);
-
-        // // Force a redraw of the table to reflect any changes
-        // this.table.redraw(true);
+        bus.emit('order:table:refreshed');
     }
 
     listeners = () => {
@@ -507,7 +511,10 @@ export class OrderPane {
 
         bus.on('order:table:sync:items', (id) => {
 
+            console.log('Syncing items from bus event:', id);
+
             this.syncItems();
+            this.refreshTable();
         });
 
         bus.on('client:updated', (client) => {
@@ -532,7 +539,7 @@ export class OrderPane {
         }
 
         this.table.addRow({
-            cm: previousRowData.cm || "",
+            cm: previousRowData.cm !== undefined ? Boolean(previousRowData.cm) : false,
             coating: previousRowData.coating || "",
             color: previousRowData.color || "",
             title: "",

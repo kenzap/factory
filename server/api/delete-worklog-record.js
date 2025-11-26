@@ -4,7 +4,7 @@ import { getDbConnection, sid } from '../_/helpers/index.js';
 
 async function revertCuttingAction(db, data) {
 
-    let response = [];
+    let response = [], res;
 
     if (!data || data.length == "0") return;
 
@@ -20,7 +20,7 @@ async function revertCuttingAction(db, data) {
     console.log('Updating coil:', data.coil_id, 'by length:', data.qty);
 
     // remove stock sheets added during cutting
-    data.sheets.forEach(async (sheet) => {
+    if (data.sheets) data.sheets.forEach(async (sheet) => {
 
         if (sheet.type != "stock") return;
 
@@ -37,10 +37,10 @@ async function revertCuttingAction(db, data) {
         console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width, result.rows[0] || {});
     });
 
-    let res = await db.query(query, params);
+    if (data.sheets) res = await db.query(query, params);
 
     // clear order item statuses
-    data.items.forEach(async (item) => {
+    if (data.items) data.items.forEach(async (item) => {
 
         // Querry 
         let query = `
@@ -70,7 +70,8 @@ async function revertCuttingAction(db, data) {
         items_db.forEach((itm, index) => {
 
             if (item.index === index && order.id === item.order_id) {
-                items_db[index].cut_date = null;
+                delete items_db[index].inventory.wrt_date;
+                delete items_db[index].inventory.wrt_user;
                 items_db[index].length_writeoff = 0;
                 items_db[index].width_writeoff = 0;
                 updated = true;
@@ -95,7 +96,7 @@ async function revertCuttingAction(db, data) {
         }
     });
 
-    response.push(res.rows[0] || {});
+    if (res) response.push(res.rows[0] || {});
 }
 
 /**
@@ -133,7 +134,7 @@ async function deleteWorklogRecord(id) {
 
         const worklogRecord = checkResult.rows[0];
 
-        console.log("worklogRecord type", worklogRecord.js.data.type);
+        // console.log("worklogRecord type", worklogRecord.js.data.type);
 
         if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data);
 
@@ -151,7 +152,7 @@ async function deleteWorklogRecord(id) {
 
     } catch (error) {
         await db.end();
-        return { success: false, error: 'failed to check worklog record' };
+        return { success: false, error: 'failed to check worklog record ' + error.message };
     }
 
     return response;

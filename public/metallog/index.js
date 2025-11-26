@@ -108,6 +108,12 @@ class MetalLog {
 
             e.preventDefault();
 
+            if (e.target.classList.contains('disabled')) return;
+
+            // Clear any existing validation states
+            document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+            document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+
             // Validate required fields
             let requiredFields = [
                 { selector: '#productColor', name: __html('Color') },
@@ -118,31 +124,73 @@ class MetalLog {
             ];
 
             let type = 'metal';
+            let cm = document.querySelector('#clientMaterial').checked ? true : false;
+            let hasErrors = false;
 
+            // Validate required fields
             for (const field of requiredFields) {
                 const element = document.querySelector(field.selector);
                 if (!element || !element.value.trim()) {
-                    toast(__html('Field required: %1$', field.name));
-                    element?.focus();
-                    return;
+                    element?.classList.add('is-invalid');
+
+                    // Add invalid feedback div
+                    const feedback = document.createElement('div');
+                    feedback.className = 'invalid-feedback';
+                    feedback.textContent = __html('Field required: %1$', field.name);
+                    element?.parentNode.appendChild(feedback);
+
+                    hasErrors = true;
+                    if (!element?.classList.contains('focused')) {
+                        element?.focus();
+                        element?.classList.add('focused');
+                    }
                 }
             }
 
             // Validate quantity is a positive number
             const qtyValue = 1;
+            const qtyElement = document.querySelector('#qty');
             if (isNaN(qtyValue) || qtyValue <= 0) {
-                toast('Quantity must be a positive number');
-                document.querySelector('#qty').focus();
-                return;
+                qtyElement?.classList.add('is-invalid');
+
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Quantity must be a positive number';
+                qtyElement?.parentNode.appendChild(feedback);
+
+                hasErrors = true;
+                if (!hasErrors) qtyElement?.focus();
             }
 
-            if (this.colorSuggestions.indexOf(document.querySelector('#productColor').value.trim()) === -1) {
-                toast('Invalid color selected');
-                return;
+            // Validate color selection
+            const colorElement = document.querySelector('#productColor');
+            if (!cm && colorElement && this.colorSuggestions.indexOf(colorElement.value.trim()) === -1) {
+                colorElement.classList.add('is-invalid');
+
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Invalid color selected';
+                colorElement.parentNode.appendChild(feedback);
+
+                hasErrors = true;
             }
 
-            if (this.coatingSuggestions.indexOf(document.querySelector('#productCoating').value.trim()) === -1) {
-                toast('Invalid coating selected');
+            // Validate coating selection
+            const coatingElement = document.querySelector('#productCoating');
+            if (!cm && coatingElement && this.coatingSuggestions.indexOf(coatingElement.value.trim()) === -1) {
+                coatingElement.classList.add('is-invalid');
+
+                const feedback = document.createElement('div');
+                feedback.className = 'invalid-feedback';
+                feedback.textContent = 'Invalid coating selected';
+                coatingElement.parentNode.appendChild(feedback);
+
+                hasErrors = true;
+            }
+
+            // If there are validation errors, show toast and return
+            if (hasErrors) {
+                toast(__html('Please fix the validation errors'));
                 return;
             }
 
@@ -159,6 +207,7 @@ class MetalLog {
                 _width: parseFloat(document.querySelector('#width').value.trim()),
                 _length: parseFloat(document.querySelector('#length').value.trim()) * 1000,
                 thickness: parseFloat(document.querySelector('#thickness').value.trim()),
+                cm: document.querySelector('#clientMaterial').checked ? true : false,
                 qty: qtyValue,
                 price: parseFloat(document.querySelector('#price').value),
                 document: {
@@ -171,8 +220,15 @@ class MetalLog {
 
             // console.log('Creating work log record:', record);
 
+            // Show spinner and disable button
+            e.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>';
+            e.target.disabled = true;
+
             // insert record
             createSupplyRecord(record, (response) => {
+
+                document.querySelector('.btn-add-worklog-record').innerHTML = '<i class="bi bi-plus-circle me-1"></i>';
+                document.querySelector('.btn-add-worklog-record').disabled = false;
 
                 if (response.success) {
 
@@ -256,7 +312,7 @@ class MetalLog {
                 const coilId = e.target.name.replace('type_', '');
                 const selectedType = e.target.value;
 
-                console.log('Coil type changed:', coilId, 'New type:', selectedType);
+                // console.log('Coil type changed:', coilId, 'New type:', selectedType);
 
                 // Find the coil and update its type
                 const coil = this.records.find(c => c._id === coilId);

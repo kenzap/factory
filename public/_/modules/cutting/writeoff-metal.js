@@ -216,7 +216,6 @@ export class WriteoffMetal {
                 thickness: this.coil.thickness,
                 parameters: this.coil.parameters,
                 coil_id: this.coil._id,
-                type: "metal",
                 origin: "c",
                 time: 0,
                 type: "cutting",

@@ -35,30 +35,24 @@ async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dat
 
     // query filters
     if (filters) {
-        // if (filters.product) {
-        //     query += ` AND js->'data'->>'product_name' ILIKE $${params.length + 1}`;
-        //     params.push(`%${filters.product}%`);
-        // }
-        // if (filters.product_id) {
-        //     query += ` AND js->'data'->>'product_id' ILIKE $${params.length + 1}`;
-        //     params.push(`%${filters.product_id}%`);
-        // }
-        if (filters.color) {
+
+        if (filters.cm == false && filters.color) {
             query += ` AND js->'data'->>'color' = $${params.length + 1}`;
             params.push(filters.color);
         }
-        if (filters.coating) {
+
+        if (filters.cm == false && filters.coating) {
             query += ` AND js->'data'->>'coating' = $${params.length + 1}`;
             params.push(filters.coating);
         }
-        // if (filters.dateFrom) {
-        //     query += ` AND js->'data'->>'date' >= $${params.length + 1}`;
-        //     params.push(filters.dateFrom);
-        // }
-        // if (filters.dateTo) {
-        //     query += ` AND js->'data'->>'date' <= $${params.length + 1}`;
-        //     params.push(filters.dateTo);
-        // }
+
+        if (filters.cm == true) {
+            query += ` AND js->'data'->>'cm' = 'true'`;
+        }
+
+        if (filters.cm == false) {
+            query += ` AND (js->'data'->>'cm' IS NULL OR js->'data'->>'cm' = 'false')`;
+        }
     }
 
     query += ` ORDER BY js->'data'->>'date' DESC LIMIT 100`;
@@ -106,8 +100,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
                 js->'data'->'invoice' as invoice,
                 js->'data'->'payment' as payment,
                 js->'data'->'waybill' as waybill,
-                COALESCE(js->'meta'->>'created', '') as created,
-                COALESCE(js->'data'->>'created', '') as created2
+                js->'data'->'date' as date
                 ${filters.items === true ? `, js->'data'->'items' as items` : ''}
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
@@ -119,30 +112,47 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
         params.push(`%${filters.client.name.trim()}%`);
     }
 
-    if (filters.dateFrom && filters.dateFrom.trim() !== '') {
-        query += ` AND js->'data'->>'created' >= $${params.length + 1}`;
-        params.push(new Date(filters.dateFrom.trim()).getTime());
+    if (filters.cm == false && filters.color) {
+        query += ` AND EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->>'color' = $${params.length + 1}
+        )`;
+        params.push(filters.color);
     }
 
-    if (filters.dateTo && filters.dateTo.trim() !== '') {
-        query += ` AND js->'data'->>'created' <= $${params.length + 1}`;
-        params.push(new Date(filters.dateTo.trim()).getTime());
+    if (filters.cm == false && filters.coating) {
+        query += ` AND EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->>'coating' = $${params.length + 1}
+        )`;
+        params.push(filters.coating);
     }
 
-    // if (filters.type == 'draft') {
-    //     query += ` AND (js->'data'->'draft')::boolean = true`;
-    // }
+    if (filters.cm == true) {
+        query += ` AND EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->>'cm' = 'true'
+        )`;
+    }
 
-    // if (filters.for && filters.for === 'orders') {
-    //     query += ` AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)`;
-    // }
+    // get orders for cutting list - exclude drafts and transactions, only with due_date set
+    query += ` AND (js->'data'->'draft')::boolean = false AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) `; // AND js->'data'->'due_date' IS NOT NULL
 
-    // if (filters.for && filters.for === 'manufacturing') {
-    const twoMonthsAgo = new Date();
-    twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
-    query += ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL AND js->'meta'->>'created' >= $${params.length + 1} `;
-    params.push(parseInt(twoMonthsAgo.getTime()));
-    // }
+    // hide orders where all items were written off more than 2 days ago
+    const twoDaysAgo = new Date();
+    twoDaysAgo.setMonth(twoDaysAgo.getDay() - 2);
+    query += ` AND EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE 
+               (item->'inventory'->>'wrt_date' IS NOT NULL AND (item->'inventory'->>'wrt_date')::timestamp > $${params.length + 1})
+                OR (item->'inventory'->>'wrt_date' IS NULL)
+        ) AND jsonb_array_length(js->'data'->'items') > 0`;
+
+    params.push(twoDaysAgo.toISOString());
 
     query += ` ORDER BY js->'data'->>'id' DESC LIMIT 1000`;
 
@@ -151,6 +161,40 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
         await db.connect();
 
         const result = await db.query(query, params);
+
+        // Filter out order items where coating and color don't match the filters
+        if (filters.cm == false && (filters.color || filters.coating)) {
+            result.rows = result.rows.map(order => {
+                if (order.items) {
+                    const filteredItems = order.items.filter(item => {
+                        let matches = true;
+                        if (filters.color && item.color !== filters.color) {
+                            matches = false;
+                        }
+                        if (filters.coating && item.coating !== filters.coating) {
+                            matches = false;
+                        }
+                        if (filters.cm && item.cm === filters.cm) {
+                            matches = false;
+                        }
+                        return matches;
+                    });
+                    return { ...order, items: filteredItems };
+                }
+                return order;
+            }).filter(order => !order.items || order.items.length > 0);
+        }
+
+        // Filter out order items where cm set to true (client material)
+        if (filters.cm == true) {
+            result.rows = result.rows.map(order => {
+                if (order.items) {
+                    const filteredItems = order.items.filter(item => item.cm === true || item.cm === 'true');
+                    return { ...order, items: filteredItems };
+                }
+                return order;
+            }).filter(order => !order.items || order.items.length > 0);
+        }
 
         orders = result.rows;
 
@@ -161,7 +205,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
     return orders;
 }
 
-// API route
+// API route 
 function getOrdersForCuttingApi(app) {
 
     app.post('/api/get-orders-for-cutting/', authenticateToken, async (req, res) => {

@@ -16,8 +16,9 @@ body {
 }
 
 #app {
-  overflow: hidden;
-  margin-top: 79px;
+    overflow: hidden;
+    margin-top: 76px;
+    font-size: 18px;
 }
 
 /* header */
@@ -180,6 +181,8 @@ body {
     border-radius: 10px;
     padding: 10px;
     margin-left: 20px;
+    font-size: 14px;
+    padding: 8px 10px;
     /* backdrop-filter: blur(10px); */
 }
 

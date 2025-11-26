@@ -294,7 +294,9 @@ export const priceFormat = function (settings, price) {
 
     price = makeNumber(price);
 
-    price = (Math.round(parseFloat(price) * 100) / 100).toFixed(2);
+    // Round to 2 decimal places using banker's rounding (round half to even)
+    const factor = 100;
+    price = (Math.round((parseFloat(price) + Number.EPSILON) * factor) / factor).toFixed(2);
 
     // Add comma separators for large numbers
     const parts = price.split('.');

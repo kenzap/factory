@@ -25,111 +25,124 @@ import { makeNumber, priceFormat } from "./global.js";
  * @returns {number|string} returns.formula_length_calc - Calculated length value
  */
 export const getPrice = (settings, item) => {
+    const obj = {
+        formula_width: item.formula_width || '0',
+        formula_length: item.formula_length || '0',
+        formula_width_calc: item.formula_width,
+        formula_length_calc: item.formula_length
+    };
 
-    let obj = {};
-
-    switch (item.calc_price) {
-
-        case 'variable':
-
-            const item_price = item.var_price.find(o => o.parent === item.coating && o.title === item.color);
-
-            // console.log('getPrice variable item_price:', item);
-
-            obj.price = item_price ? item_price.price : 0;
-            obj.total = obj.price * item.qty || 1;
-            obj.formula_width = item.formula_width ? item.formula_width : '0';
-            obj.formula_length = item.formula_length ? item.formula_length : '0';
-            obj.formula_width_calc = item.formula_width;
-            obj.formula_length_calc = item.formula_length;
-
-            // Apply adjustment to the calculated price if adj exists
-            if (item.adj && !isNaN(item.adj) && !isNaN(item.formula_length_calc)) {
-                obj.price = obj.price + (item.adj * item.formula_length_calc / 1000);
-            }
-
-            if (item.adj && !item.formula_length_calc) {
-                obj.price = obj.price + item.adj;
-            }
-
-            break;
-        case 'formula':
-        default:
-
-            const coating_price = getCoatingPrice(settings, item.coating, item.color);
-
-            obj.formula = item.formula;
-            obj.formula_price = item.formula_price ? item.formula_price : '0';
-            obj.formula_width = item.formula_width ? item.formula_width : '0';
-            obj.formula_length = item.formula_length ? item.formula_length : '0';
-            obj.formula_width_calc = item.formula_width;
-            obj.formula_length_calc = item.formula_length;
-
-            // selected coating price
-            obj.formula = obj.formula.replaceAll("COATING", coating_price);
-            obj.formula_price = obj.formula_price.replaceAll("COATING", coating_price);
-            obj.formula_price = obj.formula_price.replaceAll("M2", item.formula + "/1000000");
-
-            for (let price of settings.price) {
-
-                if (price.id.length > 0) {
-
-                    obj.formula = obj.formula.replaceAll(price.id, parseFloat(price.price));
-                    obj.formula_price = obj.formula_price.replaceAll(price.id, parseFloat(price.price));
-                }
-            }
-
-            // get input fields from digital sketch
-            item.input_fields.forEach((field, i) => {
-
-                obj.formula = obj.formula.replaceAll(field.label, field.default);
-                obj.formula_price = obj.formula_price.replaceAll(field.label, field.default);
-                obj.formula_width_calc = obj.formula_width_calc.replaceAll(field.label, field.default);
-                obj.formula_length_calc = obj.formula_length_calc.replaceAll(field.label, field.default);
-            });
-
-            // no input fields provided work with cell values
-            if (!item.input_fields.length) {
-
-                // console.log(item);
-
-                obj.formula = obj.formula.replaceAll("W", item.formula_width_calc);
-                obj.formula = obj.formula.replaceAll("L", item.formula_length_calc);
-
-                obj.formula_price = obj.formula_price.replaceAll("W", item.formula_width_calc);
-                obj.formula_price = obj.formula_price.replaceAll("L", item.formula_length_calc);
-
-                obj.formula_width_calc = obj.formula_width_calc.replaceAll("W", item.formula_width_calc);
-                obj.formula_width_calc = obj.formula_width_calc.replaceAll("L", item.formula_length_calc);
-
-                obj.formula_length_calc = obj.formula_length_calc.replaceAll("W", item.formula_width_calc);
-                obj.formula_length_calc = obj.formula_length_calc.replaceAll("L", item.formula_length_calc);
-
-                console.log(obj);
-
-                obj.price = makeNumber((calculate(obj.formula) / 1000000 * coating_price)) + makeNumber(calculate(obj.formula_price));
-                obj.total = obj.price * item.qty;
-                obj.formula_width_calc = calculate(obj.formula_width_calc);
-                obj.formula_length_calc = calculate(obj.formula_length_calc);
-            }
-
-            if (item.adj && !item.formula_length_calc) {
-                obj.price = obj.price + item.adj;
-            }
-
-            // make final calculations
-            if (item.input_fields.length > 0) {
-                obj.price = makeNumber((calculate(obj.formula) / 1000000 * coating_price)) + makeNumber(calculate(obj.formula_price));
-                obj.total = obj.price * item.qty;
-                obj.formula_width_calc = calculate(obj.formula_width_calc);
-                obj.formula_length_calc = calculate(obj.formula_length_calc);
-            }
-
-            break;
+    if (item.calc_price === 'variable') {
+        return calculateVariablePrice(item, obj);
     }
 
+    return calculateFormulaPrice(settings, item, obj);
+};
+
+const calculateVariablePrice = (item, obj) => {
+    const itemPrice = item.var_price?.find(o => o.parent === item.coating && o.title === item.color);
+
+    obj.price = itemPrice?.price || 0;
+
+    // Apply adjustments
+    if (item.adj && !isNaN(item.adj)) {
+        obj.price += (item.formula_length_calc && !isNaN(item.formula_length_calc))
+            ? item.adj * item.formula_length_calc / 1000
+            : item.adj;
+    }
+
+    console.log('Variable price itemPrice:', item.adj, obj.price);
+
+    // Apply discount
+    if (item.discount > 0) {
+        obj.price = Math.round(obj.price * (1 - item.discount / 100) * 100) / 100;
+    }
+
+    obj.total = obj.price * (item.qty || 1);
     return obj;
-}
+};
+
+const calculateFormulaPrice = (settings, item, obj) => {
+    const coatingPrice = getCoatingPrice(settings, item.coating, item.color);
+
+    obj.formula = item.formula;
+    obj.formula_price = item.formula_price || '0';
+
+    // Replace formula variables
+    obj.formula = replaceFormulaVariables(obj.formula, settings, item, coatingPrice);
+    obj.formula_price = replaceFormulaVariables(obj.formula_price, settings, item, coatingPrice);
+
+    // Replace in width/length calculations
+    [obj.formula_width_calc, obj.formula_length_calc] =
+        replaceInDimensions([obj.formula_width_calc, obj.formula_length_calc], item);
+
+    // Calculate final price
+    const basePrice = makeNumber(calculate(obj.formula) / 1000000 * coatingPrice);
+    const additionalPrice = makeNumber(calculate(obj.formula_price));
+
+    obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
+
+    console.log("item.adj", item.adj);
+
+    // Apply adjustments
+    if (item.adj && !isNaN(item.adj)) {
+        obj.price += (item.formula_length_calc && !isNaN(item.formula_length_calc))
+            ? item.adj * item.formula_length_calc / 1000
+            : item.adj;
+    }
+
+    // Apply discount
+    if (item.discount > 0) {
+        obj.price *= (1 - item.discount / 100);
+    }
+
+    obj.total = obj.price * item.qty;
+    obj.formula_width_calc = calculate(obj.formula_width_calc);
+    obj.formula_length_calc = calculate(obj.formula_length_calc);
+
+    return obj;
+};
+
+const replaceFormulaVariables = (formula, settings, item, coatingPrice) => {
+    let result = formula
+        .replaceAll("COATING", coatingPrice)
+        .replaceAll("M2", `${item.formula}/1000000`);
+
+    // Replace price IDs
+    settings.price.forEach(price => {
+        if (price.id.length > 0) {
+            result = result.replaceAll(price.id, parseFloat(price.price));
+        }
+    });
+
+    // Replace input fields or default W/L values
+    if (item.input_fields?.length) {
+        item.input_fields.forEach(field => {
+            result = result.replaceAll(field.label, field.default);
+        });
+    } else {
+        result = result
+            .replaceAll("W", item.formula_width_calc)
+            .replaceAll("L", item.formula_length_calc);
+    }
+
+    return result;
+};
+
+const replaceInDimensions = (dimensions, item) => {
+    return dimensions.map(dim => {
+        if (item.input_fields?.length) {
+            item.input_fields.forEach(field => {
+                dim = dim.replaceAll(field.label, field.default);
+            });
+        } else {
+            dim = dim
+                .replaceAll("W", item.formula_width_calc)
+                .replaceAll("L", item.formula_length_calc);
+        }
+        return dim;
+    });
+};
 
 /**
  * Formats order totals, based on getWaybillTotals method.
@@ -378,19 +391,19 @@ export const calculateItemTotal = (qty, price, adj, discount, length) => {
     // }
 
     // Handle discount with % sign - extract numeric value
-    let discountValue = discount || 0;
-    if (typeof discountValue === 'string' && discountValue.includes('%')) {
-        discountValue = parseFloat(discountValue.replace('%', '')) || 0;
-    }
+    // let discountValue = discount || 0;
+    // if (typeof discountValue === 'string' && discountValue.includes('%')) {
+    //     discountValue = parseFloat(discountValue.replace('%', '')) || 0;
+    // }
 
-    const discountAmount = basePrice * (discountValue / 100);
-    const finalPrice = basePrice - discountAmount;
+    // const discountAmount = Math.round(basePrice * (discountValue / 100) * 100) / 100;
+    // const finalPrice = Math.round((basePrice - discountAmount) * 100) / 100;
 
     // console.log('Final price calculation:', {
     //     basePrice,
     //     finalPrice
     // });
-    return parseFloat(Math.max(0, finalPrice).toFixed(2));
+    return Math.round(basePrice * 100) / 100;
 }
 
 /**

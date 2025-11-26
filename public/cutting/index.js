@@ -71,16 +71,19 @@ class Cutting {
             // load page html 
             this.html();
 
-            // render page
-            this.render();
-
             this.listeners();
         });
     }
 
     initBlocks = () => {
 
-        this.blocks = [];
+        this.blocks = [
+            {
+                coating: __html("Client Material"), colors: [
+                    { slug: "cm", color: "CM" }
+                ]
+            },
+        ];
 
         this.settings.var_parent.split('\n').forEach((coating) => {
 
@@ -90,19 +93,20 @@ class Cutting {
             })
         });
 
-        this.settings.textures.forEach((texture) => {
-            this.blocks.forEach((block) => {
+        console.log('Settings textures:', this.settings.textures);
 
-                // console.log('Texture:', texture.texture, 'Block:', block.name);
-                let name_slug = block.coating.toLowerCase().replace(/\s+/g, '-');
-                if (texture.texture.startsWith(name_slug)) {
+        this.settings.price.forEach((priceItem) => {
+            if (priceItem.public && priceItem.parent) {
+                // Find the matching block by parent name
+                const block = this.blocks.find(b => b.coating === priceItem.parent);
+                if (block) {
                     block.colors.push({
-                        slug: texture.texture,
-                        // hex: mapHexColor(texture.texture),
-                        color: texture.texture.replace(name_slug + "-", '').toUpperCase(),
+                        // /assets/textures/matt-polyester-2h3.jpeg
+                        slug: priceItem.parent.toLowerCase().replace(/\s+/g, '-') + '-' + (priceItem.title || '*').toLowerCase().replace(/\s+/g, '-'),
+                        color: priceItem.title || priceItem.id || '*',
                     });
                 }
-            });
+            }
         });
 
         this.blocks.reverse();
@@ -129,6 +133,7 @@ class Cutting {
                         ${this.settings.var_parent.split('\n').map((filter) => {
             return `<div class="filter-tab" data-filter="${filter}">${filter}</div>`;
         }).join('')}
+                        <div class="filter-tab" data-filter="${__html('Client Material')}">${__html('Client Material')}</div>
                     </div>
                 ${this.blocks.map((o) => {
             return `
@@ -141,7 +146,7 @@ class Cutting {
                     <div class="color-card" data-code="${c.color}" data-type="${o.coating}" data-slug="${c.slug}" >
                         <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;"></div>
                         <div class="color-info">
-                            <div class="color-code">${c.color}</div>
+                            <div class="color-code">${__html(c.color)}</div>
                             <div class="color-type">${o.coating}</div>
                         </div>
                     </div>`;
@@ -152,17 +157,6 @@ class Cutting {
         }).join('')}
   
         </div>`;
-    }
-
-    // render page
-    render = () => {
-
-        // initiate breadcrumbs
-        // initBreadcrumbs(
-        //     [
-        //         { text: __html('Home') },
-        //     ]
-        // );
     }
 
     // init page listeners

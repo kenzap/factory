@@ -1,6 +1,7 @@
+import { execWriteoffAction } from "../_/api/exec_writeoff_action.js";
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
-import { __html, formatDate, getDimUnit, hideLoader, onClick } from "../_/helpers/global.js";
+import { __html, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
@@ -26,9 +27,8 @@ class CuttingList {
         this.slug = urlParams.get('slug');
         this.filters = {
             client: { name: "" },
-            dateFrom: '',
-            dateTo: '',
             type: '',
+            cm: this.slug == 'cm' ? true : false,
             color: this.color || '',
             coating: this.coating || '',
             items: true
@@ -118,34 +118,39 @@ class CuttingList {
                 </div>
                 <div class="stock-list bg-light pt-0" id="stockList">
 
-                ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
-                <div class="stock-item ${!coil.parent_coil_id ? "parent" : "child"}" data-coil="${coil._id}">
-                    <div class="vertical-text wmc">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
-                    <div class="coil-info">
-                        <div class="coil-header d-flex align-items-center flex-fill justify-content-between">
-                            <div class="coil-dimensions fs-5 wmc">${Number(coil.width).toLocaleString()} × ${Number(coil.length).toLocaleString()} ${getDimUnit(this.settings)}</div>
-                            <div class="coil-parameters">
-                                <div class="d-flex me-2">
-                                    <div class="form-check form-check-inline cbo m-0 p-0">
-                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="soft_${coil._id}" value="soft" data-index="0" data-field="type" ${coil?.parameters?.softness === 'soft' ? 'checked' : ''}>
-                                        <label class="form-check-label form-text mt-0 d-none" for="soft_${coil._id}">K</label>
-                                    </div>
-                                    <div class="form-check form-check-inline cbs m-0 p-0">
-                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="hard_${coil._id}" value="hard" data-index="0" data-field="type" ${coil?.parameters?.softness === 'hard' ? 'checked' : ''}>
-                                        <label class="form-check-label form-text mt-0 d-none" for="hard_${coil._id}">Z</label>
-                                    </div>
-                                    <div class="form-check form-check-inline cbw m-0 p-0">
-                                        <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="unknown_${coil._id}" value="unknown" data-index="0" data-field="type" ${coil?.parameters?.softness === 'unknown' ? 'checked' : ''}>
-                                        <label class="form-check-label form-text mt-0 d-none" for="unknown_${coil._id}">X</label>
-                                    </div>
-                                </div> 
+                    ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
+                    <div class="stock-item ${!coil.parent_coil_id ? "parent" : "child"}" data-coil="${coil._id}">
+                        <div class="vertical-text wmc">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
+                        <div class="coil-info">
+                            <div class="coil-header d-flex align-items-center flex-fill justify-content-between">
+                                <div class="coil-dimensions fs-5 wmc">${Number(coil.width).toLocaleString()} × ${this.parseCoilLength(coil.length)}</div>
+                                <div class="coil-parameters">
+                                    <div class="d-flex me-2">
+                                        <div class="form-check form-check-inline cbo m-0 p-0">
+                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="soft_${coil._id}" value="soft" data-index="0" data-field="type" ${coil?.parameters?.softness === 'soft' ? 'checked' : ''}>
+                                            <label class="form-check-label form-text mt-0 d-none" for="soft_${coil._id}">K</label>
+                                        </div>
+                                        <div class="form-check form-check-inline cbs m-0 p-0">
+                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="hard_${coil._id}" value="hard" data-index="0" data-field="type" ${coil?.parameters?.softness === 'hard' ? 'checked' : ''}>
+                                            <label class="form-check-label form-text mt-0 d-none" for="hard_${coil._id}">Z</label>
+                                        </div>
+                                        <div class="form-check form-check-inline cbw m-0 p-0">
+                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="unknown_${coil._id}" value="unknown" data-index="0" data-field="type" ${coil?.parameters?.softness === 'unknown' ? 'checked' : ''}>
+                                            <label class="form-check-label form-text mt-0 d-none" for="unknown_${coil._id}">X</label>
+                                        </div>
+                                    </div> 
+                                </div>
                             </div>
+                            <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
                         </div>
-                        <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
                     </div>
-                </div>
-                `).join('') : `<div class="no-stock text-center py-4">${__html('No stock available')}</div>`}
+                    `).join('') : `<div class="no-stock text-center py-4">${__html('No stock available')}</div>`}
 
+                </div>
+                <div class="writeoff-button-container">
+                    <button class="btn btn-primary writeoff-btn" id="writeoffBtn">
+                    <i class="bi bi-eye-slash"></i> ${__html('Write Off Selected')}
+                    </button>
                 </div>
             </div>    
             <div class="orders-panel">
@@ -159,33 +164,54 @@ class CuttingList {
                         </div>
                         <div class="order-items">
                             ${order.items ? order.items.map((item, index) => `
-                            <div class="order-item">
+                            <div class="order-item ${this.getStatusClass(item)}">
                                 <input type="checkbox" class="checkbox" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
                                 <span class="item-id">${order.id}</span>
-                                <span class="item-description">${item.title || 'N/A'}</span>
+                                <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
                                 <span class="item-dimensions">
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
                                 </span>
                                 <span class="item-quantity">${item.qty || 1}</span>
                                 ${this.formatStatus(item)}
-                                <span class="ms-2">${item.progress || 0}</span>
                             </div>
                             `).join('') : ''}
                         </div>
                     </div>
-                    `).join('') : '<div class="no-orders">No orders available</div>'}
+                    `).join('') : `<div class="no-orders">${__html('No records added')}</div>`}
                 </div>
             </div>
-        </div>`;
+        </div>
+        `;
+    }
+
+    getStatusClass(item) {
+        if (item?.inventory?.wrt_date === undefined || item?.inventory?.wrt_date === null) {
+            return "pending-item";
+        } else {
+            return "complete-item";
+        }
     }
 
     formatStatus(item) {
-        if (item.cut_date === undefined || item.cut_date === null) {
+        if (item?.inventory?.wrt_date === undefined || item?.inventory?.wrt_date === null) {
             return `<span class="item-status status-warning">${__html('Pending')}</span>`;
         } else {
             return `<span class="item-status status-success">${__html('Complete')}</span>`;
         }
+    }
+
+    parseCoilLength(length) {
+
+        let text = "";
+        if (!length || isNaN(length)) return '0';
+        if (length.toString().length > 3) {
+            text = length.toString().substr(0, length.toString().length - 3) + '<span class="small">,' + length.toString().substr(-3) + '</span>';
+        } else {
+            text = length.toLocaleString();
+        }
+
+        return text + ' <span class="small">' + getDimUnit(this.settings) + '</span>';
     }
 
     // init page listeners
@@ -230,36 +256,25 @@ class CuttingList {
             const orderGroups = document.querySelectorAll('.order-group');
             orderGroups.forEach(group => {
                 const orderItems = group.querySelectorAll('.order-item');
-                let hasPending = false;
-                let hasComplete = false;
-                let allComplete = true;
+                let visibleItems = 0;
 
                 orderItems.forEach(item => {
-                    const statusElement = item.querySelector('.item-status');
-                    if (statusElement) {
-                        if (statusElement.classList.contains('status-warning')) {
-                            hasPending = true;
-                            allComplete = false;
-                        } else if (statusElement.classList.contains('status-success')) {
-                            hasComplete = true;
-                        } else {
-                            allComplete = false;
-                        }
-                    } else {
-                        allComplete = false;
+                    let shouldShowItem = false;
+
+                    if (allFilter.checked) {
+                        shouldShowItem = true;
+                    } else if (pendingFilter.checked) {
+                        shouldShowItem = item.classList.contains('pending-item');
+                    } else if (completeFilter.checked) {
+                        shouldShowItem = item.classList.contains('complete-item');
                     }
+
+                    item.style.display = shouldShowItem ? 'grid' : 'none';
+                    if (shouldShowItem) visibleItems++;
                 });
 
-                let shouldShow = false;
-                if (allFilter.checked) {
-                    shouldShow = true;
-                } else if (pendingFilter.checked) {
-                    shouldShow = hasPending;
-                } else if (completeFilter.checked) {
-                    shouldShow = allComplete;
-                }
-
-                group.style.display = shouldShow ? 'block' : 'none';
+                // Hide the entire group if no items are visible
+                group.style.display = visibleItems > 0 ? 'block' : 'none';
             });
         };
 
@@ -313,8 +328,11 @@ class CuttingList {
                     }
                 }
 
-                // Remove input and show span
-                input.remove();
+                // Remove input and show span only if input is still in DOM
+                if (input && input.parentNode) {
+                    input.remove();
+                }
+
                 span.style.display = 'inline';
             };
 
@@ -400,6 +418,93 @@ class CuttingList {
                 if (updated) {
                     this.init();
                 }
+            });
+        });
+
+        // mark write-off button click
+        onClick('.writeoff-btn', e => {
+
+            e.preventDefault();
+
+            console.log('Write off button clicked');
+
+            // get selected items
+            let items = [];
+
+            // get selected items
+            document.querySelectorAll('.order-item input[type="checkbox"]:checked').forEach(checkbox => {
+                let itemId = checkbox.dataset.item;
+                let [orderId, index] = itemId.split('-');
+                let order = this.orders.find(o => o.id === orderId);
+
+                index = parseInt(index);
+
+                console.log('Selected item:', itemId, orderId, index, order);
+
+                if (order) {
+                    const item = order.items.find((i, ii) => ii === index);
+                    if (item) {
+                        // Get updated values from HTML elements
+                        // const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
+                        // const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
+
+                        // const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
+                        // const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
+
+                        items.push({
+                            index: index,
+                            order_id: order.id,
+                            item_id: item._id,
+                            title: item.title,
+                            // formula_width_calc: 0,
+                            // formula_length_calc: 0,
+                            qty: item.qty
+                        });
+                    }
+                }
+            });
+
+            const orderIds = [...new Set(items.map(item => item.order_id).filter(id => id))];
+
+            const record = {
+                qty: 0,
+                origin: "c",
+                type: "cutting",
+                title: "",
+                product_name: "",
+                time: 0,
+                order_ids: orderIds,
+                items: items
+            }
+
+            if (items.length === 0) {
+                toast('No records selected');
+                return;
+            }
+
+            console.log('Write-off record:', record);
+
+            // block ui button
+            let htmlOriginal = e.currentTarget.innerHTML;
+            e.currentTarget.disabled = true;
+            e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+
+            // Create product bundle from the selected product
+            execWriteoffAction(record, (response) => {
+
+                document.querySelector('.writeoff-btn').innerHTML = htmlOriginal;
+                document.querySelector('.writeoff-btn').disabled = false;
+
+                console.log('Write-off response:', response);
+
+                if (!response.success) {
+                    alert(__html('Error: %1$', response.error));
+                    return;
+                }
+
+                this.init();
+
+                toast(__html('Changes applied'));
             });
         });
 
