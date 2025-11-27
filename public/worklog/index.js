@@ -208,7 +208,7 @@ class WorkLog {
             this.view();
 
             this.renderRecords();
-            this.updateSummary();
+            // this.updateSummary();
             this.populateFilters();
 
             this.firstLoad = false;
@@ -338,10 +338,10 @@ class WorkLog {
                 <td tyle="width:80px;">
                     ${entry.coating || '-'}
                 </td>
-                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name}</span></td>
+                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name || entry.title}</span></td>
                 <td>
                     <span class="badge ${this.getTypeClass(entry.type)} stage-badge">
-                    ${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}
+                        ${__html(entry.type.charAt(0).toUpperCase() + entry.type.slice(1).replace('-', ' '))}
                     </span>
                 </td>
                 <td><strong>${entry.qty}</strong></td>
@@ -375,7 +375,7 @@ class WorkLog {
         this.data();
 
         // this.renderEntries();
-        this.updateSummary();
+        // this.updateSummary();
     }
 
     updateSummary() {
@@ -439,7 +439,7 @@ class WorkLog {
                 this.data();
 
                 // this.renderEntries();
-                this.updateSummary();
+                // this.updateSummary();
             });
         }
     }

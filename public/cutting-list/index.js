@@ -398,9 +398,10 @@ class CuttingList {
                         const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
 
                         items.push({
+                            id: item.id,
                             index: index,
                             order_id: order.id,
-                            item_id: item._id,
+                            product_id: item._id,
                             title: item.title,
                             formula_width_calc: formula_width_calc,
                             formula_length_calc: formula_length_calc,
@@ -452,9 +453,11 @@ class CuttingList {
                         // const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
 
                         items.push({
-                            index: index,
+                            id: item.id,
+                            // index: index,
                             order_id: order.id,
-                            item_id: item._id,
+                            // item_id: item._id,
+
                             title: item.title,
                             // formula_width_calc: 0,
                             // formula_length_calc: 0,
@@ -470,7 +473,7 @@ class CuttingList {
                 qty: 0,
                 origin: "c",
                 type: "cutting",
-                title: "",
+                title: __html(`Mark complete for %1$ item%2$ from order%3$ #%4$`, items.length, items.length !== 1 ? 's' : '', orderIds.length !== 1 ? 's' : '', orderIds.join(', #')),
                 product_name: "",
                 time: 0,
                 order_ids: orderIds,

@@ -1,8 +1,8 @@
 import { updateCalculations } from "../../components/order/order_calculations.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
 import { sketchEditor } from "../../components/order/order_sketch_editor.js";
-import { __html, onClick, priceFormat } from "../../helpers/global.js";
-import { getCoatings, getColors } from "../../helpers/order.js";
+import { __html, onClick, priceFormat, randomString, toast } from "../../helpers/global.js";
+import { getCoatings, getColors, isAllowedToEdit } from "../../helpers/order.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { state } from "../../modules/order/state.js";
 import { bus } from "../bus.js";
@@ -295,6 +295,18 @@ export class OrderPane {
                     cellClick: function (e, cell) {
 
                         if (e.target.classList.contains('delete-row')) {
+
+                            const rowData = cell.getRow().getData();
+
+                            console.log('Deleting row:', rowData);
+
+                            const is = isAllowedToEdit(rowData);
+                            if (!is.allow) {
+
+                                toast(is.reason || 'You are not allowed to edit this row.');
+                                return;
+                            }
+
                             cell.getRow().delete();
                         }
 
@@ -539,6 +551,7 @@ export class OrderPane {
         }
 
         this.table.addRow({
+            id: randomString(6),
             cm: previousRowData.cm !== undefined ? Boolean(previousRowData.cm) : false,
             coating: previousRowData.coating || "",
             color: previousRowData.color || "",
@@ -668,6 +681,16 @@ export class OrderPane {
     // Enhanced number editor with Enter key handling
     numberEditor = (cell, onRendered, success, cancel, editorParams) => {
 
+        // Check if editing is allowed for this row
+        const rowData = cell.getRow().getData();
+        const is = isAllowedToEdit(rowData);
+        if (!is.allow) {
+
+            toast(is.reason || 'You are not allowed to edit this row.');
+            cancel();
+            return;
+        }
+
         const input = document.createElement("input");
         input.type = "number";
         input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
@@ -707,13 +730,24 @@ export class OrderPane {
 
     // Generic editor for suggestion fields
     suggestionEditor = (cell, onRendered, success, cancel, editorParams) => {
+
+        // Check if editing is allowed for this row
+        const rowData = cell.getRow().getData();
+        const is = isAllowedToEdit(rowData);
+        if (!is.allow) {
+
+            toast(is.reason || 'You are not allowed to edit this row.');
+            cancel();
+            return;
+        }
+
         const input = document.createElement("input");
         input.type = "text";
         input.value = cell.getValue() || "";
         input.className = "form-control form-control-sm";
 
         const datalist = document.createElement("datalist");
-        datalist.id = "suggestions-" + Math.random().toString(36).substring(2, 11);
+        datalist.id = "suggestions-" + randomString(10);
         datalist.style.backgroundColor = "beige";
         datalist.style.border = "var(--bs-border-width) solid var(--bs-border-color)!important;";
         datalist.style.borderRadius = "4px";

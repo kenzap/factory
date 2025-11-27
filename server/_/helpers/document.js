@@ -80,9 +80,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                 js->'data'->>'notes' as "notes",
                 js->'data'->>'phone' as phone,
                 js->'data'->'contacts' as contacts,
-                js->'data'->'drivers' as drivers,
-                js->'data'->'mnf_date' as mnf_date,
-                js->'data'->'isu_date' as isu_date
+                js->'data'->'drivers' as drivers
             FROM data 
             WHERE ref = $1 AND sid = $2 AND _id = $3
         `;

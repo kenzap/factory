@@ -83,52 +83,53 @@ class Stock {
 
     editCell(cell) {
         const currentValue = cell.textContent;
-        const wrapper = document.createElement('div');
-        const input = document.createElement('input');
 
-        input.type = 'text';
-        input.dataset.productId = cell.dataset.productId;
-        input.dataset.coating = cell.dataset.coating;
-        input.dataset.color = cell.dataset.color;
-        input.min = '0';
-        input.value = currentValue;
-        input.className = 'form-control form-control-sm input-editing';
-        input.style.width = '60px';
-        input.style.textAlign = 'center';
+        // Make cell editable
+        cell.contentEditable = true;
+        cell.focus();
 
-        wrapper.appendChild(input);
+        // Select all text
+        const range = document.createRange();
+        range.selectNodeContents(cell);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
 
-        cell.innerHTML = '';
-        cell.appendChild(wrapper);
-        input.focus();
-        input.select();
+        let isEditing = false;
 
-        const saveEdit = (e) => {
+        const saveEdit = () => {
+            if (isEditing) return;
+            isEditing = true;
 
-            const newValue = parseInt(input.value) || 0;
+            cell.contentEditable = false;
+
+            // Validate and clean input - only keep numbers
+            let newValue = cell.textContent.replace(/[^\d]/g, '');
+            newValue = parseInt(newValue) || 0;
 
             cell.textContent = newValue;
             cell.className = `editable-cell ${this.getStockClass(newValue)}`;
 
             let stock = {
-                color: input.dataset.color,
-                coating: input.dataset.coating,
+                color: cell.dataset.color,
+                coating: cell.dataset.coating,
                 amount: newValue,
-                _id: input.dataset.productId,
+                _id: cell.dataset.productId,
             }
 
             console.log('Saving stock:', stock);
-            // return;
 
             // Save the new stock amount
             saveStockAmount(stock, (response) => {
                 if (!response.success) {
                     toast('Error saving stock amount: ' + response.error);
                     cell.textContent = currentValue; // Revert to old value on error
+                    isEditing = false;
                     return;
                 }
 
                 toast('Changes applied');
+                isEditing = false;
             });
 
             // Show update feedback
@@ -138,17 +139,112 @@ class Stock {
             }, 200);
         };
 
-        input.addEventListener('blur', e => saveEdit(e));
-        input.addEventListener('keypress', (e) => {
+        const cancelEdit = () => {
+            cell.contentEditable = false;
+            cell.textContent = currentValue;
+            cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
+        };
+
+        // Prevent non-numeric input in real-time
+        cell.addEventListener('input', (e) => {
+            const value = cell.textContent.replace(/[^\d]/g, '');
+            if (cell.textContent !== value) {
+                cell.textContent = value;
+                // Move cursor to end
+                range.selectNodeContents(cell);
+                range.collapse(false);
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }
+        });
+
+        cell.addEventListener('blur', saveEdit);
+        cell.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
-                saveEdit(e);
+                e.preventDefault();
+                saveEdit();
             }
             if (e.key === 'Escape') {
-                cell.textContent = currentValue;
-                cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
+                e.preventDefault();
+                cancelEdit();
             }
         });
     }
+
+    // editCell(cell) {
+    //     const currentValue = cell.textContent;
+    //     const wrapper = document.createElement('div');
+    //     const input = document.createElement('input');
+
+    //     input.type = 'text';
+    //     input.dataset.productId = cell.dataset.productId;
+    //     input.dataset.coating = cell.dataset.coating;
+    //     input.dataset.color = cell.dataset.color;
+    //     input.min = '0';
+    //     input.value = currentValue;
+    //     input.className = 'form-control form-control-sm input-editing';
+    //     input.style.width = '60px';
+    //     input.style.textAlign = 'center';
+
+    //     wrapper.appendChild(input);
+
+    //     cell.innerHTML = '';
+    //     cell.appendChild(wrapper);
+    //     input.focus();
+    //     input.select();
+
+    //     let isEditing = false;
+
+    //     const saveEdit = (e) => {
+    //         if (isEditing) return;
+    //         isEditing = true;
+
+    //         const newValue = parseInt(input.value) || 0;
+
+    //         cell.textContent = newValue;
+    //         cell.className = `editable-cell ${this.getStockClass(newValue)}`;
+
+    //         let stock = {
+    //             color: input.dataset.color,
+    //             coating: input.dataset.coating,
+    //             amount: newValue,
+    //             _id: input.dataset.productId,
+    //         }
+
+    //         console.log('Saving stock:', stock);
+    //         // return;
+
+    //         // Save the new stock amount
+    //         saveStockAmount(stock, (response) => {
+    //             if (!response.success) {
+    //                 toast('Error saving stock amount: ' + response.error);
+    //                 cell.textContent = currentValue; // Revert to old value on error
+    //                 isEditing = false;
+    //                 return;
+    //             }
+
+    //             toast('Changes applied');
+    //             isEditing = false;
+    //         });
+
+    //         // Show update feedback
+    //         cell.style.transform = 'scale(1.1)';
+    //         setTimeout(() => {
+    //             cell.style.transform = 'scale(1)';
+    //         }, 200);
+    //     };
+
+    //     input.addEventListener('blur', e => saveEdit(e));
+    //     input.addEventListener('keypress', (e) => {
+    //         if (e.key === 'Enter') {
+    //             saveEdit(e);
+    //         }
+    //         if (e.key === 'Escape') {
+    //             cell.textContent = currentValue;
+    //             cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
+    //         }
+    //     });
+    // }
 
     async data() {
 

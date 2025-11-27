@@ -6,7 +6,7 @@ export const setProductStock = async (db, inventory, user_id) => {
     // console.log('setProductStock', inventory);
 
     // validate inventory data
-    if (!inventory || !inventory._id || !inventory.amount || !inventory.coating || !inventory.color) {
+    if (!inventory || !inventory._id || !inventory.coating || !inventory.color) {
         return { success: false, error: 'invalid inventory data' };
     }
 
@@ -71,7 +71,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
     // console.log('updateProductStock', inventory);
 
     // validate inventory data
-    if (!inventory || !inventory._id || !inventory.amount || !inventory.coating || !inventory.color) {
+    if (!inventory || !inventory._id || !inventory.coating || !inventory.color) {
         return { success: false, error: 'invalid inventory data' };
     }
 

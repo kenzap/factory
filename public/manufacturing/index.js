@@ -486,6 +486,7 @@ class Manufacturing {
 
                 // Clear existing bundles for this order before adding new ones
                 document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"]`).forEach(element => {
+
                     // Remove any existing bundle rows that follow this item
                     let nextSibling = element.nextElementSibling;
                     while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
@@ -515,6 +516,8 @@ class Manufacturing {
 
                         bundleItems.forEach((bundleItem) => {
 
+                            console.log('Adding bundle item:', bundleItem);
+
                             // Map bundle data from order.items.bundles if it exists
                             let bundleInventory = null;
                             let bundleId = "";
@@ -533,10 +536,28 @@ class Manufacturing {
                                     bundleAmount = matchingBundle.inventory?.writeoff_amount || bundleItem.inventory?.writeoff_amount || 0;
                                     bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
                                 }
+                            } else {
+
+                                // if (!orderItem.bundle_items) orderItem.bundle_items = [];
+
+                                // orderItem.bundle_items.push({
+                                //     bundle_id: bundleItem.bundle_id,
+                                //     coating: bundleItem.coating,
+                                //     color: bundleItem.color,
+                                //     title: bundleItem.title,
+                                //     unit: bundleItem.unit,
+                                //     qty: bundleItem.qty,
+                                //     inventory: bundleItem.inventory
+                                // });
+
+                                bundleId = bundleItem.bundle_id;
+                                bundleInventory = bundleItem.inventory;
+                                bundleAmount = bundleItem.inventory?.writeoff_amount || 0;
+                                bundleChecked = bundleItem.inventory?.checked || false;
                             }
 
                             let row = ` 
-                                <tr class="">
+                                <tr data-bundle-id="${bundleItem.bundle_id}" class="">
                                     <td class="d-none py-0"></td>
                                     <td class="py-0">
 
@@ -559,7 +580,7 @@ class Manufacturing {
                                     </td>
                                     <td class="py-0">
                                         <small class="text-muted">
-                                            <div class="stock-${bundleItem.coating}-${bundleItem.color}-${bundleId}"><span></span></div>
+                                            <div class="stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}"><span></span></div>
                                         </small>
                                     </td>
                                     <td class="py-0">
@@ -576,7 +597,7 @@ class Manufacturing {
                 });
             }
 
-            this.getStock(order._id);
+            this.getStock(order._id, response.products);
 
             this.refreshButtons(order._id);
         });
@@ -603,7 +624,7 @@ class Manufacturing {
         });
     }
 
-    getStock(order_id) {
+    getStock(order_id, extensionList = []) {
 
         // Get stock for each item in the order
         const order = this.orders.find(o => o._id === order_id);
@@ -613,7 +634,7 @@ class Manufacturing {
 
         order.items.forEach((item, i) => {
 
-            // Add bundled products to the list
+            // product items
             products.push({
                 _id: item._id,
                 hash: item.coating + item.color + item._id,
@@ -621,7 +642,19 @@ class Manufacturing {
                 color: item.color || ''
             });
 
-            // Bundled products
+            // bundled products that are not yet in items inventory (e.g. when bundles are added after initial load)
+            extensionList.forEach(prod => {
+                if (prod.product_id === item._id) {
+                    products.push({
+                        _id: prod.bundle_id,
+                        hash: (prod.coating || '') + (prod.color || '') + prod.bundle_id,
+                        coating: prod.coating || '',
+                        color: prod.color || ''
+                    });
+                }
+            });
+
+            // bundled products
             if (item.bundle_items && Array.isArray(item.bundle_items)) {
                 item.bundle_items.forEach(bundleItem => {
                     if (bundleItem.inventory) {

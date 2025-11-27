@@ -47,3 +47,26 @@ export const formatCompanyName = (order) => {
     }
     return company;
 }
+
+/**
+ * Determines whether an order row is allowed to be edited based on inventory dates.
+ * An order is not allowed to be edited if any of the following dates are present:
+ * isu_date (issue date), wrt_date (write date), or mnf_date (manufacture date).
+ * 
+ * @param {Object} rowData - The row data object containing order information
+ * @param {Object} [rowData.inventory] - The inventory object containing date fields
+ * @param {string} [rowData.inventory.isu_date] - The issue date
+ * @param {string} [rowData.inventory.wrt_date] - The write date  
+ * @param {string} [rowData.inventory.mnf_date] - The manufacture date
+ * @returns {boolean} Returns false if any inventory dates are present, otherwise false
+ */
+export const isAllowedToEdit = (rowData) => {
+
+    const inventory = rowData.inventory || false;
+
+    if (inventory.isu_date) return { allow: false, reason: 'Item is issued' };
+    if (inventory.wrt_date) return { allow: false, reason: 'Item is written off' };
+    if (inventory.rdy_date) return { allow: false, reason: 'Item is manufactured' };
+
+    return { allow: true };;
+}

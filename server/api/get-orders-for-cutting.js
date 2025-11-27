@@ -143,13 +143,13 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
 
     // hide orders where all items were written off more than 2 days ago
     const twoDaysAgo = new Date();
-    twoDaysAgo.setMonth(twoDaysAgo.getDay() - 2);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
     query += ` AND EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 
             WHERE 
-               (item->'inventory'->>'wrt_date' IS NOT NULL AND (item->'inventory'->>'wrt_date')::timestamp > $${params.length + 1})
-                OR (item->'inventory'->>'wrt_date' IS NULL)
+                (item->'inventory'->>'isu_date' IS NULL OR item->'inventory'->>'isu_date' = '') AND
+                ((item->'inventory'->>'wrt_date' IS NOT NULL AND (item->'inventory'->>'wrt_date')::timestamp > $${params.length + 1}) OR (item->'inventory'->>'wrt_date' IS NULL))
         ) AND jsonb_array_length(js->'data'->'items') > 0`;
 
     params.push(twoDaysAgo.toISOString());

@@ -70,7 +70,7 @@ export const getHtml = (record) => {
     </div>
 
     <!-- Fixed Bottom Summary -->
-    <div class="fixed-summary">
+    <div class="fixed-summary d-none">
         <div class="container-fluid">
             <table class="table summary-table mb-0">
                 <tbody>

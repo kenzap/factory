@@ -1,6 +1,7 @@
 import { getProductSuggestions } from "../../api/get_product_suggestions.js";
 import { updateCalculations } from "../../components/order/order_calculations.js";
-import { FILES } from "../../helpers/global.js";
+import { FILES, toast } from "../../helpers/global.js";
+import { isAllowedToEdit } from "../../helpers/order.js";
 
 let productSuggestions = [];
 
@@ -11,6 +12,15 @@ let productSuggestions = [];
  * @class ClientSearch 
  */
 export const productEditor = (cell, onRendered, success, cancel, editorParams) => {
+
+    // Check if editing is allowed for this row
+    const rowData = cell.getRow().getData();
+    const is = isAllowedToEdit(rowData);
+    if (!is.allow) {
+        toast(is.reason || 'You are not allowed to edit this row.');
+        cancel();
+        return;
+    }
 
     // console.log('editorParams.discounts:', editorParams.discounts);
 

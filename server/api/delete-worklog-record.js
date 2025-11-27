@@ -40,61 +40,69 @@ async function revertCuttingAction(db, data) {
     if (data.sheets) res = await db.query(query, params);
 
     // clear order item statuses
-    if (data.items) data.items.forEach(async (item) => {
+    if (data.items) {
+        // Group items by order_id to avoid multiple updates to same order
+        const itemsByOrderId = data.items.reduce((acc, item) => {
+            if (!acc[item.order_id]) acc[item.order_id] = [];
+            acc[item.order_id].push(item);
+            return acc;
+        }, {});
 
-        // Querry 
-        let query = `
-            SELECT _id, js->'data'->'id' as "id", js->'data'->'items' as "items"
-            FROM data
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
-            LIMIT 1
-        `;
-
-        let params = ['ecommerce-order', sid, item.order_id];
-
-        const result = await db.query(query, params);
-
-        let order = result.rows[0] || null;
-
-        console.log('Updating order items for order_id:', item.order_id, 'order found:', order._id);
-
-        // stop here if order not found
-        if (!order) return;
-
-        let items_db = order.items || [];
-        let updated = false;
-
-        console.log('Comparing:', items_db, 'order to:', item);
-
-        // update items
-        items_db.forEach((itm, index) => {
-
-            if (item.index === index && order.id === item.order_id) {
-                delete items_db[index].inventory.wrt_date;
-                delete items_db[index].inventory.wrt_user;
-                items_db[index].length_writeoff = 0;
-                items_db[index].width_writeoff = 0;
-                updated = true;
-            }
-        });
-
-        if (updated) {
-
-            // update order in DB
-            let updateQuery = `
-                UPDATE data
-                SET js = jsonb_set(js, '{data,items}', $4::jsonb)
-                WHERE ref = $1 AND sid = $2 AND _id = $3
-                RETURNING _id
+        // Process each order once
+        for (const [orderId, orderItems] of Object.entries(itemsByOrderId)) {
+            // Query 
+            let query = `
+                SELECT _id, js->'data'->'id' as "id", js->'data'->'items' as "items"
+                FROM data
+                WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
+                LIMIT 1
             `;
 
-            let updateParams = ['ecommerce-order', sid, order._id, JSON.stringify(items_db)];
+            let params = ['ecommerce-order', sid, orderId];
 
-            const updateResult = await db.query(updateQuery, updateParams);
+            const result = await db.query(query, params);
 
-            console.log('Reverted order item statuses for order_id:', item.order_id, 'order updated:', updateResult.rows[0] || {});
+            let order = result.rows[0] || null;
+
+            console.log('Updating order items for order_id:', orderId, 'order found:', order?._id);
+
+            // stop here if order not found
+            if (!order) continue;
+
+            let items_db = order.items || [];
+            let updated = false;
+
+            console.log('Comparing:', items_db, 'order to:', orderItems);
+
+            // update items for this order
+            items_db.forEach(itm => {
+                const matchingItem = orderItems.find(item => item.id === itm.id && order.id === item.order_id);
+                if (matchingItem) {
+                    delete itm.inventory.wrt_date;
+                    delete itm.inventory.wrt_user;
+                    itm.length_writeoff = 0;
+                    itm.width_writeoff = 0;
+                    updated = true;
+                }
+            });
+
+            if (updated) {
+                // update order in DB
+                let updateQuery = `
+                    UPDATE data
+                    SET js = jsonb_set(js, '{data,items}', $4::jsonb)
+                    WHERE ref = $1 AND sid = $2 AND _id = $3
+                    RETURNING _id
+                `;
+
+                let updateParams = ['ecommerce-order', sid, order._id, JSON.stringify(items_db)];
+
+                const updateResult = await db.query(updateQuery, updateParams);
+
+                console.log('Reverted order item statuses for order_id:', orderId, 'items:', orderItems.map(i => i.id));
+            }
         }
-    });
+    }
 
     if (res) response.push(res.rows[0] || {});
 }

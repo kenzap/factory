@@ -84,13 +84,14 @@ async function execWriteoffAction(data) {
             record._length = sheet.length; // original length
             record.width = sheet.width; // current width that can be written off
             record.length = sheet.length; // current length that can be written off
+            record.price = sheet.price;
             record.parent_coil_id = record.coil_id;
             record.qty = 1;
             record.status = "available";
             record.type = "metal";
             record.notes = `${record.coil_id.substr(0, 3)}`.trim();
 
-            // Get orders
+            // Get orders 
             let query = `
                 INSERT INTO data (_id, pid, ref, sid, js)
                 VALUES ($1, $2, $3, $4, $5)
@@ -169,11 +170,11 @@ async function execWriteoffAction(data) {
             items_db.forEach((item, index) => {
 
                 // Find the corresponding item in the order by order_id and index
-                console.log('Checking items: ', items);
+                console.log('Checking item: ', item, 'index:', index);
 
-                let itemUpdated = items.find((itm, idx) =>
-                    itm.order_id === order_id &&
-                    itm.index === index
+                let itemUpdated = items.find(itm =>
+                    // itm.order_id === order_id && itm.index === index
+                    item.id === itm.id
                 );
 
                 console.log('itemUpdated:', itemUpdated);
@@ -181,6 +182,7 @@ async function execWriteoffAction(data) {
                 if (itemUpdated) {
 
                     if (!items_db[index].inventory) { items_db[index].inventory = {}; }
+
                     items_db[index].inventory.wrt_date = new Date().toISOString();
                     items_db[index].inventory.wrt_user = data.user_id;
 
@@ -207,7 +209,6 @@ async function execWriteoffAction(data) {
 
                 console.log('UPDATE data:', updateResult.rows[0]);
             }
-
         }
 
     } finally {

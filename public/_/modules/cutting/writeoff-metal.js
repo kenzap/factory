@@ -206,10 +206,13 @@ export class WriteoffMetal {
             const orderIds = [...new Set(this.items.map(item => item.order_id).filter(id => id))];
 
             const record = {
-                title: this.coil.product_name,
+                // title: "Write-off from " + this.coil.supplier + ' ' + this.coil.width + ' × ' + this.coil.length + ' ' + getDimUnit(this.settings),
+                title: this.items.length > 0
+                    ? __html('Write-off for %1$ items from orders %2$', this.items.length, orderIds.map(id => '#' + id).join(', '))
+                    : __html('Write-off from %1$ %2$ × %3$ %4$', this.coil.supplier, this.coil.width, this.coil.length, getDimUnit(this.settings)),
                 qty: total_length,
-                product_id: this.coil.product_id,
-                product_name: this.coil.product_name,
+                product_id: "",
+                product_name: "",
                 color: this.coil.color,
                 coating: this.coil.coating,
                 supplier: this.coil.supplier,
@@ -273,6 +276,7 @@ export class WriteoffMetal {
                     width: parseFloat(sheetWidth),
                     length: parseFloat(length),
                     group: group,
+                    price: this.coil.price,
                     qty: 1, // Each individual sheet has qty of 1
                     notes: notes
                 });
