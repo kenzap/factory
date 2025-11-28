@@ -60,9 +60,20 @@ async function saveOrder(data, user) {
             const res = await db.query(select, ['ecommerce-order', sid, data.id]);
             const existingData = res.rows?.[0]?.data || {};
 
+            // Preserve original inventory data for existing items
+            const mergedData = { ...existingData, ...data };
+            if (existingData.items && data.items) {
+                mergedData.items = data.items.map((item, index) => {
+                    const existingItem = existingData.items[index];
+                    return {
+                        ...item,
+                        inventory: existingItem?.inventory || item.inventory
+                    };
+                });
+            }
+
             data_new = {
-                ...existingData,
-                ...data,
+                ...mergedData,
                 date: existingData.date || currentDate,
                 operator: existingData.operator || user.fname || '',
                 created: existingData.created || currentTime,

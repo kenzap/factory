@@ -413,13 +413,13 @@ class Manufacturing {
                                         <td>${item.qty}</td>
                                         <td>
                                             <div class="d-flex align-items-center action-ns">
-                                                <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                                <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                                <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                                <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                             </div>
                                         </td>
                                         <td><div class="stock-${item.coating}-${item.color}-${item._id}"><span>&nbsp;</span></div></td>
                                         <td>
-                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
+                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
                                             
@@ -474,6 +474,7 @@ class Manufacturing {
             // todo: add bundled products
             products.push({
                 _id: item._id,
+                item_id: item.id,
                 coating: item.coating || '',
                 color: item.color || ''
             });
@@ -481,6 +482,8 @@ class Manufacturing {
 
         // Reload bundles for all orders
         getProductBundles(products, (response) => {
+
+            console.log('Bundles response', response);
 
             if (response.success && response.products && response.products.length > 0) {
 
@@ -537,19 +540,6 @@ class Manufacturing {
                                     bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
                                 }
                             } else {
-
-                                // if (!orderItem.bundle_items) orderItem.bundle_items = [];
-
-                                // orderItem.bundle_items.push({
-                                //     bundle_id: bundleItem.bundle_id,
-                                //     coating: bundleItem.coating,
-                                //     color: bundleItem.color,
-                                //     title: bundleItem.title,
-                                //     unit: bundleItem.unit,
-                                //     qty: bundleItem.qty,
-                                //     inventory: bundleItem.inventory
-                                // });
-
                                 bundleId = bundleItem.bundle_id;
                                 bundleInventory = bundleItem.inventory;
                                 bundleAmount = bundleItem.inventory?.writeoff_amount || 0;
@@ -575,7 +565,7 @@ class Manufacturing {
                                     </td>
                                     <td class="py-0">
                                         <div class="d-flex align-items-center action-ns">
-                                            <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * element.dataset.qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
+                                            <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * element.dataset.qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${orderItem.id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
                                         </div>
                                     </td>
                                     <td class="py-0">
@@ -584,7 +574,7 @@ class Manufacturing {
                                         </small>
                                     </td>
                                     <td class="py-0">
-                                        <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" value="${bundleAmount}" style="width: 80px;">
+                                        <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${orderItem.id}" value="${bundleAmount}" style="width: 80px;">
                                     </td>
                                     <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
                                     </td> 
@@ -865,8 +855,8 @@ class Manufacturing {
         return `
         ${item?.inventory?.rdy_date ?
                 `
-                    <button class="btn btn-sm btn-outline-dark btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
-                    <button class="btn btn-sm btn-outline-dark btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${index}',true)" > ${__html('Issue')}</button>
+                    <button class="btn btn-sm btn-outline-dark btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${item?.id}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
+                    <button class="btn btn-sm btn-outline-dark btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${item?.id}',true)" > ${__html('Issue')}</button>
                 `: ``
             }
         `;
@@ -915,9 +905,10 @@ class Manufacturing {
                     // action for db
                     actions.issue.push({
                         order_id: order._id,
-                        isu_date: item.inventory.isu_date,
                         index: i,
-                        item_id: item._id
+                        isu_date: item.inventory.isu_date,
+                        item_id: item.id,
+                        product_id: item._id
                     });
                 }
 
@@ -930,12 +921,15 @@ class Manufacturing {
                     // action for db
                     actions.issue.push({
                         order_id: order._id,
-                        isu_date: item.inventory.isu_date,
                         index: i,
-                        item_id: item._id
+                        isu_date: item.inventory.isu_date,
+                        item_id: item.id,
+                        product_id: item._id
                     });
                 }
             });
+
+            console.log('Issuing order with actions:', actions);
 
             execOrderItemAction(actions, (response) => {
 
@@ -1100,7 +1094,7 @@ class Manufacturing {
     }
 
     // Additional methods for item management
-    async issueItem(order_id, item_i, isIssue = true) {
+    async issueItem(order_id, item_id, isIssue = true) {
 
         // console.log('Issuing item A', order_id, item_i, isIssue);
 
@@ -1114,12 +1108,19 @@ class Manufacturing {
 
             const order = this.orders.find(o => o._id === order_id);
 
+            const targetItem = order.items.find(item => item.id === item_id);
+            if (!targetItem) {
+                this.inQuery = false;
+                toast(__html('Item not found'));
+                return;
+            }
+
             let actions = {
                 issue: [
                     {
                         order_id: order._id,
-                        index: item_i,
-                        item_id: order.items[item_i]._id,
+                        item_id: item_id,
+                        product_id: targetItem._id,
                         isu_date: isIssue ? new Date().toISOString() : null
                     }
                 ]
@@ -1137,7 +1138,10 @@ class Manufacturing {
                 // refresh button state
                 this.orders = this.orders.map(o => {
                     if (o._id === order._id) {
-                        o.items[item_i].inventory.isu_date = actions.issue[0].isu_date;
+                        const targetItem = o.items.find(item => item.id === item_id);
+                        if (targetItem && targetItem.inventory) {
+                            targetItem.inventory.isu_date = actions.issue[0].isu_date;
+                        }
                     }
                     return o;
                 });
@@ -1152,23 +1156,23 @@ class Manufacturing {
         }
     }
 
-    async cancelItemIssue(itemId) {
-        if (confirm('Cancel?')) {
-            try {
-                await this.delay(300);
-                // toast('Record updated');
-                // Update UI to reflect the change
-                const button = document.querySelector(`button[onclick *= "${itemId}"]`);
-                if (button && button.textContent === 'Atcelt') {
-                    button.className = 'btn btn-sm btn-dark';
-                    button.textContent = 'Izsniegt';
-                    button.onclick = () => this.issueItem(itemId);
-                }
-            } catch (error) {
-                toast('Kļūda atcelšanas procesā');
-            }
-        }
-    }
+    // async cancelItemIssue(itemId) {
+    //     if (confirm('Cancel?')) {
+    //         try {
+    //             await this.delay(300);
+    //             // toast('Record updated');
+    //             // Update UI to reflect the change
+    //             const button = document.querySelector(`button[onclick *= "${itemId}"]`);
+    //             if (button && button.textContent === 'Atcelt') {
+    //                 button.className = 'btn btn-sm btn-dark';
+    //                 button.textContent = 'Izsniegt';
+    //                 button.onclick = () => this.issueItem(itemId);
+    //             }
+    //         } catch (error) {
+    //             toast('Kļūda atcelšanas procesā');
+    //         }
+    //     }
+    // }
 
     destroy() {
         if (this.autoUpdateInterval) {

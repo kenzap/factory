@@ -17,7 +17,7 @@ body {
 
 #app {
     overflow: hidden;
-    margin-top: 76px;
+    margin-top: 75px;
     font-size: 18px;
 }
 
@@ -118,7 +118,7 @@ body {
 }
 
 .sub-items-row{
-    margin-bottom: 2px;
+    margin-bottom: 1px;
 }
 
 .sub-items-row tr td,

@@ -296,33 +296,15 @@ class Orders {
                 formatter: function (cell) {
                     const value = cell.getValue();
                     if (value === true) {
-                        return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-warning">${__html('Estimate')}</span></div>`;
+                        return `<div class="d-flex align-items-center justify-content-start h-100"><span class="item-status status-warning">${__html('Estimate')}</span></div>`;
                     }
                     return "";
                 }
             },
             {
-                title: __html("Type"),
-                field: "tkl",
-                width: 80,
-                headerSort: false,
-                formatter: function (cell) {
-                    const value = cell.getValue();
-                    let badge = '';
-                    switch (value) {
-                        case '1': badge = '<span class="status-badge status-large">L.</span>'; break;
-                        case '2': badge = '<span class="status-badge status-small">K.</span>'; break;
-                        case '3': badge = '<span class="status-badge status-both">K&L</span>'; break;
-                        default: badge = value;
-                    }
-                    return badge;
-                }
-            },
-            { title: __html("Material"), field: "materl", width: 100 },
-            {
                 title: __html("Total"),
                 field: "total",
-                width: 120,
+                width: 110,
                 headerSort: false,
                 formatter: (cell) => {
                     const value = cell.getValue();
@@ -353,17 +335,62 @@ class Orders {
                     return `<span class="fw-bold- text-success-">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
                 }
             },
-            // {
-            //     title: "Manufacturing Date",
-            //     field: "inventory",
-            //     width: 110,
-            //     formatter: (cell) => {
-            //         const inventory = cell.getValue();
-            //         if (!inventory || !inventory.isu_date || inventory.isu_date === '0000-00-00') return '';
-            //         const isu_date = new Date(inventory.isu_date);
-            //         return `<span class="fw-bold text-success">${isu_date.toLocaleDateString()}</span>`;
-            //     },
-            // },
+            {
+                title: __html("Ready Date"),
+                field: "items",
+                width: 120,
+                headerSort: false,
+                formatter: (cell) => {
+                    const items = cell.getValue();
+
+                    // console.log('inventory:', items);
+
+                    if (!items || !Array.isArray(items) || items.length === 0) return '';
+
+                    // Check if all items have rdy_date
+                    const allHaveRdyDate = items.every(item =>
+                        item?.inventory?.rdy_date && item?.inventory?.rdy_date !== ''
+                    );
+
+                    // console.log('allHaveRdyDate:', allHaveRdyDate);
+
+                    if (!allHaveRdyDate) return '';
+
+                    // Find the latest rdy_date
+                    const latestDate = items.reduce((latest, item) => {
+                        const itemDate = new Date(item?.inventory?.rdy_date);
+                        return itemDate > latest ? itemDate : latest;
+                    }, new Date(0));
+
+                    return `<span class="fw-bold text-primary">${latestDate.toLocaleDateString()}</span>`;
+                },
+            },
+            {
+                title: __html("Issue Date"),
+                field: "items",
+                width: 120,
+                headerSort: false,
+                formatter: (cell) => {
+                    const items = cell.getValue();
+
+                    if (!items || !Array.isArray(items) || items.length === 0) return '';
+
+                    // Check if all items have rdy_date
+                    const allHaveRdyDate = items.every(item =>
+                        item?.inventory?.isu_date && item?.inventory?.isu_date !== ''
+                    );
+
+                    if (!allHaveRdyDate) return '';
+
+                    // Find the latest isu_date
+                    const latestDate = items.reduce((latest, item) => {
+                        const itemDate = new Date(item?.inventory?.isu_date);
+                        return itemDate > latest ? itemDate : latest;
+                    }, new Date(0));
+
+                    return `<span class="fw-bold text-success">${latestDate.toLocaleDateString()}</span>`;
+                },
+            },
             // {
             //     title: "Issue Date",
             //     field: "inventory",
@@ -375,18 +402,6 @@ class Orders {
             //         return `<span class="fw-bold text-success">${mnf_date.toLocaleDateString()}</span>`;
             //     },
             // },
-            {
-                title: __html("Payment"),
-                field: "payment",
-                width: 128,
-                headerSort: false,
-                formatter: (cell) => {
-                    const payment = cell.getValue();
-                    if (!payment || !payment.date || payment.date === '0000-00-00') return '';
-                    const date = new Date(payment.date);
-                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-success">${date.toLocaleDateString()}</span></div>`;
-                },
-            },
             {
                 title: __html("Invoice"),
                 field: "invoice",
@@ -431,6 +446,18 @@ class Orders {
                     const waybill = cell.getValue();
                     if (!waybill || !waybill.number) return '';
                     return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${waybill.number}</span></div>`;
+                },
+            },
+            {
+                title: __html("Payment"),
+                field: "payment",
+                width: 128,
+                headerSort: false,
+                formatter: (cell) => {
+                    const payment = cell.getValue();
+                    if (!payment || !payment.date || payment.date === '0000-00-00') return '';
+                    const date = new Date(payment.date);
+                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-success">${date.toLocaleDateString()}</span></div>`;
                 },
             },
             {

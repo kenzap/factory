@@ -31,9 +31,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             js->'data'->'payment' as payment,
             js->'data'->'waybill' as waybill,
             js->'data'->'date' as date,
-            COALESCE(js->'meta'->>'created', '') as created,
-            COALESCE(js->'data'->>'created', '') as created2
-            ${filters.items === true ? `, js->'data'->'items' as items` : ''}
+            js->'data'->'items' as items
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
 
@@ -103,15 +101,17 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     }
 
     if (filters.type == 'manufacturing') {
-        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND NOT EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(js->'data'->'items') AS item 
-            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
-               AND item->'inventory'->>'isu_date' != ''
-        )`;
+        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`;
         query += chunk;
         query_summary += chunk
     }
+
+    // AND NOT EXISTS (
+    //     SELECT 1 
+    //     FROM jsonb_array_elements(js->'data'->'items') AS item 
+    //     WHERE item->'inventory'->>'isu_date' IS NOT NULL 
+    //        AND item->'inventory'->>'isu_date' != ''
+    // )
 
     if (filters.type == 'ready') {
         chunk = ` AND NOT EXISTS (
@@ -188,6 +188,22 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
                 paid: parseFloat(countResult.rows[0].total_paid),
                 waybill: parseFloat(countResult.rows[0].total_waybill)
             };
+
+            // filter out items keys except inventory
+            if (orders.records && orders.records.length > 0) {
+                orders.records.forEach(order => {
+                    if (order.items && Array.isArray(order.items)) {
+                        order.items = order.items.map(item => ({
+                            ...item,
+                            inventory: item.inventory,
+                            id: item.id
+                        })).map(item => {
+                            const { inventory, ...rest } = item;
+                            return { inventory };
+                        });
+                    }
+                });
+            }
         }
 
     } finally {

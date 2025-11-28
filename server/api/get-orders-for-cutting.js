@@ -167,15 +167,12 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
             result.rows = result.rows.map(order => {
                 if (order.items) {
                     const filteredItems = order.items.filter(item => {
-                        let matches = true;
-                        if (filters.color && item.color !== filters.color) {
-                            matches = false;
+                        let matches = false;
+                        if (item.cm == false && filters.color && item.color === filters.color) {
+                            matches = true;
                         }
-                        if (filters.coating && item.coating !== filters.coating) {
-                            matches = false;
-                        }
-                        if (filters.cm && item.cm === filters.cm) {
-                            matches = false;
+                        if (item.cm == false && filters.coating && item.coating === filters.coating) {
+                            matches = true;
                         }
                         return matches;
                     });

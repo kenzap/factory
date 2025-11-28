@@ -51,7 +51,7 @@ const calculateVariablePrice = (item, obj) => {
             : item.adj;
     }
 
-    console.log('Variable price itemPrice:', item.adj, obj.price);
+    console.log('Variable price item:', item);
 
     // Apply discount
     if (item.discount > 0) {
@@ -63,7 +63,9 @@ const calculateVariablePrice = (item, obj) => {
 };
 
 const calculateFormulaPrice = (settings, item, obj) => {
-    const coatingPrice = getCoatingPrice(settings, item.coating, item.color);
+    const coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
+
+    console.log("coatingPrice", coatingPrice);
 
     obj.formula = item.formula;
     obj.formula_price = item.formula_price || '0';
@@ -82,7 +84,7 @@ const calculateFormulaPrice = (settings, item, obj) => {
 
     obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
 
-    console.log("item.adj", item.adj);
+    console.log("item", item);
 
     // Apply adjustments
     if (item.adj && !isNaN(item.adj)) {
@@ -451,10 +453,10 @@ export const calculate = (expression) => {
  * @param {string} coatingColor - The specific coating color title to find
  * @returns {Object|null} The matching coating configuration object, or null if not found
  */
-export const getCoatingPrice = (settings, coatingType, coatingColor) => {
+export const getCoatingPrice = (settings, coatingType, coatingColor, cm) => {
 
     if (!settings || !settings.price) return null;
 
     const coating = settings.price.find(item => item.parent === coatingType && item.title === coatingColor);
-    return coating ? coating.price : 0;
+    return coating && !cm ? coating.price : 0;
 }

@@ -104,7 +104,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
         }
     });
 
-    // console.log('Updated var_price:', var_price);
+    console.log('Updated var_price:', var_price);
 
     // update product stock
     const updateQuery = `

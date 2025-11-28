@@ -43,6 +43,8 @@ export class Inventory {
         const index = parseInt(orderItemRow.dataset.i);
         const item = order.items[index];
 
+        console.log('getItemData', item);
+
         return {
             item,
             index
@@ -85,6 +87,7 @@ export class Inventory {
         const actions = {
             update_item: {
                 order_id: order._id,
+                item_id: item.id,
                 index,
                 item
             }
@@ -94,8 +97,9 @@ export class Inventory {
         if (actions.update_item && !isBundle) {
             actions.update_stock = {
                 order_id: order._id,
-                item_id: item._id,
-                index: index,
+                product_id: item._id,
+                // id: item.id,
+                item_id: item.id,
                 coating: item.coating || '',
                 color: item.color || '',
                 amount: parseInt(e.target.value) || 0,
@@ -110,7 +114,8 @@ export class Inventory {
             if (bundleItem) {
                 actions.update_stock = {
                     order_id: order._id,
-                    item_id: bundleItem.inventory._id,
+                    product_id: bundleItem.inventory._id,
+                    item_id: item.id,
                     index: index,
                     coating: bundleItem.inventory.coating || '',
                     color: bundleItem.inventory.color || '',
@@ -144,8 +149,12 @@ export class Inventory {
         const source = e.target.dataset.source;
         const type = e.target.dataset.type;
         const index = parseInt(e.target.dataset.i);
+        const item_id = e.target.dataset.item_id;
+
+        console.log('syncCheckboxState source', source);
 
         if (source === "item") {
+
             // Handle main item checkbox changes
             const item = order.items[index];
             if (!item.inventory) item.inventory = {};
@@ -179,6 +188,7 @@ export class Inventory {
                 }
             }
         } else if (source === "bundle") {
+
             // Handle bundle item checkbox changes
             const bundleId = e.target.dataset.id;
             const color = e.target.dataset.color || '';
@@ -209,6 +219,7 @@ export class Inventory {
                     bundleItem = {
                         inventory: {
                             _id: bundleId,
+                            item_id: item_id,
                             color: color,
                             coating: coating,
                             writeoff_amount: 0,

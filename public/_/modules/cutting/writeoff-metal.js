@@ -38,7 +38,7 @@ export class WriteoffMetal {
             <div class="modal-header bg-light border-0"> 
                 <h5 class="modal-title">
                     <i class="bi bi-scissors me-2"></i>
-                    ${this.coil.supplier} / ${this.coil.width} × ${Number(this.coil.length).toLocaleString()} ${getDimUnit(this.settings)}
+                    ${this.coil.supplier} / ${this.coil.width} × ${Number(this.coil.length).toLocaleString()} ${getDimUnit(this.settings)} / ${this.coil.color} ${this.coil.coating}
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

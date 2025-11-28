@@ -420,7 +420,7 @@ export class LeftPane {
         // Calculate totals based on the order items and settings
         // state.order.price = getTotals(state.settings, state.order);
 
-        console.log('Order summary updated:', state.order);
+        // console.log('Order summary updated:', state.order);
 
         // const order = state.order;
 
