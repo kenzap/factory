@@ -129,6 +129,16 @@ export class OrderPane {
                         discounts: state.order.discounts || {},
                         navigateToNextCell: this.navigateToNextCell
                     },
+                    formatter: function (cell) {
+                        const value = cell.getValue() || '';
+                        const row = cell.getRow().getData();
+                        return /*html*/`
+                            <div class="d-flex justify-content-start flex-row align-items-center">
+                                <strong>${value}</strong>
+                                <div class="form-text ms-1 m-0" style="color:var(--gray-color);">${row.sdesc ? ' - ' + row.sdesc : ''}</div>
+                            </div>
+                        `;
+                    },
                 },
                 {
                     title: "",
@@ -208,7 +218,7 @@ export class OrderPane {
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { min: 0, step: 1 },
-                    width: 60,
+                    width: 54,
                 },
                 {
                     title: __html("Adj"),
@@ -216,7 +226,7 @@ export class OrderPane {
                     editor: this.numberEditor,
                     headerSort: false,
                     editorParams: { step: 0.01 },
-                    width: 80,
+                    width: 70,
                     formatter: function (cell) {
                         return cell.getValue() ? '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>' : '';
                     }
@@ -225,7 +235,7 @@ export class OrderPane {
                     title: __html("Discount"),
                     field: "discount",
                     editor: this.numberEditor,
-                    width: 100,
+                    width: 70,
                     formatter: function (cell) {
                         const value = cell.getValue() || 0;
                         return value + "%";
@@ -260,7 +270,7 @@ export class OrderPane {
                     title: __html("Note"),
                     field: "note",
                     headerSort: false,
-                    width: 200,
+                    width: 180,
                     formatter: function (cell) {
                         return '<span class="form-text">' + cell.getValue() + '</span>';
                     },
@@ -270,7 +280,7 @@ export class OrderPane {
                     title: "",
                     field: "actions",
                     headerSort: false,
-                    width: 80,
+                    width: 20,
                     formatter: function (cell) {
                         const i = cell.getRow().getPosition();
                         const currentRowData = cell.getRow().getData();

@@ -38,6 +38,11 @@ class Manufacturing {
             type: '' // Default to 'All'
         };
 
+        // Get order ID from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('id');
+        this.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
+
         this.stats = {
             latest: [],
             issued: []
@@ -177,7 +182,7 @@ class Manufacturing {
             document.getElementById('loadingIndicator').style.display = 'none';
             document.getElementById('ordersContainer').style.display = 'block';
 
-            // this.searchOrders(e.target.value, '');
+            if (this.openOrderById) { document.querySelector('#orderSearch').value = this.openOrderById; this.searchOrders(this.openOrderById, ''); this.openOrderById = null; }
         });
     }
 
@@ -392,10 +397,13 @@ class Manufacturing {
                                                 <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
                                                 <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                             </div>
-                                        </td>
+                                        </td> 
                                         <td>
                                             <div class="d-flex justify-content-start align-items-center product-name">
-                                                <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
+                                                <div>
+                                                    <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
+                                                    ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
+                                                </div>
                                                 <div class="dropdown itemsActionsCont ms-2">
                                                     <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                                         <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>

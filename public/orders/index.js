@@ -314,7 +314,7 @@ class Orders {
             {
                 title: __html("Due Date"),
                 field: "due_date",
-                width: 130,
+                width: 110,
                 headerSort: false,
                 formatter: (cell) => {
                     const value = cell.getValue();
@@ -338,21 +338,16 @@ class Orders {
             {
                 title: __html("Ready Date"),
                 field: "items",
-                width: 120,
+                width: 110,
                 headerSort: false,
                 formatter: (cell) => {
                     const items = cell.getValue();
-
-                    // console.log('inventory:', items);
-
                     if (!items || !Array.isArray(items) || items.length === 0) return '';
 
                     // Check if all items have rdy_date
                     const allHaveRdyDate = items.every(item =>
                         item?.inventory?.rdy_date && item?.inventory?.rdy_date !== ''
                     );
-
-                    // console.log('allHaveRdyDate:', allHaveRdyDate);
 
                     if (!allHaveRdyDate) return '';
 
@@ -368,7 +363,7 @@ class Orders {
             {
                 title: __html("Issue Date"),
                 field: "items",
-                width: 120,
+                width: 110,
                 headerSort: false,
                 formatter: (cell) => {
                     const items = cell.getValue();
@@ -391,17 +386,6 @@ class Orders {
                     return `<span class="fw-bold text-success">${latestDate.toLocaleDateString()}</span>`;
                 },
             },
-            // {
-            //     title: "Issue Date",
-            //     field: "inventory",
-            //     width: 110,
-            //     formatter: (cell) => {
-            //         const inventory = cell.getValue();
-            //         if (!inventory || !inventory.mnf_date || inventory.mnf_date === '0000-00-00') return '';
-            //         const mnf_date = new Date(inventory.mnf_date);
-            //         return `<span class="fw-bold text-success">${mnf_date.toLocaleDateString()}</span>`;
-            //     },
-            // },
             {
                 title: __html("Invoice"),
                 field: "invoice",
@@ -420,9 +404,9 @@ class Orders {
                 width: 110,
                 headerSort: false,
                 formatter: (cell) => {
-                    const waybill = cell.getValue();
-                    if (!waybill || !waybill.number) return '';
-                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">INV-${waybill.number}</span></div>`;
+                    const invoice = cell.getValue();
+                    if (!invoice || !invoice.number) return '';
+                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${__html('INV-%1$', invoice?.number)}</span></div>`;
                 },
             },
             {

@@ -199,7 +199,7 @@ class WorkLog {
             new Header({
                 hidden: this.mini || false,
                 title: __html('Work Log'),
-                icon: 'clock-history',
+                icon: 'journal-text',
                 style: 'navbar-light',
                 user: response?.user,
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`

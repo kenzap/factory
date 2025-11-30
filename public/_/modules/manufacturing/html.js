@@ -37,17 +37,19 @@ export const getHtml = (response) => {
                         ${response?.user?.fname ? response?.user?.fname : ""}${response?.user?.lname ? ' ' + response.user.lname.charAt(0) + '.' : ''}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol1', '/ATS/noliktava2?ats=1')">
-                            <i class="bi bi-box me-2"></i>Noliktava 1</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol2', '/ATS/noliktava2?ats=2')">
-                            <i class="bi bi-box me-2"></i>Noliktava 2</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('nol3', '/ATS/noliktava2?ats=3')">
-                            <i class="bi bi-box me-2"></i>Noliktava 3</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('stock', '/stock/')">
+                            <i class="bi bi-boxes me-2"></i>${__html('Stock')}</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('cutting', '/cutting/')">
+                            <i class="bi bi-scissors me-2"></i>${__html('Cutting')}</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('metallog', '/metallog/')">
+                            <i class="bi bi-lightning-charge me-2"></i>${__html('Metal')}</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('triangle', '/triangle/')">
+                            <i class="bi bi-triangle me-2"></i>${__html('Triangle')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('darbs', '/ATS/darbs')">
-                            <i class="bi bi-tools me-2"></i>Darbs: Viss</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('worklog', '/worklog/')">
+                            <i class="bi bi-journal-text me-2"></i>${__html('Work Log')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="/logout.php">
+                        <li><a class="dropdown-item text-danger sign-out" href="#">
                             <i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
                     </ul>
                 </div>

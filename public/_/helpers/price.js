@@ -40,21 +40,31 @@ export const getPrice = (settings, item) => {
 };
 
 const calculateVariablePrice = (item, obj) => {
-    const itemPrice = item.var_price?.find(o => o.parent === item.coating && o.title === item.color);
 
-    obj.price = itemPrice?.price || 0;
+    const itemPrice = item.cm == true ? item.var_price?.find(o => o.code === "cm") : item.var_price?.find(o => o.parent === item.coating && o.title === item.color);
+
+    obj.price = parseFloat(itemPrice?.price) || 0;
 
     // Apply adjustments
     if (item.adj && !isNaN(item.adj)) {
+
+        item.adj = parseFloat(item.adj);
+        item.formula_length_calc = parseFloat(item.formula_length_calc);
+
+        console.log('Price A:', item.adj, obj.price);
+
         obj.price += (item.formula_length_calc && !isNaN(item.formula_length_calc))
             ? item.adj * item.formula_length_calc / 1000
             : item.adj;
-    }
 
-    console.log('Variable price item:', item);
+        console.log('Price B:', item.adj, obj.price);
+    }
 
     // Apply discount
     if (item.discount > 0) {
+
+        item.discount = parseFloat(item.discount);
+
         obj.price = Math.round(obj.price * (1 - item.discount / 100) * 100) / 100;
     }
 

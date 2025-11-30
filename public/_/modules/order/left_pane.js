@@ -4,7 +4,7 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, log, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { __attr, __html, log, onChange, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotalsHTML } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
@@ -76,7 +76,7 @@ export class LeftPane {
                 <div class="form-section p-0 pb-3 border-0">
                     <h6><i class="bi bi-calendar me-2"></i>${__html('Due Date')}</h6>
                     <div class="input-group input-group-ss mb-2">
-                        <input type="datetime-local" class="form-control form-control-ss" id="due_date" value="${toLocalDateTime(state.order.due_date) || ''}" tabindex="7">
+                        <input type="datetime-local" class="form-control form-control-ss" id="due_date" value="${!state.order.draft ? toLocalDateTime(state.order.due_date) : ''}" tabindex="7">
                         <button class="btn btn-outline-primary order-table-btn po" type="button" id="orderPane">
                             <i class="bi bi-arrow-right"></i>
                         </button>
@@ -132,7 +132,7 @@ export class LeftPane {
                             <i class="bi bi-floppy me-2"></i>${state.order.id ? __html('Save') : __html('Create')}
                         </button>
                     `}
-                    
+                     
                 </div >
             </div >
         </div > `;
@@ -143,7 +143,7 @@ export class LeftPane {
 
         state.clientContactSearch = new ClientContactSearch(state.order);
 
-        this.formatDueDate(state.order.due_date);
+        if (!state.order.draft) this.formatDueDate(state.order.due_date);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -272,6 +272,16 @@ export class LeftPane {
                     new PreviewDocument(type, state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
+            }
+        });
+
+        onChange('#draft', (event) => {
+
+            state.order.draft = event.target.checked;
+
+            // Clear due date if draft is checked
+            if (event.target.checked) {
+                document.getElementById('due_date').value = '';
             }
         });
 

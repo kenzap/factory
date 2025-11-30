@@ -60,9 +60,9 @@ export class Header {
                                 ${this.response?.user?.fname ? this.response?.user?.fname : ""}${this.response?.user?.lname ? ' ' + this.response.user.lname.charAt(0) + '.' : ''}
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
-                                <li><a class="dropdown-item" href="/home/"><i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
+                                <li><a class="dropdown-item" href="/home/"><i class="bi bi-grid me-2"></i>${__html('Home')}</a></li>
                                 <li><a class="dropdown-item" href="/manufacturing/" ><i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
-                                <li><a class="dropdown-item" href="/worklog/"><i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
+                                <li><a class="dropdown-item" href="/worklog/"><i class="bi bi-journal-text me-2"></i>${__html('Work Log')}</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li><a class="dropdown-item language-picker" href="#"><i class="bi bi-translate me-2"></i>${__html('Language')}</a></li>
                                 <li><hr class="dropdown-divider"></li>
