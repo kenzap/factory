@@ -55,7 +55,7 @@ async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dat
         }
     }
 
-    query += ` ORDER BY js->'data'->>'date' DESC LIMIT 100`;
+    query += ` ORDER BY (js->'data'->>'width')::numeric DESC, (js->'data'->>'length')::numeric DESC, js->'data'->>'date' DESC LIMIT 100`;
 
     try {
 

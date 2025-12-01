@@ -1,5 +1,6 @@
 
 import { __html, makeNumber, priceFormat, sid } from './index.js';
+import { amountToWords } from './totals.js';
 
 export async function getDocumentData(client, type, _id, user, locale) {
 
@@ -492,79 +493,6 @@ export function getProductionItemsTable(settings, order, locale) {
     `;
 
     return table;
-}
-
-export const amountToWords = (amount, settings) => {
-
-    console.log(`amountToWords: ${amount}, settings: ${settings}`);
-
-    // Convert amount to words based on currency
-    const amount_int = Math.floor(amount);
-    const amount_cents = Math.round((amount - amount_int) * 100);
-
-    const units = ["", "viens", "divi", "trīs", "četri", "pieci", "seši", "septiņi", "astoņi", "deviņi"];
-    const teens = ["desmit", "vienpadsmit", "divpadsmit", "trīspadsmit", "četrpadsmit", "piecpadsmit", "sešpadsmit", "septiņpadsmit", "astoņpadsmit", "deviņpadsmit"];
-    const tens = ["", "", "divdesmit", "trīsdesmit", "četrdesmit", "piecdesmit", "sešdesmit", "septiņdesmit", "astoņdesmit", "deviņdesmit"];
-    const hundreds = ["", "simts", "divsimt", "trīssimt", "četrsimt", "piecsimt", "sešsimt", "septiņsimt", "astoņsimt", "deviņsimt"];
-
-    function numberToWords(num) {
-        if (num === 0) return "";
-
-        let words = '';
-
-        if (num >= 100) {
-            const hundredsPart = Math.floor(num / 100);
-            if (hundredsPart === 1) {
-                words += "simts ";
-            } else {
-                words += units[hundredsPart] + "simt ";
-            }
-            num %= 100;
-        }
-
-        if (num >= 20) {
-            words += tens[Math.floor(num / 10)] + " ";
-            num %= 10;
-        } else if (num >= 10) {
-            words += teens[num - 10] + " ";
-            return words.trim();
-        }
-
-        if (num > 0) {
-            words += units[num] + " ";
-        }
-
-        return words.trim();
-    }
-
-    let result = '';
-
-    // Convert main amount
-    const mainWords = numberToWords(amount_int);
-    if (mainWords) {
-        result += mainWords.charAt(0).toUpperCase() + mainWords.slice(1) + " ";
-    } else {
-        result += "Nulle ";
-    }
-
-    // Add currency name
-    if (settings.currency === "EUR") {
-        result += amount_int === 1 ? "Eiro" : "Eiro";
-    } else {
-        result += settings.currency;
-    }
-
-    // Add cents if they exist
-    if (amount_cents > 0) {
-        result += ", " + amount_cents + " ";
-        if (settings.currency === "EUR") {
-            result += "eirocenti";
-        } else {
-            result += "centi";
-        }
-    }
-
-    return result;
 }
 
 /**

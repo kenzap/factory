@@ -431,7 +431,7 @@ export class ClientPane {
 
             // console.log('Saved successfully', response);
 
-            if (!silent) toast('Updated');
+            if (!silent) toast('Changes applied');
 
             clientData._id = response.data._id;
 

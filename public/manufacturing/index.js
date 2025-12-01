@@ -3,7 +3,7 @@ import { getOrders } from "../_/api/get_orders.js";
 import { getProductBundles } from "../_/api/get_product_bundles.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
-import { __html, hideLoader, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
+import { __html, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -425,7 +425,7 @@ class Manufacturing {
                                                 <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                             </div>
                                         </td>
-                                        <td><div class="stock-${item.coating}-${item.color}-${item._id}"><span>&nbsp;</span></div></td>
+                                        <td><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
                                         <td>
                                             <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                         </td>
@@ -578,7 +578,7 @@ class Manufacturing {
                                     </td>
                                     <td class="py-0">
                                         <small class="text-muted">
-                                            <div class="stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}"><span></span></div>
+                                            <div class="${slugify(`stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}`)}"><span></span></div>
                                         </small>
                                     </td>
                                     <td class="py-0">
@@ -669,7 +669,7 @@ class Manufacturing {
 
         getProductStock(products, (response) => {
 
-            // console.log('getProductStock response', response);
+            // console.log('getProductStock response', response); 
 
             if (response.success && response.products && response.products.length > 0) {
 
@@ -677,11 +677,11 @@ class Manufacturing {
 
                     if (!product.stock) return;
 
-                    let sel = `.stock-${product.coating}-${product.color}-${product._id}`;
+                    let sel = slugify(`stock-${product.coating}-${product.color}-${product._id}`);
 
-                    // console.log('Updating stock for', sel, product.stock);
+                    console.log('Updating stock for', "." + sel, product.stock);
 
-                    document.querySelectorAll(sel).forEach(element => {
+                    document.querySelectorAll("." + sel).forEach(element => {
                         element.innerHTML = `<span class="text-muted">${product.stock || 0}</span>`;
                     });
                 });

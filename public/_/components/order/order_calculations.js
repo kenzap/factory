@@ -9,7 +9,7 @@ import { bus } from "../../modules/bus.js";
  */
 export const updateCalculations = (cell, settings) => {
 
-    console.log('Updating calculations for cell:', cell.getField());
+    // console.log('Updating calculations for cell:', cell.getField());
 
     const row = cell.getRow();
     const data = row.getData();

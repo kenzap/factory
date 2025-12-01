@@ -53,11 +53,7 @@ export const getHtml = (record) => {
                             <input type="date" class="form-control border-0" id="document_date" placeholder="" value="" >
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
-                            <label for="supplier" class="form-label d-none">${__html('Supplier')}</label>
-                            <div class="position-relative">
-                                <input type="text" class="form-control border-0" id="supplier" placeholder="${__html('Company AB')}" value="" autocomplete="off">
-                                <div id="supplierSuggestions" class="dropdown-menu position-absolute w-100" style="max-height: 200px; overflow-y: auto; display: none; z-index: 1000;"></div>
-                            </div>
+                            <supplier-suggestion></supplier-suggestion>
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="status" class="form-label d-none">${__html('Status')}</label>

@@ -2,6 +2,7 @@ import { createSupplyRecord } from "../_/api/create_supply_record.js";
 import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getMetalLog } from "../_/api/get_metal_log.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
+import { SupplierSuggestion } from "../_/components/metal/supplier_suggestion.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
 import { __html, getDimUnit, hideLoader, onChange, onClick, priceFormat, toast, unescape } from "../_/helpers/global.js";
@@ -101,6 +102,11 @@ class MetalLog {
             suggestions: this.coatingSuggestions
         }, (suggestion) => {
             console.log('Suggestion selected:', suggestion);
+        });
+
+        // supplier suggestion
+        new SupplierSuggestion({ records: self.records }, (suggestion) => {
+            console.log('Supplier selected:', suggestion);
         });
 
         // Add work log record
@@ -221,8 +227,8 @@ class MetalLog {
             // console.log('Creating work log record:', record);
 
             // Show spinner and disable button
-            e.target.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>';
-            e.target.disabled = true;
+            document.querySelector('.btn-add-worklog-record').innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>';
+            document.querySelector('.btn-add-worklog-record').disabled = true;
 
             // insert record
             createSupplyRecord(record, (response) => {
@@ -231,6 +237,8 @@ class MetalLog {
                 document.querySelector('.btn-add-worklog-record').disabled = false;
 
                 if (response.success) {
+
+                    toast('Changes applied');
 
                     this.data(); // Refresh data
                 } else {
@@ -331,63 +339,31 @@ class MetalLog {
             }
         });
 
-        // supplier suggestions
-        // Supplier autocomplete functionality
-        // document.addEventListener('DOMContentLoaded', function () {
+        // Handle Enter key navigation in form fields
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.closest('#supplyEntryForm')) {
+                e.preventDefault();
 
-        const supplierInput = document.getElementById('supplier');
-        const suggestionsDiv = document.getElementById('supplierSuggestions');
+                // Get all focusable form elements
+                const formElements = document.querySelectorAll('#supplyEntryForm input, #supplyEntryForm select, #supplyEntryForm textarea');
+                const focusableElements = Array.from(formElements).filter(el =>
+                    !el.disabled &&
+                    !el.readOnly &&
+                    el.type !== 'hidden' &&
+                    el.offsetParent !== null // Element is visible
+                );
 
-        supplierInput.addEventListener('input', (e) => {
-            const query = e.currentTarget.value.toLowerCase().trim();
+                const currentIndex = focusableElements.indexOf(e.target);
+                const nextIndex = currentIndex + 1;
 
-            if (query.length === 0) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
-
-            console.log('Supplier input:', self.records);
-
-            // Get unique suppliers from records
-            const suppliers = [...new Set(
-                self.records
-                    .filter(record => record.supplier && record.supplier.toLowerCase().includes(query))
-                    .map(record => record.supplier)
-            )];
-
-            console.log('Supplier suggestions:', suppliers);
-
-            if (suppliers.length === 0) {
-                suggestionsDiv.style.display = 'none';
-                return;
-            }
-
-            // Build suggestions HTML
-            const suggestionsHTML = suppliers
-                .slice(0, 10) // limit to first 10 suggestions
-                .map(supplier => `<a href="#" class="dropdown-item" data-supplier="${supplier}">${supplier}</a>`)
-                .join('');
-
-            suggestionsDiv.innerHTML = suggestionsHTML;
-            suggestionsDiv.style.display = 'block';
-        });
-
-        // Handle suggestion clicks
-        suggestionsDiv.addEventListener('click', function (e) {
-            e.preventDefault();
-            if (e.target.classList.contains('dropdown-item')) {
-                supplierInput.value = e.target.dataset.supplier;
-                suggestionsDiv.style.display = 'none';
+                // Move to next element or first element if at the end
+                if (nextIndex < focusableElements.length) {
+                    focusableElements[nextIndex].focus();
+                } else {
+                    focusableElements[0].focus();
+                }
             }
         });
-
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function (e) {
-            if (!supplierInput.contains(e.target) && !suggestionsDiv.contains(e.target)) {
-                suggestionsDiv.style.display = 'none';
-            }
-        });
-        // });
     }
 
     async data() {
@@ -490,17 +466,20 @@ class MetalLog {
         tbody.innerHTML = Object.entries(entriesByCoating).map(([coating, entries]) => {
             let coatingHeader = '';
             if (lastCoating !== coating) {
-                // Calculate total length for this coating group
-                const totalLength = Math.round(entries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
+                // Filter entries to only include those with status 'available'
+                const availableEntries = entries.filter(entry => entry.status === 'available');
 
-                // Calculate total price for this coating group
-                const totalPrice = entries.reduce((sum, entry) => {
+                // Calculate total length for this coating group (only available entries)
+                const totalLength = Math.round(availableEntries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
+
+                // Calculate total price for this coating group (only available entries)
+                const totalPrice = availableEntries.reduce((sum, entry) => {
                     const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
                     return sum + (area * parseFloat(entry.price || 0));
                 }, 0);
 
-                // Calculate total area for this coating group
-                const totalArea = entries.reduce((sum, entry) => {
+                // Calculate total area for this coating group (only available entries)
+                const totalArea = availableEntries.reduce((sum, entry) => {
                     const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
                     return sum + area;
                 }, 0);
@@ -708,7 +687,7 @@ class MetalLog {
                     if (response.success) {
 
                         toast('Changes applied');
-                        this.data();
+                        // setTimeout(() => { this.data(); }, 1500);
                     } else {
                         console.error(`Error saving ${field} for coil:`, coilId);
                     }
