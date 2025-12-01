@@ -93,8 +93,6 @@ class Cutting {
             })
         });
 
-        console.log('Settings textures:', this.settings.textures);
-
         this.settings.price.forEach((priceItem) => {
             if (priceItem.public && priceItem.parent) {
                 // Find the matching block by parent name
@@ -110,8 +108,6 @@ class Cutting {
         });
 
         this.blocks.reverse();
-
-        console.log('Blocks:', this.blocks);
     }
 
     // load page
@@ -129,7 +125,7 @@ class Cutting {
                     </div>
 
                     <div class="filter-tabs">
-                        <div class="filter-tab active" data-filter="all">${__html('All Colors')}</div>
+                        <div class="filter-tab active" data-filter="all">${__html('All')}</div>
                         ${this.settings.var_parent.split('\n').map((filter) => {
             return `<div class="filter-tab" data-filter="${filter}">${filter}</div>`;
         }).join('')}
@@ -139,9 +135,9 @@ class Cutting {
             return `
 
         <div id="matpe-section" class="coating-section">
-            <div class="section-title">${o.coating}</div>
+            <div class="section-title d-none">${o.coating}</div>
             <div class="color-grid" data-type="${o.coating}">
-                ${o.colors.map((c) => {
+                ${o.colors.sort((a, b) => a.color.localeCompare(b.color)).map((c) => {
                 return `
                     <div class="color-card" data-code="${c.color}" data-type="${o.coating}" data-slug="${c.slug}" >
                         <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;"></div>
@@ -234,18 +230,7 @@ class Cutting {
                 const colorType = this.dataset.type;
                 const slug = this.dataset.slug;
 
-                // Simulate navigation to another interface
-                console.log(`Navigating to color: ${colorCode} (${colorType})`);
-
-                // You can replace this with actual navigation logic
-                // alert(`Opening color details for: ${colorCode} (${colorType})`);
-
                 location.href = `/cutting-list/?color=${colorCode}&coating=${colorType}&slug=${slug}`;
-
-                // For actual implementation, you might use:
-                // window.location.href = `color-details.html?code=${colorCode}&type=${colorType}`;
-                // or for SPA routing:
-                // router.navigate(`/colors/${colorCode}?type=${colorType}`);
             });
         });
 

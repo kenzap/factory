@@ -1,5 +1,9 @@
 @import url("/_/helpers/global.css");
   
+#app{
+    margin-top: 112px;
+}
+
 .container {
     max-width: 1400px;
     margin: 0 auto;
@@ -31,13 +35,13 @@
 .filter-tabs {
     display: flex;
     justify-content: center;
-    margin-bottom: 30px;
+    margin-bottom: 32px;
     gap: 10px;
     flex-wrap: wrap;
 }
 
 .filter-tab {
-    margin-top: 64px;
+    margin-bottom: 8px;
     padding: 10px 20px;
     background: rgba(255,255,255,0.2);
     border: 2px solid rgba(255,255,255,0.3);
@@ -56,7 +60,7 @@
 }
 
 .coating-section {
-    margin-bottom: 40px;
+    margin-bottom: 24px;
 }
 
 .section-title {
@@ -71,9 +75,9 @@
 
 .color-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    padding: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+    gap: 24px;
+    /* padding: 20px; */
     background: rgba(255,255,255,0.1);
     border-radius: 20px;
     backdrop-filter: blur(10px);
@@ -81,7 +85,7 @@
 
 .color-card {
     background: white;
-    border-radius: 15px;
+    border-radius: 12px;
     overflow: hidden;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -94,7 +98,7 @@
 }
 
 .color-preview {
-    height: 80px;
+    height: 64px;
     position: relative;
     overflow: hidden;
 }
