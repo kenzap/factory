@@ -1,12 +1,41 @@
 import { updateCalculations } from "../../components/order/order_calculations.js";
+import { numberEditor } from "../../components/order/order_number_editor.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
 import { sketchEditor } from "../../components/order/order_sketch_editor.js";
-import { __html, onClick, priceFormat, randomString, toast } from "../../helpers/global.js";
+import { suggestionEditor } from "../../components/order/order_suggestion_editor.js";
+import { textEditor } from "../../components/order/order_text_editor.js";
+import { __html, onClick, priceFormat, toast } from "../../helpers/global.js";
 import { getCoatings, getColors, isAllowedToEdit } from "../../helpers/order.js";
+import { addRow, navigateToNextCell, navigateToPreviousCell } from "../../helpers/order_table.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { state } from "../../modules/order/state.js";
 import { bus } from "../bus.js";
 
+/**
+ * OrderPane class manages the order table interface for handling product orders.
+ * Provides functionality for creating, editing, and managing order items in a tabulator table.
+ * 
+ * @class OrderPane
+ * 
+ * @description
+ * This class initializes and manages an interactive order table with the following features:
+ * - Editable cells for product details (color, coating, dimensions, quantity, etc.)
+ * - Auto-suggestions for color, coating, product and discount fields
+ * - Product sketch editor integration
+ * - Automatic calculations for area, pricing, and totals
+ * - Row operations (add, delete, bulk update)
+ * - Real-time synchronization with global state
+ * 
+ * @example
+ * // Initialize the order pane
+ * const orderPane = new OrderPane();
+ * 
+ * @requires TabulatorFull - External table library for data grid functionality
+ * @requires state - Global state object containing order data and settings
+ * @requires bus - Event bus for component communication
+ * 
+ * @since 1.0.0
+ */
 export class OrderPane {
 
     constructor() {
@@ -50,7 +79,7 @@ export class OrderPane {
         let self = this;
 
         // Initialize Tabulator
-        this.table = new TabulatorFull("#order-table", {
+        state.table = new TabulatorFull("#order-table", {
             height: "auto",
             layout: "fitColumns",
             resizableColumns: true,
@@ -64,20 +93,23 @@ export class OrderPane {
                 {
                     title: __html("CM"),
                     field: "cm",
-                    editor: "tickCross",
+                    width: 40,
                     headerSort: false,
-                    formatter: "tickCross",
-                    width: 40
+                    editor: "tickCross",
+                    formatter: "tickCross"
+
                 },
                 {
                     title: __html("Color"),
                     field: "color",
-                    editor: this.suggestionEditor,
-                    headerSort: false,
-                    editorParams: {
-                        suggestions: this.colorSuggestions
-                    },
                     width: 80,
+                    headerSort: false,
+                    editor: suggestionEditor,
+                    editorParams: {
+                        suggestions: this.colorSuggestions,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    },
                     cellEdited: (cell) => {
 
                         // Match entered value with suggestions (case-insensitive)
@@ -97,12 +129,14 @@ export class OrderPane {
                 {
                     title: __html("Coating"),
                     field: "coating",
-                    editor: this.suggestionEditor,
-                    headerSort: false,
-                    editorParams: {
-                        suggestions: this.coatingSuggestions
-                    },
                     width: 100,
+                    headerSort: false,
+                    editor: suggestionEditor,
+                    editorParams: {
+                        suggestions: this.coatingSuggestions,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    },
                     cellEdited: (cell) => {
                         // Match entered value with suggestions (case-insensitive)
                         const enteredValue = cell.getValue();
@@ -121,13 +155,14 @@ export class OrderPane {
                 {
                     title: __html("Product"),
                     field: "title",
-                    editor: productEditor,
-                    headerSort: false,
                     width: 400,
+                    headerSort: false,
+                    editor: productEditor,
                     editorParams: {
                         settings: state.settings,
                         discounts: state.order.discounts || {},
-                        navigateToNextCell: this.navigateToNextCell
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
                     },
                     formatter: function (cell) {
                         const value = cell.getValue() || '';
@@ -138,13 +173,13 @@ export class OrderPane {
                                 <div class="form-text ms-1 m-0" style="color:var(--gray-color);">${row.sdesc ? ' - ' + row.sdesc : ''}</div>
                             </div>
                         `;
-                    },
+                    }
                 },
                 {
                     title: "",
                     field: "sketch",
-                    headerSort: false,
                     width: 40,
+                    headerSort: false,
                     formatter: function (cell) {
                         const value = cell.getValue() || '';
                         const row = cell.getRow().getData();
@@ -184,24 +219,34 @@ export class OrderPane {
                 {
                     title: __html("W (mm)"),
                     field: "formula_width_calc",
-                    editor: this.numberEditor,
-                    headerSort: false,
-                    editorParams: { min: 0, step: 1 },
                     width: 68,
+                    headerSort: false,
+                    editor: numberEditor,
+                    editorParams: {
+                        min: 0,
+                        step: 1,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    }
                 },
                 {
                     title: __html("L (mm)"),
                     field: "formula_length_calc",
-                    editor: this.numberEditor,
-                    headerSort: false,
-                    editorParams: { min: 0, step: 1 },
                     width: 68,
+                    headerSort: false,
+                    editor: numberEditor,
+                    editorParams: {
+                        min: 0,
+                        step: 1,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    }
                 },
                 {
                     title: __html("F (m²)"),
                     field: "area",
-                    headerSort: false,
                     width: 68,
+                    headerSort: false,
                     formatter: function (cell) {
                         return '<span>' + (cell.getValue() || '0.000') + '</span>';
                     }
@@ -218,18 +263,27 @@ export class OrderPane {
                 {
                     title: __html("Qty"),
                     field: "qty",
-                    editor: this.numberEditor,
-                    headerSort: false,
-                    editorParams: { min: 0, step: 1 },
                     width: 54,
+                    headerSort: false,
+                    editor: numberEditor,
+                    editorParams: {
+                        min: 0,
+                        step: 1,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    }
                 },
                 {
                     title: __html("Adj"),
                     field: "adj",
-                    editor: this.numberEditor,
-                    headerSort: false,
-                    editorParams: { step: 0.01 },
                     width: 70,
+                    headerSort: false,
+                    editor: numberEditor,
+                    editorParams: {
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell,
+                        step: 0.01
+                    },
                     formatter: function (cell) {
                         return cell.getValue() ? '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>' : '';
                     }
@@ -237,34 +291,35 @@ export class OrderPane {
                 {
                     title: __html("Discount"),
                     field: "discount",
-                    editor: this.numberEditor,
                     width: 70,
+                    headerSort: false,
+                    editor: suggestionEditor,
+                    editorParams: {
+                        suggestions: this.discountSuggestions,
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    },
                     formatter: function (cell) {
                         const value = cell.getValue() || 0;
                         return value + "%";
-                    },
-                    editor: this.suggestionEditor,
-                    headerSort: false,
-                    editorParams: {
-                        suggestions: this.discountSuggestions
-                    },
+                    }
                 },
                 {
                     title: __html("Price"),
                     field: "price",
-                    headerSort: false,
                     width: 100,
+                    headerSort: false,
                     formatter: function (cell) {
                         const row = cell.getRow().getData();
                         const price = parseFloat(row.price) || 0;
                         return '<span class="calculated-field">' + priceFormat(state.settings, price) + '</span>';
-                    },
+                    }
                 },
                 {
                     title: __html("Total"),
                     field: "total",
-                    headerSort: false,
                     width: 100,
+                    headerSort: false,
                     formatter: function (cell) {
                         return '<span class="calculated-field">' + priceFormat(state.settings, cell.getValue()) + '</span>';
                     }
@@ -272,18 +327,22 @@ export class OrderPane {
                 {
                     title: __html("Note"),
                     field: "note",
-                    headerSort: false,
                     width: 180,
+                    headerSort: false,
+                    editor: textEditor,
+                    editorParams: {
+                        navigateToNextCell: navigateToNextCell,
+                        navigateToPreviousCell: navigateToPreviousCell
+                    },
                     formatter: function (cell) {
                         return '<span class="form-text">' + cell.getValue() + '</span>';
-                    },
-                    editor: this.textEditor,
+                    }
                 },
                 {
                     title: "",
                     field: "actions",
-                    headerSort: false,
                     width: 20,
+                    headerSort: false,
                     formatter: function (cell) {
                         const i = cell.getRow().getPosition();
                         const currentRowData = cell.getRow().getData();
@@ -418,25 +477,18 @@ export class OrderPane {
             ]
         });
 
-        // Load existing order items into the table
-        if (state.order.items && state.order.items.length > 0) {
-
-            // console.log('Loading existing order items into the table:', state.order.items);
-            // this.table.setData(state.order.items);
-        }
-
         // Add event listener for row deletion
-        this.table.on("rowDeleted", (row) => {
+        state.table.on("rowDeleted", (row) => {
             this.syncItems();
             bus.emit('order:table:refreshed', state.order);
         });
 
         // Add event listener to track any cell value changes
-        this.table.on("cellEdited", (cell) => {
+        state.table.on("cellEdited", (cell) => {
 
             // Check if this is the last row and automatically add a new one
-            if (this.table.getRows().length === 0) {
-                this.addRow();
+            if (state.table.getRows().length === 0) {
+                addRow();
             }
 
             console.log('Cell edited:', cell.getField(), cell.getValue());
@@ -448,7 +500,7 @@ export class OrderPane {
             this.refreshTable();
         });
 
-        if (state.order?.items?.length === 0) setTimeout(() => { this.addRow() }, 100);
+        if (state.order?.items?.length === 0) setTimeout(() => { addRow() }, 100);
     }
 
     syncItems = () => {
@@ -502,7 +554,7 @@ export class OrderPane {
         // },
 
         // Sync the order items with the table data
-        state.order.items = this.table.getData().map(item => {
+        state.order.items = state.table.getData().map(item => {
             return {
                 ...item,
                 // area: (parseFloat(item.width) * parseFloat(item.length) / 1000000).toFixed(3),
@@ -516,7 +568,7 @@ export class OrderPane {
         // Preserve scroll position during redraw
         const scrollElement = document.querySelector('#order-table .tabulator-tableholder');
         const scrollLeft = scrollElement ? scrollElement.scrollLeft : 0;
-        this.table.redraw(false);
+        state.table.redraw(false);
         // setTimeout(() => {
         //     const scrollElementAfter = document.querySelector('#order-table .tabulator-tableholder');
         //     if (scrollElementAfter) {
@@ -531,7 +583,7 @@ export class OrderPane {
 
         // Add new row button functionality
         onClick('#add-order-row', () => {
-            this.addRow();
+            addRow();
         });
 
         bus.on('order:table:sync:items', (id) => {
@@ -546,313 +598,7 @@ export class OrderPane {
 
             console.log('Client updated:', client);
 
-            // state.order.discounts = client.discounts || [];
-
             this.refreshTable();
         });
-    }
-
-    addRow = () => {
-
-        // Get coating and color from previous row if it exists
-        const rows = this.table.getRows();
-        let previousRowData = {};
-
-        if (rows.length > 0) {
-            const lastRow = rows[rows.length - 1];
-            previousRowData = lastRow.getData();
-        }
-
-        this.table.addRow({
-            id: randomString(6),
-            cm: previousRowData.cm !== undefined ? Boolean(previousRowData.cm) : false,
-            coating: previousRowData.coating || "",
-            color: previousRowData.color || "",
-            title: "",
-            formula_width_calc: "",
-            formula_length_calc: "",
-            area: 0,
-            qty: 1,
-            adj: 0,
-            price: 0,
-            discount: 0,
-            note: "",
-            total: 0
-        });
-
-        // start editing color cell of the new row
-        setTimeout(() => {
-            const newRow = this.table.getRows()[this.table.getRows().length - 1];
-            const firstColumn = this.table.getColumns()[1];
-            const firstCell = newRow.getCell(firstColumn.getField());
-            firstCell.edit();
-        }, 50);
-    }
-
-    // Custom navigation function
-    navigateToNextCell = (currentCell) => {
-
-        // console.log('Navigating to next cell from:', currentCell.getField());
-
-        const currentRow = currentCell.getRow();
-        const currentColumn = currentCell.getColumn();
-        const columns = this.table.getColumns().filter(col => col.getField() !== 'actions');
-        const editableColumns = columns.filter(col => {
-            // Check if column has an editor (is editable)
-            const colDef = col.getDefinition();
-            return colDef.editor && colDef.field !== 'area' && colDef.field !== 'total' && colDef.field !== 'price';
-        });
-        const currentColumnIndex = editableColumns.findIndex(col => col.getField() === currentColumn.getField());
-        const currentRowIndex = this.table.getRows().findIndex(row => row === currentRow);
-
-        // console.log('Current column index:', currentColumnIndex, ' row index', currentRowIndex);
-
-        if (currentColumnIndex < editableColumns.length - 1) {
-            // Move to next editable column in same row
-            const nextColumn = editableColumns[currentColumnIndex + 1];
-            // Refresh row reference to avoid stale references
-            const freshRows = this.table.getRows();
-            const freshRow = freshRows[currentRowIndex];
-
-            // console.log('Moving to next column:', nextColumn.getField(), ' freshRow:', freshRow);
-
-            // const nextCell = freshRow.getCell(nextColumn);
-
-            if (freshRow) {
-                const nextCell = freshRow.getCell(nextColumn.getField());
-                if (nextCell) {
-                    try {
-                        nextCell.edit();
-                    } catch (error) {
-                        console.warn('Cannot edit cell:', nextColumn.getField(), error);
-                    }
-                }
-            }
-        } else {
-            // Move to first editable column of next row, or create new row if at end
-            const rows = this.table.getRows();
-            const currentRowIndex = rows.findIndex(row => row === currentRow);
-
-            if (currentRowIndex < rows.length - 1) {
-                // Move to next row
-                const nextRow = rows[currentRowIndex + 1];
-                const firstEditableColumn = editableColumns[1];
-                if (firstEditableColumn && nextRow) {
-                    const nextCell = nextRow.getCell(firstEditableColumn.getField());
-                    if (nextCell) {
-                        try {
-                            nextCell.edit();
-                        } catch (error) {
-                            console.warn('Cannot edit cell:', firstEditableColumn.getField(), error);
-                        }
-                    }
-                }
-            } else {
-
-                // Add new row and move to first cell
-                console.log('At end of table, adding new row.');
-                this.addRow();
-            }
-        }
-    }
-
-    textEditor = (cell, onRendered, success, cancel, editorParams) => {
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = cell.getValue() || "";
-        input.className = "form-control form-control-sm";
-
-        input.addEventListener("blur", () => {
-            success(input.value);
-        }
-        );
-
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                success(input.value);
-                // Navigate to next cell after a short delay
-                // setTimeout(() => {
-                this.navigateToNextCell(cell);
-                // }, 25);
-            } else if (e.key === "Escape") {
-                cancel();
-            } else if (e.key === "Tab") {
-                success(input.value);
-            }
-        });
-
-        onRendered(() => {
-            input.focus();
-            input.select();
-        });
-
-        return input;
-    }
-
-    // Enhanced number editor with Enter key handling
-    numberEditor = (cell, onRendered, success, cancel, editorParams) => {
-
-        // Check if editing is allowed for this row
-        const rowData = cell.getRow().getData();
-        const is = isAllowedToEdit(rowData);
-        if (!is.allow) {
-
-            toast(is.reason || 'You are not allowed to edit this row.');
-            cancel();
-            return;
-        }
-
-        const input = document.createElement("input");
-        input.type = "number";
-        input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
-        input.className = "form-control form-control-sm";
-
-        // Apply editor params
-        if (editorParams.min !== undefined) input.min = editorParams.min;
-        if (editorParams.max !== undefined) input.max = editorParams.max;
-        if (editorParams.step !== undefined) input.step = editorParams.step;
-
-        input.addEventListener("blur", () => {
-            success(input.value ? parseFloat(input.value) : "");
-        });
-
-        input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-                e.preventDefault();
-                success(input.value ? parseFloat(input.value) : "");
-                // Navigate to next cell after a short delay
-                // setTimeout(() => {
-                this.navigateToNextCell(cell);
-                // }, 25);
-            } else if (e.key === "Escape") {
-                cancel();
-            } else if (e.key === "Tab") {
-                success(input.value ? parseFloat(input.value) : "");
-            }
-        });
-
-        onRendered(() => {
-            input.focus();
-            input.select();
-        });
-
-        return input;
-    }
-
-    // Generic editor for suggestion fields
-    suggestionEditor = (cell, onRendered, success, cancel, editorParams) => {
-
-        // Check if editing is allowed for this row
-        const rowData = cell.getRow().getData();
-        const is = isAllowedToEdit(rowData);
-        if (!is.allow) {
-
-            toast(is.reason || 'You are not allowed to edit this row.');
-            cancel();
-            return;
-        }
-
-        const input = document.createElement("input");
-        input.type = "text";
-        input.value = cell.getValue() || "";
-        input.className = "form-control form-control-sm";
-
-        const datalist = document.createElement("datalist");
-        datalist.id = "suggestions-" + randomString(10);
-        datalist.style.backgroundColor = "beige";
-        datalist.style.border = "var(--bs-border-width) solid var(--bs-border-color)!important;";
-        datalist.style.borderRadius = "4px";
-        datalist.style.minWidth = "200px";
-
-        editorParams.suggestions.forEach(suggestion => {
-            const option = document.createElement("option");
-            option.value = suggestion;
-            option.style.backgroundColor = "beige";
-            option.style.padding = "4px 8px";
-            datalist.appendChild(option);
-        });
-
-
-        let lastKeyPressed = '';
-
-        input.addEventListener("keydown", (e) => {
-            lastKeyPressed = e.key;
-
-            console.log('Key pressed in suggestion editor:', lastKeyPressed);
-        });
-
-        // Detect when user selects from datalist
-        input.addEventListener("input", (e) => {
-            const selectedValue = e.target.value;
-            if (editorParams.suggestions.includes(selectedValue) && lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
-                console.log('User selected from datalist:', selectedValue);
-                // Handle the selection here
-                success(selectedValue);
-                this.navigateToNextCell(cell);
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
-            }
-        });
-
-        // input.addEventListener("input", (e) => {
-        //     // This triggers when user selects from datalist
-
-        //     const selectedValue = e.target.value;
-        //     if (editorParams.suggestions.includes(selectedValue)) {
-        //         // console.log('S:Suggestion selected:', selectedValue);
-        //         // Don't navigate if user pressed backspace or delete
-        //         if (lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
-        //             // Navigate to next cell after a short delay
-        //             // setTimeout(() => {
-        //             // this.navigateToNextCell(cell);
-        //             // }, 25);
-        //         }
-        //     }
-        // });
-
-        input.setAttribute("list", datalist.id);
-        document.body.appendChild(datalist);
-
-        input.addEventListener("blur", () => {
-            success(input.value);
-            if (datalist.parentNode) {
-                document.body.removeChild(datalist);
-            }
-        });
-
-        input.addEventListener("keydown", (e) => {
-
-            if (e.key === "Enter") {
-
-                success(input.value);
-
-                // e.preventDefault();
-
-                this.navigateToNextCell(cell);
-
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
-
-                // Navigate to next cell after a short delay
-                // setTimeout(() => {
-
-                // }, 25);
-            } else if (e.key === "Escape") {
-                cancel();
-                if (datalist.parentNode) {
-                    document.body.removeChild(datalist);
-                }
-            }
-        });
-
-        onRendered(() => {
-            input.focus();
-        });
-
-        return input;
     }
 }

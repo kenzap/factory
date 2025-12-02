@@ -90,6 +90,12 @@ export class Auth {
 
         self.modal.querySelector('.modal-body').innerHTML = modalHTML;
 
+        // Clear all classes from modal-dialog except modal-dialog itself
+        const modalDialog = self.modal.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.className = 'modal-dialog';
+        }
+
         self.modalCont.show();
 
         self.modal.querySelector('#otp-email').focus();

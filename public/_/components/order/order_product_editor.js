@@ -275,7 +275,6 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
             }
         }, 150);
     });
-
     input.addEventListener("keydown", (e) => {
         if (e.key === "ArrowDown") {
             e.preventDefault();
@@ -334,7 +333,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
                 success(selectedSuggestion);
                 setTimeout(() => {
-                    editorParams.navigateToNextCell(cell);
+                    if (e.shiftKey) {
+                        editorParams.navigateToPreviousCell(cell);
+                    } else {
+                        editorParams.navigateToNextCell(cell);
+                    }
                 }, 10);
             } else {
 
@@ -344,7 +347,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 productSuggestions = [];
                 success(input.value);
                 setTimeout(() => {
-                    editorParams.navigateToNextCell(cell);
+                    if (e.shiftKey) {
+                        editorParams.navigateToPreviousCell(cell);
+                    } else {
+                        editorParams.navigateToNextCell(cell);
+                    }
                 }, 10);
             }
         } else if (e.key === "Escape") {
