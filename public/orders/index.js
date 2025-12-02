@@ -169,7 +169,8 @@ class Orders {
                             <option value="manufacturing">${__html('Manufacturing')}</option>
                             <option value="ready">${__html('Ready')}</option>
                             <option value="issued">${__html('Issued')}</option>
-                        </select>
+                            <option value="waybills">${__html('Waybills')}</option>
+                        </select> 
                     </div>
                     <div class="col-md-6 d-flex justify-content-end">
                         <label class="form-label d-none">&nbsp;</label>

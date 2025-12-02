@@ -89,19 +89,19 @@ export class LeftPane {
                     <div class="btn-group-toggle d-flex flex-nowrap gap-1 overflow-hidden-" data-bs-toggle="buttons">
                         <div class="d-flex align-items-center justify-content-between w-100 h-100 overflow-hidden-">
                             <div class="d-flex flex-nowrap overflow-hidden-">
-                                <button class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
-                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV-%1$', state.order?.invoice?.number) : __html('Invoice')}</button>
-                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
-                                <button class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV-%1$', state.order?.invoice?.number) : __html('Invoice')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
                             </div>
                             <div class="dropdown flex-shrink-0">
                                 <svg id="docActions" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po mb-1" viewBox="0 0 16 16">
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
                                 <ul class="dropdown-menu">
-                                    <li><button class="dropdown-item document-btn mb-1" data-type="packing-slip">${__html('Packing Slip')}</button></li>
-                                    <li><button class="dropdown-item document-btn mb-1" data-type="invoice-eu">${__html('Invoice EU')}</button></li>
-                                    <li><button class="dropdown-item document-btn mb-1" data-type="production-slip-detailed">${__html('Production Slip')}</button></li>
+                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="packing-slip">${__html('Packing Slip')}</button></li>
+                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="invoice-eu">${__html('Invoice EU')}</button></li>
+                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="production-slip-detailed">${__html('Production Slip')}</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -207,6 +207,10 @@ export class LeftPane {
 
         // Order list table button
         onClick('#editClientBtn', () => {
+
+            if (!state.order.eid) state.order.name = document.getElementById('clientFilter').value;
+
+            // console.log('Client list button clicked', state.order);
 
             new ClientPane(state.settings, state.order);
         });
@@ -368,6 +372,7 @@ export class LeftPane {
 
             if (document.getElementById('clientFilter').value != client.legal_name && client.legal_name.length) {
                 document.getElementById('clientFilter').value = client.legal_name;
+                document.getElementById('clientFilter').dataset._id = client._id;
             }
 
             this.summary();
@@ -426,40 +431,13 @@ export class LeftPane {
 
     summary = () => {
 
-
-        // Calculate totals based on the order items and settings
-        // state.order.price = getTotals(state.settings, state.order);
-
-        // console.log('Order summary updated:', state.order);
-
-        // const order = state.order;
-
-        // if (!order.price) {
-        //     order.price = { tax_calc: false, tax_percent: 0, tax_total: 0, total: 0, grand_total: 0 };
-        // }
-
         let totals = getTotalsHTML(state.settings, state.order);
 
-        // console.log('Order totals:', totals.price);
+        log('Order totals:', totals.price);
 
         state.order.price = totals.price;
 
         document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
-
-        // // Create the order summary HTML
-        // document.querySelector('order-summary').innerHTML = /*html*/`
-        //     <div class="d-flex justify-content-between">
-        //         <span>${__html('Subtotal')}</span>
-        //         <span id="subtotal">${priceFormat(state.settings, order.price.total)}</span>
-        //     </div>
-        //     <div class="d-flex justify-content-between">
-        //         <span>${state.settings.tax_display + " " + state.settings.tax_percent}%</span>
-        //         <span id="vat_rate">${priceFormat(state.settings, order.price.tax_total)}</span>
-        //     </div>
-        //     <div class="d-flex justify-content-between">
-        //         <span>${__html('Total')}</span>
-        //         <span id="totalAmount">${priceFormat(state.settings, order.price.grand_total)}</span>
-        //     </div>`;
     }
 
     save = () => {

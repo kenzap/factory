@@ -12,13 +12,12 @@ import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Promise<string>} - XML string of products
 */
-async function viewInvoice(_id, user, lang) {
+async function viewInvoice(_id, user, locale, lang) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-        const locale = await getLocale(lang);
 
         let data = await getDocumentData(db, "quotation", _id, user, locale);
 
@@ -55,10 +54,12 @@ function viewInvoiceApi(app) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
+            const locale = await getLocale(lang);
+
             console.log('/document/quotation/', req.user);
 
             // Generate HTML for invoice
-            const html = await viewInvoice(id, req.user, lang);
+            const html = await viewInvoice(id, req.user, locale, lang);
 
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
@@ -98,13 +99,12 @@ function viewInvoiceApi(app) {
             if (req.query.email) {
 
                 const body = `
-                    <h1>Invoice for order #${req.query.id}</h1>
-                    <p>Attached is the invoice document for your order.</p>
+                    <h1>${__html(locale, "Estimate")} #${req.query.id}</h1>
                 `;
 
                 // req.query.email = "pavel";
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Invoice for order #%1$", req.query.id), body, [doc_path]);
+                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html(locale, "Estimate") + ' #' + req.query.id, body, [doc_path]);
                 res.send({ success: true, message: 'email sent' });
 
                 // Clean up the PDF file after sending email

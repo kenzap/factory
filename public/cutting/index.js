@@ -6,7 +6,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 
-/**
+/**  
  * Main navigation menu page of the dashboard.
  * Loads HTMLContent from _cnt_home.js file.
  * Renders menu items in a list view manner

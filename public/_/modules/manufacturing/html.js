@@ -11,20 +11,20 @@ export const getHtml = (response) => {
             </a>
             
             <!-- Search Container -->
-            <div class="search-container d-flex align-items-center">
+            <div class="search-container d-flex align-items-center d-none d-md-flex">
                 <div class="me-3">
                     <input type="text" id="orderSearch" class="form-control search-input" placeholder="ID" maxlength="4" style="width: 100px;">
                 </div>
                 <div class="me-3">
                     <input type="text" id="companySearch" class="form-control search-input" placeholder="${__html('Client')}" style="width: 250px;">
-                </div>
+                </div> 
                 <button class="btn btn-outline-light action-btn me-2" onclick="manufacturing.refreshOrders()">
                     <i class="bi bi-arrow-clockwise"></i> ${__html('Refresh')}
                 </button>
             </div>
 
             <!-- Stats -->
-            <div class="stats-container text-white small">
+            <div class="stats-container text-white small d-none d-xl-block">
                 <div>${__html('Latest')} <span id="latestOrders" class="fw-bold">-</span></div>
                 <div>${__html('Issued')} <span id="issuedOrders" class="fw-bold">-</span></div>
             </div>
@@ -72,7 +72,7 @@ export const getHtml = (response) => {
     </div>
 
     <!-- Close Button (for narrow mode) -->
-    <button class="close-btn d-none" id="closeBtn" onclick="window.close()">
+    <button class="close-btn text-dark d-xl-none" id="closeBtn" onclick="window.close()">
         <i class="bi bi-x-lg"></i>
     </button>
     `;

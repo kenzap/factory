@@ -18,7 +18,7 @@ export class ClientPane {
 
         this.firstLoad = true;
 
-        state.client = { _id: state.order.eid ? state.order.eid : null, drivers: [], addresses: [], contacts: [] };
+        state.client = { _id: state.order.eid ? state.order.eid : null, legal_name: state.order.name, drivers: [], addresses: [], contacts: [] };
 
         // check if header is already present
         this.init();

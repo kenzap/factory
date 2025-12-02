@@ -12,13 +12,12 @@ import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Promise<string>} - XML string of products
 */
-async function viewWaybill(_id, user, lang) {
+async function viewWaybill(_id, user, locale, lang) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-        const locale = await getLocale(lang);
 
         let data = await getDocumentData(db, "waybill", _id, user, locale);
 
@@ -59,10 +58,12 @@ function viewWaybillApi(app) {
                 return res.status(400).json({ error: 'Waybill ID is required' });
             }
 
+            const locale = await getLocale(lang);
+
             console.log('/document/waybill/', lang);
 
             // Generate HTML for waybill
-            const html = await viewWaybill(id, req.user, lang);
+            const html = await viewWaybill(id, req.user, locale, lang);
 
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
@@ -102,13 +103,10 @@ function viewWaybillApi(app) {
             if (req.query.email) {
 
                 const body = `
-                    <h1>Waybill for order #${req.query.id}</h1>
-                    <p>Attached is the waybill document for your order.</p>
+                    <h1>${__html(locale, "Waybill")} #${req.query.id}</h1>
                 `;
 
-                // req.query.email = "pavel..";
-
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Waybill for order #%1$", req.query.id), body, [doc_path]);
+                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html(locale, "Waybill") + ' #' + req.query.id, body, [doc_path]);
                 res.send({ success: true, message: 'email sent' });
 
                 // Clean up the PDF file after sending email

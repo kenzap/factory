@@ -141,7 +141,7 @@ export function getWaybillItemsTable(settings, order, locale) {
     // Check if any item has a discount
     const hasDiscount = order.items.some(item => item.discount && item.discount > 0);
 
-    console.log("Has discount column:", hasDiscount);
+    // console.log("Has discount column:", hasDiscount);
 
     let table = `
                 <!-- Items Table -->
@@ -155,9 +155,9 @@ export function getWaybillItemsTable(settings, order, locale) {
                             <th scope="col">${hasDiscount ? __html(locale, "Net") : __html(locale, "Price")}</th>
                             <th scope="col">${__html(locale, "Qty")}</th>
                             <th scope="col">${__html(locale, "Unit")}</th>
-                            <th scope="col"><div class="${order.vat_status == "0" ? "text-end" : "text-start"}">${order.vat_status == "0" ? __html(locale, "Total") : __html(locale, "Price")}</div></th>
+                            <th scope="col"><div class="${order.vat_status == "0" ? "text-end" : "text-start"}">${order.vat_status == "0" ? __html(locale, "Total") : __html(locale, "Total")}</div></th>
                             <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}">${__html(locale, "Tax")}</th>
-                            <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end">${__html(locale, "Total")}</div></th>
+                            <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end">${__html(locale, "Total with tax")}</div></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -250,7 +250,6 @@ export const getWaybillTotals = (settings, order) => {
             item_total_21 += makeNumber(item.total);
         }
     });
-
 
     if (item_total_0 === 0 && item_total_21 > 0) {
         // Only VAT items
@@ -360,15 +359,8 @@ export function getProductionItemsTable(settings, order, locale) {
 
     let groups = settings.groups ? JSON.parse(settings.groups) : [];
 
-    // console.log("getProductionItemsTable groups", groups);
-    // console.log("getProductionItemsTable locale", order.items);
-
-    // if (!Array.isArray(groups)) groups = [];
-
     let tableContent = '';
     let itemIndex = 1;
-
-    console.log("getProductionItemsTable order.items", order.items);
 
     groups.forEach(group => {
 

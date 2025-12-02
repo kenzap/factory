@@ -18,9 +18,16 @@ export const validateOTP = (email_or_phone, otp, nonce, cb) => {
             // hide UI loader
             hideLoader();
 
-            if (response.success) cb(response);
+            if (response) cb(response);
 
-            if (!response.success) parseApiError(response);
+            if (!response) parseApiError(response);
         })
-        .catch(error => { parseApiError(error); });
+        .catch(error => {
+
+            console.log('Error validating OTP:', error);
+
+            cb({ success: false, error: 'error validating otp' });
+
+            parseApiError(error);
+        });
 }

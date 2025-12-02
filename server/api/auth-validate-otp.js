@@ -1,6 +1,6 @@
 
 import express from 'express';
-import { cacheUserSession, generateTokens, getOtpByEmailOrPhone, getUserByEmail, getUserByPhone, isValidEmail, isValidPhone } from '../_/helpers/auth.js';
+import { cacheUserSession, deleteOtpByEmailOrPhone, generateTokens, getOtpByEmailOrPhone, getRequestCount, getUserByEmail, getUserByPhone, incrementRequestCount, isValidEmail, isValidPhone } from '../_/helpers/auth.js';
 import { log } from '../_/helpers/index.js';
 
 // API route for product export
@@ -15,15 +15,29 @@ function validateOtpApi(app) {
             const { email_or_phone, nonce, otp } = req.body;
 
             if (!email_or_phone || !otp || !nonce) {
-                res.status(400).json({
-                    error: 'email, otp and nonce are required',
-                    code: 400
-                });
+                res.status(400).json({ success: false, error: 'email, otp and nonce are required', code: 400 });
                 return;
             }
 
             if (!isValidEmail(email_or_phone) && !isValidPhone(email_or_phone)) {
-                res.status(400).json({ error: 'email or phone is required', code: 400 });
+                res.status(400).json({ success: false, error: 'email or phone is required', code: 400 });
+                return;
+            }
+
+            // rate limiting for validation attempts
+            const validationLimitKey = `otp_validation_${email_or_phone}`;
+            const maxValidationAttempts = 3;
+            const validationWindow = 15 * 60 * 1000;
+
+            const validationCount = await getRequestCount(validationLimitKey);
+            if (validationCount >= maxValidationAttempts) {
+                // Invalidate the OTP after too many attempts
+                await deleteOtpByEmailOrPhone(email_or_phone);
+                res.status(429).json({
+                    success: false,
+                    error: 'too many failed attempts, please request a new otp',
+                    code: 429
+                });
                 return;
             }
 
@@ -31,30 +45,30 @@ function validateOtpApi(app) {
             let otpCached = await getOtpByEmailOrPhone(email_or_phone, nonce);
 
             if (!otpCached) {
-                res.status(400).json({ error: 'invalid nonce', code: 400 });
+                await incrementRequestCount(validationLimitKey, validationWindow);
+                res.status(400).json({ success: false, error: 'invalid or expired otp', code: 400 });
                 return;
             }
 
             if (otpCached !== otp) {
-                res.status(400).json({ error: 'invalid otp', email_or_phone, otpCached, otp, code: 400 });
+                await incrementRequestCount(validationLimitKey, validationWindow);
+                res.status(400).json({ success: false, error: 'invalid otp', code: 400 });
                 return;
             }
+
+            await deleteOtpByEmailOrPhone(email_or_phone);
 
             log(`OTP validated for ${email_or_phone}`);
 
             let user = null;
 
-            // get user by email
+            // get user
             if (isValidEmail(email_or_phone)) user = await getUserByEmail(email_or_phone);
-
-            // get user by phone
             if (isValidPhone(email_or_phone)) user = await getUserByPhone(email_or_phone);
 
             // if user not found
             if (!user) {
-                res.status(404).json({
-                    error: 'user not found', code: 404
-                });
+                res.status(404).json({ success: false, error: 'user not found', code: 404 });
                 return;
             }
 
@@ -62,8 +76,6 @@ function validateOtpApi(app) {
 
             // cache user session
             await cacheUserSession(user);
-
-            // TODO: invalidate OTP and nonce
 
             // Generate tokens
             const { accessToken, refreshToken } = generateTokens(user);
@@ -87,7 +99,7 @@ function validateOtpApi(app) {
             });
         } catch (err) {
 
-            res.status(500).json({ error: 'failed to request otp', code: 500 });
+            res.status(500).json({ success: false, error: 'failed to request otp', code: 500 });
             log(`Error validating OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });

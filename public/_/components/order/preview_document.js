@@ -51,7 +51,7 @@ export class PreviewDocument {
         this.modal.querySelector(".modal-title").innerHTML = "";
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
-                <i class="bi bi-envelope me-1"></i> ${__html('Send Email')}
+                <i class="bi bi-envelope me-1"></i> ${__html('Email')}
             </button>
             <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
                 <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}
@@ -75,8 +75,8 @@ export class PreviewDocument {
         this.modal_cont.show();
 
         // bind events
-        this.modal.querySelector('.btn-document-send-email').addEventListener('click', () => this.sendEmail());
-        this.modal.querySelector('.btn-document-annul').addEventListener('click', () => this.annul());
+        this.modal.querySelector('.btn-document-send-email').addEventListener('click', (e) => this.sendEmail(e));
+        this.modal.querySelector('.btn-document-annul').addEventListener('click', (e) => this.annul(e));
     }
 
     annul() {
@@ -97,11 +97,15 @@ export class PreviewDocument {
         });
     }
 
-    sendEmail() {
+    sendEmail(e) {
+
+        e.preventDefault();
+
+        const button = this.modal.querySelector('.btn-document-send-email');
+        if (button.disabled) return;
 
         if (!confirm(__html('Send email to %1$?', this.order.email))) return;
 
-        const button = this.modal.querySelector('.btn-document-send-email');
         button.disabled = true;
         button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
 

@@ -210,13 +210,13 @@ export const incrementRequestCount = async (key, timeWindow) => {
 }
 
 // Get OTP by email and nonce
-export const getOtpByEmailOrPhone = async (email, nonce) => {
+export const getOtpByEmailOrPhone = async (email_or_phone, nonce) => {
     try {
         const redisClient = createClient({ url: process.env.REDIS_URL });
         await redisClient.connect();
-        const key = `otp:${email}`;
+        const key = `otp:${email_or_phone}`;
         const otp = await redisClient.get(key);
-        const nonceKey = `nonce:${email}`;
+        const nonceKey = `nonce:${email_or_phone}`;
         const storedNonce = await redisClient.get(nonceKey);
         await redisClient.quit();
         if (otp && storedNonce === nonce) {
@@ -225,6 +225,21 @@ export const getOtpByEmailOrPhone = async (email, nonce) => {
         return null;
     } catch (error) {
         console.error('Error getting OTP by email or phone:', error);
+        throw error;
+    }
+}
+
+export const deleteOtpByEmailOrPhone = async (email_or_phone) => {
+    try {
+        const redisClient = createClient({ url: process.env.REDIS_URL });
+        await redisClient.connect();
+        const key = `otp:${email_or_phone}`;
+        await redisClient.del(key);
+        const nonceKey = `nonce:${email_or_phone}`;
+        await redisClient.del(nonceKey);
+        await redisClient.quit();
+    } catch (error) {
+        console.error('Error deleting OTP by email or phone:', error);
         throw error;
     }
 }

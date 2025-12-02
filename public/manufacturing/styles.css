@@ -112,6 +112,14 @@ body {
     width: 480px;
 }
 
+.product-name.narrow{
+    width: auto;
+}
+
+.mode-narrow{
+    display: none;
+}
+
 .company-name {
     font-size: 1.2rem;
     font-weight: 600;
@@ -190,14 +198,14 @@ body {
     position: fixed;
     bottom: 30px;
     right: 30px;
-    width: 60px;
-    height: 60px;
+    width: 64px;
+    height: 64px;
     border-radius: 50%;
     /* background: linear-gradient(45deg, var(--danger-color), #c0392b); */
     border: none;
     color: white;
     font-size: 1.5rem;
-    box-shadow: 0 4px 20px rgba(231, 76, 60, 0.3);
+    box-shadow: 0 4px 20px rgba(1, 1, 1, 0.3);
     transition: all 0.3s ease;
 }
 

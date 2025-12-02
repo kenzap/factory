@@ -12,15 +12,15 @@ function getOtpApi(app) {
     app.post('/api/auth/get-otp', async (req, res) => {
         try {
 
-            const { email_or_phone } = req.body;
+            let { email_or_phone } = req.body;
 
             if (!email_or_phone) {
-                res.status(400).json({ error: 'email or phone is required', code: 400 });
+                res.status(400).json({ success: false, error: 'email or phone is required', code: 400 });
                 return;
             }
 
             if (!isValidEmail(email_or_phone) && !isValidPhone(email_or_phone)) {
-                res.status(400).json({ error: 'invalid email or phone format', code: 400 });
+                res.status(400).json({ success: false, error: 'invalid email or phone format', code: 400 });
                 return;
             }
 
@@ -45,6 +45,7 @@ function getOtpApi(app) {
 
             if (requestCount >= maxRequests) {
                 res.status(429).json({
+                    success: false,
                     error: 'too many otp requests, please try again later',
                     code: 429
                 });
@@ -55,7 +56,7 @@ function getOtpApi(app) {
 
             // Generate a 6-digit OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
-            const nonce = Math.floor(100000 + Math.random() * 900000).toString();
+            const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 12);
 
             // Store OTP with expiration (you'll need to implement storage - Redis, database, or in-memory)
             // This is a placeholder for your storage implementation
@@ -71,7 +72,7 @@ function getOtpApi(app) {
             res.json({ success: true, code: 200, nonce: nonce, message: 'otp sent successfully' });
         } catch (err) {
 
-            res.status(500).json({ error: 'failed to request otp', code: 500 });
+            res.status(500).json({ success: false, error: 'failed to request otp', code: 500 });
             log(`Error requesting OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });

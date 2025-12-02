@@ -148,6 +148,9 @@ export class OrderPane {
                     formatter: function (cell) {
                         const value = cell.getValue() || '';
                         const row = cell.getRow().getData();
+
+                        row.sketch_attached = true;
+
                         if (row.sketch_attached) return /*html*/`
                             <div class="d-flex align-items-center">
                                 <span class="flex-grow-1">${value}</span>

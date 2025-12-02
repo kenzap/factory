@@ -55,7 +55,7 @@ export class Auth {
         }
 
         // prevent user from requesting OTP again
-        if (self.resendTimes >= 3) {
+        if (self.resendTimes >= 5) {
 
             self.warningScreen(self, "attempts"); return;
         }
@@ -127,11 +127,10 @@ export class Auth {
 
         let self = this;
 
-        // ui is blocked
-        if (self.modal.querySelector('.btn-get-otp').dataset.loading) return false;
+        console.log('Requesting OTP...');
 
-        // reset previous validation
-        self.modal.querySelector('#otp-email').setCustomValidity(''); self.modal.querySelector('.otp-email-notice').innerHTML = '';
+        // ui is blocked
+        if (self.modal.querySelector('.btn-get-otp').dataset.loading === "true") return false;
 
         // validate email
         let email_or_phone = self.modal.querySelector('#otp-email').value.trim();
@@ -170,9 +169,31 @@ export class Auth {
         // request OTP on server
         getOTP(email_or_phone, (response) => {
 
-            if (!response.success && response.error) { self.modal.querySelector('.otp-email-notice').innerHTML = response.error; return; }
+            let allow = true;
 
-            if (!response.nonce) return;
+            // reset previous validation
+            self.modal.querySelector('#otp-email').setCustomValidity(''); self.modal.querySelector('.otp-email-notice').innerHTML = '';
+
+            console.log('OTP request response:', response);
+
+            if (!response.success && response.error) {
+
+                allow = false;
+
+                self.modal.querySelector('.otp-email-notice').innerHTML = response.error;
+            }
+
+            if (!response.nonce) allow = false;
+
+            if (!allow) {
+
+                setTimeout(() => {
+                    self.modal.querySelector('.btn-get-otp').dataset.loading = false;
+                    self.modal.querySelector('.btn-get-otp').innerHTML = __html('Get OTP');
+                }, 1600);
+
+                return;
+            }
 
             self.viewVerify(response);
         });
@@ -351,7 +372,7 @@ export class Auth {
         let self = this;
 
         // UI is blocked
-        if (self.modal.querySelector('.btn-validate-otp').dataset.loading) return;
+        if (self.modal.querySelector('.btn-validate-otp').dataset.loading === "true") return;
 
         // restore  defaults
         self.modal.querySelector('.otp-password-notice').classList.remove('d-block');
@@ -371,6 +392,27 @@ export class Auth {
 
         // submit application
         validateOTP(email_or_phone, otp, nonce, (response) => {
+
+            self.modal.querySelector('.btn-validate-otp').dataset.loading = false;
+
+            let allow = true;
+
+            if (!response.success && response.error) {
+
+                self.modal.querySelector('.otp-password-notice').innerHTML = response.error;
+                self.modal.querySelector('.otp-password-notice').classList.add('d-block');
+
+                allow = false;
+            }
+
+            if (!allow) {
+
+                setTimeout(() => {
+                    self.modal.querySelector('.btn-validate-otp').dataset.loading = false;
+                }, 1600);
+
+                return
+            }
 
             // clear previous attempts 
             localStorage.setItem('otp-resend-times', 0);
@@ -449,7 +491,7 @@ export class Auth {
             if (!self.modal.querySelector('.btn-validate-otp')) { clearInterval(self.interval); return; }
 
             // show validation countdow timer
-            if (!self.modal.querySelector('.btn-validate-otp').dataset.loading) display.textContent = __html('Verify (%1$)', minutes + ":" + seconds);
+            if (self.modal.querySelector('.btn-validate-otp').dataset.loading !== "true") display.textContent = __html('Verify (%1$)', minutes + ":" + seconds);
 
             // timer runs out, force request new otp
             if (--timer < 0) {

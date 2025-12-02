@@ -1,9 +1,9 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const sendEmailDocument = (data, type, cb) => {
+export const sendEmailDocument = (data, cb) => {
 
     // do API query
-    fetch(`${API()}/document/${type}/?id=${data.id}&email=${data.email}`, {
+    fetch(`${API()}/document/${data.type}/?id=${data.id}&email=${data.email}`, {
         method: 'get',
         headers: H()
     })

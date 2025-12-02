@@ -3,7 +3,7 @@ import { getOrders } from "../_/api/get_orders.js";
 import { getProductBundles } from "../_/api/get_product_bundles.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
-import { __html, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
+import { __html, attr, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { formatCompanyName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -42,6 +42,7 @@ class Manufacturing {
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('id');
         this.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
+        this.mode = urlParams.get('mode') ? urlParams.get('mode') : 'normal';
 
         this.stats = {
             latest: [],
@@ -308,13 +309,13 @@ class Manufacturing {
                         <div class="company-name">${formatCompanyName(order)}</div>
                         <small class="text-muted elipsized">${order.notes}</small>
                     </div>
-                    <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
+                    <div class="col-md-${this.mode == 'narrow' ? '2' : '1'} po" onclick="manufacturing.loadOrderDetails('${order.id}')">
                         <small class="text-muted- text-dark text-nowrap">${toLocalUserDate(order.due_date)}</small>
                     </div>
                     <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
                         <small class="text-muted- text-dark text-nowrap">${toLocalUserTime(order.due_date)}</small>
                     </div>
-                    <div class="col-md-1">
+                    <div class="col-md-1 mode-${attr(this.mode)}">
                         <small class="text-muted">${order.operator}</small>
                     </div>
                 </div>
@@ -368,7 +369,7 @@ class Manufacturing {
                                     <th class="d-none">${__html('Nr.')}</th>
                                     <th>${__html('Works')}</th>
                                     <th>
-                                        <div class="d-flex align-items-center text-bold product-name">
+                                        <div class="d-flex align-items-center text-bold product-name ${attr(this.mode)}">
                                             <div class="d-none">${__html('Product')}</div>
                                             <select class="form-select- form-select-sm- bg-transparent ps-0 p-0 border-0 fw-bold" id="groupFilter-${orderId}" style="width: auto;" onchange="manufacturing.filterByGroup('${order._id}', this.value)">
                                                 <option value="">${__html('Products')}</option>
@@ -381,8 +382,8 @@ class Manufacturing {
                                     <th>${__html('Unit')}</th>
                                     <th>${__html('Quantity')}</th>
                                     <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
-                                    <th>${__html('Stock')}</th>
-                                    <th>${__html('Taken')}</th>
+                                    <th class="mode-${attr(this.mode)}">${__html('Stock')}</th>
+                                    <th class="mode-${attr(this.mode)}">${__html('Taken')}</th>
                                     <th class="text-end">${__html('Action')}</th>
                                 </tr>
                             </thead>
@@ -399,7 +400,7 @@ class Manufacturing {
                                             </div>
                                         </td> 
                                         <td>
-                                            <div class="d-flex justify-content-start align-items-center product-name">
+                                            <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
                                                 <div>
                                                     <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
                                                     ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
@@ -425,8 +426,8 @@ class Manufacturing {
                                                 <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                             </div>
                                         </td>
-                                        <td><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
-                                        <td>
+                                        <td class="mode-${attr(this.mode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
+                                        <td class="mode-${attr(this.mode)}">
                                             <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
@@ -561,7 +562,7 @@ class Manufacturing {
 
                                     </td>
                                     <td class="py-0" >
-                                        <div class="product-name">
+                                        <div class="product-name ${attr(this.mode)}">
                                             <small class="text-muted me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
                                             <small class="text-muted me-2">${bundleItem?.coating}</small>
                                             <small class="text-muted me-2">${bundleItem?.color}</small>
@@ -576,12 +577,12 @@ class Manufacturing {
                                             <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * element.dataset.qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${orderItem.id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
                                         </div>
                                     </td>
-                                    <td class="py-0">
+                                    <td class="py-0 mode-${attr(this.mode)}">
                                         <small class="text-muted">
                                             <div class="${slugify(`stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}`)}"><span></span></div>
                                         </small>
                                     </td>
-                                    <td class="py-0">
+                                    <td class="py-0 mode-${attr(this.mode)}">
                                         <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${orderItem.id}" value="${bundleAmount}" style="width: 80px;">
                                     </td>
                                     <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">

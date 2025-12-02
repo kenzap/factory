@@ -20,5 +20,12 @@ export const getOTP = (email_or_phone, cb) => {
 
             if (!response) parseApiError(response);
         })
-        .catch(error => { parseApiError(error); });
+        .catch(error => {
+
+            console.log('Error validating OTP:', error);
+
+            cb({ success: false, error: 'error getting otp' });
+
+            parseApiError(error);
+        });
 }

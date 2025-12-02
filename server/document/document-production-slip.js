@@ -12,13 +12,12 @@ import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Promise<string>} - XML string of products
 */
-async function viewProductionSlip(_id, user, lang) {
+async function viewProductionSlip(_id, user, locale, lang) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-        const locale = await getLocale(lang);
 
         let data = await getDocumentData(db, "production_slip", _id, user, locale);
 
@@ -47,10 +46,12 @@ function viewProductionSlipApi(app) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
+            const locale = await getLocale(lang);
+
             console.log('/document/production-slip/ lang', lang);
 
             // Generate HTML for waybill
-            const html = await viewProductionSlip(id, req.user, lang);
+            const html = await viewProductionSlip(id, req.user, locale, lang);
 
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
@@ -90,13 +91,12 @@ function viewProductionSlipApi(app) {
             if (req.query.email) {
 
                 const body = `
-                    <h1>Production slip for order #${req.query.id}</h1>
-                    <p>Attached is the production slip document.</p>
+                    <h1>${__html(locale, "Production Slip")} #${req.query.id}</h1>
                 `;
 
                 // req.query.email = "pavel";
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html("Production slip for order #%1$", req.query.id), body, [doc_path]);
+                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html(locale, "Production Slip") + ' #' + req.query.id, body, [doc_path]);
                 res.send({ success: true, message: 'email sent' });
 
                 // Clean up the PDF file after sending email

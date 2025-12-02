@@ -56,16 +56,33 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         params.push(`${filters.client.name.trim()}`);
     }
 
-    if (filters.dateFrom && filters.dateFrom.trim() !== '') {
+    // order date
+    if (filters.type != 'waybills' && filters.dateFrom && filters.dateFrom.trim() !== '') {
         chunk = ` AND (js->'data'->>'date' >= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
         params.push(filters.dateFrom.trim());
     }
 
-    // Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
-    if (filters.dateTo && filters.dateTo.trim() !== '') {
+    // order date / Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
+    if (filters.type != 'waybills' && filters.dateTo && filters.dateTo.trim() !== '') {
         chunk = ` AND (js->'data'->>'date' <= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
+        params.push(filters.dateTo.trim());
+    }
+
+    // waybill date
+    if (filters.type == 'waybills' && filters.dateFrom && filters.dateFrom.trim() !== '') {
+        chunk = ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
+        params.push(filters.dateFrom.trim());
+    }
+
+    // waybill date / Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
+    if (filters.type == 'waybills' && filters.dateTo && filters.dateTo.trim() !== '') {
+        chunk = ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
         params.push(filters.dateTo.trim());
