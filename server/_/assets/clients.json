@@ -1,0 +1,9 @@
+[
+{"type":"header","version":"4.9.5deb2","comment":"Export to JSON plugin for PHPMyAdmin"},
+{"type":"database","name":"my_db"},
+{"type":"table","name":"clients","database":"my_db","data":
+[
+{"clientid":"16138","nosaukums":"ELITE GROUP LTD","faks":"","telefons":"","jurfiz":"J","pilseta":"","adres":"","bank":"1","aprrek":"","kontaktp":"","ipnos":"","extrainfo":"","datefirst":"2025-10-30","datelast":"2025-10-30","regnum":"40203160000","pvnnum":"40203160000","tklcen":"331","email":"example@gmail.com","www":"","lursoft":null,"extra":"{\"id\":\"16138\",\"moneoid\":\"1001373\"}"}
+]
+}
+]
