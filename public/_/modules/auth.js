@@ -443,7 +443,11 @@ export class Auth {
             clearInterval(self.interval);
 
             // reload the page to refresh user session
-            location.reload();
+            if (response.user.portal) {
+                window.open(window.location.origin + '/' + response.user.portal + '/', '_self');
+            } else {
+                location.reload();
+            }
         });
     }
 

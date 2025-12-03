@@ -165,8 +165,8 @@ class CuttingList {
                         <div class="order-items">
                             ${order.items ? order.items.map((item, index) => `
                             <div class="order-item ${this.getStatusClass(item)}">
-                                <input type="checkbox" class="checkbox" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
-                                <span class="item-id"><a href="/manufacturing/?id=${order.id}">${order.id}</a></span>
+                                <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
+                                <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}">${order.id}</a></span>
                                 <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
                                 <span class="item-dimensions">
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 

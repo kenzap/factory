@@ -201,6 +201,14 @@ export class WriteoffMetal {
 
             let total_length = this.getTotalWriteoffLength();
 
+            // Check if total write-off length exceeds coil length
+            if (total_length > this.coil.length) {
+                alert(__html('Total write-off length (%1$ %2$) exceeds coil length (%3$ %4$)',
+                    total_length, getDimUnit(this.settings),
+                    this.coil.length, getDimUnit(this.settings)));
+                return;
+            }
+
             // console.log('Total length to write-off:', total_length); return;
 
             const orderIds = [...new Set(this.items.map(item => item.order_id).filter(id => id))];

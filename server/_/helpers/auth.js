@@ -261,7 +261,8 @@ export const getUserByEmail = async (email) => {
                     js->'data'->>'lname' as lname,
                     js->'data'->>'rights' as rights,
                     js->'data'->>'avatar' as avatar,
-                    js->'data'->>'blocks' as blocks
+                    js->'data'->>'blocks' as blocks,
+                    js->'data'->>'portal' as portal
             FROM data 
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'email' = $3
             LIMIT 1
@@ -275,7 +276,8 @@ export const getUserByEmail = async (email) => {
                 fname: row.fname,
                 lname: row.lname,
                 rights: row.rights ? JSON.parse(row.rights) : [],
-                avatar: row.avatar ? JSON.parse(row.avatar) : null
+                avatar: row.avatar ? JSON.parse(row.avatar) : null,
+                portal: row.portal || null
             };
         }
 
@@ -303,7 +305,8 @@ export const getUserByPhone = async (phone) => {
                     js->'data'->>'lname' as lname,
                     js->'data'->>'rights' as rights,
                     js->'data'->>'avatar' as avatar,
-                    js->'data'->>'blocks' as blocks
+                    js->'data'->>'blocks' as blocks,
+                    js->'data'->>'portal' as portal
             FROM data 
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'phone' = $3
             LIMIT 1
@@ -317,7 +320,8 @@ export const getUserByPhone = async (phone) => {
                 fname: row.fname,
                 lname: row.lname,
                 rights: row.rights ? JSON.parse(row.rights) : [],
-                avatar: row.avatar ? JSON.parse(row.avatar) : null
+                avatar: row.avatar ? JSON.parse(row.avatar) : null,
+                portal: row.portal || null
             };
         }
 
@@ -345,7 +349,8 @@ export const getUserById = async (id) => {
                     js->'data'->>'lname' as lname,
                     js->'data'->>'rights' as rights,
                     js->'data'->>'avatar' as avatar,
-                    js->'data'->>'blocks' as blocks
+                    js->'data'->>'blocks' as blocks,
+                    js->'data'->>'portal' as portal
             FROM data 
             WHERE ref = $1 AND sid = $2 AND _id = $3
             LIMIT 1
@@ -360,7 +365,8 @@ export const getUserById = async (id) => {
                 fname: row.fname,
                 lname: row.lname,
                 rights: row.rights ? JSON.parse(row.rights) : [],
-                avatar: row.avatar ? JSON.parse(row.avatar) : null
+                avatar: row.avatar ? JSON.parse(row.avatar) : null,
+                portal: row.portal || null
             };
         }
 

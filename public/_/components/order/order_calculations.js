@@ -82,8 +82,10 @@ export const updateCalculations = (cell, settings) => {
 
     console.log('Calculated area:', price_length);
 
-    if (!data.sketch_attached) row.update({ area: isNaN(area) ? "" : area });
-    if (!data.sketch_attached) row.update({ price_length: isNaN(price_length) ? "" : price_length });
+    // if (!data.sketch_attached) 
+    row.update({ area: isNaN(area) ? "" : area });
+    // if (!data.sketch_attached) 
+    row.update({ price_length: isNaN(price_length) ? "" : price_length });
 
     // Calculate total price
     const total = calculateItemTotal(

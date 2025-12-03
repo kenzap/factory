@@ -94,6 +94,8 @@ const calculateFormulaPrice = (settings, item, obj) => {
 
     obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
 
+    if (item.cm) obj.price = 0;
+
     console.log("item", item);
 
     // Apply adjustments

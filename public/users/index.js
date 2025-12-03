@@ -116,9 +116,9 @@ class Users {
                             </a>
                         </div>
                     </td>
-                    <td class="destt" style="max-width:250px;min-width:250px;">
+                    <td class="destt userActionsCont" style="max-width:250px;min-width:250px;">
                         <div class="my-1">
-                            <a class="text-body" href="#" >${user.fname || ""}</a>
+                            <a class="text-body action" data-type="edit" data-id="${user._id}" data-index="${i}" href="#" >${user.fname || ""}</a>
                         </div>
                     </td>
                     <td>

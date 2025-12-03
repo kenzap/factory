@@ -382,7 +382,7 @@ class Transactions {
                     input.click(); // Trigger date picker
                     input.value = payment.date && payment.date !== '0000-00-00' ? new Date(payment.date).toISOString().split('T')[0] : '';
 
-                    console.log('Cell edited value', input.value, " | ", payment.date);
+                    // console.log('Cell edited value', input.value, " | ", payment.date);
 
                     // Handle value change
                     input.addEventListener('change', () => {
@@ -430,6 +430,22 @@ class Transactions {
                     // Add visual indicator to the entire row
                     const rowElement = cell.getRow().getElement();
                     rowElement.classList.add('table-warning');
+
+                    // If payment date was added and amount is empty, prefill with total
+                    const payment = cell.getValue();
+                    if (payment && payment.date && payment.date !== '0000-00-00' && (!payment.amount || payment.amount === 0)) {
+                        const totalValue = parseFloat(rowData.total) || 0;
+                        const updatedPayment = { ...payment, amount: totalValue };
+                        cell.setValue(updatedPayment);
+                    }
+
+                    // If payment date is cleared, also clear the amount
+                    if (!payment.date && payment.amount) {
+
+                        console.log('Resetting amount:', payment.date);
+                        const updatedPayment = { ...payment, amount: '' };
+                        cell.setValue(updatedPayment);
+                    }
 
                     // Refresh the cell to update formatter
                     cell.getRow().reformat();
