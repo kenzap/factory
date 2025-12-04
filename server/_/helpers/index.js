@@ -60,6 +60,8 @@ export const getLocale = async (locale) => {
 
     if (!locale) locale = process.env.LOCALE || 'en'; // Default to 'en' if not set
 
+    console.log('Fetching locale:', locale);
+
     const db = getDbConnection();
     await db.connect();
 

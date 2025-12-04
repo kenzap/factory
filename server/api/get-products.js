@@ -109,7 +109,7 @@ function getProductsApi(app) {
     app.post('/api/get-products/', authenticateToken, async (req, res) => {
         try {
             const filters = req.body.filters || {};
-            const locale = await getLocale();
+            const locale = await getLocale(req.headers?.locale);
             const records = await getProducts(filters);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "stock_categories"]);
 

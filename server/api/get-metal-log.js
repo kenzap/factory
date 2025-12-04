@@ -101,7 +101,7 @@ function getMetalLogApi(app) {
         try {
 
             const records = await getMetalLog(req.body.filters);
-            const locale = await getLocale();
+            const locale = await getLocale(req.headers?.locale);
             const locales = await getLocales();
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price"]);
 

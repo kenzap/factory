@@ -1,6 +1,7 @@
 import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getOrders } from "../_/api/get_orders.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
+import { PreviewReport } from "../_/components/payments/preview_report.js";
 import { __html, hideLoader, log, priceFormat, toast } from "../_/helpers/global.js";
 import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
 import { bus } from "../_/modules/bus.js";
@@ -178,9 +179,20 @@ class Orders {
                             <button class="btn btn-outline-dark d-flex align-items-center" id="refreshBtn">
                                 <i class="bi bi-arrow-repeat d-flex me-1"></i> ${__html('Refresh')}
                             </button>
-                            <button class="btn btn-outline-dark d-flex align-items-center" id="reportBtn">
-                                <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
-                            </button>
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-outline-dark dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-filetype-pdf d-flex me-1"></i> ${__html('Report')}
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" id="waybillReportBtn">
+                                    <i class="bi bi-truck me-2"></i>${__html('Waybills')}
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="#" id="exportCsvBtn">
+                                    <i class="bi bi-filetype-csv me-2"></i>${__html('Export')}
+                                    </a></li>
+                                </ul>
+                            </div>
                             <button class="btn btn-outline-dark d-flex align-items-center" id="deleteBtn">
                                 <i class="bi bi-trash d-flex me-1"></i> ${__html('Delete')}
                             </button>
@@ -211,7 +223,7 @@ class Orders {
 
         // Button event listeners
         document.getElementById('refreshBtn').addEventListener('click', () => { this.table.setPage(1); });
-        document.getElementById('reportBtn').addEventListener('click', () => this.generateReport());
+        document.getElementById('waybillReportBtn').addEventListener('click', () => this.generateWaybillReport());
         document.getElementById('deleteBtn').addEventListener('click', () => this.delete());
 
         // Clear date input on backspace
@@ -230,13 +242,6 @@ class Orders {
                 this.table.setPage(1);
             }
         });
-
-        // Or if using event listeners
-        // this.table.on("tableBuilt", () => {
-        //     log("Table built successfully!");
-        //     // Set initial sort to show correct visual state
-        //     this.table.setSort("id", "desc");
-        // });
 
         // Or if using event listeners
         this.table.on("dataLoaded", function () {
@@ -462,6 +467,16 @@ class Orders {
                 }
             }
         ];
+    }
+
+    generateWaybillReport = () => {
+
+        new PreviewReport(`/report/waybills/?eid=${this.filters.client?.eid || ''}&name=${this.filters.client?.name || ''}&from=${this.filters.dateFrom || ''}&to=${this.filters.dateTo || ''}&format=pdf`, (response) => {
+            if (!response.success) {
+                toast(__html('Error opening report'));
+                return;
+            }
+        });
     }
 
     delete = () => {

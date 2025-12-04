@@ -138,7 +138,7 @@ function getClientsApi(app) {
     app.post('/api/get-clients/', authenticateToken, async (req, res) => {
         try {
 
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers?.locale);
             const filters = req.body.filters || {};
             const clients = await getClients(filters);
 

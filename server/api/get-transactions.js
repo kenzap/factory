@@ -168,7 +168,7 @@ function getTransactionsApi(app) {
     app.post('/api/get-transactions/', authenticateToken, async (req, res) => {
         try {
 
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers?.locale);
             const filters = req.body.filters || {};
             const orders = await getTransactions(filters);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);
