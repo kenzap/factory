@@ -1,6 +1,36 @@
 
 import { sid } from './index.js';
 
+/**
+ * Sets or updates the stock amount for a specific product variant based on coating and color.
+ * 
+ * @async
+ * @function setProductStock
+ * @param {Object} db - Database connection object with query method
+ * @param {Object} inventory - Inventory data object containing product variant information
+ * @param {string} inventory._id - Product ID
+ * @param {string} inventory.coating - Product coating type (use '-' for no coating)
+ * @param {string} inventory.color - Product color variant
+ * @param {number|string} inventory.amount - Stock amount to set (will be parsed to integer)
+ * @param {string} user_id - User ID performing the operation
+ * @returns {Promise<Object>} Returns success object with updated product ID or error object
+ * @returns {Promise<{success: boolean, error: string}>} On validation failure
+ * @returns {Promise<{_id: string}>} On successful update
+ * @throws {Error} Throws error if product not found or update operation fails
+ * 
+ * @description
+ * This function validates inventory data, sanitizes the amount input, retrieves existing
+ * product variant pricing data, updates or adds stock information for the specified
+ * coating/color combination, and persists the changes to the database.
+ * 
+ * @example
+ * const result = await setProductStock(db, {
+ *   _id: 'product123',
+ *   coating: 'matte',
+ *   color: 'red',
+ *   amount: '50'
+ * }, 'user456');
+ */
 export const setProductStock = async (db, inventory, user_id) => {
 
     // console.log('setProductStock', inventory);
@@ -66,6 +96,29 @@ export const setProductStock = async (db, inventory, user_id) => {
     return updateResult.rows[0];
 }
 
+/**
+ * Updates the stock quantity for a specific product variant based on coating and color.
+ * 
+ * @async
+ * @function updateProductStock
+ * @param {Object} db - Database connection object with query method
+ * @param {Object} inventory - Inventory data object containing product details
+ * @param {string} inventory._id - Product ID to update
+ * @param {string} inventory.coating - Product coating type (use '-' for no coating)
+ * @param {string} inventory.color - Product color variant
+ * @param {number|string} inventory.amount - Amount to add to current stock (will be parsed as integer)
+ * @param {string} user_id - User ID performing the update (currently unused in implementation)
+ * @returns {Promise<Object>} Returns success object with _id on success, or error object on failure
+ * @throws {Error} Throws error if product not found or update operation fails
+ * 
+ * @example
+ * const result = await updateProductStock(db, {
+ *   _id: 'prod123',
+ *   coating: 'Polyester',
+ *   color: 'RR11',
+ *   amount: 10
+ * }, 'user456');
+ */
 export const updateProductStock = async (db, inventory, user_id) => {
 
     // console.log('updateProductStock', inventory);

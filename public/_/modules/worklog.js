@@ -16,7 +16,7 @@ export const getHtml = (record) => {
                                 <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
                             </div>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
                             <input type="text" class="form-control border-0" id="productColor" placeholder="" value="${record.color}" required>
                         </div>
@@ -32,7 +32,7 @@ export const getHtml = (record) => {
                             <label for="time" class="form-label d-none">${__html('Time (min)')}</label>
                             <input type="number" class="form-control border-0" id="time" min="1" placeholder="Min">
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-1 d-none">
                             <label for="origin" class="form-label d-none">${__html('Origin')}</label>
                             <select class="form-select border-0" id="origin" required>
                                 <option value="w">${__html('Warehouse')}</option>
@@ -42,7 +42,7 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2">
                             <label for="type" class="form-label d-none">${__html('Type')}</label>
-                            <select class="form-select  border-0" id="type" required></select>
+                            <select class="form-select border-0" id="type" required></select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
                             <button type="submit" class="btn btn-dark  border-0 btn-add-worklog-record w-100">

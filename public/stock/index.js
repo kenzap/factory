@@ -79,6 +79,35 @@ class Stock {
                 this.editCell(e.target);
             }
         });
+
+        // Coating filter
+        onClick('#coatingFilter .dropdown-item', (e) => {
+            e.preventDefault();
+
+            const selectedCoating = document.getElementById('selectedCoating');
+            selectedCoating.textContent = e.target.textContent;
+
+            const coating = e.target.getAttribute('data-value');
+            e.target.closest('.dropdown').querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
+            e.target.classList.add('active');
+
+            // Filter the table based on selected coating
+            this.filterTableByCoating(coating);
+        });
+    }
+
+    filterTableByCoating(coating) {
+        const tbody = document.getElementById('stockTableBody');
+        const rows = tbody.querySelectorAll('tr');
+
+        rows.forEach(row => {
+            const coatingCell = row.querySelector('.product-coating div');
+            if (coating.trim() === "" || coatingCell.textContent.trim() === coating.trim()) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     }
 
     editCell(cell) {
@@ -171,81 +200,6 @@ class Stock {
         });
     }
 
-    // editCell(cell) {
-    //     const currentValue = cell.textContent;
-    //     const wrapper = document.createElement('div');
-    //     const input = document.createElement('input');
-
-    //     input.type = 'text';
-    //     input.dataset.productId = cell.dataset.productId;
-    //     input.dataset.coating = cell.dataset.coating;
-    //     input.dataset.color = cell.dataset.color;
-    //     input.min = '0';
-    //     input.value = currentValue;
-    //     input.className = 'form-control form-control-sm input-editing';
-    //     input.style.width = '60px';
-    //     input.style.textAlign = 'center';
-
-    //     wrapper.appendChild(input);
-
-    //     cell.innerHTML = '';
-    //     cell.appendChild(wrapper);
-    //     input.focus();
-    //     input.select();
-
-    //     let isEditing = false;
-
-    //     const saveEdit = (e) => {
-    //         if (isEditing) return;
-    //         isEditing = true;
-
-    //         const newValue = parseInt(input.value) || 0;
-
-    //         cell.textContent = newValue;
-    //         cell.className = `editable-cell ${this.getStockClass(newValue)}`;
-
-    //         let stock = {
-    //             color: input.dataset.color,
-    //             coating: input.dataset.coating,
-    //             amount: newValue,
-    //             _id: input.dataset.productId,
-    //         }
-
-    //         console.log('Saving stock:', stock);
-    //         // return;
-
-    //         // Save the new stock amount
-    //         saveStockAmount(stock, (response) => {
-    //             if (!response.success) {
-    //                 toast('Error saving stock amount: ' + response.error);
-    //                 cell.textContent = currentValue; // Revert to old value on error
-    //                 isEditing = false;
-    //                 return;
-    //             }
-
-    //             toast('Changes applied');
-    //             isEditing = false;
-    //         });
-
-    //         // Show update feedback
-    //         cell.style.transform = 'scale(1.1)';
-    //         setTimeout(() => {
-    //             cell.style.transform = 'scale(1)';
-    //         }, 200);
-    //     };
-
-    //     input.addEventListener('blur', e => saveEdit(e));
-    //     input.addEventListener('keypress', (e) => {
-    //         if (e.key === 'Enter') {
-    //             saveEdit(e);
-    //         }
-    //         if (e.key === 'Escape') {
-    //             cell.textContent = currentValue;
-    //             cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
-    //         }
-    //     });
-    // }
-
     async data() {
 
         // get products
@@ -333,14 +287,25 @@ class Stock {
 
         header.innerHTML = `
             <tr>
-                <th class="product-name">${__html('Product')}</th>
-                <th class="product-coating">${__html('Coating')}</th>
+            <th class="product-name">${__html('Product')}</th>
+            <th class="product-coating">
+                <div class="dropdown ${this.coatings.length <= 1 ? 'd-none' : ''}">
+                    <button class="btn btn-link text-dark stock-table p-0 text-decoration-none fw-bold" type="button" data-bs-toggle="dropdown">
+                        <span id="selectedCoating">${__html('All')}</span>
+                        <i class="bi bi-chevron-down ms-1"></i>
+                    </button>
+                    <ul class="dropdown-menu" id="coatingFilter">
+                        <li><a class="dropdown-item active" href="#" data-value="">${__html('All')}</a></li>
+                        ${this.coatings.map(coating =>
+            `<li><a class="dropdown-item" href="#" data-value="${coating}">${coating}</a></li>`
+        ).join('')}
+                    </ul>
+                </div>
+            </th>
             ${this.colors.map(color => {
-            return `<th class="color-header" > <div>${color}</div></th > `;
-        }).join('')
-            }
-            </tr>
-    `;
+            return `<th class="color-header"><div>${color}</div></th>`;
+        }).join('')}
+            </tr>`;
     }
 
     /**
@@ -415,7 +380,7 @@ class Stock {
     }
 
     getStockAmount(product, coating, color) {
-        let stock = 0;
+        let stock = "";
 
         if (product.var_price) {
             product.var_price.forEach(vp => {
@@ -444,7 +409,11 @@ class Stock {
     }
 
     getStockClass(quantity) {
-        if (quantity === 0) return 'out-of-stock';
+        quantity = parseFloat(quantity);
+
+        if (quantity === '') return '';
+        if (quantity <= 0) return 'out-of-stock';
+        // if (quantity <= 5) return 'out-of-stock';
         if (quantity <= 25) return 'very-low-stock';
         if (quantity <= 100) return 'low-stock';
         return '';

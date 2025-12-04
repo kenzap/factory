@@ -72,6 +72,11 @@ class WorkLog {
         }
 
         this.listeners();
+
+        setTimeout(() => {
+            document.querySelector('#qty').focus();
+            document.querySelector('#qty').select();
+        }, 100);
     }
 
     listeners() {
@@ -146,7 +151,7 @@ class WorkLog {
             const record = {
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
-                product_id: this.product ? this.product.id : '',
+                product_id: this.product ? this.product._id : '',
                 product_name: document.querySelector('#productName').value,
                 color: document.querySelector('#productColor').value.trim(),
                 coating: document.querySelector('#productCoating').value.trim(),
@@ -233,7 +238,6 @@ class WorkLog {
         }
 
         // Populate type filter
-
         const filterType = `
             <option value="" ${this.filters.type === '' ? 'selected' : ''}>${__html('All')}</option>
             ${this.settings?.work_categories?.map(category =>

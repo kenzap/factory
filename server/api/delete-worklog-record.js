@@ -1,6 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
-
+import { updateProductStock } from '../_/helpers/product.js';
 
 async function revertCuttingAction(db, data) {
 
@@ -17,7 +17,7 @@ async function revertCuttingAction(db, data) {
 
     let params = ['supplylog', sid, data.coil_id, data.qty];
 
-    console.log('Updating coil:', data.coil_id, 'by length:', data.qty);
+    // console.log('Updating coil:', data.coil_id, 'by length:', data.qty);
 
     // remove stock sheets added during cutting
     if (data.sheets) data.sheets.forEach(async (sheet) => {
@@ -41,6 +41,7 @@ async function revertCuttingAction(db, data) {
 
     // clear order item statuses
     if (data.items) {
+
         // Group items by order_id to avoid multiple updates to same order
         const itemsByOrderId = data.items.reduce((acc, item) => {
             if (!acc[item.order_id]) acc[item.order_id] = [];
@@ -107,6 +108,21 @@ async function revertCuttingAction(db, data) {
     if (res) response.push(res.rows[0] || {});
 }
 
+function revertStockReplenishmentAction(db, data) {
+
+    console.log('Reverting stock replenishment action:', data);
+
+    // return;
+
+    // simply reduce stock by the replenished amount
+    return updateProductStock(db, {
+        _id: data.product_id,
+        coating: data.coating,
+        color: data.color,
+        amount: -1 * data.qty
+    }, data.user_id);
+}
+
 /**
  * Delete product by id
  *
@@ -116,7 +132,7 @@ async function revertCuttingAction(db, data) {
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteWorklogRecord(id) {
+async function deleteWorklogRecord(id, user_id) {
 
     const db = getDbConnection();
 
@@ -140,11 +156,12 @@ async function deleteWorklogRecord(id) {
             return { success: false, error: 'worklog record not found' };
         }
 
-        const worklogRecord = checkResult.rows[0];
+        let worklogRecord = checkResult.rows[0];
 
-        // console.log("worklogRecord type", worklogRecord.js.data.type);
+        worklogRecord.js.data.user_id = user_id;
 
         if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data);
+        if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data);
 
         // Delete worklog record
         let query = `
@@ -171,7 +188,7 @@ function deleteWorklogRecordApi(app) {
 
     app.post('/api/delete-worklog-record/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteWorklogRecord(_req.body.id);
+        const response = await deleteWorklogRecord(_req.body.id, _req.user.id);
 
         // console.log('delete response', response);
 

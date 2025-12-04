@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { updateProductStock } from '../_/helpers/product.js';
 
 /**
  * Create worklog record
@@ -43,6 +44,19 @@ async function createWorkLog(data) {
         const result = await db.query(query, params);
 
         response = result.rows[0] || {};
+
+        // if origin set to w = warehouse, update inventory stock accordingly
+        if (data.type && data.type === 'stock-replenishment') {
+
+            console.log('Creating stock replenishment action for worklog record:', data);
+
+            await updateProductStock(db, {
+                _id: data.product_id,
+                coating: data.coating,
+                color: data.color,
+                amount: data.qty
+            }, data.user_id);
+        }
 
     } finally {
         await db.end();
