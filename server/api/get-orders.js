@@ -14,124 +14,90 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
     let orders = { records: [], total: 0 };
 
-    // Get orders
+    // Get orders - optimized query
     let query = `
         SELECT _id, 
-            COALESCE(js->'data'->>'id', '') as id, 
-            COALESCE(js->'data'->>'from', '') as from, 
-            COALESCE(js->'data'->>'name', '') as name, 
-            COALESCE(js->'data'->>'eid', '') as eid, 
-            COALESCE(js->'data'->>'notes', '') as notes,
-            COALESCE(js->'data'->'price'->>'grand_total', '') as total,
-            COALESCE(js->'data'->>'operator', '') as operator,
-            COALESCE(js->'data'->>'due_date', '') as due_date,
-            CASE WHEN js->'data'->'draft' IS NOT NULL THEN (js->'data'->'draft')::boolean ELSE false END as draft,
+            js->'data'->>'id' as id, 
+            js->'data'->>'from' as from, 
+            js->'data'->>'name' as name, 
+            js->'data'->>'eid' as eid, 
+            js->'data'->>'notes' as notes,
+            js->'data'->'price'->>'grand_total' as total,
+            js->'data'->>'operator' as operator,
+            js->'data'->>'due_date' as due_date,
+            COALESCE((js->'data'->'draft')::boolean, false) as draft,
             js->'data'->'inventory' as inventory,
             js->'data'->'invoice' as invoice,
             js->'data'->'payment' as payment,
             js->'data'->'waybill' as waybill,
-            js->'data'->'date' as date,
-            js->'data'->'items' as items
+            js->'data'->'date' as date
+            ${filters.items ? ', js->\'data\'->\'items\' as items' : ''}
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
 
     let query_summary = `
         SELECT
             COUNT(*) as total,
-            SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
-            SUM(CASE WHEN js->'data'->'price'->>'grand_total' IS NOT NULL AND js->'data'->'price'->>'grand_total' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_amount,
-            SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_waybill
+            COALESCE(SUM((js->'data'->'payment'->>'amount')::numeric), 0) as total_paid,
+            COALESCE(SUM((js->'data'->'price'->>'grand_total')::numeric), 0) as total_amount,
+            COALESCE(SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 0) as total_waybill
         FROM data 
         WHERE ref = $1 AND sid = $2`;
 
     const params = ['ecommerce-order', sid];
+    let whereConditions = [];
 
-    let chunk = null;
-
+    // Build WHERE conditions dynamically
     if (filters.client?.eid) {
-        chunk = ` AND (js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`;
-        query += chunk;
-        query_summary += chunk
+        whereConditions.push(`(js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`);
         params.push(`${filters.client.eid.trim()}`);
         params.push(`${filters.client.name.trim()}`);
     }
 
-    // order date
-    if (filters.type != 'waybills' && filters.dateFrom && filters.dateFrom.trim() !== '') {
-        chunk = ` AND (js->'data'->>'date' >= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
+    // Date filtering logic (consolidated)
+    const dateField = filters.type === 'waybills' ? "js->'data'->'waybill'->>'date'" : "js->'data'->>'date'";
+
+    if (filters.dateFrom?.trim()) {
+        whereConditions.push(`(${dateField} >= $${params.length + 1})`);
         params.push(filters.dateFrom.trim());
     }
 
-    // order date / Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
-    if (filters.type != 'waybills' && filters.dateTo && filters.dateTo.trim() !== '') {
-        chunk = ` AND (js->'data'->>'date' <= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
+    if (filters.dateTo?.trim()) {
+        whereConditions.push(`(${dateField} <= $${params.length + 1})`);
         params.push(filters.dateTo.trim());
     }
 
-    // waybill date
-    if (filters.type == 'waybills' && filters.dateFrom && filters.dateFrom.trim() !== '') {
-        chunk = ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
-        params.push(filters.dateFrom.trim());
-    }
-
-    // waybill date / Handle dateTo by adding one day to include the entire day, ex, from 20 Nov to 20 Nov
-    if (filters.type == 'waybills' && filters.dateTo && filters.dateTo.trim() !== '') {
-        chunk = ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
-        params.push(filters.dateTo.trim());
-    }
-
-    if (filters.type == 'draft') {
-        chunk = ` AND (js->'data'->'draft')::boolean = true`;
-        query += chunk;
-        query_summary += chunk
+    // Type-specific filters
+    if (filters.type === 'draft') {
+        whereConditions.push(`(js->'data'->'draft')::boolean = true`);
     }
 
     if (filters.for === 'orders') {
-        chunk = ` AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)`;
-        query += chunk;
-        query_summary += chunk
+        whereConditions.push(`((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)`);
     }
 
-    if (filters.for && filters.for === 'manufacturing') {
+    if (filters.for === 'manufacturing') {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 1);
-        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) AND js->'data'->'due_date' IS NOT NULL
-        AND EXISTS (    
-            SELECT 1 
-            FROM jsonb_array_elements(js->'data'->'items') AS item 
-            WHERE (item->'inventory'->>'isu_date' IS NULL 
-               OR item->'inventory'->>'isu_date' = ''
-               OR item->'inventory'->>'isu_date' >= $${params.length + 1})
-        ) `;
-        query += chunk;
-        query_summary += chunk
-        // params.push(twoMonthsAgo);
+        whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) 
+            AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL) 
+            AND js->'data'->'due_date' IS NOT NULL
+            AND EXISTS (    
+                SELECT 1 
+                FROM jsonb_array_elements(js->'data'->'items') AS item 
+                WHERE (item->'inventory'->>'isu_date' IS NULL 
+                   OR item->'inventory'->>'isu_date' = ''
+                   OR item->'inventory'->>'isu_date' >= $${params.length + 1})
+            )`);
         params.push(oneWeekAgo);
     }
 
-    if (filters.type == 'manufacturing') {
-        chunk = ` AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`;
-        query += chunk;
-        query_summary += chunk
+    if (filters.type === 'manufacturing') {
+        whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
     }
 
-    // AND NOT EXISTS (
-    //     SELECT 1 
-    //     FROM jsonb_array_elements(js->'data'->'items') AS item 
-    //     WHERE item->'inventory'->>'isu_date' IS NOT NULL 
-    //        AND item->'inventory'->>'isu_date' != ''
-    // )
-
-    if (filters.type == 'ready') {
-        chunk = ` AND NOT EXISTS (
+    if (filters.type === 'ready') {
+        whereConditions.push(`NOT EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 
             WHERE item->'inventory'->>'rdy_date' IS NULL 
@@ -141,83 +107,72 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             FROM jsonb_array_elements(js->'data'->'items') AS item 
             WHERE item->'inventory'->>'isu_date' IS NOT NULL 
                AND item->'inventory'->>'isu_date' != ''
-        ) AND jsonb_array_length(js->'data'->'items') > 0`;
-        query += chunk;
-        query_summary += chunk
+        ) AND jsonb_array_length(js->'data'->'items') > 0`);
     }
 
-    if (filters.type == 'issued') {
-        chunk = ` AND EXISTS (
+    if (filters.type === 'issued') {
+        whereConditions.push(`EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 
             WHERE item->'inventory'->>'isu_date' IS NOT NULL 
                AND item->'inventory'->>'isu_date' != ''
-        ) AND jsonb_array_length(js->'data'->'items') > 0`;
-        query += chunk;
-        query_summary += chunk;
+        ) AND jsonb_array_length(js->'data'->'items') > 0`);
     }
 
-    // Apply pagination
-    const limit = filters.limit || 250;
+    // Append all WHERE conditions
+    if (whereConditions.length > 0) {
+        const whereClause = ` AND ${whereConditions.join(' AND ')}`;
+        query += whereClause;
+        query_summary += whereClause;
+    }
+
+    // Apply sorting and pagination
+    const limit = Math.min(filters.limit || 250, 1000); // Cap at 1000
     const offset = filters.offset || 0;
 
-    // Apply sorting
     const sortBy = filters.sort_by || 'created';
     const sortDir = filters.sort_dir || 'desc';
 
-    let orderByClause = `js->'data'->>'created'`;
-    switch (sortBy) {
-        case 'name':
-            orderByClause = `js->'data'->>'name'`;
-            break;
-        case 'id':
-            orderByClause = `js->'data'->>'id'`;
-            break;
-        case 'entity':
-            orderByClause = `js->'data'->>'entity'`;
-            break;
-        case 'created':
-        default:
-            orderByClause = `js->'data'->>'created'`;
-            break;
-    }
+    const orderByMap = {
+        'name': `js->'data'->>'name'`,
+        'id': `js->'data'->>'id'`,
+        'entity': `js->'data'->>'entity'`,
+        'created': `js->'data'->>'created'`
+    };
 
+    const orderByClause = orderByMap[sortBy] || orderByMap['created'];
     query += ` ORDER BY ${orderByClause} ${sortDir.toUpperCase()} LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit);
     params.push(offset);
 
     try {
-
         await db.connect();
 
-        const result = await db.query(query, params);
+        // Run queries in parallel when possible
+        const [result, countResult] = await Promise.all([
+            db.query(query, params),
+            (filters.for === 'orders' || filters.for === 'transactions')
+                ? db.query(query_summary, params.slice(0, -2))
+                : Promise.resolve(null)
+        ]);
 
         orders.records = result.rows;
 
-        if (filters.for === 'orders' || filters.for === 'transactions') {
-
-            const countParams = params.slice(0, -2); // Remove LIMIT and OFFSET params
-            const countResult = await db.query(query_summary, countParams);
-
+        if (countResult) {
             orders.total = parseInt(countResult.rows[0].total);
             orders.summary = {
-                total: parseFloat(countResult.rows[0].total_amount),
-                paid: parseFloat(countResult.rows[0].total_paid),
-                waybill: parseFloat(countResult.rows[0].total_waybill)
+                total: parseFloat(countResult.rows[0].total_amount) || 0,
+                paid: parseFloat(countResult.rows[0].total_paid) || 0,
+                waybill: parseFloat(countResult.rows[0].total_waybill) || 0
             };
 
-            // filter out items keys except inventory
-            if (orders.records && orders.records.length > 0) {
+            // Optimize item filtering - only load items when needed
+            if (filters.items && orders.records?.length > 0) {
                 orders.records.forEach(order => {
                     if (order.items && Array.isArray(order.items)) {
                         order.items = order.items.map(item => ({
-                            ...item,
-                            inventory: item.inventory,
-                            id: item.id
-                        })).map(item => {
-                            const { inventory, ...rest } = item;
-                            return { inventory };
-                        });
+                            inventory: item.inventory
+                        }));
                     }
                 });
             }
@@ -234,6 +189,9 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 function getOrdersApi(app) {
 
     app.post('/api/get-orders/', authenticateToken, async (req, res) => {
+
+        const startTime = Date.now();
+
         try {
 
             console.log('/api/get-orders/', req.body.filters);
@@ -241,9 +199,13 @@ function getOrdersApi(app) {
             const locale = await getLocale(req.headers.locale);
             const filters = req.body.filters || {};
             const orders = await getOrders(filters);
+
+            const processingTime = (Date.now() - startTime);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "groups"]);
 
-            res.send({ success: true, settings, user: req.user, orders, locale });
+            // const processingTime = (Date.now() - startTime);
+
+            res.send({ success: true, settings, user: req.user, orders, locale, processingTime });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

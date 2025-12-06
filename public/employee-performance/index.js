@@ -1,5 +1,6 @@
 import { getEmployeePerformance } from "../_/api/get_employee_performance.js";
 import { drawWorkCategoryChart } from "../_/components/charts/work_category_chart.js";
+import { drawWorkSummaryTable } from "../_/components/charts/work_summary_table.js";
 import { drawWorkTotalsByDayChart } from "../_/components/charts/work_totals_by_day_chart.js";
 import { drawWorkTotalsChart } from "../_/components/charts/work_totals_chart.js";
 import { __html, hideLoader } from "../_/helpers/global.js";
@@ -76,6 +77,7 @@ class EmployeePerformance {
             this.records = response.records;
             this.work_categories_stats = response.work_categories_stats;
             this.work_categories_by_day_stats = response.work_categories_by_day_stats;
+            this.employee_performance = response.employee_performance;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
 
@@ -103,9 +105,6 @@ class EmployeePerformance {
 
         const employeeSelect = document.getElementById('filterEmployee');
         const typeSelect = document.getElementById('filterType');
-        const dateFromInput = document.getElementById('filterStartDate');
-        const dateToInput = document.getElementById('filterEndDate');
-        const type = document.getElementById('type');
 
         // Populate employee filter
         if (this.users && this.users.length > 0) {
@@ -132,6 +131,7 @@ class EmployeePerformance {
         drawWorkCategoryChart('workTypeChart', this.settings, this.work_categories_stats);
         drawWorkTotalsChart('employeeChart', this.settings, this.work_categories_stats);
         drawWorkTotalsByDayChart('workTotalsByDayChart', this.settings, this.work_categories_by_day_stats);
+        drawWorkSummaryTable('workSummaryTable', this.settings, this.users, this.employee_performance);
     }
 
     applyFilters() {
@@ -167,13 +167,6 @@ class EmployeePerformance {
 
         // hide summary if viewed in iframe
         if (this.mini) document.querySelector('.fixed-summary').style.display = 'none';
-    }
-
-    getUserName(userId) {
-        if (!this.users) return userId;
-
-        const user = this.users.find(u => u._id === userId);
-        return user ? user.fname + ' ' + user.lname.charAt(0) : userId;
     }
 }
 

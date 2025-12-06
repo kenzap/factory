@@ -167,7 +167,7 @@ async function getWorkCategoriesByDayStats(filters) {
     return dailyStats;
 }
 
-async function getWorkCategoriesStats(filters) {
+async function getWorkCategoriesStats(filters, reportType) {
 
     const db = getDbConnection();
     let categories = [];
@@ -194,6 +194,7 @@ async function getWorkCategoriesStats(filters) {
         let query = `
                 SELECT
                 js->'data'->>'type' AS type,
+                ${reportType === 'employee_performance' ? "js->'data'->>'user_id' AS user_id," : ""}
                 COUNT(*) AS count,
                 SUM(CAST(js->'data'->>'qty' AS INTEGER)) AS total_qty
                 FROM data
@@ -224,6 +225,10 @@ async function getWorkCategoriesStats(filters) {
 
         query += ` GROUP BY js->'data'->>'type'`;
 
+        if (reportType === 'employee_performance') {
+            query += `,js->'data'->>'user_id'`;
+        }
+
         const result = await db.query(query, params);
         if (result.rows.length > 0) {
             categories = result.rows;
@@ -242,14 +247,14 @@ function getEmployeePerformanceApi(app) {
         try {
 
             const users = await getUsers();
-            const records = await getEmployeePerformance(req.body.filters);
+            const employee_performance = await getWorkCategoriesStats(req.body.filters, 'employee_performance');
             const work_categories_stats = await getWorkCategoriesStats(req.body.filters);
             const work_categories_by_day_stats = await getWorkCategoriesByDayStats(req.body.filters);
             const locale = await getLocale(req.headers?.locale);
             const locales = await getLocales();
             const settings = await getSettings(["work_categories", "currency", "currency_symb", "currency_symb_loc", "price"]);
 
-            res.send({ success: true, settings, locale, locales, work_categories_stats, work_categories_by_day_stats, records: records, users: users, user: req.user });
+            res.send({ success: true, settings, locale, locales, work_categories_stats, work_categories_by_day_stats, employee_performance, users: users, user: req.user });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

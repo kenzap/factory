@@ -27,25 +27,6 @@ export const getHtml = (filters) => {
             </div>
         </div>
 
-        <div class="stats d-none">
-            <div class="stat-card">
-                <h3>Kopējais daudzums</h3>
-                <div class="value" id="totalQty">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Ieraksti</h3>
-                <div class="value" id="totalEntries">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Darbinieki</h3>
-                <div class="value" id="totalEmployees">0</div>
-            </div>
-            <div class="stat-card">
-                <h3>Darba veidi</h3>
-                <div class="value" id="totalWorkTypes">0</div>
-            </div>
-        </div>
-
         <div class="charts-section">
             <div class="charts-grid">
                 <div class="chart-container">
@@ -68,6 +49,12 @@ export const getHtml = (filters) => {
                         <canvas id="workTotalsByDayChart"></canvas>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div id="workSummaryTable">
+
             </div>
         </div>
     </div>

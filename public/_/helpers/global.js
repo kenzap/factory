@@ -1326,6 +1326,24 @@ export const mapHexColor = (slug) => {
     }
 }
 
+/**
+ * Retrieves the formatted name of a user by their ID
+ * @param {string} userId - The unique identifier of the user
+ * @returns {string} The formatted user name (first name + last name initial) or the userId if user not found or users array is not available
+ * @example
+ * // Returns "John D" if user exists
+ * getUserName("123456")
+ * 
+ * // Returns "123456" if user doesn't exist
+ * getUserName("nonexistent")
+ */
+export const getUserName = (users, userId) => {
+    if (!users) return userId;
+
+    const user = users.find(u => u._id === userId);
+    return user ? user.fname + ' ' + user.lname.charAt(0) : userId;
+}
+
 // Country names object using 2-letter country codes to reference country name
 // ISO 3166 Alpha-2 Format: [2 letter Country Code]: [Country Name]
 // Sorted alphabetical by country name (special characters on bottom)

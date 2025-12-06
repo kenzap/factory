@@ -35,8 +35,11 @@ export function log_error(...args) {
 // Database connection helper
 export function getDbConnection() {
 
+    // process.env.DATABASE_URL = 'postgresql://skarda_design:weid84£q213c23Rvd00hjsdaFVDfLSQsvdsfVFDQ@10.0.0.4:5432/skarda_design';
     console.log('Connecting to database...', process.env.DATABASE_URL);
+
     return new Client({
+        // connectionString: 'postgresql://skarda_design:weid84£q213c23Rvd00hjsdaFVDfLSQsvdsfVFDQ@10.0.0.4:5432/skarda_design'
         connectionString: process.env.DATABASE_URL
     });
 }

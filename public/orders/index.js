@@ -324,7 +324,8 @@ class Orders {
                 headerSort: false,
                 formatter: (cell) => {
                     const value = cell.getValue();
-                    if (!value) return '';
+                    const rowData = cell.getRow().getData();
+                    if (!value || rowData.draft === true) return '';
                     const date = new Date(value);
                     return `<span class="fw-bold- text-success-">${date.toLocaleDateString()}</span>`;
                 }
@@ -336,7 +337,8 @@ class Orders {
                 headerSort: false,
                 formatter: (cell) => {
                     const value = cell.getValue();
-                    if (!value) return '';
+                    const rowData = cell.getRow().getData();
+                    if (!value || rowData.draft === true) return '';
                     const date = new Date(value);
                     return `<span class="fw-bold- text-success-">${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`;
                 }
@@ -392,18 +394,18 @@ class Orders {
                     return `<span class="fw-bold text-success">${latestDate.toLocaleDateString()}</span>`;
                 },
             },
-            {
-                title: __html("Invoice"),
-                field: "invoice",
-                width: 120,
-                headerSort: false,
-                formatter: (cell) => {
-                    const waybill = cell.getValue();
-                    if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
-                    const date = new Date(waybill.date);
-                    return `<span>${date.toLocaleDateString()}</span>`;
-                },
-            },
+            // {
+            //     title: __html("Invoice"),
+            //     field: "invoice",
+            //     width: 120,
+            //     headerSort: false,
+            //     formatter: (cell) => {
+            //         const waybill = cell.getValue();
+            //         if (!waybill || !waybill.date || waybill.date === '0000-00-00') return '';
+            //         const date = new Date(waybill.date);
+            //         return `<span>${date.toLocaleDateString()}</span>`;
+            //     },
+            // },
             {
                 title: __html("Invoice #"),
                 field: "invoice",
@@ -412,7 +414,10 @@ class Orders {
                 formatter: (cell) => {
                     const invoice = cell.getValue();
                     if (!invoice || !invoice.number) return '';
-                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${__html('INV-%1$', invoice?.number)}</span></div>`;
+
+                    const date = new Date(invoice.date);
+
+                    return `<div class="d-flex align-items-center justify-content-center h-100"><span class="item-status status-danger">${date.toLocaleDateString()}</span></div>`;
                 },
             },
             {

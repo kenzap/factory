@@ -123,11 +123,6 @@ class Home {
                         text: __html('Payments'),
                         link: link('/payments/'),
                         target: '_blank',
-                    },
-                    {
-                        text: __html('Reports'),
-                        link: link('/reports/'),
-                        target: '_blank',
                     }
                 ],
             },
@@ -140,11 +135,6 @@ class Home {
                     {
                         text: __html('Clients'),
                         link: link('/clients/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Reports'),
-                        link: link('/journal/transactions/'),
                         target: '_blank',
                     }
                 ],
@@ -192,8 +182,8 @@ class Home {
                 icon: '<i class="bi bi-graph-up me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
-                        text: __html('Analytics'),
-                        link: link('/analytics/'),
+                        text: __html('Works'),
+                        link: link('/employee-performance/'),
                         target: '_blank',
                     }
                 ],

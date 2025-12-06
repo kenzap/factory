@@ -66,12 +66,17 @@ export class OrderPane {
         // Add fade effect to indicate loading/disabled state
         document.querySelector('.right-pane').innerHTML = /*html*/`
             <div class="table-container">
-                <button id="add-order-row" class="btn btn-outline-primary btn-sm btn-add-row">
-                    <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
-                </button>
+                <div class="btn-group mb-2" role="group">
+                    <button id="add-order-row" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
+                    </button>
+                    <a href="https://office.skarda.design/manufacturing/?id=${state.order.id}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
+                        <i class="bi bi-box-arrow-up-right me-2"></i>
+                        ${__html('Manufacturing')}
+                    </a>
+                </div>
                 <div id="order-table"></div>
-            </div>
-        `;
+            </div>`;
     }
 
     table = () => {

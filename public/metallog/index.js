@@ -494,7 +494,14 @@ class MetalLog {
                 lastCoating = coating;
             }
 
-            return coatingHeader + entries.map((entry, i) => `
+            // Sort entries by color ascending
+            const sortedEntries = entries.sort((a, b) => {
+                const colorA = (a.color || '').toLowerCase();
+                const colorB = (b.color || '').toLowerCase();
+                return colorA.localeCompare(colorB);
+            });
+
+            return coatingHeader + sortedEntries.map((entry, i) => `
             <tr>
                 <td style="width:80px;" class="align-middle">
                     ${entry.color || '-'}

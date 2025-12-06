@@ -89,7 +89,7 @@ export class LeftPane {
                     <div class="btn-group-toggle d-flex flex-nowrap gap-1 overflow-hidden-" data-bs-toggle="buttons">
                         <div class="d-flex align-items-center justify-content-between w-100 h-100 overflow-hidden-">
                             <div class="d-flex flex-nowrap overflow-hidden-">
-                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
+                                <button ${state.order?.id && state.order.draft == false ? '' : 'disabled'} class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
                                 <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV-%1$', state.order?.invoice?.number) : __html('Invoice')}</button>
                                 <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
                                 <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
@@ -287,6 +287,8 @@ export class LeftPane {
             if (event.target.checked) {
                 document.getElementById('due_date').value = '';
             }
+
+            if (state.order?.id) document.querySelector('.document-btn[data-type="waybill"]').disabled = state.order.draft;
         });
 
         // Due date input focus handler

@@ -78,11 +78,16 @@ async function getProductSuggestions(filters) {
 function getProductSuggestionsApi(app) {
 
     app.post('/api/get-product-suggestions/', authenticateToken, async (req, res) => {
+
+        const startTime = Date.now();
+
         try {
 
             const suggestions = await getProductSuggestions(req.body.filters);
 
-            res.send({ success: true, suggestions, message: '' });
+            const processingTime = Date.now() - startTime;
+
+            res.send({ success: true, suggestions, message: '', now: Date.now(), processingTime });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to retrieve records' });
