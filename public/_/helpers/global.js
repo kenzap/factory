@@ -321,10 +321,10 @@ export const makeNumber = function (price) {
     return price;
 }
 
-export const formatTime = (timestamp) => {
+export const formatTime = (isoString) => {
 
-    if (!timestamp) return '';
-    const date = new Date(timestamp * 1000);
+    if (!isoString) return '';
+    const date = new Date(isoString);
     return date.toLocaleDateString();
 }
 

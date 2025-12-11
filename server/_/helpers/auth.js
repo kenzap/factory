@@ -477,7 +477,7 @@ export const generateTokens = (user) => {
     const refreshToken = jwt.sign(
         { id: user.id },
         JWT_REFRESH_SECRET,
-        { expiresIn: '7d' }
+        { expiresIn: '12h' }
     );
 
     return { accessToken, refreshToken };

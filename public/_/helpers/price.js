@@ -1,4 +1,4 @@
-import { makeNumber, priceFormat } from "./global.js";
+import { __html, makeNumber, priceFormat } from "./global.js";
 
 /**
  * Calculates pricing information based on item configuration and parameters
@@ -175,7 +175,7 @@ export const getTotalsHTML = (settings, order) => {
     let item_grand_total = 0; // Grand total with and without VAT
     let html = '';
 
-    let vat_text = 'PVN ' + settings.tax_percent + '%:';
+    let vat_text = __html('VAT %1$%:', settings.tax_percent);
 
     settings.tax_percent = parseFloat(settings.tax_percent);
 
@@ -235,7 +235,7 @@ export const getTotalsHTML = (settings, order) => {
         html = `
                 <table class="totals-table">
                     <tr>
-                        <td class="text-start"><strong>KOPĀ:</strong></td>
+                        <td class="text-start"><strong>${__html('Total:')}</strong></td>
                         <td class="text-end">${priceFormat(settings, item_total_21)}</td>
                     </tr>
                     <tr>
@@ -243,7 +243,7 @@ export const getTotalsHTML = (settings, order) => {
                         <td class="text-end">${priceFormat(settings, Math.round(item_total_21 * settings.tax_percent) / 100)}</td>
                     </tr>
                     <tr>
-                        <td class="text-start"><strong>KOPĀ APMAKSAI:</strong></td>
+                        <td class="text-start"><strong>${__html('Total with tax:')}</strong></td>
                         <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
                     </tr>
                 </table>`;
@@ -255,7 +255,7 @@ export const getTotalsHTML = (settings, order) => {
         html = `
                 <table class="totals-table">
                     <tr>
-                        <td class="text-start"><strong>KOPĀ:</strong></td>
+                        <td class="text-start"><strong>${__html('Total:')}</strong></td>
                         <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                     </tr>
                     <tr>
@@ -263,7 +263,7 @@ export const getTotalsHTML = (settings, order) => {
                         <td class="text-end">${priceFormat(settings, 0)}</td>
                     </tr>
                     <tr>
-                        <td class="text-start"><strong>KOPĀ APMAKSAI:</strong></td>
+                        <td class="text-start"><strong>${__html('Total with tax:')}</strong></td>
                         <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                     </tr>
                 </table>`;
@@ -274,13 +274,13 @@ export const getTotalsHTML = (settings, order) => {
         item_grand_total = Math.round((item_total_0 + (item_total_21 * tax_coef)) * 100) / 100;
 
         html = `
-                <table class="totals-table">
+                <table class="totals-table"> 
                     <tr>
-                        <td class="text-start me-2"><strong>KOPĀ:</strong> </td>
+                        <td class="text-start me-2"><strong>${__html('Total:')}</strong> </td>
                         <td class="text-end">${priceFormat(settings, item_total_0)}</td>
                     </tr>
                     <tr>
-                        <td class="text-start me-2"><strong>KOPĀ (PVN ${settings.tax_percent}%):</strong> </td>
+                        <td class="text-start me-2"><strong>${__html('Total (VAT %1$%):', settings.tax_percent)}</strong> </td>
                         <td class="text-end">${priceFormat(settings, item_total_21)}</td>
                     </tr>
                     <tr>
@@ -292,7 +292,7 @@ export const getTotalsHTML = (settings, order) => {
                         <td class="text-end">${priceFormat(settings, Math.round((item_total_21 * (tax_coef - 1)) * 100) / 100)}</td>
                     </tr>
                     <tr>
-                        <td class="text-start me-2"><strong>KOPĀ APMAKSAI:</strong> </td>
+                        <td class="text-start me-2"><strong>${__html('Total with tax:')}</strong> </td>
                         <td class="text-end">${priceFormat(settings, item_grand_total)}</td>
                     </tr>
                 </table>`;

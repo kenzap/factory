@@ -66,6 +66,15 @@ export class ClientOrderSearch {
                             `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${client.name}</div>`
                         ).join('');
                         suggestions.classList.remove('d-none');
+
+                        // Reset scroll position and remove any active states
+                        suggestions.scrollTop = 0;
+                        const items = suggestions.querySelectorAll('.autocomplete-item');
+                        items.forEach(item => {
+                            item.style.backgroundColor = '';
+                            item.style.color = '';
+                            item.classList.remove('active');
+                        });
                     } else {
                         suggestions.classList.add('d-none');
                     }
@@ -74,6 +83,7 @@ export class ClientOrderSearch {
                 }
             });
         });
+
 
         // Handle suggestion clicks
         suggestions.addEventListener('click', (e) => {
@@ -122,6 +132,7 @@ export class ClientOrderSearch {
                     } else {
                         currentIndex = items.length - 1;
                     }
+                    console.log('Current Index:', currentIndex);
                     this.highlightItem(items, currentIndex);
                 }
             } else if (e.key === 'Enter') {
@@ -175,6 +186,23 @@ export class ClientOrderSearch {
                 item.style.backgroundColor = 'var(--primary-color)';
                 item.style.color = 'white';
                 item.classList.add('active');
+
+                // Scroll the active item into view
+                const suggestionsContainer = document.getElementById('clientSuggestions');
+                const itemTop = item.offsetTop;
+                const itemHeight = item.offsetHeight;
+                const containerScrollTop = suggestionsContainer.scrollTop;
+                const containerHeight = suggestionsContainer.clientHeight;
+
+                // Check if item is above visible area
+                if (itemTop < containerScrollTop) {
+                    suggestionsContainer.scrollTop = itemTop;
+                }
+                // Check if item is below visible area
+                else if (itemTop + itemHeight > containerScrollTop + containerHeight) {
+                    suggestionsContainer.scrollTop = itemTop + itemHeight - containerHeight;
+                }
+
             } else {
                 item.style.backgroundColor = ''; // Reset color
                 item.style.color = '';
@@ -182,4 +210,5 @@ export class ClientOrderSearch {
             }
         });
     }
+
 }

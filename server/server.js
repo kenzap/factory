@@ -17,6 +17,7 @@ const app = express();
 const PUBLIC_DIR = path.join(__dirname, '../public');
 const API_DIR = path.join(__dirname, 'api');
 const DOCUMENT_DIR = path.join(__dirname, 'document');
+const INTEGRATIONS_DIR = path.join(__dirname, 'integrations');
 
 // Cache for file existence to avoid repeated fs calls
 const fileCache = new Map();
@@ -109,9 +110,44 @@ async function loadRoutes(directory, routeType) {
     }));
 }
 
+// Load integrations
+async function loadIntegrations(directory, integrationType) {
+    if (!fs.existsSync(directory)) return;
+
+    const integrationFolders = fs.readdirSync(directory, { withFileTypes: true })
+        .filter(dirent => dirent.isDirectory())
+        .map(dirent => dirent.name);
+
+    await Promise.all(integrationFolders.map(async (folder) => {
+        const integrationPath = path.join(directory, folder, 'index.js');
+
+        if (!checkFileExists(integrationPath)) {
+            console.warn(`Integration ${folder} missing index.js entry point`);
+            return;
+        }
+
+        try {
+            const module = await import(integrationPath);
+            const integration = module.default || module;
+
+            if (typeof integration === 'function') {
+                integration(app);
+                console.log(`Loaded integration: ${folder}`);
+            } else {
+                console.warn(`Integration ${folder} does not export a function`);
+            }
+        } catch (err) {
+            console.error(`Error loading ${integrationType} integration ${folder}:`, err);
+        }
+    }));
+}
+
 // Load all routes at startup
 await loadRoutes(API_DIR, 'API');
 await loadRoutes(DOCUMENT_DIR, 'document');
+
+// Load integrations
+await loadIntegrations(INTEGRATIONS_DIR, 'integrations');
 
 // Optimized Next.js-like routing with caching
 app.get('*', (req, res, next) => {
@@ -139,10 +175,10 @@ app.get('*', (req, res, next) => {
         }
     }
 
-    // SPA fallback for HTML requests
-    if (req.accepts('html')) {
-        return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-    }
+    // // SPA fallback for HTML requests
+    // if (req.accepts('html')) {
+    //     return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
+    // }
 
     // 404
     res.status(404).send('Not found');
