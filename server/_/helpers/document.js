@@ -15,6 +15,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                        js->'data'->>'tax_auto_rate' as tax_auto_rate, 
                        js->'data'->>'tax_percent' as tax_percent, 
                        js->'data'->>'tax_display' as tax_display,
+                       js->'data'->>'discount_visibility' as discount_visibility,
                        js->'data'->>'waybill_last_number' as waybill_last_number,
                        js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
                        js->'data'->>'groups' as groups,
@@ -139,7 +140,8 @@ export function getWaybillItemsTable(settings, order, locale) {
     console.log("getWaybillItemsTable", order.items);
 
     // Check if any item has a discount
-    const hasDiscount = order.items.some(item => item.discount && item.discount > 0);
+    let hasDiscount = order.items.some(item => item.discount && item.discount > 0);
+    hasDiscount = settings.discount_visibility === '1' ? hasDiscount : false;
 
     // console.log("Has discount column:", hasDiscount);
 
@@ -149,7 +151,7 @@ export function getWaybillItemsTable(settings, order, locale) {
                     <thead>
                         <tr>
                             <th scope="col">#</th>
-                            <th scope="col">${__html(locale, "Product")}</th>
+                            <th scope="col">${__html(locale, "Product") + settings.discount_visibility}</th>
                             ${hasDiscount ? `<th scope="col">${__html(locale, "Price")}</th>` : ``}
                             ${hasDiscount ? `<th scope="col"><div class="text-start">${__html(locale, "Discount")}</div></th>` : ``}
                             <th scope="col">${hasDiscount ? __html(locale, "Net") : __html(locale, "Price")}</th>
@@ -157,7 +159,7 @@ export function getWaybillItemsTable(settings, order, locale) {
                             <th scope="col">${__html(locale, "Unit")}</th>
                             <th scope="col"><div class="${order.vat_status == "0" ? "text-end" : "text-start"}">${order.vat_status == "0" ? __html(locale, "Total") : __html(locale, "Total")}</div></th>
                             <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}">${__html(locale, "Tax")}</th>
-                            <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end">${__html(locale, "Total with tax")}</div></th>
+                            <th scope="col" class="${order.vat_status == "0" ? "d-none" : ""}"><div class="text-end text-nowrap">${__html(locale, "Total with tax")}</div></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -175,7 +177,7 @@ export function getWaybillItemsTable(settings, order, locale) {
         return item.total ? `
                 <tr class="${i == order.items.length - 1 ? "border-secondary" : ""}">
                     <th scope="row">${i + 1}</th>
-                    <td>${item.title} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""} ${item.formula_width_calc && item.formula_length_calc ? `(${priceFormat(settings, item.price / (item.formula_length_calc / 1000))} par t/m)` : ""} ${i == 1000 ? "(4 x Skrūve DIN 933 8.8 M8 x 40 HDG, 4 x Uzgrieznis DIN 934 M8 HDG, 2 x Gumijas blīve 3 mm EPDM W-60)" : ""}${i == 1001 ? "(1 x Uzgrieznis DIN 934 M8 HDG, 1 x Skrūve DIN 933 8.8 M8 x 40 HDG)" : ""}</td>
+                    <td>${item.title} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""}${item.group == 'bending' && item.formula_width_calc && item.formula_length_calc ? ` ${priceFormat(settings, item.price / (item.formula_length_calc / 1000))} t/m` : ""}</td>
                     ${hasDiscount ? `<td>${priceFormat(settings, originalPrice)}</td>` : ``}
                     ${hasDiscount ? `<td><div class="text-start">${item.discount && item.discount > 0 ? `-${item.discount}%` : ''}</div></td>` : ``}
                     <td>${priceFormat(settings, item.price)}</td>

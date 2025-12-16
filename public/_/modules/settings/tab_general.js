@@ -92,51 +92,15 @@ export class TabGeneral {
             <div class="row">
               <div class="col-lg-6">
                 <div class="form-group row mb-3 mt-1">
-                  <label class="col-sm-3 col-form-label">${__html('Coupons')}</label>
+                  <label class="col-sm-3 col-form-label">${__html('Visibility')}</label>
                   <div class="col-sm-9">
                     <div class="form-check">
-                      <input id="coupons" class="form-check-input inp" name="coupons" type="checkbox" value="1" data-type="checkbox">
-                      <label class="form-check-label" for="coupons">
-                        ${__html('Enable coupons')}
+                      <input id="discount_visibility" class="form-check-input inp" name="discount_visibility" type="checkbox" value="1" data-type="checkbox">
+                      <label class="form-check-label" for="discount_visibility">
+                        ${__html('Document discounts')}
                       </label>
                     </div>
-                    <p class="form-text">${__html('Allow use of coupons upon checkout.')}</p>
-                  </div> 
-                </div>
-              </div>
-  
-              <div class="col-lg-6">
-                <div class="form-group row mb-3 mt-1">
-                  <label class="col-sm-3 col-form-label">${__html('List of coupons')}</label>
-                  <div class="col-sm-9">
-                    <textarea id="coupon_list" class="form-control inp" name="coupon_list" rows="2" data-type="text" style="font-size:13px;font-family: monospace;"></textarea>
-                    <p class="form-text">${__html('Provide one coupon and its discount rate per line. Example: BESTDEALS 15.')}</p>
-                  </div> 
-                </div>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-lg-6">
-                <div class="form-group row mb-3 mt-1">
-                  <label class="col-sm-3 col-form-label">${__html('Products')}</label>
-                  <div class="col-sm-9">
-                    <div class="form-check">
-                      <input id="product_discounts" class="form-check-input inp" name="product_discounts" type="checkbox" value="1" data-type="checkbox">
-                      <label class="form-check-label" for="product_discounts">
-                        ${__html('Product discounts')}
-                      </label>
-                    </div>
-                    <p class="form-text">${__html('Enable or disable all discounts defined under individual products page.')}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-6 d-none">
-                <div class="form-group row mb-3 mt-1">
-                  <label class="col-sm-3 col-form-label">${__html('List of hours')}</label>
-                  <div class="col-sm-9">
-                    <textarea id="happy_hours_list" class="form-control inp" name="happy_hours_list" rows="2" data-type="text" style="font-size:13px;font-family: monospace;"></textarea>
-                    <p class="form-text">${__html('Provide one happy hour, its discount per line. Example: Monday 15:00-17:30 10.')}</p>
+                    <p class="form-text">${__html('Enable or disable discount visibility in quotations, waybills, and invoices.')}</p>
                   </div>
                 </div>
               </div>
