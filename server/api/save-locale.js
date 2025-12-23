@@ -10,14 +10,14 @@ import { getDbConnection, sid } from '../_/helpers/index.js';
 */
 async function saveLocale(_id, data) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     if (!data) return { success: false, error: 'no data provided' };
 
     let response = null;
 
     // Update only keys of js that are present in data object
-    let params = ['ecommerce', sid, _id];
+    let params = ['locale', sid, _id];
     let paramIndex = 4;
 
     let keys = Object.keys(data);
@@ -41,19 +41,19 @@ async function saveLocale(_id, data) {
         RETURNING _id
     `;
 
-    console.log('saveLocale params:', params);
-    console.log('saveLocale query:', query);
+    // console.log('saveLocale params:', params);
+    // console.log('saveLocale query:', query);
 
     try {
 
-        await client.connect();
+        await db.connect();
 
-        const result = await client.query(query, params);
+        const result = await db.query(query, params);
 
         response = result.rows;
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;

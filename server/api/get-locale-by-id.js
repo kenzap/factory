@@ -3,7 +3,7 @@ import { getDbConnection, log, sid } from '../_/helpers/index.js';
 
 async function getLocaleById(id) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     let locale = {};
 
@@ -22,14 +22,14 @@ async function getLocaleById(id) {
 
     try {
 
-        await client.connect();
+        await db.connect();
 
-        const result = await client.query(query, ['locale', sid, id]);
+        const result = await db.query(query, ['locale', sid, id]);
         if (result.rows.length > 0) {
             locale = result.rows[0];
         }
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return locale;
