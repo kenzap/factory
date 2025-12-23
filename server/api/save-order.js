@@ -57,7 +57,7 @@ async function saveOrder(data, user) {
                 LIMIT 1
             `;
 
-            const res = await db.query(select, ['ecommerce-order', sid, data.id]);
+            const res = await db.query(select, ['order', sid, data.id]);
             const existingData = res.rows?.[0]?.data || {};
 
             // Preserve original inventory data for existing items
@@ -99,7 +99,7 @@ async function saveOrder(data, user) {
                 js = EXCLUDED.js
             RETURNING _id, js->'data'->>'id' as "id"`;
 
-        const result = await db.query(query_update, [data_new._id, 0, 'ecommerce-order', sid, JSON.stringify({ data: data_new, meta: meta })]);
+        const result = await db.query(query_update, [data_new._id, 0, 'order', sid, JSON.stringify({ data: data_new, meta: meta })]);
 
         response = result.rows[0] || {};
 

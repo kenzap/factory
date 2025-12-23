@@ -43,7 +43,7 @@ async function saveProduct(data) {
         // Prepare params: first 3 are as before, then each value for update
         const params = [
             data._id,
-            'ecommerce-product',
+            'product',
             sid,
             ...updateKeys.map(key => JSON.stringify(data[key]))
         ];

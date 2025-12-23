@@ -28,7 +28,7 @@ export const issueItem = async (db, actions) => {
                     WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
                 `;
 
-        const itemResult = await db.query(itemQuery, [issueAction.order_id, 'ecommerce-order', sid]);
+        const itemResult = await db.query(itemQuery, [issueAction.order_id, 'order', sid]);
 
         let items = itemResult.rows[0]?.items || [];
         const i = items.findIndex(item => item.id === issueAction.item_id);
@@ -59,7 +59,7 @@ export const issueItem = async (db, actions) => {
 
         const updateParams = [
             issueAction.order_id,
-            'ecommerce-order',
+            'order',
             sid,
             JSON.stringify(items)
         ];

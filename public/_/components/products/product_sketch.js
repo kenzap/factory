@@ -27,7 +27,7 @@ export class ProductSketch {
         this.view();
 
         // sketch controls
-        this.SketchUpload = new SketchUpload(this.product, this.settings);
+        this.SketchUpload = new SketchUpload(this.product, this.settings, this.sketchMode);
 
         this.SketchControls = new SketchControls(this.product, this.settings);
 

@@ -39,7 +39,7 @@ function syncMoneoIDsApi(app) {
                     WHERE ref = $1 AND sid = $2 AND (js->'data'->>'legal_name' = $3 ${element.regnum.length == 11 ? "OR js->'data'->>'reg_number' = '" + element.regnum + "'" : ""})
                 `;
 
-                const result = await db.query(query, ['3dfactory-entity', sid, element.nosaukums]);
+                const result = await db.query(query, ['entity', sid, element.nosaukums]);
 
                 let row = {};
 
@@ -72,7 +72,7 @@ function syncMoneoIDsApi(app) {
                         `;
 
                         // Update matching records with moneoid from JSON
-                        let query_response = await db.query(query_update, [moneo_id, row._id, '3dfactory-entity', sid]);
+                        let query_response = await db.query(query_update, [moneo_id, row._id, 'entity', sid]);
                     } else {
 
                         non_matches++;

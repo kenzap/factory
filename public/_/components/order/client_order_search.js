@@ -62,9 +62,15 @@ export class ClientOrderSearch {
                 if (response && response.clients) {
                     this.clients = response.clients;
                     if (this.clients.length > 0) {
-                        suggestions.innerHTML = this.clients.map(client =>
-                            `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${client.name}</div>`
-                        ).join('');
+                        suggestions.innerHTML = this.clients.map(client => {
+                            let name = client.name;
+                            if (client.entity == 'individual' && client.fname && client.lname) {
+                                name = (client.lname || '') + ' ' + (client.fname || '');
+                            }
+
+                            console.log('Client name:', client.name);
+                            return `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${name}</div>`
+                        }).join('');
                         suggestions.classList.remove('d-none');
 
                         // Reset scroll position and remove any active states

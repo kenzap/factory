@@ -23,7 +23,7 @@ async function deleteOrderWaybill(id, user) {
         const query = `
             SELECT js->'data'->'waybill' as waybill
             FROM data
-            WHERE ref = 'ecommerce-order' AND sid = $1 AND js->'data'->>'id' = $2
+            WHERE ref = 'order' AND sid = $1 AND js->'data'->>'id' = $2
             LIMIT 1
         `;
 
@@ -34,7 +34,7 @@ async function deleteOrderWaybill(id, user) {
             waybill = result.rows[0].waybill || waybill;
         }
 
-        // Append waybill number to anulled list in ecommerce-settings
+        // Append waybill number to anulled list in settings
         if (waybill && waybill.number) {
             const updateSettingsQuery = `
             UPDATE data 
@@ -43,7 +43,7 @@ async function deleteOrderWaybill(id, user) {
                 '{data,waybill_anulled_list}', 
                 to_jsonb(COALESCE(js->'data'->>'waybill_anulled_list', '') || CASE WHEN js->'data'->>'waybill_anulled_list' IS NULL OR js->'data'->>'waybill_anulled_list' = '' THEN $1 ELSE E'\n' || $1 END)
             )
-            WHERE ref = '3dfactory-settings' AND sid = $2
+            WHERE ref = 'settings' AND sid = $2
             `;
             await db.query(updateSettingsQuery, [waybill.number, sid]);
 

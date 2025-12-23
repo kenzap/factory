@@ -3,7 +3,6 @@ import { getProduct } from "../_/api/get_product.js";
 import { saveProduct } from "../_/api/save_product.js";
 import { FileUpload } from "../_/components/file/upload.js";
 import { ProductFiles } from "../_/components/products/product_files.js";
-import { ProductImages } from "../_/components/products/product_images.js";
 import { ProductMeta } from "../_/components/products/product_meta.js";
 import { ProductPrice } from "../_/components/products/product_price.js";
 import { ProductSidebar } from "../_/components/products/product_sidebar.js";
@@ -97,7 +96,7 @@ class ProductEdit {
             self.ProductMeta = new ProductMeta(this.product, this.locales, this.settings);
 
             // product images
-            self.ProductImages = new ProductImages(this.product, this.settings);
+            // self.ProductImages = new ProductImages(this.product, this.settings);
 
             // product sidebar
             self.ProductSidebar = new ProductSidebar(this.product);

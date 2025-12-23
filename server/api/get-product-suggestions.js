@@ -38,7 +38,7 @@ async function getProductSuggestions(filters) {
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0'
         `;
 
-    let params = ['ecommerce-product', sid, locale];
+    let params = ['product', sid, locale];
 
     if (filters.s && filters.s.trim() !== '') {
         const keywords = filters.s.trim().split(/\s+/);

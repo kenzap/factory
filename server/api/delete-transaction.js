@@ -35,7 +35,7 @@ async function deleteTransaction(data) {
                 WHERE ref = $1 AND sid = $2 AND _id = $3
                 RETURNING _id`;
 
-            const params = ['ecommerce-order', sid, order._id];
+            const params = ['order', sid, order._id];
             const result = await db.query(query, params);
 
             if (result.rows.length > 0) {

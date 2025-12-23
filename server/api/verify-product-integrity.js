@@ -23,7 +23,7 @@ async function verifyProducts() {
         ORDER BY var_price_length DESC
     `;
 
-    let params = ['ecommerce-product', sid, locale];
+    let params = ['product', sid, locale];
 
     // ORDER BY name ASC
     try {

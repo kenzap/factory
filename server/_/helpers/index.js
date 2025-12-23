@@ -76,7 +76,7 @@ export const getLocale = async (locale) => {
             LIMIT 1
         `;
 
-        const result = await db.query(query, ['locale-ecommerce', sid, locale]);
+        const result = await db.query(query, ['locale', sid, locale]);
         if (result.rows.length > 0) {
 
             response.values = result.rows[0].locale || {};
@@ -108,7 +108,7 @@ export const getLocales = async () => {
             LIMIT 50
         `;
 
-        const result = await client.query(query, ['locale-ecommerce', sid]);
+        const result = await client.query(query, ['locale', sid]);
         if (result.rows.length > 0) {
 
             locales = result.rows;
@@ -160,7 +160,7 @@ export const getSettings = async (fields) => {
             `;
         }
 
-        const result = await client.query(query, ['3dfactory-settings', sid]);
+        const result = await client.query(query, ['settings', sid]);
         if (result.rows.length > 0) {
             const row = result.rows[0];
 

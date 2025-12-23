@@ -20,12 +20,12 @@ async function getClientSuggestions(filters) {
 
     // Get clients 
     let query = `
-        SELECT COALESCE(js->'data'->>'legal_name', '') as name, COALESCE(js->'data'->>'reg_address', '') as address, _id
+        SELECT COALESCE(js->'data'->>'legal_name', '') as name, COALESCE(js->'data'->>'fname', '') as fname, COALESCE(js->'data'->>'lname', '') as lname, COALESCE(js->'data'->>'entity', '') as entity, COALESCE(js->'data'->>'reg_address', '') as address, _id
         FROM data 
         WHERE ref = $1 AND sid = $2 AND js->'data'->>'legal_name' IS NOT NULL AND js->'data'->>'legal_name' != ''
         `;
 
-    let params = ['3dfactory-entity', sid];
+    let params = ['entity', sid];
 
     try {
 

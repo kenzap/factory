@@ -47,7 +47,7 @@ async function saveTransaction(data) {
                 const params = [
                     item._id,
                     0,
-                    'ecommerce-order',
+                    'order',
                     sid,
                     JSON.stringify({ data: item })
                 ];
@@ -77,7 +77,7 @@ async function saveTransaction(data) {
                 // Prepare params: first 3 are as before, then each value for update
                 const params = [
                     item._id,
-                    'ecommerce-order',
+                    'order',
                     sid,
                     ...updateKeys.map(key => JSON.stringify(item[key]))
                 ];

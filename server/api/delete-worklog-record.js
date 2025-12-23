@@ -59,7 +59,7 @@ async function revertCuttingAction(db, data) {
                 LIMIT 1
             `;
 
-            let params = ['ecommerce-order', sid, orderId];
+            let params = ['order', sid, orderId];
 
             const result = await db.query(query, params);
 
@@ -96,7 +96,7 @@ async function revertCuttingAction(db, data) {
                     RETURNING _id
                 `;
 
-                let updateParams = ['ecommerce-order', sid, order._id, JSON.stringify(items_db)];
+                let updateParams = ['order', sid, order._id, JSON.stringify(items_db)];
 
                 const updateResult = await db.query(updateQuery, updateParams);
 

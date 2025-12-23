@@ -24,6 +24,8 @@ async function getClientDetails(id) {
             js->'data'->>'email' as email,
             js->'data'->>'type' as "type",
             js->'data'->>'entity' as entity,
+            js->'data'->>'fname' as "fname",
+            js->'data'->>'lname' as "lname",
             js->'data'->>'legal_name' as "legal_name",
             js->'data'->>'bank_name' as "bank_name",
             js->'data'->>'bank_acc' as "bank_acc",
@@ -46,7 +48,7 @@ async function getClientDetails(id) {
 
         await client.connect();
 
-        const result = await client.query(query, ['3dfactory-entity', sid, id]);
+        const result = await client.query(query, ['entity', sid, id]);
 
         if (result.rows) data = result.rows[0] || {};
 

@@ -17,7 +17,7 @@ export async function getClientDiscounts(eid) {
     try {
         await db.connect();
 
-        const result = await db.query(query, ['3dfactory-entity', sid, eid]);
+        const result = await db.query(query, ['entity', sid, eid]);
 
         if (result.rows && result.rows[0]) {
             discounts = result.rows[0].discounts || {};
@@ -38,7 +38,7 @@ export async function getNextOrderId(client) {
     let webhooks = [];
 
     const query = "SELECT (js->'data'->>'last_order_id')::int as last_order_id, js->'data'->'webhooks' as webhooks FROM data WHERE ref = $1 AND sid = $2 LIMIT 1";
-    const params = ['ecommerce-settings', sid];
+    const params = ['settings', sid];
 
     const result = await client.query(query, params);
 
@@ -54,7 +54,7 @@ export async function getNextOrderId(client) {
 
     // update number
     const updateQuery = "UPDATE data SET js = jsonb_set(js, '{data,last_order_id}', $1::jsonb) WHERE ref = $2";
-    const updateParams = [JSON.stringify(last_order_id), 'ecommerce-settings'];
+    const updateParams = [JSON.stringify(last_order_id), 'settings'];
     await client.query(updateQuery, updateParams);
 
     return last_order_id;

@@ -22,7 +22,7 @@ async function deleteLocale(id) {
         WHERE ref = $1 AND sid = $2 AND _id = $3
         RETURNING _id`;
 
-    const params = ['locale-ecommerce', sid, id];
+    const params = ['locale', sid, id];
 
     try {
 

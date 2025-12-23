@@ -35,7 +35,7 @@ async function createLocale(data) {
                 js = EXCLUDED.js
             RETURNING _id`;
 
-        const params = [_id, 0, 'locale-ecommerce', sid, JSON.stringify({ data: data, meta: { created: timestamp, updated: timestamp } })];
+        const params = [_id, 0, 'locale', sid, JSON.stringify({ data: data, meta: { created: timestamp, updated: timestamp } })];
 
         const result = await client.query(query, params);
 

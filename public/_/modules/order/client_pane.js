@@ -51,7 +51,18 @@ export class ClientPane {
                 state.order.discounts = state.client.discounts || {};
                 state.order.entity = state.client.entity || 'company';
 
-                // console.log('Client data after fetch:', state.order);
+                state.order.fname = state.client.fname || '';
+                state.order.lname = state.client.lname || '';
+
+                state.order.legal_name = state.client.legal_name || '';
+
+                if (!state.client.fname && !state.client.lname && state.client.legal_name) {
+                    const nameParts = state.client.legal_name.trim().split(' ');
+                    state.client.lname = nameParts[0] || '';
+                    state.client.fname = nameParts.slice(1).join(' ') || '';
+                }
+
+                console.log('Client data after fetch:', state.order);
             }
 
             // Refresh the view with client data
@@ -107,29 +118,37 @@ export class ClientPane {
                     <label for="vat_number" class="form-label">${__html('VAT Number')}</label>
                     <input type="text" class="form-control" id="vat_number" value="${state.client.vat_number || ''}">
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label id="label-company-name" for="legal_name" class="form-label">${__html('Company Name')}</label>
-                    <label id="label-legal-name" for="legal_name" class="form-label d-none">${__html('Full Name')}</label>
+                <div class="col-md-6 mb-3 company-name-cont ${state.client.entity == "individual" ? 'd-none' : ''}">
+                    <label id="label-company-name" for="legal_name" class="form-label">${__html('Company name')}</label>
+                    <label id="label-legal-name" for="legal_name" class="form-label d-none">${__html('Full name')}</label>
                     <input type="text" class="form-control" id="legal_name" value="${attr(state.client.legal_name || state.client.name || '')}">
                 </div>
+                <div class="col-md-3 mb-3 name-cont ${state.client.entity == "individual" ? '' : 'd-none'}">
+                    <label id="label-fname" for="fname" class="form-label">${__html('First name')}</label>
+                    <input type="text" class="form-control" id="fname" value="${attr(state.client.fname || '')}">
+                </div>
+                <div class="col-md-3 mb-3 name-cont ${state.client.entity == "individual" ? '' : 'd-none'}">
+                    <label id="label-lname" for="lname" class="form-label">${__html('Last name')}</label>
+                    <input type="text" class="form-control" id="lname" value="${attr(state.client.lname || '')}">
+                </div>
                 <div class="col-md-6 mb-3">
-                    <label for="bank_name" class="form-label">${__html('Bank Name')}</label>
+                    <label for="bank_name" class="form-label">${__html('Bank name')}</label>
                     <input type="text" class="form-control" id="bank_name" value="${(attr(state.client.bank_name || ''))}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="bank_acc" class="form-label">${__html('Bank Account')}</label>
+                    <label for="bank_acc" class="form-label">${__html('Bank account')}</label>
                     <input type="text" class="form-control" id="bank_acc" value="${state.client.bank_acc || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
-                    <label for="reg_address" class="form-label">${__html('Registration Address')}</label>
+                    <label for="reg_address" class="form-label">${__html('Registration address')}</label>
                     <input type="text" class="form-control" id="reg_address" value="${state.client.reg_address || ''}" >
                 </div>
                 <div class="col-12 mb-3">
-                    <label for="client_notes" class="form-label">${__html('Internal Note')}</label>
+                    <label for="client_notes" class="form-label">${__html('Internal note')}</label>
                     <textarea class="form-control" id="client_notes" rows="3" >${state.client.notes || ''}</textarea>
                 </div>
                 <div class="col-md-6 mb-3 d-none">
-                    <label for="clientPhoneRight" class="form-label">${__html('Phone Number')}</label>
+                    <label for="clientPhoneRight" class="form-label">${__html('Phone number')}</label>
                     <input type="tel" class="form-control" id="clientPhoneRight" value="${attr(state.client.phone || '')}" >
                 </div>
                 <div class="col-md-6 mb-3 d-none">
@@ -187,11 +206,11 @@ export class ClientPane {
             const entity = event.target.dataset.entity;
 
             if (entity == "individual") {
-                document.getElementById('label-company-name').classList.add('d-none');
-                document.getElementById('label-legal-name').classList.remove('d-none');
+                document.querySelector('.company-name-cont').classList.add('d-none');
+                [...document.querySelectorAll('.name-cont')].forEach(el => el.classList.remove('d-none'));
             } else {
-                document.getElementById('label-company-name').classList.remove('d-none');
-                document.getElementById('label-legal-name').classList.add('d-none');
+                document.querySelector('.company-name-cont').classList.remove('d-none');
+                [...document.querySelectorAll('.name-cont')].forEach(el => el.classList.add('d-none'));
             }
         });
 
@@ -347,6 +366,8 @@ export class ClientPane {
         const reg_number = document.getElementById('reg_number').value.trim();
         const vat_number = document.getElementById('vat_number').value.trim();
         const legal_name = document.getElementById('legal_name').value.trim();
+        const fname = document.getElementById('fname').value.trim();
+        const lname = document.getElementById('lname').value.trim();
         const clientPhoneRight = document.getElementById('clientPhoneRight').value.trim();
         const email = document.getElementById('email').value.trim();
         const bank_name = document.getElementById('bank_name').value.trim();
@@ -388,6 +409,16 @@ export class ClientPane {
             hasErrors = true;
         }
 
+        if (entity.dataset.entity == "individual" && !fname) {
+            document.getElementById('fname').classList.add('is-invalid');
+            hasErrors = true;
+        }
+
+        if (entity.dataset.entity == "individual" && !lname) {
+            document.getElementById('lname').classList.add('is-invalid');
+            hasErrors = true;
+        }
+
         if (hasErrors) {
             // Scroll to first invalid field
             const firstInvalidField = document.querySelector('.right-pane .is-invalid');
@@ -405,6 +436,8 @@ export class ClientPane {
             reg_number,
             vat_number,
             legal_name,
+            fname,
+            lname,
             name: legal_name, // For compatibility with existing code
             phone: clientPhoneRight,
             email,

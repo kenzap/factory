@@ -40,7 +40,7 @@ async function getProductStock(products) {
 
             // Assume all products use the same locale
             const locale = process.env.LOCALE || 'en';
-            const params = ['ecommerce-product', sid, locale, productIds];
+            const params = ['product', sid, locale, productIds];
             const result = await db.query(query, params);
 
             // Filter var_price by coating and color if provided in input products

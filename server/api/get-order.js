@@ -49,7 +49,7 @@ async function getOrderDetails(id) {
 
         await db.connect();
 
-        const result = await db.query(query, ['ecommerce-order', sid, id]);
+        const result = await db.query(query, ['order', sid, id]);
         if (result.rows) data = result.rows[0] || {};
 
         // console.log('getOrderDetails result', result.rows);

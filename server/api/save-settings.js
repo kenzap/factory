@@ -40,7 +40,7 @@ async function saveSettings(data) {
 
         // Prepare params: first 3 are as before, then each value for update
         const params = [
-            '3dfactory-settings',
+            'settings',
             sid,
             ...updateKeys.map(key => JSON.stringify(data[key]))
         ];

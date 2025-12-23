@@ -39,7 +39,7 @@ export const updateItem = async (db, actions) => {
                     WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
                     `;
 
-        const itemResult = await db.query(itemQuery, [actions.order_id, 'ecommerce-order', sid]);
+        const itemResult = await db.query(itemQuery, [actions.order_id, 'order', sid]);
 
         let items = itemResult.rows[0]?.items || [];
         let targetItem = items[index];
@@ -77,7 +77,7 @@ export const updateItem = async (db, actions) => {
 
         const updateParams = [
             actions.order_id,
-            'ecommerce-order',
+            'order',
             sid,
             JSON.stringify(items)
         ];

@@ -30,7 +30,7 @@ async function saveClient(data) {
             js = EXCLUDED.js
         RETURNING _id`;
 
-    const params = [data._id, 0, '3dfactory-entity', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
+    const params = [data._id, 0, 'entity', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
 
     try {
 

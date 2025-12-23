@@ -152,7 +152,7 @@ async function execWriteoffAction(data) {
                 LIMIT 1
             `;
 
-            let params = ['ecommerce-order', sid, order_id];
+            let params = ['order', sid, order_id];
 
             const result = await db.query(query, params);
 
@@ -201,7 +201,7 @@ async function execWriteoffAction(data) {
                 // update order items
                 query = `UPDATE data SET js = jsonb_set(js, '{data,items}', $1) WHERE _id = $2 AND ref = $3 RETURNING _id`;
 
-                params = [JSON.stringify(items_db), order._id, 'ecommerce-order'];
+                params = [JSON.stringify(items_db), order._id, 'order'];
 
                 const updateResult = await db.query(query, params);
 

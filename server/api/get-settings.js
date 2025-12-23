@@ -20,7 +20,7 @@ async function getSettings() {
 
         await client.connect();
 
-        const result = await client.query(query, ['3dfactory-settings', sid]);
+        const result = await client.query(query, ['settings', sid]);
         if (result.rows.length > 0) {
 
             // get settings from the first row

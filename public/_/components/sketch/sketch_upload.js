@@ -3,10 +3,11 @@ import { hasRenderFiles } from "./helpers.js";
 
 export class SketchUpload {
 
-    constructor(product, settings) {
+    constructor(product, settings, sketchMode) {
 
         this.product = product;
         this.settings = settings;
+        this.sketchMode = sketchMode;
 
         this.init();
 
@@ -26,7 +27,7 @@ export class SketchUpload {
             <div class="sketch-upload-cont">
                 <img class="p-img po images-sketch${i}" data-index="sketch${i}" src="${img}" style="width:500px;height:500px;"/>
                 <button type="button" class="btn-close pt-3 btn btn-close-sm remove" tabindex="-1"></button>
-                <input type="file" name="sketchfile" data-type="search" data-index="sketch${i}" class="file sketch-upload aif-sketch${i} d-none">
+                <input type="file" name="sketchfile" data-type="search" data-index="sketch${i}" class="file file-upload sketch-upload aif-sketch${i} d-none">
             </div>
             `;
     }
@@ -55,14 +56,14 @@ export class SketchUpload {
             // check image type
             if (input.files[0].type != 'image/jpeg' && input.files[0].type != 'image/jpg' && input.files[0].type != 'image/png') {
 
-                toast(__("Please provide image in JPEG format"));
+                toast("Please provide image in JPEG format");
                 return;
             }
 
             // check image size
             if (input.files[0].size > 5000000) {
 
-                toast(__("Please provide an image smaller than %1$ MB in size!", 10));
+                toast("Please provide an image smaller than %1$ MB in size!", 10);
                 return;
             }
 
@@ -73,8 +74,8 @@ export class SketchUpload {
             let reader = new FileReader();
             reader.onload = function (e) {
 
-                self.state.product.sketch.img = [true];
-                self.state.ProductSketch.sketchMode(hasRenderFiles(self.state) ? 'preview' : 'upload');
+                self.product.sketch.img = [true];
+                self.sketchMode(hasRenderFiles(self.product) ? 'preview' : 'upload');
                 [...document.querySelectorAll('.images-' + index)].forEach(el => el.setAttribute('src', e.currentTarget.result));
             }
             reader.readAsDataURL(input.files[0]);
@@ -91,7 +92,7 @@ export class SketchUpload {
         // document.querySelector('.sketch-upload-cont .remove').classList.add("d-none");
         // e.currentTarget.classList.add("d-none");
 
-        this.state.product.sketch.img = [];
+        this.product.sketch.img = [];
         this.state.ProductSketch.sketchMode(hasRenderFiles(this.state) ? 'preview' : 'upload');
     }
 

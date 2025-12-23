@@ -53,7 +53,7 @@ export const setProductStock = async (db, inventory, user_id) => {
                 WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
             `;
 
-    const varResult = await db.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
+    const varResult = await db.query(varQuery, [inventory._id, 'product', sid]);
     let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
@@ -86,7 +86,7 @@ export const setProductStock = async (db, inventory, user_id) => {
             RETURNING _id
         `;
 
-    const updateParams = [JSON.stringify(var_price), inventory._id, 'ecommerce-product', sid];
+    const updateParams = [JSON.stringify(var_price), inventory._id, 'product', sid];
     const updateResult = await db.query(updateQuery, updateParams);
 
     if (updateResult.rows.length === 0) {
@@ -141,7 +141,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
                 WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
             `;
 
-    const varResult = await db.query(varQuery, [inventory._id, 'ecommerce-product', sid]);
+    const varResult = await db.query(varQuery, [inventory._id, 'product', sid]);
     let var_price = varResult.rows[0]?.var_price || [];
 
     // find product by color and coating
@@ -167,7 +167,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
             RETURNING _id
         `;
 
-    const updateParams = [JSON.stringify(var_price), inventory._id, 'ecommerce-product', sid];
+    const updateParams = [JSON.stringify(var_price), inventory._id, 'product', sid];
     const updateResult = await db.query(updateQuery, updateParams);
 
     if (updateResult.rows.length === 0) {

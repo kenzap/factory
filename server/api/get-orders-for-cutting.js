@@ -105,7 +105,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
 
-    const params = ['ecommerce-order', sid];
+    const params = ['order', sid];
 
     if (filters.client?.name && filters.db.name.trim() !== '') {
         query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;

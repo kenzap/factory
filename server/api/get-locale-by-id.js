@@ -24,7 +24,7 @@ async function getLocaleById(id) {
 
         await client.connect();
 
-        const result = await client.query(query, ['locale-ecommerce', sid, id]);
+        const result = await client.query(query, ['locale', sid, id]);
         if (result.rows.length > 0) {
             locale = result.rows[0];
         }

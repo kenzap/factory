@@ -28,7 +28,7 @@ async function getContacts(id) {
 
         await client.connect();
 
-        const result = await client.query(query, ['3dfactory-entity', sid, id]);
+        const result = await client.query(query, ['entity', sid, id]);
 
         records = result.rows;
 

@@ -42,7 +42,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
             FROM data
             WHERE ref = $1 AND sid = $2 `;
 
-    const params = ['ecommerce-order', sid];
+    const params = ['order', sid];
 
     // if (filters.client?.name && filters.client.name.trim() !== '') {
     //     query += ` AND LOWER(js->'data'->>'name') LIKE LOWER($${params.length + 1})`;

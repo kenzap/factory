@@ -17,7 +17,7 @@ async function saveLocale(_id, data) {
     let response = null;
 
     // Update only keys of js that are present in data object
-    let params = ['locale-ecommerce', sid, _id];
+    let params = ['ecommerce', sid, _id];
     let paramIndex = 4;
 
     let keys = Object.keys(data);

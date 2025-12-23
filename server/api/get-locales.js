@@ -23,7 +23,7 @@ async function getLocales() {
 
         await client.connect();
 
-        const result = await client.query(query, ['locale-ecommerce', sid]);
+        const result = await client.query(query, ['locale', sid]);
         if (result.rows.length > 0) {
             locales = result.rows;
         }

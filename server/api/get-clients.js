@@ -52,10 +52,10 @@ async function getClients(filters = { client: { name: "", eid: "" }, dateFrom: '
         FROM data 
         WHERE ref = $1 AND sid = $2 `;
 
-    const params = ['3dfactory-entity', sid];
+    const params = ['entity', sid];
 
     if (filters.client?.eid) {
-        query += ` AND (js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`;
+        query += ` AND (_id = $${params.length + 1} OR unaccent(js->'data'->>'legal_name') ILIKE unaccent($${params.length + 2}))`;
         params.push(`${filters.client.eid.trim()}`);
         params.push(`${filters.client.name.trim()}`);
     }

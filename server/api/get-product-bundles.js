@@ -49,7 +49,7 @@ async function getProductBundles(products) {
                 FROM data pb
                 LEFT JOIN data ep ON pb.js->'data'->>'bundle_id' IS NOT NULL 
                     AND ep._id = pb.js->'data'->>'bundle_id' 
-                    AND ep.ref = 'ecommerce-product' 
+                    AND ep.ref = 'product' 
                     AND ep.sid = $2
                 WHERE pb.ref = $1 AND pb.sid = $2 AND (${conditions})
                 `;

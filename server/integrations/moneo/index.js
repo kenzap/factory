@@ -107,7 +107,7 @@ async function getOrdersForInvoiceSync(db, dateStart, dateEnd, limit) {
         LIMIT $5
     `;
 
-    const params = ['ecommerce-order', sid, dateStart, dateEnd, limit];
+    const params = ['order', sid, dateStart, dateEnd, limit];
 
     let result = await db.query(query, params);
 
@@ -142,7 +142,7 @@ async function getOrdersForReceiptSync(db, dateStart, dateEnd, limit) {
         LIMIT $5
     `;
 
-    const params = ['ecommerce-order', sid, dateStart, dateEnd, limit];
+    const params = ['order', sid, dateStart, dateEnd, limit];
 
     let result = await db.query(query, params);
 
@@ -181,7 +181,7 @@ async function processInvoices(orders, db) {
 
 async function getClient(eid, db) {
 
-    const result = await db.query("SELECT _id, js->'data'->>'legal_name' as legal_name, js->'integrations'->'moneo'->>'id' as moneoid FROM data WHERE ref = $1 AND sid = $2 AND _id = $3", ['3dfactory-entity', sid, eid]);
+    const result = await db.query("SELECT _id, js->'data'->>'legal_name' as legal_name, js->'integrations'->'moneo'->>'id' as moneoid FROM data WHERE ref = $1 AND sid = $2 AND _id = $3", ['entity', sid, eid]);
     if (result.rows.length > 0) return result.rows[0] || {};
 
     return {};
@@ -431,7 +431,7 @@ async function createInvoice(order, client, db) {
             RETURNING _id
         `;
 
-        let response = await db.query(updateQuery, [moneoInvoiceId, order._id, 'ecommerce-order', sid]);
+        let response = await db.query(updateQuery, [moneoInvoiceId, order._id, 'order', sid]);
         console.log(`Invoice created with Moneo ID: ${moneoInvoiceId}`);
 
         // }
@@ -546,7 +546,7 @@ async function createReceipt(order, client, db) {
             RETURNING _id
         `;
 
-        let response = await db.query(updateQuery, [moneoReceiptId, order._id, 'ecommerce-order', sid]);
+        let response = await db.query(updateQuery, [moneoReceiptId, order._id, 'order', sid]);
 
         // receiptStruct.db_response = response;
 

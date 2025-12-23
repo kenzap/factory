@@ -44,7 +44,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         FROM data 
         WHERE ref = $1 AND sid = $2`;
 
-    const params = ['ecommerce-order', sid];
+    const params = ['order', sid];
     let whereConditions = [];
 
     // Build WHERE conditions dynamically
@@ -130,14 +130,15 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     const limit = Math.min(filters.limit || 250, 1000); // Cap at 1000
     const offset = filters.offset || 0;
 
-    const sortBy = filters.sort_by || 'created';
+    const sortBy = filters.sort_by || 'date';
     const sortDir = filters.sort_dir || 'desc';
 
     const orderByMap = {
         'name': `js->'data'->>'name'`,
-        'id': `js->'data'->>'id'`,
+        'id': `(js->'data'->>'id')::integer`,
         'entity': `js->'data'->>'entity'`,
-        'created': `js->'data'->>'created'`
+        'created': `js->'data'->>'created'`,
+        'date': `js->'data'->>'date'`
     };
 
     const orderByClause = orderByMap[sortBy] || orderByMap['created'];

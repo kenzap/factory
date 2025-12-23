@@ -3,7 +3,7 @@ import { getDbConnection, getLocale, getMinPrice, log, sid } from '../_/helpers/
 /**
  * 3D Factory Product Export API
  *
- * Extract product data from Factory database stored under ecommerce-product key and export it in XML format.
+ * Extract product data from Factory database stored under product key and export it in XML format.
  * Used by salidzini.lv and kurpirkt.lv to import product data to their search engine.
  *
  * @version 1.0
@@ -33,7 +33,7 @@ async function exportProductsXML(lang) {
             LIMIT 1
         `;
 
-        const ecommerceResult = await client.query(ecommerceQuery, ['ecommerce-settings', sid]);
+        const ecommerceResult = await client.query(ecommerceQuery, ['settings', sid]);
         if (ecommerceResult.rows.length > 0) {
             const row = ecommerceResult.rows[0];
             state.settings = {
@@ -54,7 +54,7 @@ async function exportProductsXML(lang) {
             LIMIT 1
         `;
 
-        const factoryResult = await client.query(factoryQuery, ['3dfactory-settings', sid]);
+        const factoryResult = await client.query(factoryQuery, ['settings', sid]);
         if (factoryResult.rows.length > 0) {
             const row = factoryResult.rows[0];
             state.sk_settings = {
@@ -82,7 +82,7 @@ async function exportProductsXML(lang) {
             LIMIT 1000
         `;
 
-        const productsResult = await client.query(productsQuery, [lang, 'ecommerce-product']);
+        const productsResult = await client.query(productsQuery, [lang, 'product']);
 
         for (const row of productsResult.rows) {
             const id = row._id;

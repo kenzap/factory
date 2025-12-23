@@ -36,7 +36,7 @@ async function execWaybillsReport(data) {
             AND js->'data'->'price'->'grand_total' IS NOT NULL
         `;
 
-        const queryParams = ['ecommerce-order', sid];
+        const queryParams = ['order', sid];
         let paramIndex = 3;
 
         // Filter by client eid if provided

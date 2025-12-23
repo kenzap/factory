@@ -24,7 +24,7 @@ async function deleteClient(id) {
         WHERE ref = $1 AND sid = $2 AND _id = $3
         RETURNING _id`;
 
-    const params = ['3dfactory-entity', sid, id];
+    const params = ['entity', sid, id];
 
     try {
 

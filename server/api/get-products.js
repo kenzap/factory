@@ -39,7 +39,7 @@ async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0
         WHERE ref = $1 AND sid = $2
     `;
 
-    let params = ['ecommerce-product', sid, locale];
+    let params = ['product', sid, locale];
 
     // Add search filter if present
     if (filters.s && filters.s.trim() !== '') {
@@ -111,7 +111,7 @@ function getProductsApi(app) {
             const filters = req.body.filters || {};
             const locale = await getLocale(req.headers?.locale);
             const records = await getProducts(filters);
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "stock_categories"]);
+            const settings = await getSettings(["currency", "textures", "currency_symb", "currency_symb_loc", "system_of_units", "stock_categories"]);
 
             res.send({ success: true, user: req.user, settings, locale, products: records.products, meta: records.meta, message: '' });
         } catch (err) {

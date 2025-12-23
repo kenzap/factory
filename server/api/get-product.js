@@ -53,7 +53,7 @@ async function getProduct(id) {
         WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1
     `;
 
-    let params = ['ecommerce-product', sid, id];
+    let params = ['product', sid, id];
 
     // ORDER BY name ASC
     try {

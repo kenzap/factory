@@ -33,7 +33,7 @@ async function execDebitorReport(data) {
             WHERE ref = $1 AND sid = $2 AND (js->'data' ? 'payment' OR js->'data' ? 'waybill') 
             `;
 
-        const queryParams = ['ecommerce-order', sid];
+        const queryParams = ['order', sid];
         let paramIndex = 3;
 
         // Filter by client eid if provided

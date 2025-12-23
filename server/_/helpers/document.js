@@ -25,7 +25,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                 LIMIT 1
             `;
 
-    const settingsResult = await client.query(settingsQuery, ['3dfactory-settings', sid, type + '_document_template']);
+    const settingsResult = await client.query(settingsQuery, ['settings', sid, type + '_document_template']);
     if (settingsResult.rows.length > 0) {
         settings = settingsResult.rows[0];
     }
@@ -58,7 +58,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
             LIMIT 1
         `;
 
-    const orderResult = await client.query(orderQuery, ['ecommerce-order', sid, _id]);
+    const orderResult = await client.query(orderQuery, ['order', sid, _id]);
     if (orderResult.rows) order = orderResult.rows[0] || {};
 
     // console.log('waybill order', order);
@@ -87,7 +87,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
             WHERE ref = $1 AND sid = $2 AND _id = $3
         `;
 
-    const entityResult = await client.query(clientQuery, ['3dfactory-entity', sid, order.eid]);
+    const entityResult = await client.query(clientQuery, ['entity', sid, order.eid]);
     if (entityResult.rows) entity = entityResult.rows[0] || {};
 
     return {
@@ -107,7 +107,7 @@ export async function updateWaybillNumber(db, order) {
     const query = `
             UPDATE data
             SET js = jsonb_set(js, '{data,waybill}', $1::jsonb)
-            WHERE ref = 'ecommerce-order' AND sid = $2 AND js->'data'->>'id' = $3
+            WHERE ref = 'order' AND sid = $2 AND js->'data'->>'id' = $3
             RETURNING _id
         `;
 
@@ -126,7 +126,7 @@ export async function updateInvoiceNumber(db, order) {
     const query = `
             UPDATE data
             SET js = jsonb_set(js, '{data,invoice}', $1::jsonb)
-            WHERE ref = 'ecommerce-order' AND sid = $2 AND js->'data'->>'id' = $3
+            WHERE ref = 'order' AND sid = $2 AND js->'data'->>'id' = $3
             RETURNING _id
         `;
 
@@ -620,7 +620,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
             const updateSettingsQuery = `
                 UPDATE data
                 SET js = jsonb_set(js, '{data,waybill_anulled_list}', $1::jsonb)
-                WHERE ref = '3dfactory-settings' AND sid = $2
+                WHERE ref = 'settings' AND sid = $2
             `;
             await db.query(updateSettingsQuery, [JSON.stringify(settings.waybill_anulled_list), sid]);
 
@@ -660,7 +660,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
     const settingsQuery = `
             UPDATE data
             SET js = jsonb_set(js, '{data,waybill_last_number}', $1::jsonb)
-            WHERE ref = '3dfactory-settings' AND sid = $2
+            WHERE ref = 'settings' AND sid = $2
         `;
 
     // when waybill is annulled this request is skipped

@@ -24,7 +24,7 @@ async function deleteProduct(id) {
         WHERE ref = $1 AND sid = $2 AND _id = $3
         RETURNING _id`;
 
-    const params = ['ecommerce-product', sid, id];
+    const params = ['product', sid, id];
 
     try {
 
