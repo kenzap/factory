@@ -29,5 +29,7 @@ readme.txt
 # mac os stuff
 .DS_Store
 
+.vscode/
+
 dist/
 etc/
