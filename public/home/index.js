@@ -1,5 +1,5 @@
 import { getHome } from "../_/api/get_home.js";
-import { __html, attr, hideLoader, html, initBreadcrumbs, link } from "../_/helpers/global.js";
+import { __html, attr, hideLoader, html, initBreadcrumbs, link, slugify } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -277,7 +277,7 @@ class Home {
                                             <p class="card-description mt-1 mb-0">${__html(block.desc)}</p>
                                             <div class="link-group">
                                                 ${block.links.map((link) => {
-                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${attr(link.target ? link.target : "_self")}" data-ext="pages">${html(link.text)}</a>`
+                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${slugify(link.link)}" data-ext="pages">${html(link.text)}</a>`
             }).join('')}
                                             </div>
                                         </div>
@@ -310,4 +310,4 @@ class Home {
     }
 }
 
-new Home();
+window.home = new Home();

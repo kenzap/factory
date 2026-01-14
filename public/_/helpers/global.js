@@ -81,6 +81,20 @@ export const deleteFile = (id) => {
         .catch(error => { parseApiError(error); });
 }
 
+export const openLink = (url) => {
+
+    // Check if a tab with this URL is already open
+    const existingTab = window.openTabs && window.openTabs[url];
+    if (existingTab && !existingTab.closed) {
+        existingTab.focus();
+    } else {
+        const newTab = window.open(url, '_blank');
+        // Store reference to the opened tab
+        if (!window.openTabs) window.openTabs = {};
+        window.openTabs[url] = newTab;
+    }
+}
+
 /**
  * @name getAPI
  * @description Returns API link

@@ -42,7 +42,11 @@ export class Auth {
 
         if (!self.modal) return;
 
-        self.modal.querySelector('.modal-title').innerHTML = __html('Sign in');
+        let html = `
+            <div class="modal-header border-0">
+                <h5 class="modal-title">${__html('Sign in')}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" tabindex="-1"></button>
+            </div>`;
 
         // should we reset attempt restrictions
         if (Math.floor(Date.now() / 1000) - self.resendLast > (5 * 60)) {
@@ -60,35 +64,39 @@ export class Auth {
             self.warningScreen(self, "attempts"); return;
         }
 
-        self.modal.querySelector('.modal-footer').innerHTML = `
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-branded btn-modal btn-get-otp">${__html('Get OTP')}</button>
-                <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">${__html('Cancel')}</button>
-            </div>
-        `;
-
-        let modalHTML = `
-            <form class="form-cont needs-validation" novalidate>
-                <div class="form-group row mb-3 mx-sm-3">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
-                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
-                    </svg>
-                    <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address or phone')}</label>
-                    <div class="col-lg-12">
-                        <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
-                        <div class="invalid-feedback otp-email-notice text-center"></div>
-                        <p class="form-text text-center">${__html('*You will receive a one-time password to your email address.')}</p>
-                        <div class="text-center">
-                            <div class="form-check form-switch d-inline-block form-text mt-4">
-                                <input class="form-check-input" type="checkbox" id="trust-device" ${self.email.length > 0 ? 'checked' : ''}>
-                                <label class="form-check-label" for="trust-device">${__html('Trust this device for 30 days.')}</label>
+        html += `
+            <div class="modal-body p-0">
+                <form class="form-cont needs-validation" novalidate>
+                    <div class="form-group row mb-3 mx-sm-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                        </svg>
+                        <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address or phone')}</label>
+                        <div class="col-lg-12">
+                            <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
+                            <div class="invalid-feedback otp-email-notice text-center"></div>
+                            <p class="form-text text-center">${__html('*You will receive a one-time password to your email address.')}</p>
+                            <div class="text-center">
+                                <div class="form-check form-switch d-inline-block form-text mt-4">
+                                    <input class="form-check-input" type="checkbox" id="trust-device" ${self.email.length > 0 ? 'checked' : ''}>
+                                    <label class="form-check-label" for="trust-device">${__html('Trust this device for 30 days.')}</label>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>`;
 
-        self.modal.querySelector('.modal-body').innerHTML = modalHTML;
+        html +=
+            `<div class="modal-footer border-0">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-branded btn-modal btn-get-otp">${__html('Get OTP')}</button>
+                    <button type="button" class="btn btn-outline-dark" data-bs-dismiss="modal">${__html('Cancel')}</button>
+                </div>
+            </div>
+            `;
+
+        self.modal.querySelector('.modal-content').innerHTML = html;
 
         // Clear all classes from modal-dialog except modal-dialog itself
         const modalDialog = self.modal.querySelector('.modal-dialog');

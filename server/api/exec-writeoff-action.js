@@ -185,6 +185,7 @@ async function execWriteoffAction(data) {
 
                     items_db[index].inventory.wrt_date = new Date().toISOString();
                     items_db[index].inventory.wrt_user = data.user_id;
+                    items_db[index].inventory.coil_id = record.coil_id;
 
                     // items_db[index].formula_width_calc = itemUpdated.formula_width_calc
                     // items_db[index].formula_length_calc = itemUpdated.formula_length_calc;
@@ -194,7 +195,7 @@ async function execWriteoffAction(data) {
                 }
             });
 
-            console.log('Updated items:', items_db, 'was updated:', updated, 'id:', order._id);
+            // console.log('Updated items:', items_db, 'was updated:', updated, 'id:', order._id);
 
             if (updated) {
 

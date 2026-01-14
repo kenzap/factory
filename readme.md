@@ -108,11 +108,24 @@ This will start all required services including PostgreSQL, Redis, and the Node.
 ## Development
 
 ### Quick Start
-
 To launch the ERP system locally:
 
 ```bash
 docker compose up
+```
+
+This will create 4 containers: Redis, Node.js, PostgreSQL, and Adminer (for managing PostgreSQL data). Demo data will be installed automatically from the `postgres.sql` file located in the root of this repository.
+
+You can access PostgreSQL with the default password `password123`:
+
+```bash
+http://localhost:8080/?pgsql=local_postgres&username=postgres&db=cloud&ns=public
+```
+
+To open ERP dashboard
+
+```bash
+http://localhost:3000/home/
 ```
 
 ### PostgreSQL (Alternative setups)

@@ -36,7 +36,11 @@ export const getPrice = (settings, item) => {
         return calculateVariablePrice(item, obj);
     }
 
-    return calculateFormulaPrice(settings, item, obj);
+    if (item.calc_price === 'formula') {
+        return calculateFormulaPrice(settings, item, obj);
+    }
+
+    return { price: 0, total: 0 }
 };
 
 const calculateVariablePrice = (item, obj) => {
@@ -75,8 +79,6 @@ const calculateVariablePrice = (item, obj) => {
 const calculateFormulaPrice = (settings, item, obj) => {
     const coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
 
-    console.log("coatingPrice", coatingPrice);
-
     obj.formula = item.formula;
     obj.formula_price = item.formula_price || '0';
 
@@ -87,6 +89,8 @@ const calculateFormulaPrice = (settings, item, obj) => {
     // Replace in width/length calculations
     [obj.formula_width_calc, obj.formula_length_calc] =
         replaceInDimensions([obj.formula_width_calc, obj.formula_length_calc], item);
+
+    console.log("calculateFormulaPrice", obj);
 
     // Calculate final price
     const basePrice = makeNumber(calculate(obj.formula) / 1000000 * coatingPrice);
@@ -118,6 +122,9 @@ const calculateFormulaPrice = (settings, item, obj) => {
 };
 
 const replaceFormulaVariables = (formula, settings, item, coatingPrice) => {
+
+    console.log('replaceFormulaVariables', item);
+
     let result = formula
         .replaceAll("COATING", coatingPrice)
         .replaceAll("M2", `${item.formula}/1000000`);
@@ -139,6 +146,8 @@ const replaceFormulaVariables = (formula, settings, item, coatingPrice) => {
             .replaceAll("W", item.formula_width_calc)
             .replaceAll("L", item.formula_length_calc);
     }
+
+    console.log('replaceFormulaVariables result', result);
 
     return result;
 };

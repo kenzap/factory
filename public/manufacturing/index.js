@@ -570,7 +570,7 @@ class Manufacturing {
                                     </td>
                                     <td class="py-0"><small class="text-muted">${bundleItem?.unit || "gab"}</small></td>
                                     <td class="py-0">
-                                        <small class="text-muted">${bundleItem?.qty || 1} x ${element.dataset.qty}</small>
+                                        <small class="text-muted">${parseFloat(bundleItem?.qty) * parseFloat(element.dataset.qty)}</small>
                                     </td>
                                     <td class="py-0">
                                         <div class="d-flex align-items-center action-ns">

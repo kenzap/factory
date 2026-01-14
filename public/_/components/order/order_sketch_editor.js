@@ -72,19 +72,37 @@ export const sketchEditor = (cell, settings, order, cb) => {
                     updatedRowData.formula_width_calc = parseInt(data.formula_width);
                 }
 
-                // Update length - check if formula_length is a direct value or needs to be resolved from input_fields_values
-                if (data.formula_length) {
-                    if (!isNaN(data.formula_length)) {
-                        // Direct numeric value
-                        updatedRowData.formula_length_calc = parseInt(data.formula_length);
-                    } else if (data.input_fields_values) {
-                        // Formula references an input field, try to resolve it
-                        Object.keys(data.input_fields_values).forEach(key => {
-                            if (data.formula_length.includes(key.replace('input', ''))) {
-                                updatedRowData.formula_length_calc = parseInt(data.input_fields_values[key]);
-                            }
-                        });
-                    }
+                // Update length from formula_length
+                if (data.formula_length && !isNaN(data.formula_length)) {
+                    updatedRowData.formula_length_calc = parseInt(data.formula_length);
+                }
+
+                // Update width based on input fields
+                if (data.input_fields_values && isNaN(data.formula_width)) {
+                    // Formula references an input field, try to resolve it
+                    let formula_width_calc = 0;
+                    Object.keys(data.input_fields_values).forEach(key => {
+                        if (data.formula_width.includes(key.replace('input', ''))) {
+                            formula_width_calc += parseInt(data.input_fields_values[key]);
+                        }
+                    });
+                    if (formula_width_calc) updatedRowData.formula_width_calc = formula_width_calc;
+                }
+
+                console.log('input_fields_values:', data.input_fields_values);
+                console.log('formula_width:', data.formula_width);
+                console.log('formula_width_calc:', updatedRowData.formula_width_calc);
+
+                // Update length based on input fields
+                if (data.input_fields_values && isNaN(data.formula_length)) {
+                    // Formula references an input field, try to resolve it
+                    let formula_length_calc = 0;
+                    Object.keys(data.input_fields_values).forEach(key => {
+                        if (data.formula_length.includes(key.replace('input', ''))) {
+                            formula_length_calc += parseInt(data.input_fields_values[key]);
+                        }
+                    });
+                    if (formula_length_calc) updatedRowData.formula_length_calc = formula_length_calc;
                 }
 
                 // Calculate area if both width and length are available
