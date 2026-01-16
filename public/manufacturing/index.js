@@ -43,6 +43,7 @@ class Manufacturing {
         const orderId = urlParams.get('id');
         this.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
         this.mode = urlParams.get('mode') ? urlParams.get('mode') : 'normal';
+        this.viewMode = localStorage.getItem('manufacturingViewMode') || 'compact';
 
         this.stats = {
             latest: [],
@@ -315,7 +316,7 @@ class Manufacturing {
                     <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
                         <small class="text-muted- text-dark text-nowrap">${toLocalUserTime(order.due_date)}</small>
                     </div>
-                    <div class="col-md-1 mode-${attr(this.mode)}">
+                    <div class="col-md-1 mode-${attr(this.mode)} po" onclick="manufacturing.loadOrderDetails('${order.id}')">
                         <small class="text-muted">${order.operator}</small>
                     </div>
                 </div>
@@ -382,14 +383,14 @@ class Manufacturing {
                                     <th>${__html('Unit')}</th>
                                     <th>${__html('Quantity')}</th>
                                     <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
-                                    <th class="mode-${attr(this.mode)}">${__html('Stock')}</th>
-                                    <th class="mode-${attr(this.mode)}">${__html('Taken')}</th>
+                                    <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Stock')}</th>
+                                    <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Taken')}</th>
                                     <th class="text-end">${__html('Action')}</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 ${order.items.map((item, i) => `
-                                    <tr class="order-item-row" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-qty="${item.qty}" data-group="${item.group}" >
+                                    <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                                         <td class="d-none">${i + 1}</td>
                                         <td>
                                             <div class="work-buttons">
@@ -416,7 +417,7 @@ class Manufacturing {
                                                     </ul>
                                                 </div>
                                             </div>
-                                            <small class="text-muted">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                                            <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
                                         </td>
                                         <td>${item.unit || "gab"}</td>
                                         <td>${item.qty}</td>
@@ -426,8 +427,8 @@ class Manufacturing {
                                                 <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
                                             </div>
                                         </td>
-                                        <td class="mode-${attr(this.mode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
-                                        <td class="mode-${attr(this.mode)}">
+                                        <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
+                                        <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
                                             <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                         </td>
                                         <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
@@ -482,8 +483,8 @@ class Manufacturing {
 
             // todo: add bundled products
             products.push({
-                _id: item._id,
                 item_id: item.id,
+                product_id: item._id,
                 coating: item.coating || '',
                 color: item.color || ''
             });
@@ -508,91 +509,73 @@ class Manufacturing {
                     }
                 });
 
-                // Group products by product_id first
-                const groupedProducts = {};
-                response.products.forEach(product => {
-                    if (!groupedProducts[product.product_id]) {
-                        groupedProducts[product.product_id] = [];
+                // Map bundles with order items
+                response.products.forEach((bundleItem, bundleItemIndex) => {
+
+                    console.log('Adding bundle item:', bundleItem);
+
+                    // Map bundle data from order.items.bundles if it exists
+                    let bundleInventory = null;
+                    let bundleId = "";
+                    let bundleAmount = 1;
+                    let bundleChecked = 0;
+                    let orderItem = order.items.find(item => item.id === bundleItem.item_id);
+                    let qty = orderItem ? orderItem.qty : 1;
+
+                    if (orderItem.bundle_items && Array.isArray(orderItem.bundle_items)) {
+
+                        const matchingBundle = orderItem.bundle_items.find(b =>
+                            b.inventory._id === bundleItem.bundle_id
+                        );
+
+                        if (matchingBundle) {
+                            bundleId = matchingBundle.inventory._id
+                            bundleInventory = matchingBundle.inventory || bundleItem.inventory;
+                            bundleAmount = matchingBundle.inventory?.writeoff_amount || bundleItem.inventory?.writeoff_amount || 0;
+                            bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
+                        }
+                    } else {
+                        bundleId = bundleItem.bundle_id;
+                        bundleInventory = bundleItem.inventory;
+                        bundleAmount = bundleItem.inventory?.writeoff_amount || 0;
+                        bundleChecked = bundleItem.inventory?.checked || false;
                     }
-                    groupedProducts[product.product_id].push(product);
-                });
 
-                // Process each product group
-                Object.keys(groupedProducts).forEach(productId => {
-                    const bundleItems = groupedProducts[productId];
+                    let row = ` 
+                        <tr data-bundle-id="${bundleItem.bundle_id}" class="view-${attr(this.viewMode)}">
+                            <td class="d-none py-0"></td>
+                            <td class="py-0">
 
-                    document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"][data-item_id="${productId}"]`).forEach((element, bi) => {
-                        let bundleItemIndex = 0;
-                        const itemIndex = parseInt(element.dataset.i);
-                        const orderItem = order.items[itemIndex];
+                            </td>
+                            <td class="py-0" >
+                                <div class="product-name ${attr(this.mode)}">
+                                    <small class="text-dark me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
+                                    <small class="text-dark me-2">${bundleItem?.coating}</small>
+                                    <small class="text-dark me-2">${bundleItem?.color}</small>
+                                </div>
+                            </td>
+                            <td class="py-0"><small class="text-dark">${bundleItem?.unit || "gab"}</small></td>
+                            <td class="py-0">
+                                <small class="text-dark">${parseFloat(bundleItem?.qty) * parseFloat(qty)}</small>
+                            </td>
+                            <td class="py-0">
+                                <div class="d-flex align-items-center action-ns">
+                                    <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${bundleItem?.product_id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
+                                </div>
+                            </td>
+                            <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
+                                <small class="text-dark">
+                                    <div class="${slugify(`stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}`)}"><span></span></div>
+                                </small>
+                            </td>
+                            <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
+                                <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${bundleItem?.product_id}" value="${bundleAmount}" style="width: 80px;">
+                            </td>
+                            <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
+                            </td> 
+                        </tr>`;
 
-                        bundleItems.forEach((bundleItem) => {
-
-                            console.log('Adding bundle item:', bundleItem);
-
-                            // Map bundle data from order.items.bundles if it exists
-                            let bundleInventory = null;
-                            let bundleId = "";
-                            let bundleAmount = 0;
-                            let bundleChecked = 0;
-
-                            if (orderItem.bundle_items && Array.isArray(orderItem.bundle_items)) {
-
-                                const matchingBundle = orderItem.bundle_items.find(b =>
-                                    b.inventory._id === bundleItem.bundle_id
-                                );
-
-                                if (matchingBundle) {
-                                    bundleId = matchingBundle.inventory._id
-                                    bundleInventory = matchingBundle.inventory || bundleItem.inventory;
-                                    bundleAmount = matchingBundle.inventory?.writeoff_amount || bundleItem.inventory?.writeoff_amount || 0;
-                                    bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
-                                }
-                            } else {
-                                bundleId = bundleItem.bundle_id;
-                                bundleInventory = bundleItem.inventory;
-                                bundleAmount = bundleItem.inventory?.writeoff_amount || 0;
-                                bundleChecked = bundleItem.inventory?.checked || false;
-                            }
-
-                            let row = ` 
-                                <tr data-bundle-id="${bundleItem.bundle_id}" class="">
-                                    <td class="d-none py-0"></td>
-                                    <td class="py-0">
-
-                                    </td>
-                                    <td class="py-0" >
-                                        <div class="product-name ${attr(this.mode)}">
-                                            <small class="text-muted me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
-                                            <small class="text-muted me-2">${bundleItem?.coating}</small>
-                                            <small class="text-muted me-2">${bundleItem?.color}</small>
-                                        </div>
-                                    </td>
-                                    <td class="py-0"><small class="text-muted">${bundleItem?.unit || "gab"}</small></td>
-                                    <td class="py-0">
-                                        <small class="text-muted">${parseFloat(bundleItem?.qty) * parseFloat(element.dataset.qty)}</small>
-                                    </td>
-                                    <td class="py-0">
-                                        <div class="d-flex align-items-center action-ns">
-                                            <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * element.dataset.qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${orderItem.id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
-                                        </div>
-                                    </td>
-                                    <td class="py-0 mode-${attr(this.mode)}">
-                                        <small class="text-muted">
-                                            <div class="${slugify(`stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}`)}"><span></span></div>
-                                        </small>
-                                    </td>
-                                    <td class="py-0 mode-${attr(this.mode)}">
-                                        <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${orderItem.id}" value="${bundleAmount}" style="width: 80px;">
-                                    </td>
-                                    <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
-                                    </td> 
-                                </tr>`;
-
-                            element.insertAdjacentHTML('afterend', row);
-                            bundleItemIndex++;
-                        });
-                    });
+                    if (document.querySelector(`.order-item-row[data-id="${bundleItem.item_id}"]`)) document.querySelector(`.order-item-row[data-id="${bundleItem.item_id}"]`).insertAdjacentHTML('afterend', row);
                 });
             }
 
@@ -609,7 +592,7 @@ class Manufacturing {
         const orders = this.orders;
         const self = this;
 
-        new AddBundle({ _id, title, color, coating, orderId }, this.settings, (response) => {
+        window.addbundle = new AddBundle({ _id, title, color, coating, orderId }, this.settings, (response) => {
             if (!response.success) {
                 toast(__html('Error: ') + response.error);
                 return;
@@ -1156,8 +1139,6 @@ class Manufacturing {
                 });
 
                 this.refreshButtons(order._id);
-
-                // toast(__html('Record updated'));
             });
 
         } catch (error) {
@@ -1165,23 +1146,16 @@ class Manufacturing {
         }
     }
 
-    // async cancelItemIssue(itemId) {
-    //     if (confirm('Cancel?')) {
-    //         try {
-    //             await this.delay(300);
-    //             // toast('Record updated');
-    //             // Update UI to reflect the change
-    //             const button = document.querySelector(`button[onclick *= "${itemId}"]`);
-    //             if (button && button.textContent === 'Atcelt') {
-    //                 button.className = 'btn btn-sm btn-dark';
-    //                 button.textContent = 'Izsniegt';
-    //                 button.onclick = () => this.issueItem(itemId);
-    //             }
-    //         } catch (error) {
-    //             toast('Kļūda atcelšanas procesā');
-    //         }
-    //     }
-    // }
+    toggleView() {
+
+        this.viewMode = this.viewMode === 'warehouse' ? 'compact' : 'warehouse';
+        document.body.dataset.viewMode = this.viewMode;
+
+        localStorage.setItem('manufacturingViewMode', this.viewMode);
+
+        // Rerender orders to apply the new view mode
+        this.renderOrders();
+    }
 
     destroy() {
         if (this.autoUpdateInterval) {

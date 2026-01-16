@@ -10,7 +10,7 @@ import { getDbConnection, sid } from '../_/helpers/index.js';
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteProductBundle(id) {
+async function deleteProductBundle(all, product_id, bundle_id, id) {
 
     const db = getDbConnection();
 
@@ -18,21 +18,35 @@ async function deleteProductBundle(id) {
 
     let response = null;
 
-    // Get orders
-    let query = `
-        DELETE FROM data 
-        WHERE ref = $1 AND sid = $2 AND _id = $3
-        RETURNING _id`;
+    console.log('Delete product bundle called with', { all, product_id, bundle_id, id });
 
-    const params = ['product-bundle', sid, id];
+
 
     try {
 
         await db.connect();
 
-        const result = await db.query(query, params);
+        // Delete all similar product bundles
+        if (all) {
 
-        response = result.rows;
+            const result = await db.query(`
+                DELETE FROM data 
+                WHERE ref = $1 AND sid = $2 AND js->'data'->>'product_id' = $3 AND js->'data'->>'bundle_id' = $4
+                RETURNING _id`, ['product-bundle', sid, product_id, bundle_id]);
+
+            response = result.rows;
+        }
+
+        // Delete single product bundle
+        if (!all) {
+
+            const result = await db.query(`
+                DELETE FROM data 
+                WHERE ref = $1 AND sid = $2 AND _id = $3
+                RETURNING _id`, ['product-bundle', sid, id]);
+
+            response = result.rows;
+        }
 
     } finally {
         await db.end();
@@ -46,7 +60,7 @@ function deleteProductBundleApi(app) {
 
     app.post('/api/delete-product-bundle/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteProductBundle(_req.body.id);
+        const response = await deleteProductBundle(_req.body.all, _req.body.product_id, _req.body.bundle_id, _req.body.id);
 
         // console.log('delete response', response);
 

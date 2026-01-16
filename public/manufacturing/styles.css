@@ -116,6 +116,7 @@ body {
     width: auto;
 }
 
+.view-compact,
 .mode-narrow{
     display: none;
 }

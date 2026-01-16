@@ -36,6 +36,7 @@ export function log_error(...args) {
 export function getDbConnection() {
     return new Client({
         connectionString: process.env.DATABASE_URL
+        // connectionString: "postgresql://skarda_design:weid84£q213c23Rvd00hjsdaFVDfLSQsvdsfVFDQ@host.docker.internal:5433/skarda_design"
     });
 }
 

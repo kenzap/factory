@@ -2,10 +2,10 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 
 /**
- * Create supply record
+ * Create bundle record
  *
  * @version 1.0
- * @param {JSON} data - Supply record data
+ * @param {JSON} data - Bundle record data, example: {"product_id":"e440dce02c04e62e10bed94443c1721795326d9e","product_color":"Zinc","product_coating":"Zinc","bundle_id":"8sgr31mh7x74qz29xtoma26xzr6h11s8xh88ryfc","bundle_color":"Zinc","bundle_coating":"Zinc","bundle_qty":1}
  * @returns {JSON<Object>} - Response
 */
 async function createProductBundle(data) {

@@ -1,9 +1,10 @@
 import { createProductBundle } from "../../api/create_product_bundle.js";
 import { deleteProductBundle } from "../../api/delete_product_bundle.js";
 import { getProductBundles } from "../../api/get_product_bundles.js";
+import { syncProductBundle } from "../../api/sync_product_bundle.js";
 import { DropdownSuggestion } from "../../components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../../components/products/product_search.js";
-import { __html, onClick, toast } from "../../helpers/global.js";
+import { __html, toast } from "../../helpers/global.js";
 import { getCoatings, getColors } from "../../helpers/order.js";
 
 /**
@@ -82,7 +83,7 @@ export class AddBundle {
                                         <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="${__html('Quantity')}" value="" required>
                                     </div>
                                     <div class="col-md-1 form-cont d-flex align-items-end d-none-" data-type="general">
-                                        <button type="submit" class="btn btn-dark border-0 btn-add-bundle-record w-100">
+                                        <button type="submit" class="btn btn-dark border-0 btn-add-bundle-record w-100" onclick="addbundle.addEntry(event)">
                                             <i class="bi bi-plus-circle me-1"></i>
                                         </button>
                                     </div>
@@ -141,14 +142,12 @@ export class AddBundle {
         });
 
         this.data();
-
-        this.listeners();
     }
 
     data = () => {
 
         let products = [{
-            _id: this.product_id,
+            product_id: this.product_id,
             coating: this.coating || '',
             color: this.color || ''
         }];
@@ -196,6 +195,7 @@ export class AddBundle {
 
         tbody.innerHTML = entriesToShow.map(entry => {
 
+            console.log('Bundle entry:', entry);
             return `
             <tr>
                 <td style="width:320px;" class="align-middle">
@@ -214,87 +214,117 @@ export class AddBundle {
                    ${this.statusBadge(entry)}
                 </td>
                 <td class="text-end align-middle">
-                    <button class="btn btn-delete-entry text-danger" data-_id="${entry._id}" title="Delete entry">
+                    <button class="btn btn-repeat-entry text-dark me-0" data-_id="${entry._id}" onclick="addbundle.syncEntry(event, '${entry.product_id}', '${entry.bundle_id}', '${entry.coating}', '${entry.color}')" title="Repeat entry for all colors and coatings">
+                        <i class="bi bi-repeat"></i>
+                    </button>
+                    <button class="btn btn-delete-entry text-danger" data-_id="${entry._id}" onclick="addbundle.deleteEntry(event, '${entry.product_id}', '${entry.bundle_id}', '${entry._id}')" title="Delete entry">
                         <i class="bi bi-trash"></i>
                     </button>
                 </td>
             </tr>
         `;
         }).join('');
+    }
 
-        onClick('.btn-delete-entry', (e) => {
+    syncEntry = (e, product_id, bundle_id, bundle_coating, bundle_color) => {
 
-            const id = e.currentTarget.getAttribute('data-_id');
+        e.preventDefault();
 
-            if (!confirm(__html('Remove?'))) return;
+        if (!confirm(__html('Create bundle for other colors and coatings?'))) return;
 
-            deleteProductBundle({ id }, (response) => {
+        syncProductBundle({ product_id, bundle_id, bundle_coating, bundle_color }, (response) => {
+            if (!response.success) {
+
+                console.error('Error: %1$', response.error);
+                return;
+            }
+
+            if (response.bundles_created > 0) {
+                toast(__html('Bundles created: %1$', response.bundles_created));
+            } else {
+                toast(__html('No new bundles were created'));
+            }
+
+            this.data();
+
+            response.orderId = this.orderId;
+
+            this.cb(response);
+        });
+    }
+
+    deleteEntry = (e, product_id, bundle_id, id) => {
+
+        // const id = e.currentTarget.getAttribute('data-_id');
+
+        if (!confirm(__html('Remove?'))) return;
+
+        let all = confirm(__html('Remove similar bundles?'));
+
+        deleteProductBundle({ all, product_id, bundle_id, id }, (response) => {
+
+            if (!response.success) {
+
+                console.error('Error: %1$', response.error);
+                return;
+            }
+
+            this.data();
+
+            response.orderId = this.orderId;
+
+            this.cb(response);
+        });
+    }
+
+    addEntry = (e) => {
+
+        e.preventDefault();
+
+        const bundle_id = this.product_bundle?._id || this.product_bundle._id;
+        const color = document.querySelector('#productColor').value.trim();
+        const coating = document.querySelector('#productCoating').value.trim();
+        const qty = parseInt(document.querySelector('#qty').value.trim(), 10) || 1;
+        const orderId = this.orderId;
+
+        // console.log('Add bundle record:', { bundle_id, color, coating, qty, orderId });
+
+        if (!bundle_id) {
+            alert(__html('Please select a product'));
+            return;
+        }
+
+        // Create product bundle from the selected product
+        createProductBundle(
+            {
+                product_id: this.product_id,
+                product_color: this.color,
+                product_coating: this.coating,
+                bundle_id: bundle_id,
+                bundle_color: color,
+                bundle_coating: coating,
+                bundle_qty: qty
+            }, (response) => {
 
                 if (!response.success) {
-
-                    console.error('Error: %1$', response.error);
+                    alert(__html('Error: %1$', response.error));
                     return;
                 }
 
+                toast(__html('Changes applied'));
+
+                // this.modal_cont.hide();
                 this.data();
 
                 response.orderId = this.orderId;
 
                 this.cb(response);
             });
-        });
     }
 
     statusBadge(entry) {
 
         if (!entry.status) return `<span class="item-status status-primary">${__html('Published')}</span>`;
         if (entry.status == 'waiting') return `<span class="item-status status-warning">${__html('Waiting')}</span>`;
-    }
-
-    listeners = () => {
-
-        onClick('.btn-add-bundle-record', async (e) => {
-            e.preventDefault();
-
-            const bundle_id = this.product_bundle?._id || this.product_bundle._id;
-            const color = document.querySelector('#productColor').value.trim();
-            const coating = document.querySelector('#productCoating').value.trim();
-            const qty = parseInt(document.querySelector('#qty').value.trim(), 10) || 1;
-            const orderId = this.orderId;
-
-            // console.log('Add bundle record:', { bundle_id, color, coating, qty, orderId });
-
-            if (!bundle_id) {
-                alert(__html('Please select a product'));
-                return;
-            }
-
-            // Create product bundle from the selected product
-            createProductBundle(
-                {
-                    product_id: this.product_id,
-                    product_color: this.color,
-                    product_coating: this.coating,
-                    bundle_id: bundle_id,
-                    bundle_color: color,
-                    bundle_coating: coating,
-                    bundle_qty: qty
-                }, (response) => {
-
-                    if (!response.success) {
-                        alert(__html('Error: %1$', response.error));
-                        return;
-                    }
-
-                    toast(__html('Changes applied'));
-
-                    // this.modal_cont.hide();
-                    this.data();
-
-                    response.orderId = this.orderId;
-
-                    this.cb(response);
-                });
-        });
     }
 }

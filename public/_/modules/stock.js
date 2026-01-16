@@ -14,7 +14,7 @@ export const getHtml = (response) => {
             <div class="search-container d-flex align-items-center">
                 <div class="me-3">
                     <div class="dropdown">
-                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 12px; min-width: 200px;">
+                        <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 6px; min-width: 200px;">
                             <span id="selectedCategory">${__html(response?.settings?.stock_categories[0].name)}</span>
                         </button>
                         <ul class="dropdown-menu" id="categoryFilter">
