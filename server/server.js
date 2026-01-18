@@ -8,6 +8,9 @@ import helmet from 'helmet';
 import livereload from 'livereload';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { checkFileExists } from './_/helpers/extensions/file.js';
+import { loadExtensions } from './_/helpers/extensions/loader.js';
+import createLogger from './_/helpers/logger.js';
 
 dotenv.config();
 
@@ -17,24 +20,14 @@ const app = express();
 const PUBLIC_DIR = path.join(__dirname, '../public');
 const API_DIR = path.join(__dirname, 'api');
 const DOCUMENT_DIR = path.join(__dirname, 'document');
-const INTEGRATIONS_DIR = path.join(__dirname, 'integrations');
+const EXTENSIONS_DIR = path.join(__dirname, 'extensions');
+const logger = createLogger('server');
 
 // Cache for file existence to avoid repeated fs calls
 const fileCache = new Map();
-const CACHE_TTL = process.env.NODE_ENV === 'production' ? Infinity : 5000; // 5s in dev, permanent in prod
 
-function checkFileExists(filePath) {
-    const now = Date.now();
-    const cached = fileCache.get(filePath);
-
-    if (cached && (CACHE_TTL === Infinity || now - cached.time < CACHE_TTL)) {
-        return cached.exists;
-    }
-
-    const exists = fs.existsSync(filePath);
-    fileCache.set(filePath, { exists, time: now });
-    return exists;
-}
+// cron cache
+const scheduledJobs = new Map()
 
 // Request timing middleware (only in development)
 if (process.env.NODE_ENV !== 'production') {
@@ -42,7 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
         const startTime = Date.now();
         res.on('finish', () => {
             const duration = Date.now() - startTime;
-            console.log(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
+            logger.info(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
         });
         next();
     });
@@ -105,39 +98,7 @@ async function loadRoutes(directory, routeType) {
                 handler(app);
             }
         } catch (err) {
-            console.error(`Error loading ${routeType} route ${file}:`, err);
-        }
-    }));
-}
-
-// Load integrations
-async function loadIntegrations(directory, integrationType) {
-    if (!fs.existsSync(directory)) return;
-
-    const integrationFolders = fs.readdirSync(directory, { withFileTypes: true })
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
-
-    await Promise.all(integrationFolders.map(async (folder) => {
-        const integrationPath = path.join(directory, folder, 'index.js');
-
-        if (!checkFileExists(integrationPath)) {
-            console.warn(`Integration ${folder} missing index.js entry point`);
-            return;
-        }
-
-        try {
-            const module = await import(integrationPath);
-            const integration = module.default || module;
-
-            if (typeof integration === 'function') {
-                integration(app);
-                console.log(`Loaded integration: ${folder}`);
-            } else {
-                console.warn(`Integration ${folder} does not export a function`);
-            }
-        } catch (err) {
-            console.error(`Error loading ${integrationType} integration ${folder}:`, err);
+            logger.error(`Error loading ${routeType} route ${file}:`, err);
         }
     }));
 }
@@ -147,7 +108,7 @@ await loadRoutes(API_DIR, 'API');
 await loadRoutes(DOCUMENT_DIR, 'document');
 
 // Load integrations
-await loadIntegrations(INTEGRATIONS_DIR, 'integrations');
+await loadExtensions(EXTENSIONS_DIR, app, logger, scheduledJobs, fileCache);
 
 // Optimized Next.js-like routing with caching
 app.get('*', (req, res, next) => {
@@ -169,16 +130,11 @@ app.get('*', (req, res, next) => {
     ];
 
     for (const file of filesToCheck) {
-        if (checkFileExists(file.path)) {
+        if (checkFileExists(file.path, fileCache)) {
             res.type(file.type);
             return res.sendFile(file.path);
         }
     }
-
-    // // SPA fallback for HTML requests
-    // if (req.accepts('html')) {
-    //     return res.sendFile(path.join(PUBLIC_DIR, 'index.html'));
-    // }
 
     // 404
     res.status(404).send('Not found');
@@ -186,12 +142,12 @@ app.get('*', (req, res, next) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-    console.error('Server error:', err);
+    logger.error('Server error:', err);
     res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`Server running on http://localhost:${PORT}`);
+    logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
 });

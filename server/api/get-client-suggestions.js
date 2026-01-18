@@ -12,8 +12,6 @@ import { getDbConnection, log, sid } from '../_/helpers/index.js';
 */
 async function getClientSuggestions(filters) {
 
-    console.log('filters', filters);
-
     const client = getDbConnection();
 
     let clients = {};
@@ -57,8 +55,6 @@ async function getClientSuggestions(filters) {
 
 // API route
 function getClientSuggestionsApi(app) {
-
-    console.log('getClientSuggestionsApi loaded');
 
     app.post('/api/get-client-suggestions/', authenticateToken, async (req, res) => {
         try {

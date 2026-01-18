@@ -1,0 +1,8 @@
+{
+  "name": "moneo",
+  "version": "1.0.0",
+  "enabled": true,
+  "requires": {
+    "kenzap": ">=2.0.0"
+  }
+}

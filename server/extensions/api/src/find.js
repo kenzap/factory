@@ -1,6 +1,14 @@
-export const find = async (query, access, db) => {
+/**
+ * Executes a find operation with the provided query and access parameters
+ * @param {Object} query - The query object containing search criteria
+ * @param {Object} access - Access control object for permissions
+ * @param {Object} db - Database connection object
+ * @param {Object} logger - Logger instance for logging operations
+ * @returns {Promise<Object>} Promise that resolves to the query response or error object with success: false and reason
+ */
+export const find = async (query, access, db, logger) => {
     try {
-        const response = await executeFind(query, access, db);
+        const response = await executeFind(query, access, db, logger);
         return response;
     } catch (error) {
         return {
@@ -13,7 +21,7 @@ export const find = async (query, access, db) => {
 /**
  * Execute find query
  */
-async function executeFind(query, access, db) {
+async function executeFind(query, access, db, logger) {
 
     // Validate access
     if (!access.permission === 'read' && !access.permission === 'write') {
@@ -35,11 +43,11 @@ async function executeFind(query, access, db) {
 
     // Handle ID-based queries
     if (query.id) {
-        return await findById(query, builder, db);
+        return await findById(query, builder, db, logger);
     }
 
     // Handle general queries
-    return await findMany(query, builder, db);
+    return await findMany(query, builder, db, logger);
 }
 
 /**
@@ -60,7 +68,7 @@ function validateQuery(query) {
 /**
  * Find by ID(s)
  */
-async function findById(query, builder, db) {
+async function findById(query, builder, db, logger) {
     const ids = Array.isArray(query.id) ? query.id : [query.id];
 
     if (ids.length === 0) {
@@ -73,17 +81,17 @@ async function findById(query, builder, db) {
 
     // Single ID with GET
     if (!Array.isArray(query.id) && query.type === 'get') {
-        return await findSingle(query, builder, db);
+        return await findSingle(query, builder, db, logger);
     }
 
     // Multiple IDs or FIND
-    return await findMultiple(ids, query, builder, db);
+    return await findMultiple(ids, query, builder, db, logger);
 }
 
 /**
  * Find single record
  */
-async function findSingle(query, builder, db) {
+async function findSingle(query, builder, db, logger) {
     const { select, params } = builder.buildSelectQuery();
     const id = query.id;
 
@@ -108,7 +116,7 @@ async function findSingle(query, builder, db) {
 /**
  * Find multiple records by IDs
  */
-async function findMultiple(ids, query, builder, db) {
+async function findMultiple(ids, query, builder, db, logger) {
     const { select, params } = builder.buildSelectQuery();
     const limit = builder.getLimit();
     const offset = builder.getOffset();
@@ -125,7 +133,7 @@ async function findMultiple(ids, query, builder, db) {
         OFFSET ${offset}
     `;
 
-    console.log('SQL:', sql, [...params, ...ids]);
+    logger.info('sql:', sql, [...params, ...ids]);
 
     const result = await db.query(sql, [...params, ...ids]);
 
@@ -135,7 +143,7 @@ async function findMultiple(ids, query, builder, db) {
 /**
  * Find many records with filters
  */
-async function findMany(query, builder, db) {
+async function findMany(query, builder, db, logger) {
     const { select, params } = builder.buildSelectQuery();
     const whereClause = builder.buildWhereClause();
     const groupBy = builder.buildGroupBy();
