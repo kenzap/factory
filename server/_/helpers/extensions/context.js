@@ -1,4 +1,6 @@
 import createLogger from '../../helpers/logger.js';
+import { getSettings } from '../settings.js';
+import { createConfigInterface, resolveIntegrationConfig } from './config.js';
 import createManagedRawDb from './db.js';
 
 /**
@@ -14,7 +16,11 @@ import createManagedRawDb from './db.js';
  *   - services: Object for exposed ERP services (currently empty)
  *   - config: Configuration object with enabled flag
  */
-export const createExtensionContext = (extensionName, db, cronManager, router) => {
+export const createExtensionContext = async (extensionName, db, cronManager, router, manifest) => {
+
+    const configValues = resolveIntegrationConfig(manifest)
+
+    const settings = await getSettings();
 
     // Example of controlled database access
     return {
@@ -36,6 +42,8 @@ export const createExtensionContext = (extensionName, db, cronManager, router) =
             // expose ERP services if needed
         },
 
+        config: createConfigInterface(settings, extensionName),
+
         db: createManagedRawDb(db),
 
         cron: {
@@ -53,10 +61,6 @@ export const createExtensionContext = (extensionName, db, cronManager, router) =
                     options
                 )
             }
-        },
-
-        config: {
-            enabled: true
         }
     }
 }

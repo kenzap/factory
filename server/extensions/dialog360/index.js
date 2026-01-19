@@ -11,7 +11,7 @@ import { notifyOrderReady } from './src/notify-order-ready.js';
  * @param {Object} params.cron - Cron manager for scheduling recurring tasks
  * @param {Object} params.db - Database connection instance
  * @param {Object} params.logger - Logger instance for debugging and monitoring
- * 
+ *  
  * @description
  * Sets up:
  * - GET /orders-ready endpoint to retrieve orders ready for notification
@@ -21,7 +21,9 @@ import { notifyOrderReady } from './src/notify-order-ready.js';
  * @note In the cron expression '0 9,10,15,16 * * 1-5', the '1-5' represents
  *       Monday through Friday (1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday)
  */
-export function register({ router, cron, db, logger }) {
+export function register({ router, cron, config, db, logger }) {
+
+    logger.info('Registering WhatsApp extension with API key:', config.get('DIALOG_KEY') ? config.get('DIALOG_KEY') : 'not set');
 
     // Route to get orders ready for notification
     router.get('/orders-ready', async (req, res) => {
@@ -45,7 +47,7 @@ export function register({ router, cron, db, logger }) {
     // Test route for order ready notification
     router.get('/order-ready-test/:id', async (req, res) => {
 
-        const response = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, db, logger);
+        const response = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, config, db, logger);
 
         // const response = await notifyOrderNewAdmin({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, db, logger);
 

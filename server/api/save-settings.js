@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
+import { clearSettingsCache } from '../_/helpers/settings.js';
 
 /**
  * Save settings
@@ -65,6 +66,9 @@ function saveSettingsApi(app) {
 
         const data = _req.body;
         const response = await saveSettings(data);
+
+        // Clear settings cache
+        clearSettingsCache();
 
         res.json({ success: true, product: response });
     });

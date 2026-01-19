@@ -1,38 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
-
-async function getSettings() {
-
-    let settings = {};
-
-    // get database connection
-    const client = getDbConnection();
-
-    // settings query
-    const query = `
-        SELECT js->'data' AS data
-        FROM data 
-        WHERE ref = $1 AND sid = $2 
-        LIMIT 1
-    `;
-
-    try {
-
-        await client.connect();
-
-        const result = await client.query(query, ['settings', sid]);
-        if (result.rows.length > 0) {
-
-            // get settings from the first row
-            const row = result.rows[0];
-            settings = row.data ? row.data : {};
-        }
-    } finally {
-        await client.end();
-    }
-
-    return settings;
-}
+import { loadIntegrationManifests } from '../_/helpers/extensions/manifest.js';
+import { getLocale, log } from '../_/helpers/index.js';
+import { getSettings } from '../_/helpers/settings.js';
 
 // API route
 function getSettingsApi(app) {
@@ -42,8 +11,10 @@ function getSettingsApi(app) {
 
             const locale = await getLocale(req.headers.locale);
             const settings = await getSettings();
+            const extensions = loadIntegrationManifests();
+            // const config = mergeSettings(extensions, settings);
 
-            res.send({ success: true, settings, locale, sid: 0, user: req.user, });
+            res.send({ success: true, settings, extensions, locale, sid: 0, user: req.user, });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get settings' });

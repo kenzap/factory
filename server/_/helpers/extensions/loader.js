@@ -5,6 +5,7 @@ import { getDbConnection } from '../index.js';
 import { createExtensionContext } from './context.js';
 import { createCronManager } from './cron.js';
 import { checkFileExists } from './file.js';
+import { loadManifest } from './manifest.js';
 
 /**
  * Loads and registers extensions from a specified directory
@@ -45,6 +46,8 @@ export const loadExtensions = async (directory, app, logger, scheduledJobs, file
             continue
         }
 
+        const manifest = loadManifest(integrationPath)
+
         try {
             const module = await import(integrationPath)
             const integration = module.default || module
@@ -61,7 +64,7 @@ export const loadExtensions = async (directory, app, logger, scheduledJobs, file
             app.use(`/extension/${folder}`, router)
 
             // 🔹 Create plugin context
-            const context = createExtensionContext(folder, getDbConnection, cronManager, router)
+            const context = await createExtensionContext(folder, getDbConnection, cronManager, router, manifest)
 
             // 🔹 Register integration
             integration.register(context)

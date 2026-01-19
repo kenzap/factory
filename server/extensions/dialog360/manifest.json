@@ -1,0 +1,19 @@
+{
+  "name": "Dialog 360",
+  "version": "1.0.0",
+  "enabled": true,
+  "requires": {
+    "kenzap": ">=2.0.0"
+  },
+  "events": [
+    "invoice.created",
+    "order.ready"
+  ],
+  "config": {
+    "DIALOG_KEY": { "title": "Dialog Key", "type": "token", "required": true, "default": "" },
+    "DIALOG_API_URL": { "title": "API URL", "type": "text", "required": true, "default": "https://waba-v2.360dialog.io/messages" },
+    "WHATSAPP_NAMESPACE": { "title": "Namespace", "type": "text", "required": true, "default": "" },
+    "WHATSAPP_OTP_SIGNATURE": { "title": "OTP Signature", "type": "token", "required": true, "secret": true },
+    "WHATSAPP_OTP_PACKAGE": { "title": "OTP Package", "type": "text", "required": true }
+  }
+}
