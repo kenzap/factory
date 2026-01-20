@@ -1,7 +1,8 @@
 import createLogger from '../../helpers/logger.js';
 import { getSettings } from '../settings.js';
-import { createConfigInterface, resolveIntegrationConfig } from './config.js';
+import { createConfigInterface } from './config.js';
 import createManagedRawDb from './db.js';
+import { createEventInterface, eventBus, getAllowedEvents } from './events.js';
 
 /**
  * Creates a plugin context object for integrations with controlled access to ERP resources.
@@ -18,9 +19,9 @@ import createManagedRawDb from './db.js';
  */
 export const createExtensionContext = async (extensionName, db, cronManager, router, manifest) => {
 
-    const configValues = resolveIntegrationConfig(manifest)
+    const allowedEvents = getAllowedEvents(manifest)
 
-    const settings = await getSettings();
+    const settings = await getSettings()
 
     // Example of controlled database access
     return {
@@ -45,6 +46,12 @@ export const createExtensionContext = async (extensionName, db, cronManager, rou
         config: createConfigInterface(settings, extensionName),
 
         db: createManagedRawDb(db),
+
+        events: createEventInterface(
+            eventBus,
+            extensionName,
+            allowedEvents
+        ),
 
         cron: {
             register: (jobName, schedule, handler, options) => {

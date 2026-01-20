@@ -1,6 +1,7 @@
 
 import express from 'express';
-import { getRequestCount, incrementRequestCount, isValidEmail, isValidPhone, sendOtpEmail, sendOtpWhatsApp, storeNonce, storeOtp } from '../_/helpers/auth.js';
+import { getRequestCount, incrementRequestCount, isValidEmail, isValidPhone, sendOtpEmail, storeNonce, storeOtp } from '../_/helpers/auth.js';
+import { eventBus } from '../_/helpers/extensions/events.js';
 import { log } from '../_/helpers/index.js';
 
 // API route for product export
@@ -65,7 +66,7 @@ function getOtpApi(app) {
 
             // Send OTP via email (you'll need to implement email service)
             if (isValidEmail(email_or_phone)) await sendOtpEmail(email_or_phone, otp);
-            if (isValidPhone(email_or_phone)) await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
+            if (isValidPhone(email_or_phone)) eventBus.emit('otp.requested', { phone: email_or_phone, otp }); // await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
 
             log(`OTP generated for ${email_or_phone} - ${otp}`);
 

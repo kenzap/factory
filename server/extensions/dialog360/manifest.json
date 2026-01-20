@@ -1,13 +1,12 @@
 {
   "name": "Dialog 360",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "enabled": true,
   "requires": {
     "kenzap": ">=2.0.0"
   },
   "events": [
-    "invoice.created",
-    "order.ready"
+    "otp.requested"
   ],
   "config": {
     "DIALOG_KEY": { "title": "Dialog Key", "type": "token", "required": true, "default": "" },

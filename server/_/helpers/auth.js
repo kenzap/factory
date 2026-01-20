@@ -3,7 +3,7 @@ import { body } from 'express-validator';
 import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { send_email } from './email.js';
-import { getDbConnection, log, log_error, sid } from './index.js';
+import { getDbConnection, sid } from './index.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-provided-in-env';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-provided-in-env';
@@ -98,85 +98,6 @@ export const sendOtpEmail = async (email, otp) => {
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {
         console.error('Error sending OTP email:', error);
-        throw error;
-    }
-}
-
-// Send OTP via WhatsApp function placeholder
-export const sendOtpWhatsApp = async (phone, otp, isOtp = false) => {
-
-    try {
-        // 360dialog API configuration
-        // production
-        // const url = "https://waba.360dialog.io/v1/messages";
-        const url = "https://waba-v2.360dialog.io/messages";
-        const apiKey = process.env.DIALOG_KEY;
-
-        // console.log('Using WhatsApp API URL:', url);
-        // console.log('Using WhatsApp API Key:', apiKey ? 'Provided' : 'Not Provided', apiKey);
-
-        // sandbox
-        // const url = "https://waba-sandbox.360dialog.io/v1/messages";
-        // const apiKey = "UXENI6_sandbox";
-
-        // Define template at https://developers.facebook.com/apps/ > your app > WhatsApp > Message Templates
-        const payload = {
-            to: phone,
-            messaging_product: "whatsapp",
-            type: "template",
-            template: {
-                namespace: process.env.WHATSAPP_NAMESPACE,
-                language: {
-                    policy: "deterministic",
-                    code: "en"
-                },
-                name: "auth_otp",
-                components: [
-                    {
-                        type: "body",
-                        parameters: [
-                            {
-                                type: "text",
-                                text: otp
-                            }
-                        ]
-                    },
-                    {
-                        type: "button",
-                        sub_type: "url",
-                        index: "0",
-                        parameters: [
-                            {
-                                type: "text",
-                                text: otp
-                            }
-                        ]
-                    }
-                ]
-            }
-        };
-
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'D360-Api-Key': apiKey
-            },
-            body: JSON.stringify(payload)
-        });
-
-        if (!response.ok) {
-            log_error(`HTTP error! status:`, response);
-        }
-
-        const result = await response.json();
-
-        log(`WhatsApp OTP sent to ${phone}:`, result);
-
-        return { success: true, message: 'WhatsApp message sent successfully', data: result };
-
-    } catch (error) {
-        log_error('Error sending WhatsApp message:', error);
         throw error;
     }
 }

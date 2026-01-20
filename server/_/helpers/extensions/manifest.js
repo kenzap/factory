@@ -45,6 +45,12 @@ export const loadIntegrationManifests = () => {
     return manifests
 }
 
+/**
+ * Loads and parses a manifest.json file from the same directory as the given integration path.
+ * 
+ * @param {string} integrationPath - The path to the integration file
+ * @returns {Object|null} The parsed manifest object, or null if the manifest file doesn't exist
+ */
 export const loadManifest = (integrationPath) => {
     const manifestPath = path.join(
         path.dirname(integrationPath),
@@ -56,7 +62,3 @@ export const loadManifest = (integrationPath) => {
     const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
     return manifest
 }
-
-// export default loadManifest;
-
-// export default loadIntegrationManifests;

@@ -1,6 +1,7 @@
 import { getOrdersReadyForNotification } from './src/get-orders-ready-for-notification.js';
 // import { notifyOrderNewAdmin } from './src/notify-order-new-admin.js';
 import { notifyOrderReady } from './src/notify-order-ready.js';
+import { sendOtp } from './src/send-otp.js';
 
 // register whatsapp extension
 /**
@@ -21,9 +22,16 @@ import { notifyOrderReady } from './src/notify-order-ready.js';
  * @note In the cron expression '0 9,10,15,16 * * 1-5', the '1-5' represents
  *       Monday through Friday (1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday)
  */
-export function register({ router, cron, config, db, logger }) {
+export function register({ router, cron, config, events, db, logger }) {
 
-    logger.info('Registering WhatsApp extension with API key:', config.get('DIALOG_KEY') ? config.get('DIALOG_KEY') : 'not set');
+    logger.info('Registering WhatsApp extension with API key:', config.get('DIALOG_KEY') ? config.get('DIALOG_KEY') : 'not set')
+
+    events.on("otp.requested", async ({ phone, otp }) => {
+
+        logger.info("OTP Request received:", phone, otp);
+
+        await sendOtp(phone, otp, config, logger);
+    })
 
     // Route to get orders ready for notification
     router.get('/orders-ready', async (req, res) => {
