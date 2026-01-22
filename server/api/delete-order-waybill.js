@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { updateWaybillNumber } from '../_/helpers/document.js';
+import { updateWaybillNumber } from '../_/helpers/document/index.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 
 /**

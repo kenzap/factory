@@ -1,5 +1,4 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { locale } from '../_/helpers/index.js';
 
 function clean_firm(firm) {
     firm = firm.replace(/^SIA\s/, "");
@@ -58,16 +57,18 @@ function get_type(firm) {
  * @param {JSON} data - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function verifyClient(data) {
+async function verifyClient(data, logger) {
 
-    // TODO. add multi country support
-    const cc = locale.toLocaleUpperCase();
+    // tax region code
+    const cc = data.tax_region?.toUpperCase() || locale?.toUpperCase();
 
     // set defaults
     const output = {
         success: true,
         pvncode: "",
         pvnStatus: "0",
+        vatNumber: "",
+        vatStatus: "0",
         statuss: "0",
         adress_full: "",
         client_update: false
@@ -80,6 +81,9 @@ async function verifyClient(data) {
         if (js.isValid && js.userError === "VALID") {
             output.statuss = "1";
             output.pvnStatus = "active";
+            output.vatStatus = "1";
+            output.vatNumber = cc + js.vatNumber;
+            output.regNumber = js.vatNumber;
             output.adress_full = js.address;
             output.pvncode = cc + js.vatNumber;
             output.name = js.name;
@@ -90,21 +94,20 @@ async function verifyClient(data) {
 
         return output;
     } catch (error) {
+
+        logger.error('verifyClient error:', error);
+
         return { success: false, error: error.message };
     }
 }
 
 // Simple API route
-function verifyClientApi(app) {
+function verifyClientApi(app, logger) {
 
     app.post('/api/verify-client/', authenticateToken, async (_req, res) => {
 
-        // console.log('saveClientApi _req.body', _req.body);
-
         const data = _req.body;
-        const response = await verifyClient(data);
-
-        console.log('saveClient response', response);
+        const response = await verifyClient(data, logger);
 
         res.json({ success: true, client: response, message: 'client saved' });
     });

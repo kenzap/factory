@@ -1,140 +1,228 @@
 import { chromium } from 'playwright';
-import { authenticateToken } from '../_/helpers/auth.js';
-import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillItemsTable, getWaybillNextNumber, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
+// import { authenticateToken } from '../_/helpers/auth.js';
+import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillNextNumber, parseDocument } from '../_/helpers/document/index.js';
+import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
 import { send_email } from '../_/helpers/email.js';
-import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
+import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
+import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
+import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
 
-/**
+/**   
  * Waybill PDF Document Generator
  * 
- * @version 1.0
- * @date 2025-08-06
+ * @version 2.0
+ * @date 2025-01-21
  * @param {string} lang - Language code for product titles and categories
- * @returns {Promise<string>} - XML string of products
+ * @returns {Promise<object>} - Waybill data with HTML, totals, and metadata
 */
-async function viewWaybill(_id, user, locale, lang) {
+async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-
+        // Get document data
         let data = await getDocumentData(db, "waybill", _id, user, locale);
 
         data.lang = lang;
-
         data.user = user;
 
+        // Get waybill template
         let waybill = data.settings?.document_template || "";
 
+        // Generate or retrieve waybill number
         data.order.waybill = await getWaybillNextNumber(db, data.order, data.settings, user);
 
-        data.manufacturing_date = getManufacturingDate(data.order);
+        // Determine countries for tax calculation
+        const sellerCountry = options.sellerCountry ||
+            data.settings?.tax_region ||
+            'LV';
 
+        logger.info(`Generating waybill for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
+        // logger.info(`Buyer Entity: ${JSON.stringify(data.entity)}`);
+
+        const buyerCountry = options.buyerCountry ||
+            data.entity?.country_code ||
+            extractCountryFromVAT(data.entity?.vat_number) ||
+            sellerCountry;
+
+        // Initialize calculator with entity info
+        const calculator = new InvoiceCalculator(
+            data.settings,
+            data.order,
+            sellerCountry,
+            buyerCountry,
+            data.entity  // Entity contains type, vat_status, vat_number
+        );
+
+        // Calculate totals with tax breakdown
+        const totals = calculator.calculateTotals(locale);
+
+        logger.info(`Calculated waybill totals: ${JSON.stringify(totals)}`);
+
+        // Generate items table
+        data.waybill_items_table = getInvoiceItemsTable(
+            data.settings,
+            data.order,
+            locale,
+            calculator
+        );
+
+        // Get manufacturing and issuing dates
+        data.manufacturing_date = getManufacturingDate(data.order);
         data.issuing_date = getIssuingDate(data.order);
 
-        data.waybill_items_table = getWaybillItemsTable(data.settings, data.order, locale);
+        // Generate totals section
+        data.waybill_totals = getInvoiceTotals(
+            data.settings,
+            data.order,
+            locale,
+            totals
+        );
 
-        data.waybill_totals = getWaybillTotals(data.settings, data.order);
+        // Store totals for PEPPOL export if needed
+        data.calculated_totals = totals;
+        data.peppol_xml = options.format === 'peppol'
+            ? generatePeppolXML(data.order, totals, data.settings)
+            : null;
 
-        console.log(`Waybill next number:`, data.order.waybill);
+        logger.info(`Waybill ${data.order.waybill.number} - Total: ${totals.totalInvoiceAmount}`);
+        // logger.info('Tax breakdown:', JSON.stringify(totals.taxBreakdown));
 
-        return parseDocument(waybill, data);
+        // Parse document template with data
+        const parsedDocument = parseDocument(waybill, data);
+
+        return {
+            html: parsedDocument,
+            totals: totals,
+            peppolXml: data.peppol_xml,
+            waybillNumber: data.order.waybill.number,
+            manufacturingDate: data.manufacturing_date,
+            issuingDate: data.issuing_date
+        };
 
     } finally {
         await db.end();
     }
 }
 
-// API route for product export
-function viewWaybillApi(app) {
-
-    app.get('/document/waybill/', authenticateToken, async (req, res) => {
-        // app.get('/document/waybill/', async (req, res) => {
+// API route for waybill generation
+function viewWaybillApi(app, logger) {
+    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
+    app.get('/document/waybill/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
+            const format = req.query.format || 'pdf'; // pdf, html, peppol
+
             if (!id) {
                 return res.status(400).json({ error: 'Waybill ID is required' });
             }
 
             const locale = await getLocale(lang);
 
-            console.log('/document/waybill/', lang);
+            // Additional options
+            const options = {
+                format: format,
+                sellerCountry: req.query.seller_country,
+                buyerCountry: req.query.buyer_country
+            };
 
-            // Generate HTML for waybill
-            const html = await viewWaybill(id, req.user, locale, lang);
+            logger.info(`Generating waybill for ID: ${id}, User: ${req.user?.username || 'guest'}`);
 
+            // Generate waybill
+            const waybillData = await viewWaybill(id, req.user, locale, lang, options, logger);
+
+            // Handle PEPPOL XML format
+            if (format === 'peppol') {
+                res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+                res.setHeader('Content-Disposition', `attachment; filename="waybill-${waybillData.waybillNumber}.xml"`);
+                return res.send(waybillData.peppolXml);
+            }
+
+            // Handle HTML format
+            if (format === 'html') {
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return res.send(waybillData.html);
+            }
+
+            // Handle PDF format
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
 
-            await page.setContent(html, { waitUntil: 'networkidle' });
+            await page.setContent(waybillData.html, { waitUntil: 'networkidle' });
             await page.waitForLoadState('load');
-            await page.waitForTimeout(500); // Ensure content is rendered
+            await page.waitForTimeout(500);
 
-            // Take screenshot
-            const screenshotBuffer = await page.screenshot({
-                fullPage: true,
-                type: 'png'
+            const doc_path = '/app/server/document/pdf/waybill-' + id + '.pdf';
+
+            await page.emulateMedia({ media: 'screen' });
+            const pdfBuffer = await page.pdf({
+                path: doc_path,
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
             });
 
-            // Save screenshot to file
+            // Save screenshot in development
             if (process.env.NODE_ENV === 'development') {
+                const screenshotBuffer = await page.screenshot({
+                    fullPage: true,
+                    type: 'png'
+                });
+
                 const fs = await import('fs');
                 const path = await import('path');
                 const screenshotPath = path.join(process.cwd(), '/public/waybill-screenshot.png');
                 await fs.promises.writeFile(screenshotPath, screenshotBuffer);
             }
 
-            const doc_path = '/app/server/document/pdf/waybill-' + req.query.id + '.pdf';
-
-            await page.emulateMedia({ media: 'screen' });
-            const pdfBuffer = await page.pdf({
-                path: doc_path,
-                width: '100px',
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
-            });
-
             await browser.close();
 
-            // send email with waybill
+            // Send email if requested
             if (req.query.email) {
-
                 const body = `
-                    <h1>${__html(locale, "Waybill")} #${req.query.id}</h1>
+                    <h1>${__html(locale, "Waybill")} #${waybillData.waybillNumber}</h1>
+                    <p>${__html(locale, "Total")}: ${waybillData.totals.totalInvoiceAmount} ${waybillData.totals.currency}</p>
                 `;
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html(locale, "Waybill") + ' #' + req.query.id, body, [doc_path]);
-                res.send({ success: true, message: 'email sent' });
+                await send_email(
+                    req.query.email,
+                    "invoice@skarda.design",
+                    "Skārda Nams SIA",
+                    `${__html(locale, "Waybill")} #${waybillData.waybillNumber}`,
+                    body,
+                    [doc_path]
+                );
 
-                // Clean up the PDF file after sending email
+                // Clean up PDF after sending
                 const fs = await import('fs');
                 try {
                     await fs.promises.unlink(doc_path);
                 } catch (unlinkErr) {
-                    console.warn('Failed to delete PDF file:', unlinkErr.message);
+                    logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
-                return;
+
+                return res.json({
+                    success: true,
+                    message: 'Email sent',
+                    waybillNumber: waybillData.waybillNumber,
+                    total: waybillData.totals.totalInvoiceAmount
+                });
             }
 
-            // Check if user wants HTML output
-            const format = req.query.format || 'pdf';
-
-            if (format === 'html') {
-                res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                res.send(html);
-            } else {
-                res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
-                res.setHeader('Content-Disposition', 'filename="waybill.pdf"');
-                res.setHeader('Content-Length', pdfBuffer.length);
-                res.send(pdfBuffer);
-            }
+            // Return PDF
+            res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
+            res.setHeader('Content-Disposition', `filename="waybill-${waybillData.waybillNumber}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            res.send(pdfBuffer);
 
         } catch (err) {
-            res.status(500).json({ error: 'Failed to generate document' });
-            log(`Failed to generate document: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+            logger.error(`Failed to generate waybill: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+            res.status(500).json({
+                error: 'Failed to generate waybill',
+                details: process.env.NODE_ENV === 'development' ? err.message : undefined
+            });
         }
     });
 }

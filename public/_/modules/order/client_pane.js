@@ -7,7 +7,8 @@ import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
-import { __html, attr, onChange, onClick, toast } from "../../helpers/global.js";
+import { __html, attr, countries, onChange, onClick, toast } from "../../helpers/global.js";
+import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 import { state } from "../../modules/order/state.js";
@@ -47,6 +48,7 @@ export class ClientPane {
                 state.client.addresses = state.client.addresses || [];
                 state.client.contacts = state.client.contacts || [];
 
+                state.order.vat_number = state.client.vat_number || '';
                 state.order.vat_status = state.client.vat_status || '0';
                 state.order.discounts = state.client.discounts || {};
                 state.order.entity = state.client.entity || 'company';
@@ -72,11 +74,8 @@ export class ClientPane {
 
     view = () => {
 
-        console.log('Rendering client pane for client:', state.client);
+        console.log('Rendering client pane for client:', state.client, state.settings.tax_region);
 
-        // Add fade effect to indicate loading/disabled state
-        // document.querySelector('.right-pane').style.opacity = '0.5';
-        // document.querySelector('.right-pane').style.pointerEvents = 'none';
         document.querySelector('.right-pane').innerHTML = /*html*/`
         <client-pane>
             <!-- Alert Notification -->
@@ -87,24 +86,21 @@ export class ClientPane {
             
             <!-- Client Type -->
             <div class="row mb-3">
-                <div class="col-12">
-                    <h6>${__html('Client Type')}</h6>
-                    <div class="btn-group" role="group">
-                        <input type="radio" class="btn-check" name="entity" id="individual_anm" data-entity="individual" data-vat_status="1" autocomplete="off" ${state.client.entity === 'individual' && state.client.vat_status === '1' ? 'checked' : ''}>
-                        <label class="btn btn-outline-primary btn-sm" for="individual_anm">${__html('Fiziskā ANM')}</label>
-
-                        <input type="radio" class="btn-check" name="entity" id="individual" data-entity="individual" data-vat_status="0" autocomplete="off" ${state.client.entity === 'individual' && state.client.vat_status === '0' ? 'checked' : ''}>
-                        <label class="btn btn-outline-primary btn-sm" for="individual">${__html('Fiziskā')}</label>
-
-                        <input type="radio" class="btn-check" name="entity" id="company_anm" data-entity="company" data-vat_status="1" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '1' ? 'checked' : ''}>
-                        <label class="btn btn-outline-primary btn-sm" for="company_anm">${__html('Juridiskā ANM')}</label>
-
-                        <input type="radio" class="btn-check" name="entity" id="company" data-entity="company" data-vat_status="0" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '0' ? 'checked' : ''}>
-                        <label class="btn btn-outline-primary btn-sm" for="company">${__html('Juridiskā')}</label>
-
-                        <input type="radio" class="btn-check" name="entity" id="company_export" data-entity="company" data-vat_status="2" autocomplete="off" ${state.client.entity === 'company' && state.client.vat_status === '2' ? 'checked' : ''}>
-                        <label class="btn btn-outline-primary btn-sm" for="company_export">${__html('Juridiskā Ārzemes')}</label>
+                <div class="col-md-6">
+                    <label for="individual" class="form-label">${__html('Client type')}</label>
+                    <div class="btn-group d-flex" role="group">
+                        <input type="radio" class="btn-check" name="entity" id="individual" data-entity="individual" autocomplete="off" ${state.client.entity === 'individual' ? 'checked' : ''}>
+                        <label class="btn btn-outline-primary" for="individual" style="height: 38px; line-height: 1.5;">${__html('Individual')}</label>
+                        <input type="radio" class="btn-check" name="entity" id="company" data-entity="company" autocomplete="off" ${state.client.entity === 'company' ? 'checked' : ''}>
+                        <label class="btn btn-outline-primary" for="company" style="height: 38px; line-height: 1.5;">${__html('Company')}</label>
                     </div>
+                </div>
+                <div class="col-md-6">
+                    <label for="tax_region" class="form-label">${__html('Tax region')}</label>
+                    <select id="tax_region" class="form-select inp" name="tax_region" data-type="select">
+                      <option value="">${__html('Select')}</option>
+                      ${countries.map(c => `<option value="${c.code}" ${(state.client.tax_region || state.settings.tax_region) === c.code ? 'selected' : ''}>${__html(c.name)}</option>`).join('')}
+                    </select>
                 </div>
             </div>
             
@@ -115,6 +111,7 @@ export class ClientPane {
                     <input type="text" class="form-control" id="reg_number" value="${state.client.reg_number || state.client.reg_num || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
+                    <input class="form-check-input me-1 vat_status" type="checkbox" role="switch" ${state.client.vat_status === '1' ? 'checked' : ''} >
                     <label for="vat_number" class="form-label">${__html('VAT Number')}</label>
                     <input type="text" class="form-control" id="vat_number" value="${state.client.vat_number || ''}">
                 </div>
@@ -172,12 +169,8 @@ export class ClientPane {
             <!-- Save Button -->
             <div class="text-end">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary btn-lg px-3" id="saveClientBtn">
-                        <i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save')}
-                    </button>
-                    <button class="btn btn-outline-danger btn-lg px-3" id="removeClientBtn">
-                        <i class="bi bi-trash fs-5"></i>
-                    </button>
+                    <button class="btn btn-outline-primary btn-lg px-3" id="saveClientBtn"><i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save')}</button>
+                    <button class="btn btn-outline-danger btn-lg px-3" id="removeClientBtn"><i class="bi bi-trash fs-5"></i></button>
                 </div>
             </div>
         <client-pane>`;
@@ -212,6 +205,11 @@ export class ClientPane {
                 document.querySelector('.company-name-cont').classList.remove('d-none');
                 [...document.querySelectorAll('.name-cont')].forEach(el => el.classList.add('d-none'));
             }
+        });
+
+        onChange('.vat_status', (event) => {
+
+            state.client.vat_status = event.target.checked ? '1' : '0';
         });
 
         // From the client side
@@ -252,10 +250,10 @@ export class ClientPane {
             }
         });
 
-        // Verify company details
+        // Verify company details 
         onClick('.verify_company', () => {
 
-            verifyClient(document.getElementById('reg_number').value.trim(), (response) => {
+            verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
                 if (response && response.success) {
 
                     // console.log('Client verification response:', response);
@@ -266,12 +264,16 @@ export class ClientPane {
                     const entity = document.querySelector('input[name="entity"]:checked');
 
                     if (!entity) {
+
                         alert('Select a client type.');
                         return false;
                     }
 
+                    // clear previous alert
+                    document.querySelector('alert-notification').innerHTML = '';
+
                     // trigger alert if client can not be verified
-                    if (response.client.pvnStatus === '0' && entity.dataset.entity === 'company') {
+                    if (response.client.vatStatus === '0' && entity.dataset.entity === 'company') {
 
                         document.querySelector('alert-notification').innerHTML = /*html*/`
                             <div class="alert alert-danger d-flex alert-dismissible mb-4" role="alert">
@@ -283,15 +285,19 @@ export class ClientPane {
                             </div>`
                     }
 
-                    if (response.client.pvnStatus === 'active') {
+                    if (response.client.vatStatus === '1') {
 
                         if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
-                        if (response.client.pvnStatus) state.client.vat_status = response.client.pvnStatus || '';
+                        if (response.client.vatStatus) state.client.vat_status = response.client.vatStatus || '';
                         if (response.client.adress_full) { state.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = state.client.reg_address; }
+
+                        const tax_region = extractCountryFromVAT(response.client.vatNumber || '');
+                        if (tax_region) document.querySelector('#tax_region').value = tax_region;
                     }
 
-                    if (response.client.pvnStatus === 'active' && entity.dataset.entity === 'company') {
+                    if (response.client.vatStatus === '1' && entity.dataset.entity === 'company') {
 
+                        document.querySelector('.vat_status').checked = true;
                         document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
 
                         this.save(true);
@@ -375,6 +381,8 @@ export class ClientPane {
         const reg_address = document.getElementById('reg_address').value.trim();
         const notes = document.getElementById('client_notes').value.trim();
         const entity = document.querySelector('input[name="entity"]:checked');
+        const vat_status = document.querySelector('.vat_status').checked ? '1' : '0';
+        const tax_region = document.getElementById('tax_region').value || '';
 
         if (!entity) {
             alert('Select a client type.');
@@ -432,10 +440,11 @@ export class ClientPane {
         const clientData = {
             _id: state.client._id || null,
             entity: entity.dataset.entity,
-            vat_status: entity.dataset.vat_status,
+            vat_status,
             reg_number,
             vat_number,
             legal_name,
+            tax_region,
             fname,
             lname,
             name: legal_name, // For compatibility with existing code

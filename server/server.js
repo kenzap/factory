@@ -95,7 +95,7 @@ async function loadRoutes(directory, routeType) {
             const module = await import(path.join(directory, file));
             const handler = module.default || module;
             if (typeof handler === 'function') {
-                handler(app);
+                handler(app, logger);
             }
         } catch (err) {
             logger.error(`Error loading ${routeType} route ${file}:`, err);

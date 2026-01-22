@@ -24,7 +24,7 @@ import { sendOtp } from './src/send-otp.js';
  */
 export function register({ router, cron, config, events, db, logger }) {
 
-    logger.info('Registering WhatsApp extension with API key:', config.get('DIALOG_KEY') ? config.get('DIALOG_KEY') : 'not set')
+    logger.info('Registering dialog360 extension')
 
     events.on("otp.requested", async ({ phone, otp }) => {
 

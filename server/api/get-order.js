@@ -35,6 +35,7 @@ async function getOrderDetails(id) {
             js->'data'->'notes' as "notes",
             js->'data'->'price' as "price",
             js->'data'->'vat_status' as "vat_status",
+            js->'data'->'vat_number' as "vat_number",
             js->'data'->'entity' as "entity",
             js->'data'->'operator' as "operator",
             js->'data'->'waybill' as "waybill",
@@ -70,7 +71,7 @@ function getOrderApi(app) {
         let order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
         order.discounts = await getClientDiscounts(order.eid);
 
-        res.json({ success: true, order, settings: await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "groups", "price", "tax_auto_rate", "tax_calc", "tax_display", "tax_percent", "tax_rate"]), locale });
+        res.json({ success: true, order, settings: await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "groups", "price", "tax_auto_rate", "tax_calc", "tax_display", "tax_percent", "tax_rate", "tax_region", "vat_number"]), locale });
     });
 }
 

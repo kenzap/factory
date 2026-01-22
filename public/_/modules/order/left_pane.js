@@ -4,8 +4,10 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, log, onChange, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { __attr, __html, log, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { getTotalsHTML } from "../../helpers/price.js";
+import { InvoiceCalculator } from '../../helpers/tax/calculator.js';
+import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
@@ -371,6 +373,8 @@ export class LeftPane {
             state.clientContactSearch.data();
 
             state.order.vat_status = client.vat_status || '0';
+            state.order.entity = client.entity || 'company';
+            state.order.vat_number = client.vat_number || '';
 
             if (document.getElementById('clientFilter').value != client.legal_name && client.legal_name.length) {
                 document.getElementById('clientFilter').value = client.legal_name;
@@ -433,13 +437,98 @@ export class LeftPane {
 
     summary = () => {
 
+        let options = {};
+        let entity = { entity: state.order.entity, vat_status: state.order.vat_status, vat_number: state.order.vat_number };
+
+        console.log('Order:', state.order);
+
+        // Determine countries for tax calculation
+        const sellerCountry = options.sellerCountry ||
+            state.settings?.tax_region ||
+            'LV'; // Default to Latvia
+
+        const buyerCountry = options.buyerCountry ||
+            state.order.entity?.country_code ||
+            extractCountryFromVAT(state.order.entity?.vat_number) ||
+            sellerCountry;
+
+        // Initialize invoice calculator
+        const calculator = new InvoiceCalculator(
+            state.settings,
+            state.order,
+            sellerCountry,
+            buyerCountry,
+            entity
+        );
+
+        // Calculate totals with tax breakdown
+        const _totals = calculator.calculateTotals();
+
+
         let totals = getTotalsHTML(state.settings, state.order);
 
+        log('entity:', entity);
         log('Order totals:', totals.price);
+        log('Order totals:', _totals);
 
         state.order.price = totals.price;
+        state.order.tax_total = _totals.totalTaxAmount;
+        state.order.total = _totals.totalTaxableAmount;
+        state.order.grand_total = _totals.totalInvoiceAmount;
 
-        document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
+        // document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
+        document.querySelector('order-summary').innerHTML = this.getInvoiceTotals(state.settings, state.order, state.locale, _totals);
+    }
+
+    /**
+     * Generate invoice totals
+     */
+    getInvoiceTotals(settings, order, locale, totals) {
+        if (!totals) return '';
+
+        // const showTax = order.vat_status !== "0";
+        const breakdown = totals.taxBreakdown || [];
+
+        let html = '<div class="totals">';
+
+        // Right side - Totals breakdown
+        html += '<div class="totals-right"><table class="totals-table">';
+
+        // Subtotal
+        html += `
+            <tr>
+                <td class="text-start"><span>${__html("Subtotal")}:</span></td>
+                <td class="text-end">${priceFormat(settings, totals.totalTaxableAmount)}</td>
+            </tr>
+        `;
+
+        // Tax breakdown
+        if (breakdown.length > 0) {
+            breakdown.forEach(tax => {
+                const label = tax.rate > 0
+                    ? `${__html(tax.display)}:`
+                    : `${__html(tax.legalText)}:`;
+
+                html += `
+                    <tr>
+                        <td class="text-start"><span>${label}</span></td>
+                        <td class="text-end">${priceFormat(settings, tax.taxAmount)}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        // Grand total
+        html += `
+            <tr class="total-row">
+                <td class="text-start"><strong>${__html("Total to pay")}:</strong></td>
+                <td class="text-end"><strong>${priceFormat(settings, totals.totalInvoiceAmount)}</strong></td>
+            </tr>
+        `;
+
+        html += '</table></div></div>';
+
+        return html;
     }
 
     save = () => {
@@ -491,6 +580,7 @@ export class LeftPane {
             items: state.order.items || [], // Assuming items are stored in state.order.items
             price: state.order.price || {},
             vat_status: state.order.vat_status || '0',
+            vat_number: state.order.vat_number || '',
             entity: state.order.entity || 'company',
             // Add more fields as necessary
         };
@@ -500,7 +590,7 @@ export class LeftPane {
 
         saveOrder(orderData, (response) => {
 
-            console.log('Order saved successfully:', response.order);
+            // console.log('Order saved successfully:', response.order);
 
             if (response.order.id) state.order.id = response.order.id;
             if (response.order._id) state.order._id = response.order._id;

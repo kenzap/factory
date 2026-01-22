@@ -2,9 +2,7 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, log, sid } from '../_/helpers/index.js';
 
 /**
- * Get Clients
- *
- * List clients
+ * Get Client Details
  *
  * @version 1.0
  * @param {string} id - entity ID of the client
@@ -34,6 +32,7 @@ async function getClientDetails(id) {
             js->'data'->>'reg_num' as reg_num,
             js->'data'->>'vat_number' as "vat_number",
             js->'data'->>'vat_status' as "vat_status",
+            js->'data'->>'tax_region' as "tax_region",
             js->'data'->>'notes' as "notes",
             js->'data'->>'phone' as phone,
             js->'data'->'contacts' as contacts,
@@ -65,8 +64,6 @@ function getClientDetailsApi(app) {
     app.post('/api/get-client-details/', authenticateToken, async (req, res) => {
         try {
             const data = await getClientDetails(req.body.id);
-
-            console.log('getClientDetailsApi data', data);
 
             res.send({ success: true, data, message: '' });
         } catch (err) {

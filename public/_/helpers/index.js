@@ -609,6 +609,26 @@ export const simulateClick = (elem) => {
 };
 
 /**
+ * Converts a value to a properly formatted number with two decimal places.
+ * 
+ * @param {string|number} price - The price value to convert to a number
+ * @returns {number} The parsed and rounded number with up to 2 decimal places
+ * 
+ * @example
+ * makeNumber("12.345") // returns 12.35
+ * makeNumber(null) // returns 0
+ * makeNumber(undefined) // returns 0
+ * makeNumber("10") // returns 10
+ */
+export const makeNumber = function (price) {
+
+    price = price ? price : 0;
+    price = parseFloat(price);
+    price = Math.round(price * 100) / 100;
+    return price;
+}
+
+/**
  * Create a web friendly URL slug from a string.
  *
  * Requires XRegExp (http://xregexp.com) with unicode add-ons for UTF-8 support.

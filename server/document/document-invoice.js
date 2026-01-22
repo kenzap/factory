@@ -1,138 +1,224 @@
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDocumentData, getInvoiceNextNumber, getWaybillItemsTable, getWaybillTotals, parseDocument } from '../_/helpers/document.js';
+import { getDocumentData, getInvoiceNextNumber, parseDocument } from '../_/helpers/document/index.js';
+import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
 import { send_email } from '../_/helpers/email.js';
-import { __html, getDbConnection, getLocale, log } from '../_/helpers/index.js';
+import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
+import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
+import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
 
 /**
- * Waybill PDF Document Generator
+ * Generate invoice with universal EU tax support
  * 
- * @version 1.0
- * @date 2025-08-06
- * @param {string} lang - Language code for product titles and categories
- * @returns {Promise<string>} - XML string of products
-*/
-async function viewInvoice(_id, user, locale, lang) {
+ * @param {string} _id - Order ID
+ * @param {object} user - User object
+ * @param {object} locale - Locale object
+ * @param {string} lang - Language code
+ * @param {object} options - Additional options (sellerCountry, buyerCountry, format)
+ */
+async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
 
     const db = getDbConnection();
     await db.connect();
 
     try {
-
+        // Get document data
         let data = await getDocumentData(db, "invoice", _id, user, locale);
 
         data.lang = lang;
-
         data.user = user;
 
+        // Get invoice template
         let invoice = data.settings?.document_template || "";
 
+        // Generate or retrieve invoice number
         data.order.invoice = await getInvoiceNextNumber(db, data.order, data.settings, user);
 
-        data.invoice_items_table = getWaybillItemsTable(data.settings, data.order, locale);
+        // Determine countries for tax calculation
+        const sellerCountry = options.sellerCountry ||
+            data.settings?.tax_region ||
+            'LV'; // Default to Latvia
 
-        data.invoice_totals = getWaybillTotals(data.settings, data.order);
+        logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
 
-        console.log(`Invoice next number:`, data.order.invoice);
+        const buyerCountry = options.buyerCountry ||
+            data.entity?.country_code ||
+            extractCountryFromVAT(data.entity?.vat_number) ||
+            sellerCountry;
 
-        return parseDocument(invoice, data);
+        // Initialize invoice calculator
+        const calculator = new InvoiceCalculator(
+            data.settings,
+            data.order,
+            sellerCountry,
+            buyerCountry,
+            data.entity
+        );
+
+        // Calculate totals with tax breakdown
+        const totals = calculator.calculateTotals();
+
+        // Generate items table
+        data.invoice_items_table = getInvoiceItemsTable(
+            data.settings,
+            data.order,
+            locale,
+            calculator
+        );
+
+        // Generate totals section
+        data.invoice_totals = getInvoiceTotals(
+            data.settings,
+            data.order,
+            locale,
+            totals
+        );
+
+        // Store totals for PEPPOL export if needed
+        data.calculated_totals = totals;
+        data.peppol_xml = options.format === 'peppol'
+            ? generatePeppolXML(data.order, totals, data.settings)
+            : null;
+
+        // console.log(`Invoice ${data.order.invoice.number} - Total: ${totals.totalInvoiceAmount}`);
+        // console.log('Tax breakdown:', totals.taxBreakdown);
+
+        // Parse document template with data
+        const parsedDocument = parseDocument(invoice, data);
+
+        return {
+            html: parsedDocument,
+            totals: totals,
+            peppolXml: data.peppol_xml,
+            invoiceNumber: data.order.invoice.number
+        };
 
     } finally {
         await db.end();
     }
 }
 
-// API route for product export 
-function viewInvoiceApi(app) {
-
+/**
+ * API route for invoice generation
+ */
+function viewInvoiceApi(app, logger) {
     app.get('/document/invoice/', authenticateToken, async (req, res) => {
-        // app.get('/document/invoice/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
+            const format = req.query.format || 'pdf'; // pdf, html, peppol
+
+            // logger.info(`Generating invoice ID: ${id} in format: ${format} for user: ${req.user.username}`);
+
             if (!id) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
             const locale = await getLocale(lang);
 
-            console.log('/document/invoice/', req.user);
+            // Additional options
+            const options = {
+                format: format,
+                sellerCountry: req.query.seller_country,
+                buyerCountry: req.query.buyer_country
+            };
 
-            // Generate HTML for invoice
-            const html = await viewInvoice(id, req.user, locale, lang);
+            // Generate invoice
+            const invoiceData = await viewInvoice(id, req.user, locale, lang, options, logger);
 
+            // Handle PEPPOL XML format
+            if (format === 'peppol') {
+                res.setHeader('Content-Type', 'application/xml; charset=utf-8');
+                res.setHeader('Content-Disposition', `attachment; filename="invoice-${id}.xml"`);
+                return res.send(invoiceData.peppolXml);
+            }
+
+            // Handle HTML format
+            if (format === 'html') {
+                res.setHeader('Content-Type', 'text/html; charset=utf-8');
+                return res.send(invoiceData.html);
+            }
+
+            // Handle PDF format
             const browser = await chromium.launch({ headless: true });
             const page = await browser.newPage();
 
-            await page.setContent(html, { waitUntil: 'networkidle' });
+            await page.setContent(invoiceData.html, { waitUntil: 'networkidle' });
             await page.waitForLoadState('load');
-            await page.waitForTimeout(500); // Ensure content is rendered
+            await page.waitForTimeout(500);
 
-            // Take screenshot
-            const screenshotBuffer = await page.screenshot({
-                fullPage: true,
-                type: 'png'
+            // Generate PDF
+            const doc_path = `/app/server/document/pdf/invoice-${id}.pdf`;
+
+            await page.emulateMedia({ media: 'screen' });
+            const pdfBuffer = await page.pdf({
+                path: doc_path,
+                format: 'A4',
+                printBackground: true,
+                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
             });
 
-            // Save screenshot to file
+            // Save screenshot in development
             if (process.env.NODE_ENV === 'development') {
+                const screenshotBuffer = await page.screenshot({
+                    fullPage: true,
+                    type: 'png'
+                });
+
                 const fs = await import('fs');
                 const path = await import('path');
                 const screenshotPath = path.join(process.cwd(), '/public/invoice-screenshot.png');
                 await fs.promises.writeFile(screenshotPath, screenshotBuffer);
             }
 
-            const doc_path = '/app/server/document/pdf/invoice-' + req.query.id + '.pdf';
-
-            await page.emulateMedia({ media: 'screen' });
-            const pdfBuffer = await page.pdf({
-                path: doc_path,
-                width: '100px',
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
-            });
-
             await browser.close();
 
-            // send email with waybill
+            // Send email if requested
             if (req.query.email) {
-
                 const body = `
-                    <h1>${__html(locale, "Invoice")} #${req.query.id}</h1>
+                    <h1>${__html(locale, "Invoice")} #${invoiceData.invoiceNumber}</h1>
+                    <p>${__html(locale, "Total")}: ${invoiceData.totals.totalInvoiceAmount} ${invoiceData.totals.currency}</p>
                 `;
 
-                // req.query.email = "pavel";
+                await send_email(
+                    req.query.email,
+                    "invoice@skarda.design",
+                    "Skārda Nams SIA",
+                    `${__html(locale, "Invoice")} #${invoiceData.invoiceNumber}`,
+                    body,
+                    [doc_path]
+                );
 
-                await send_email(req.query.email, "invoice@skarda.design", "Skārda Nams SIA", __html(locale, "Invoice") + ' #' + req.query.id, body, [doc_path]);
-                res.send({ success: true, message: 'email sent' });
-
-                // Clean up the PDF file after sending email
+                // Clean up PDF after sending
                 const fs = await import('fs');
                 try {
                     await fs.promises.unlink(doc_path);
                 } catch (unlinkErr) {
-                    console.warn('Failed to delete PDF file:', unlinkErr.message);
+                    logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
-                return;
+
+                return res.send({
+                    success: true,
+                    message: 'Email sent',
+                    invoiceNumber: invoiceData.invoiceNumber,
+                    total: invoiceData.totals.totalInvoiceAmount
+                });
             }
 
-            // Check if user wants HTML output
-            const format = req.query.format || 'pdf';
-
-            if (format === 'html') {
-                res.setHeader('Content-Type', 'text/html; charset=utf-8');
-                res.send(html);
-            } else {
-                res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
-                res.setHeader('Content-Disposition', 'filename="invoice.pdf"');
-                res.setHeader('Content-Length', pdfBuffer.length);
-                res.send(pdfBuffer);
-            }
+            // Return PDF
+            res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
+            res.setHeader('Content-Disposition', `filename="invoice-${invoiceData.invoiceNumber}.pdf"`);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            res.send(pdfBuffer);
 
         } catch (err) {
-            res.status(500).json({ error: 'Failed to generate document' });
-            log(`Failed to generate document: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+
+            logger.error(`Failed to generate invoice: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+
+            res.status(500).json({
+                error: 'Failed to generate invoice',
+                details: process.env.NODE_ENV === 'development' ? err.message : undefined
+            });
         }
     });
 }

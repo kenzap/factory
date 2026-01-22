@@ -1,0 +1,108 @@
+// calculator.js
+// Simplified calculator using unified tax regimes
+
+import { calculateTax, makeNumber, resolveRegime } from './index.js';
+
+/**
+ * Invoice Calculator
+ * Uses single tax regime model for all calculations
+ */
+export class InvoiceCalculator {
+    constructor(settings, order, sellerCountry, buyerCountry, buyerEntity = {}) {
+        this.settings = settings;
+        this.order = order;
+        this.sellerCountry = sellerCountry || 'LV';
+        this.buyerCountry = buyerCountry || 'LV';
+        this.buyerEntity = buyerEntity;
+        this.taxGroups = new Map();
+    }
+
+    /**
+     * Calculate totals
+     */
+    calculateTotals(locale) {
+        this.taxGroups.clear();
+
+        this.order.items.forEach(item => {
+            if (!item.total || item.total === 0) return;
+
+            // Resolve tax regime for this item
+            const regime = resolveRegime(
+                item,
+                this.sellerCountry,
+                this.buyerCountry,
+                this.buyerEntity
+            );
+
+            // console.log('Resolved regime for item', item.title, ':', regime);
+
+            // Store regime info on item
+            item.taxRegime = regime;
+            item.tax_rate = regime.rate;
+            item.tax_display = regime.display;
+            item.tax_legal = regime.legalText ? regime.legalText(locale) : null;
+
+            // Calculate tax
+            const lineTotal = makeNumber(item.total);
+            const taxAmount = calculateTax(lineTotal, regime);
+
+            // Group by display + legal reference
+            const groupKey = `${regime.display}_${regime.legalRef || 'none'}`;
+
+            if (!this.taxGroups.has(groupKey)) {
+                this.taxGroups.set(groupKey, {
+                    display: regime.display,
+                    rate: regime.rate,
+                    legalRef: regime.legalRef,
+                    legalText: regime.legalText ? regime.legalText(locale) : null,
+                    peppolCode: regime.peppolCode,
+                    taxableAmount: 0,
+                    taxAmount: 0,
+                    items: []
+                });
+            }
+
+            const group = this.taxGroups.get(groupKey);
+            group.taxableAmount += lineTotal;
+            group.taxAmount += taxAmount;
+            group.items.push(item);
+        });
+
+        return this.generateTotals();
+    }
+
+    /**
+     * Generate totals object
+     */
+    generateTotals() {
+        let totalTaxableAmount = 0;
+        let totalTaxAmount = 0;
+
+        const taxBreakdown = Array.from(this.taxGroups.values());
+
+        taxBreakdown.forEach(group => {
+            totalTaxableAmount += group.taxableAmount;
+            totalTaxAmount += group.taxAmount;
+        });
+
+        const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 100) / 100;
+
+        return {
+            taxBreakdown,
+            totalTaxableAmount: Math.round(totalTaxableAmount * 100) / 100,
+            totalTaxAmount: Math.round(totalTaxAmount * 100) / 100,
+            totalInvoiceAmount,
+            currency: this.settings.currency || 'EUR'
+        };
+    }
+
+    /**
+     * Calculate tax for single line (used in table rendering)
+     */
+    calculateTaxAmount(baseAmount, rate, peppolCode) {
+        if (['AE', 'K', 'G', 'E', 'Z', 'O'].includes(peppolCode)) {
+            return 0;
+        }
+        return Math.round((baseAmount * (rate / 100)) * 100) / 100;
+    }
+}

@@ -1,4 +1,4 @@
-import { __html, getCurrencies } from "../../helpers/global.js";
+import { __html, countries, getCurrencies } from "../../helpers/global.js";
 
 export class TabGeneral {
 
@@ -193,31 +193,40 @@ export class TabGeneral {
             <div class="row">
               <div class="col-lg-6">
                   <div class="form-group row mb-3 mt-1">
-                    <label class="col-sm-3 col-form-label">${__html('Tax')}</label>
+                  <label class="col-sm-3 col-form-label">${__html('Calculation')}</label>
                     <div class="col-sm-9">
                         <div class="form-check">
-                          <input id="tax_calc" class="form-check-input inp" name="tax_calc" type="checkbox" value="1" data-type="checkbox">
-                          <label class="form-check-label" for="tax_calc">
-                              ${__html('Calculate')}
+                          <input id="tax_percent_auto" class="form-check-input inp" name="tax_percent_auto" type="checkbox" value="1" data-type="checkbox">
+                          <label class="form-check-label" for="tax_percent_auto">
+                              ${__html('Auto tax rate')}
                           </label>
                         </div>
-                        <p class="form-text">${__html('Enable tax calculations when processing orders.')}</p>
+                        <p class="form-text">${__html('Automatically detect tax rate whenever applicable.')}</p>
                     </div> 
                   </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                <div class="form-group row mb-3 mt-1">
+                  <label class="col-sm-3 col-form-label">${__html('Tax region')}</label>
+                  <div class="col-sm-9">
+                    <select id="tax_region" class="form-select inp" name="tax_region" data-type="select">
+                      <option value="">${__html('Select')}</option>
+                      ${countries.map(c => `<option value="${c.code}">${__html(c.name)}</option>`).join('')}
+                    </select>
+                    <p class="form-text">${__html('Select the country for tax calculations and compliance.')}</p>
+                  </div> 
+                </div>
               </div>
 
               <div class="col-lg-6">
                   <div class="form-group row mb-3 mt-1">
-                  <label class="col-sm-3 col-form-label">${__html('Geolocation')}</label>
+                    <label class="col-sm-3 col-form-label">${__html('Vat number')}</label>
                     <div class="col-sm-9">
-                        <div class="form-check">
-                        <input id="tax_percent_auto" class="form-check-input inp" name="tax_percent_auto" type="checkbox" value="1" data-type="checkbox">
-                        <label class="form-check-label" for="tax_percent_auto">
-                            ${__html('Auto tax rate')}
-                        </label>
-                        </div>
-                        <p class="form-text">${__html('Automatically detect tax rate whenever applicable.')}</p>
-                    </div> 
+                        <input id="vat_number" type="text" class="form-control inp" placeholder="VAT123456" name="vat_number" data-type="text">
+                        <p class="form-text">${__html('Enter the VAT number for tax purposes.')}</p>
+                    </div>
                   </div>
               </div>
             </div>
@@ -225,7 +234,7 @@ export class TabGeneral {
             <div class="row">
               <div class="col-lg-6">
                   <div class="form-group row mb-3 mt-1">
-                    <label class="col-sm-3 col-form-label">${__html('Percent')}</label>
+                    <label class="col-sm-3 col-form-label">${__html('Standard rate')}</label>
                     <div class="col-sm-9">
                         <input id="tax_percent" type="text" class="form-control inp" placeholder="21" name="tax_percent" data-type="text">
                         <p class="form-text">${__html('Default tax rate. Example, 9 or 21. Use numeric value.')}</p>

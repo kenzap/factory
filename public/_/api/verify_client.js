@@ -1,13 +1,13 @@
 import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
 
-export const verifyClient = (reg_number, cb) => {
+export const verifyClient = (data, cb) => {
 
     // do API query
     fetch(API() + '/api/verify-client/', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({
-            reg_number
+            ...data
         })
     })
         .then(response => response.json())
