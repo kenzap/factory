@@ -103,7 +103,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
                 js->'data'->'date' as date
                 ${filters.items === true ? `, js->'data'->'items' as items` : ''}
         FROM data 
-        WHERE ref = $1 AND sid = $2 `;
+        WHERE ref = $1 AND sid = $2 AND js->'data'->'deleted' IS NULL `;
 
     const params = ['order', sid];
 

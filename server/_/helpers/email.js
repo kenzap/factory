@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { log_error } from './index.js';
+import { getDbConnection, log_error, sid } from './index.js';
 
 /**
  * SMTP email handler script
@@ -62,4 +62,42 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
     }
 
     return output;
+}
+
+export async function markOrderEmailSent(id, type, email, user, logger) {
+
+    const db = getDbConnection();
+    await db.connect();
+
+    try {
+
+        const query_select = `
+            SELECT js->'data'->>'${type}' as ${type}
+            FROM data
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3
+            LIMIT 1
+        `;
+
+        const result_select = await db.query(query_select, ['order', sid, id]);
+        let data = result_select.rows[0]?.[type] ? JSON.parse(result_select.rows[0][type]) : {};
+
+        data['email_sent_date'] = new Date().toISOString()
+        data['email_sent_by_user_id'] = user?.id
+        data['email_sent_to'] = email
+
+        const query_update = `
+            UPDATE data
+            SET js = jsonb_set(js, '{data,${type}}', $4::jsonb)
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3
+        `;
+
+        await db.query(query_update, ['order', sid, id, JSON.stringify(data)]);
+
+        logger.info(`Marked email_sent for Order ID: ${id} ${JSON.stringify(data)}`);
+
+    } catch (err) {
+        logger.error(`Failed to mark email sent for Order ID: ${id}: ${err.message}`);
+    } finally {
+        await db.end();
+    }
 }

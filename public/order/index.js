@@ -71,6 +71,8 @@ class OrderEdit {
 
         bus.on('order:updated', (id) => {
 
+            console.log('Order updated listener triggered with id:', id);
+
             state.order.id = id;
 
             this.init();

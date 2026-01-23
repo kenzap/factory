@@ -33,7 +33,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             js->'data'->'date' as date
             ${filters.items ? ', js->\'data\'->\'items\' as items' : ''}
         FROM data 
-        WHERE ref = $1 AND sid = $2 `;
+        WHERE ref = $1 AND sid = $2 AND js->'data'->'deleted' IS NULL `;
 
     let query_summary = `
         SELECT

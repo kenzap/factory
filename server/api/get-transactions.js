@@ -30,7 +30,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 js->'data'->'waybill' as waybill
                 ${filters.items === true ? `, js->'data'->'items' as items` : ''}
         FROM data 
-        WHERE ref = $1 AND sid = $2 `;
+        WHERE ref = $1 AND sid = $2 AND js->'data'->'deleted' IS NULL`;
 
     // transactions summary query
     let query_summary = `

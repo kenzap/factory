@@ -312,7 +312,7 @@ export class OrderPane {
                 {
                     title: __html("Price"),
                     field: "price",
-                    width: 100,
+                    width: 90,
                     headerSort: false,
                     formatter: function (cell) {
                         const row = cell.getRow().getData();
@@ -332,7 +332,7 @@ export class OrderPane {
                 {
                     title: __html("Note"),
                     field: "note",
-                    width: 180,
+                    width: 140,
                     headerSort: false,
                     editor: textEditor,
                     editorParams: {

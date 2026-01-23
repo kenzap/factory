@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getInvoiceNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
-import { send_email } from '../_/helpers/email.js';
+import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
@@ -175,6 +175,7 @@ function viewInvoiceApi(app, logger) {
 
             // Send email if requested
             if (req.query.email) {
+
                 const body = `
                     <h1>${__html(locale, "Invoice")} #${invoiceData.invoiceNumber}</h1>
                     <p>${__html(locale, "Total")}: ${invoiceData.totals.totalInvoiceAmount} ${invoiceData.totals.currency}</p>
@@ -197,6 +198,10 @@ function viewInvoiceApi(app, logger) {
                     logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
 
+                // Mark email as sent in database
+                await markOrderEmailSent(id, 'invoice', req.query.email, req.user, logger);
+
+                // Return response
                 return res.send({
                     success: true,
                     message: 'Email sent',

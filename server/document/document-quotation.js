@@ -1,8 +1,8 @@
 import { chromium } from 'playwright';
-// import { authenticateToken } from '../_/helpers/auth.js';
+import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
 import { getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
-import { send_email } from '../_/helpers/email.js';
+import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
@@ -90,14 +90,14 @@ async function viewQuotation(_id, user, locale, lang, options = {}, logger) {
 // API route for product export 
 function viewQuotationApi(app, logger) {
 
-    // app.get('/document/quotation/', authenticateToken, async (req, res) => {
-    app.get('/document/quotation/', async (req, res) => {
+    app.get('/document/quotation/', authenticateToken, async (req, res) => {
+        // app.get('/document/quotation/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
             const format = req.query.format || 'pdf'; // pdf, html, peppol
 
-            // logger.info(`Generating invoice ID: ${id} in format: ${format} for user: ${req.user.username}`);
+            logger.info(`Generating quotation ID: ${id} in format: ${format} for user: ${req.user.username}`);
 
             if (!id) {
                 return res.status(400).json({ error: 'Order ID is required' });
@@ -158,7 +158,7 @@ function viewQuotationApi(app, logger) {
             // Send email if requested
             if (req.query.email) {
                 const body = `
-                    <h1>${__html(locale, "Quotation")} #${quotationData.invoiceNumber}</h1>
+                    <h1>${__html(locale, "Quotation")} #${id}</h1>
                     <p>${__html(locale, "Total")}: ${quotationData.totals.totalInvoiceAmount} ${quotationData.totals.currency}</p>
                 `;
 
@@ -166,7 +166,7 @@ function viewQuotationApi(app, logger) {
                     req.query.email,
                     "invoice@skarda.design",
                     "Skārda Nams SIA",
-                    `${__html(locale, "Quotation")} #${quotationData.invoiceNumber}`,
+                    `${__html(locale, "Quotation")} #${id}`,
                     body,
                     [doc_path]
                 );
@@ -179,6 +179,11 @@ function viewQuotationApi(app, logger) {
                     logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
 
+                // Mark email as sent in database
+                logger.info(`Marking quotation email as sent for ID: ${id} to ${req.query.email}`);
+                await markOrderEmailSent(id, 'quotation', req.query.email, req.user, logger);
+
+                // Response
                 return res.send({
                     success: true,
                     message: 'Email sent'
@@ -187,7 +192,7 @@ function viewQuotationApi(app, logger) {
 
             // Return PDF
             res.setHeader('Content-Type', 'application/pdf; charset=utf-8');
-            res.setHeader('Content-Disposition', `filename="quotation-${quotationData.invoiceNumber}.pdf"`);
+            res.setHeader('Content-Disposition', `filename="quotation-${id}.pdf"`);
             res.setHeader('Content-Length', pdfBuffer.length);
             res.send(pdfBuffer);
 

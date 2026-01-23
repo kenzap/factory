@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
 import { getProductionItemsTable } from '../_/helpers/document/render.js';
-import { send_email } from '../_/helpers/email.js';
+import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
@@ -34,7 +34,7 @@ async function viewProductionSlip(_id, user, locale, lang, options = {}, logger)
             data.settings?.tax_region ||
             'LV'; // Default to Latvia
 
-        logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
+        logger.info(`Generating production slip for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
 
         const buyerCountry = options.buyerCountry ||
             data.entity?.country_code ||
@@ -91,6 +91,8 @@ function viewProductionSlipApi(app, logger) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
+            // logger.info(`Generating production slip ID: ${id} in format: ${format} for user: ${req.user.username}`);
+
             const locale = await getLocale(lang);
 
             // Additional options
@@ -146,8 +148,7 @@ function viewProductionSlipApi(app, logger) {
             // Send email if requested
             if (req.query.email) {
                 const body = `
-                    <h1>${__html(locale, "Production Slip")} #${slipData.productionSlipNumber}</h1>
-                    <p>${__html(locale, "Total")}: ${slipData.totals.totalInvoiceAmount} ${slipData.totals.currency}</p>
+                    <h1>${__html(locale, "Production Slip")} #${id}</h1>
                 `;
 
                 await send_email(
@@ -167,6 +168,10 @@ function viewProductionSlipApi(app, logger) {
                     logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
 
+                // Mark email as sent in database
+                await markOrderEmailSent(id, 'production_slip', req.query.email, req?.user, logger);
+
+                // Response
                 return res.send({
                     success: true,
                     message: 'Email sent',

@@ -31,6 +31,7 @@ async function execDebitorReport(data) {
             COUNT(*) as order_count
             FROM data
             WHERE ref = $1 AND sid = $2 AND (js->'data' ? 'payment' OR js->'data' ? 'waybill') 
+            AND js->'data'->'deleted' IS NULL
             `;
 
         const queryParams = ['order', sid];
@@ -124,7 +125,6 @@ function execDebitorReportApi(app) {
         const locale = await getLocale(_req.headers.locale);
         const report = await execDebitorReport(data);
         const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "groups"]);
-
 
         // Generate HTML report
         const today = new Date().toLocaleDateString('en-GB', { timeZone: 'Europe/Riga' });

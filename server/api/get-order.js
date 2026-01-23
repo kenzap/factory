@@ -41,9 +41,11 @@ async function getOrderDetails(id) {
             js->'data'->'operator' as "operator",
             js->'data'->'waybill' as "waybill",
             js->'data'->'invoice' as "invoice",
+            js->'data'->'quotation' as "quotation",
+            js->'data'->'production_slip' as "production_slip",
             js->'data'->'items' as "items"
         FROM data
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
+        WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 AND js->'data'->'deleted' IS NULL
         LIMIT 1
     `;
 

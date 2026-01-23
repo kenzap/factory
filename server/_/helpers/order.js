@@ -59,3 +59,35 @@ export async function getNextOrderId(client) {
 
     return last_order_id;
 }
+
+export async function markOrderEmailSent(_id, type, user, logger) {
+
+    const db = getDbConnection();
+    await db.connect();
+
+    try {
+
+        const query_select = `
+            SELECT js->'data'->>'notifications' as notifications,
+            FROM data
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3
+            LIMIT 1
+        `;
+
+        const result_select = await db.query(query_select, ['order', user.sid, _id]);
+        const emailSent = result_select.rows[0]?.email_sent === 'true';
+
+        const query_update = `
+            UPDATE data
+            SET js = jsonb_set(js, '{data,email_sent}', 'true'::jsonb)
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3
+        `;
+
+        await db.query(query, ['order', user.sid, _id]);
+
+        logger.info(`Marked email_sent for Order ID: ${_id}`);
+    } finally {
+        await db.end();
+    }
+
+}

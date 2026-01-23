@@ -34,6 +34,7 @@ async function execWaybillsReport(data) {
             AND js->'data'->'price'->'total' IS NOT NULL
             AND js->'data'->'price'->'tax_total' IS NOT NULL
             AND js->'data'->'price'->'grand_total' IS NOT NULL
+            AND js->'data'->'deleted' IS NULL
         `;
 
         const queryParams = ['order', sid];

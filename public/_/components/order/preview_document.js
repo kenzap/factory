@@ -1,6 +1,7 @@
 import { deleteOrderWaybill } from "../../api/delete_order_waybill.js";
 import { sendEmailDocument } from "../../api/send_email_document.js";
-import { API, H, __html, parseApiError, toast } from "../../helpers/global.js";
+import { API, H, __html, parseApiError, toLocalUserDateTime, toast } from "../../helpers/global.js";
+import { isEmail } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 
 export class PreviewDocument {
@@ -52,6 +53,7 @@ export class PreviewDocument {
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
                 <i class="bi bi-envelope me-1"></i> ${__html('Email')}
+                ${this.order[this.type]?.email_sent_date ? ` ${toLocalUserDateTime(this.order[this.type].email_sent_date)}` : ''}
             </button>
             <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
                 <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}
@@ -104,6 +106,11 @@ export class PreviewDocument {
         const button = this.modal.querySelector('.btn-document-send-email');
         if (button.disabled) return;
 
+        if (!isEmail(this.order.email)) {
+            alert(__html('Invalid email address: %1$', this.order.email));
+            return;
+        }
+
         if (!confirm(__html('Send email to %1$?', this.order.email))) return;
 
         button.disabled = true;
@@ -113,7 +120,7 @@ export class PreviewDocument {
 
             if (response.success) {
 
-                // bus.emit('order:updated', this.order.id);
+                bus.emit('order:updated', this.order.id);
                 this.modal_cont.hide();
                 let msg = __html('Document sent to %1$', this.order.email);
                 toast(msg);

@@ -2,7 +2,7 @@ import { chromium } from 'playwright';
 // import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
-import { send_email } from '../_/helpers/email.js';
+import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
@@ -108,6 +108,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 
 // API route for waybill generation
 function viewWaybillApi(app, logger) {
+
     // app.get('/document/waybill/', authenticateToken, async (req, res) => {
     app.get('/document/waybill/', async (req, res) => {
         try {
@@ -202,6 +203,9 @@ function viewWaybillApi(app, logger) {
                 } catch (unlinkErr) {
                     logger.error('Failed to delete PDF file:', unlinkErr.message);
                 }
+
+                // Mark email as sent in database
+                await markOrderEmailSent(id, 'waybill', req.query.email, req?.user, logger);
 
                 return res.json({
                     success: true,

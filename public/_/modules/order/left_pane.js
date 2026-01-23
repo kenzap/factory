@@ -91,10 +91,10 @@ export class LeftPane {
                     <div class="btn-group-toggle d-flex flex-nowrap gap-1 overflow-hidden-" data-bs-toggle="buttons">
                         <div class="d-flex align-items-center justify-content-between w-100 h-100 overflow-hidden-">
                             <div class="d-flex flex-nowrap overflow-hidden-">
-                                <button ${state.order?.id && state.order.draft == false ? '' : 'disabled'} class="btn ${state.order?.waybill?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
-                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV-%1$', state.order?.invoice?.number) : __html('Invoice')}</button>
-                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
-                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? 'btn-primary' : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
+                                <button ${state.order?.id && state.order.draft == false ? '' : 'disabled'} class="btn ${state.order?.waybill?.number ? (state.order['waybill']?.email_sent_date ? 'btn-dark' : 'btn-primary') : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="waybill">${state.order?.waybill?.number ? state.order?.waybill?.number : __html('Waybill')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? (state.order['invoice']?.email_sent_date ? 'btn-dark' : 'btn-primary') : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="invoice">${state.order?.invoice?.number ? __html('INV-%1$', state.order?.invoice?.number) : __html('Invoice')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? (state.order['quotation']?.email_sent_date ? 'btn-dark' : 'btn-primary') : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="quotation">${__html('P1')}</button>
+                                <button ${state.order?.id ? '' : 'disabled'} class="btn ${state.order?.invoice?.number ? (state.order['production_slip']?.email_sent_date ? 'btn-dark' : 'btn-primary') : 'btn-outline-primary'} btn-ss document-btn me-1 mb-1 flex-shrink-0" data-type="production-slip">${__html('P2')}</button>
                             </div>
                             <div class="dropdown flex-shrink-0">
                                 <svg id="docActions" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po mb-1" viewBox="0 0 16 16">
@@ -191,7 +191,7 @@ export class LeftPane {
             if (!confirm(__html('Delete record?'))) return;
 
             // Remove from db
-            deleteTransaction([{ _id: state.order._id }], (response) => {
+            deleteTransaction([{ _id: state.order._id, soft: true }], (response) => {
 
                 if (response.success) {
 
