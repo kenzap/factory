@@ -32,7 +32,7 @@ export const updateCalculations = (cell, settings) => {
 
     // update product price when formula_length = L | no sketch data
     // console.log('Data before calculation:', data);
-    if (data._id && ((data.formula_length === "L" || data.formula_width === "W"))) {
+    if (data._id && ((data.formula_length && /^[^A-KM-Z]*L[^A-KM-Z]*$/i.test(data.formula_length)) || (data.formula_width && /^[^A-JX-Z]*W[^A-JX-Z]*$/i.test(data.formula_width)))) {
 
         // data.input_fields[0].default = data.length || 0;
 

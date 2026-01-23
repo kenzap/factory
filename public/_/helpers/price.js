@@ -77,24 +77,33 @@ const calculateVariablePrice = (item, obj) => {
 };
 
 const calculateFormulaPrice = (settings, item, obj) => {
+
+    // Get coating price per m2
     const coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
 
+    // m2 calculation
     obj.formula = item.formula;
-    obj.formula_price = item.formula_price || '0';
-
-    // Replace formula variables
     obj.formula = replaceFormulaVariables(obj.formula, settings, item, coatingPrice);
+
+    // Additional cost calculation or pm 
+    obj.formula_price = item.formula_price || '0';
     obj.formula_price = replaceFormulaVariables(obj.formula_price, settings, item, coatingPrice);
 
     // Replace in width/length calculations
-    [obj.formula_width_calc, obj.formula_length_calc] =
-        replaceInDimensions([obj.formula_width_calc, obj.formula_length_calc], item);
+    [obj.formula_width_calc, obj.formula_length_calc] = replaceInDimensions([obj.formula_width_calc, obj.formula_length_calc], item);
 
     console.log("calculateFormulaPrice", obj);
 
-    // Calculate final price
+    // Coating price per m2 (no discount applied to coating)
     const basePrice = makeNumber(calculate(obj.formula) / 1000000 * coatingPrice);
-    const additionalPrice = makeNumber(calculate(obj.formula_price));
+
+    // Additional cost calculation (per meter price)
+    let additionalPrice = makeNumber(calculate(obj.formula_price));
+
+    // Apply discount only to the per-meter (additional) price component
+    if (item.discount > 0) {
+        additionalPrice *= (1 - item.discount / 100);
+    }
 
     obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
 
@@ -107,11 +116,6 @@ const calculateFormulaPrice = (settings, item, obj) => {
         obj.price += (item.formula_length_calc && !isNaN(item.formula_length_calc))
             ? item.adj * item.formula_length_calc / 1000
             : item.adj;
-    }
-
-    // Apply discount
-    if (item.discount > 0) {
-        obj.price *= (1 - item.discount / 100);
     }
 
     obj.total = obj.price * item.qty;

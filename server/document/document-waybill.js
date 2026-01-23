@@ -38,7 +38,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
             data.settings?.tax_region ||
             'LV';
 
-        logger.info(`Generating waybill for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
+        // logger.info(`Generating waybill for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
         // logger.info(`Buyer Entity: ${JSON.stringify(data.entity)}`);
 
         const buyerCountry = options.buyerCountry ||
@@ -58,7 +58,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
         // Calculate totals with tax breakdown
         const totals = calculator.calculateTotals(locale);
 
-        logger.info(`Calculated waybill totals: ${JSON.stringify(totals)}`);
+        // logger.info(`Calculated waybill totals: ${JSON.stringify(totals)}`);
 
         // Generate items table
         data.waybill_items_table = getInvoiceItemsTable(

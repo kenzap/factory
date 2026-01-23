@@ -9,7 +9,7 @@ import { getDbConnection, sid } from '../_/helpers/index.js';
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteOrderWaybill(id, user) {
+async function deleteOrderWaybill(id, user, logger) {
 
     const db = getDbConnection();
 
@@ -36,18 +36,32 @@ async function deleteOrderWaybill(id, user) {
 
         // Append waybill number to anulled list in settings
         if (waybill && waybill.number) {
-            const updateSettingsQuery = `
-            UPDATE data 
-            SET js = jsonb_set(
-                js, 
-                '{data,waybill_anulled_list}', 
-                to_jsonb(COALESCE(js->'data'->>'waybill_anulled_list', '') || CASE WHEN js->'data'->>'waybill_anulled_list' IS NULL OR js->'data'->>'waybill_anulled_list' = '' THEN $1 ELSE E'\n' || $1 END)
-            )
-            WHERE ref = 'settings' AND sid = $2
-            `;
-            await db.query(updateSettingsQuery, [waybill.number, sid]);
 
-            // await db.query(updateSettingsQuery, [JSON.stringify([waybill.number]), sid]);
+            const query_waybill_anulled_list = `
+                SELECT js->'data'->>'waybill_anulled_list' as waybill_anulled_list
+                FROM data
+                WHERE ref = 'settings' AND sid = $1
+                LIMIT 1
+                `;
+
+            const result_anulled = await db.query(query_waybill_anulled_list, [sid]);
+            let waybill_anulled_list = '';
+            if (result_anulled.rows.length > 0) {
+                waybill_anulled_list = result_anulled.rows[0].waybill_anulled_list || '';
+            }
+
+            // Add waybill number to the list separated by new lines
+            waybill_anulled_list = waybill_anulled_list
+                ? waybill_anulled_list + '\n' + waybill.number
+                : waybill.number;
+
+            const update_query = `
+                UPDATE data
+                SET js = jsonb_set(js, '{data,waybill_anulled_list}', $1::jsonb)
+                WHERE ref = 'settings' AND sid = $2
+                `;
+
+            await db.query(update_query, [JSON.stringify(waybill_anulled_list), sid]);
         }
 
         // Update waybill number to null
@@ -68,13 +82,13 @@ async function deleteOrderWaybill(id, user) {
 }
 
 // API route
-function deleteOrderWaybillApi(app) {
+function deleteOrderWaybillApi(app, logger) {
 
     app.post('/api/delete-order-waybill/', authenticateToken, async (_req, res) => {
 
-        console.log('delete ', _req.body);
+        logger.info('delete-order-waybill user ', _req.user);
 
-        const response = await deleteOrderWaybill(_req.body.id, _req.user);
+        const response = await deleteOrderWaybill(_req.body.id, _req.user, logger);
 
         /// console.log('delete response', response);
 

@@ -36,6 +36,7 @@ async function getOrderDetails(id) {
             js->'data'->'price' as "price",
             js->'data'->'vat_status' as "vat_status",
             js->'data'->'vat_number' as "vat_number",
+            js->'data'->'tax_region' as "tax_region",
             js->'data'->'entity' as "entity",
             js->'data'->'operator' as "operator",
             js->'data'->'waybill' as "waybill",

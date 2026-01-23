@@ -467,9 +467,9 @@ export class LeftPane {
 
         let totals = getTotalsHTML(state.settings, state.order);
 
-        log('entity:', entity);
-        log('Order totals:', totals.price);
-        log('Order totals:', _totals);
+        // log('entity:', entity);
+        // log('Order totals:', totals.price);
+        // log('Order totals:', _totals);
 
         state.order.price = totals.price;
         state.order.tax_total = _totals.totalTaxAmount;

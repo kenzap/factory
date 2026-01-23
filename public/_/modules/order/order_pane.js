@@ -70,7 +70,7 @@ export class OrderPane {
                     <button id="add-order-row" class="btn btn-outline-primary btn-sm">
                         <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
                     </button>
-                    <a href="https://office.skarda.design/manufacturing/?id=${state.order.id}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
+                    <a href="/manufacturing/?id=${state.order.id}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
                         <i class="bi bi-box-arrow-up-right me-2"></i>
                         ${__html('Manufacturing')}
                     </a>

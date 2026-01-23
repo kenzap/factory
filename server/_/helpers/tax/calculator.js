@@ -23,6 +23,8 @@ export class InvoiceCalculator {
     calculateTotals(locale) {
         this.taxGroups.clear();
 
+        if (!this.order.items) this.order.items = [];
+
         this.order.items.forEach(item => {
             if (!item.total || item.total === 0) return;
 
