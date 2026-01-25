@@ -1,4 +1,5 @@
 import { getCoatings } from "../_/api/get_coatings.js";
+import { getOrdersCuttingSummary } from "../_/api/get_orders_cutting_summary.js";
 import { __html, hideLoader } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
@@ -73,6 +74,22 @@ class Cutting {
 
             this.listeners();
         });
+
+        // get cutting summary
+        getOrdersCuttingSummary({}, (response) => {
+
+            response.summary.forEach((item) => {
+
+                const selector = `.color-card[data-slug="${item.coating.toLowerCase().replace(/\s+/g, '-')}-${item.color.toLowerCase().replace(/\s+/g, '-')}"] .counter-bubble`;
+
+                const counterBubble = document.querySelector(selector);
+
+                if (counterBubble) {
+                    counterBubble.textContent = item.count;
+                    counterBubble.style.display = item.count > 0 ? 'block' : 'none';
+                }
+            });
+        });
     }
 
     initBlocks = () => {
@@ -115,15 +132,6 @@ class Cutting {
 
         document.querySelector('#app').innerHTML = /*html*/`
             <div class="container">
-                    <div class="header d-none">
-                        <h1>Color Catalog</h1>
-                        <p>Professional Coating Colors - RAL & RR Collections</p>
-                    </div>
-
-                    <div class="search-container d-none">
-                        <input type="text" class="search-box" placeholder="Search colors (e.g., RAL-3005, RR-23)..." id="searchInput">
-                    </div>
-
                     <div class="filter-tabs">
                         <div class="filter-tab active" data-filter="all">${__html('All')}</div>
                         ${this.settings.var_parent.split('\n').map((filter) => {
@@ -140,7 +148,9 @@ class Cutting {
                 ${o.colors.sort((a, b) => a.color.localeCompare(b.color)).map((c) => {
                 return `
                     <div class="color-card" data-code="${c.color}" data-type="${o.coating}" data-slug="${c.slug}" >
-                        <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;"></div>
+                        <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;">
+                            <div class="counter-bubble">0</div>
+                        </div>
                         <div class="color-info">
                             <div class="color-code">${__html(c.color)}</div>
                             <div class="color-type">${o.coating}</div>

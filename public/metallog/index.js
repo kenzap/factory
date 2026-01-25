@@ -694,6 +694,9 @@ class MetalLog {
                     if (response.success) {
 
                         toast('Changes applied');
+
+                        this.data();
+
                         // setTimeout(() => { this.data(); }, 1500);
                     } else {
                         console.error(`Error saving ${field} for coil:`, coilId);

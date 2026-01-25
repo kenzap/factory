@@ -51,6 +51,7 @@ export const formatClientName = (entity) => {
  * it abbreviates the name to the first letter of the first two words.
  * @param {Object} settings - The settings object containing price information
  * TODO: add detection based on entity type
+ * @deprecated use formatClientName instead
  * @returns 
  */
 export const formatCompanyName = (order) => {
