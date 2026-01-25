@@ -52,10 +52,9 @@ async function getProductSuggestions(filters) {
     query += `
             ORDER BY 
                 CASE 
-                    WHEN js->'data'->>'priority' = '' THEN 1 
-                    ELSE 0 
-                END,
-                js->'data'->'priority' ASC
+                    WHEN js->'data'->>'priority' = '' OR js->'data'->>'priority' IS NULL THEN 1000000 
+                    ELSE CAST(js->'data'->>'priority' AS INTEGER)
+                END ASC
             LIMIT 50`;
 
     // ORDER BY name ASC

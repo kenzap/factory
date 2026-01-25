@@ -53,20 +53,41 @@ app.use(cors({
 
 app.use(express.json({ limit: '10mb' }));
 
-// LiveReload setup
+// LiveReload setup with cache busting
 if (process.env.NODE_ENV !== 'production') {
-    const liveReloadServer = livereload.createServer();
-    liveReloadServer.watch(PUBLIC_DIR);
-    const livereloadMiddleware = connectLivereload();
+    try {
+        const liveReloadServer = livereload.createServer({
+            port: 35729,
+            host: 'localhost',
+            exts: ['html', 'css', 'js'],
+            delay: 2000
+        });
 
-    function conditionalLivereload(req, res, next) {
-        // Skip injection for PDF route or based on some flag
-        if (req.path.startsWith('/document/') || req.path.startsWith('/api/') || req.path.startsWith('/report/')) {
-            return next();
+        liveReloadServer.watch(PUBLIC_DIR);
+
+        logger.info('LiveReload server started on port 35729');
+
+        const livereloadMiddleware = connectLivereload({
+            port: 35729
+        });
+
+        function conditionalLivereload(req, res, next) {
+            if (req.path.startsWith('/document/') || req.path.startsWith('/api/') || req.path.startsWith('/report/')) {
+                return next();
+            }
+
+            // Disable caching for development
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+
+            return livereloadMiddleware(req, res, next);
         }
-        return livereloadMiddleware(req, res, next);
+        app.use(conditionalLivereload);
+
+    } catch (err) {
+        logger.error('Failed to start LiveReload:', err);
     }
-    app.use(conditionalLivereload);
 }
 
 // Static files with proper caching

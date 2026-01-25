@@ -22,8 +22,6 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
         return;
     }
 
-    // console.log('editorParams.discounts:', editorParams.discounts);
-
     const container = document.createElement("div");
     container.style.position = "relative";
     container.style.display = "flex";
@@ -173,8 +171,8 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 option.appendChild(optionText);
 
                 option.addEventListener("mouseenter", (e) => {
-                    selectedIndex = index;
-                    updateSelectedOption();
+                    // selectedIndex = index;
+                    // updateSelectedOption();
 
                     // Show large preview image
                     largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
@@ -191,18 +189,15 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                     e.preventDefault();
                     // Don't reset selectedIndex on mouseleave to preserve keyboard navigation
                     // selectedIndex = -1;
-                    updateSelectedOption();
+                    // updateSelectedOption();
 
                     // Hide large preview image
                     largePreview.style.display = "none";
                 });
 
                 option.addEventListener("click", () => {
-                    // console.log('Suggestion clicked:', suggestion);
-                    productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
 
-                    // input.value = suggestion.title + " " + suggestion.sdesc;
-                    // dropdown.style.display = "none";
+                    productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
 
                     // Hide large preview on click
                     largePreview.style.display = "none";
@@ -404,9 +399,6 @@ const productSelected = (suggestion, cell, settings, discounts) => {
     updatedData.formula_width_calc = updatedData.formula_width || "";
     updatedData.formula_length_calc = updatedData.formula_length || "";
     updatedData.discount = discounts[updatedData.group] || 0;
-
-    // console.log('updatedData: ', updatedData, discounts);
-    // console.log('group: ', updatedData.group);
 
     // Update the row with all suggestion properties
     cell.getRow().update(updatedData);

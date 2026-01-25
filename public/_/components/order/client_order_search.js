@@ -176,10 +176,32 @@ export class ClientOrderSearch {
         onClick('.edit-client-btn', (e) => {
 
             const clientName = clientInput.value.trim();
-            if (clientName.length > 0) {
+
+            if (clientName.length > 0 && clientInput.dataset._id) {
+
+                // client name entered and selected from suggestion list
                 bus.emit('client:search:refresh', { _id: clientInput.dataset._id, name: clientName });
                 bus.emit('contact:search:refresh', { _id: clientInput.dataset._id, name: clientName });
+
+            } else if (clientName.length > 0 && clientInput.dataset._id === "") {
+
+                // client name entered but not selected from suggestion list, try to match
+                this.clients.forEach(client => {
+
+                    if (clientInput.value.trim() === client.name) {
+
+                        bus.emit('client:search:refresh', { _id: client._id, name: client.name });
+                    }
+                });
+
+                // no client match
+                bus.emit('client:search:refresh', { _id: '', name: '' });
+                bus.emit('contact:search:refresh', { _id: '', name: '' });
+
             } else {
+
+                // no client name entered
+                bus.emit('client:search:refresh', { _id: '', name: '' });
                 bus.emit('contact:search:refresh', { _id: '', name: '' });
             }
         });

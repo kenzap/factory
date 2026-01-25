@@ -48,7 +48,8 @@ async function getProduct(id) {
             js->'data'->'priority' AS priority,
             js->'data'->'locales' AS locales,
             js->'data'->'updated' AS updated,
-            js->'data'->'tax_id' AS tax_id
+            js->'data'->'tax_id' AS tax_id,
+            js->'data'->'tax_regime' AS tax_regime
         FROM data
         WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1
     `;
@@ -84,7 +85,7 @@ function getProductApi(app) {
             const records = await getProduct(req.body.id);
             const locale = await getLocale(req.headers?.locale);
             const locales = await getLocales();
-            const settings = await getSettings(["var_parent", "currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "price", "taxes", "groups", "stock_categories"]);
+            const settings = await getSettings(["var_parent", "currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "tax_region", "price", "taxes", "groups", "stock_categories"]);
 
             res.send({ success: true, settings, locale, locales, product: records, user: req.user });
         } catch (err) {

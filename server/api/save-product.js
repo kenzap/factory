@@ -21,6 +21,8 @@ async function saveProduct(data) {
         if (!data) return { success: false, error: 'no data provided' };
 
         data.updated = Math.floor(new Date().getTime() / 1000);
+        data.updated_at = new Date().toISOString();
+        data.updated_by = data.user?.id || null;
 
         // Prepare update for only provided keys in data
         const updateKeys = Object.keys(data);

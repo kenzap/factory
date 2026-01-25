@@ -280,6 +280,7 @@ class ProductEdit {
         data['slugs'] = self.product.slugs;
         data['modelling'] = document.querySelector('#modelling').checked ? 1 : 0;
         data['tax_id'] = document.querySelector('#tax_id').value;
+        data['tax_regime'] = document.querySelector('#tax_regime').value;
         data['parts'] = [];
         data['keywords'] = [];
 

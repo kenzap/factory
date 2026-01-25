@@ -1,5 +1,6 @@
 
 import { sid } from '../index.js';
+import { formatClientName } from '../order.js';
 
 export async function getDocumentData(client, type, _id, user, locale) {
 
@@ -296,6 +297,10 @@ export const parseDocument = (document, data) => {
     document = data.entity.legal_name
         ? document.replace(/\{\{client_name\}\}/g, data.entity.legal_name)
         : removeField(document, 'client_name');
+
+    document = data.entity.legal_name
+        ? document.replace(/\{\{client_name_formatted\}\}/g, formatClientName(data.entity))
+        : removeField(document, 'client_name_formatted');
 
     document = data.entity.reg_number
         ? document.replace(/\{\{client_reg_number\}\}/g, data.entity.reg_number)

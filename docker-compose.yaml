@@ -32,6 +32,7 @@ services:
       restart: unless-stopped
       ports:
         - "3000:3000"
+        - "35729:35729"  # LiveReload port
       volumes:
         - ./server:/app/server
         - ./public:/app/public

@@ -39,7 +39,7 @@
 /* editor */
 .richtext-input{min-height: 200px;}
 .richtext-input .ql-editor{min-height: 200px;}
-.form-keywords{font-size: 1em;}
+/* .form-keywords{font-size: 1em;} */
 .form-linked{font-size: 0.7em;font-family: monospace;}
 .ql-table-temporary{display: none;}
 .icon-doc::before,

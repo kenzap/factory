@@ -91,6 +91,8 @@ class Stock {
             e.target.closest('.dropdown').querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
             e.target.classList.add('active');
 
+            this.selectedCoating = coating;
+
             // Filter the table based on selected coating
             this.filterTableByCoating(coating);
         });
@@ -291,13 +293,13 @@ class Stock {
             <th class="product-coating">
                 <div class="dropdown ${this.coatings.length <= 1 ? 'd-none' : ''}">
                     <button class="btn btn-link text-dark stock-table p-0 text-decoration-none fw-bold" type="button" data-bs-toggle="dropdown">
-                        <span id="selectedCoating">${__html('All')}</span>
+                        <span id="selectedCoating">${this.selectedCoating ? this.selectedCoating : __html('All')}</span>
                         <i class="bi bi-chevron-down ms-1"></i>
                     </button>
                     <ul class="dropdown-menu" id="coatingFilter">
                         <li><a class="dropdown-item active" href="#" data-value="">${__html('All')}</a></li>
                         ${this.coatings.map(coating =>
-            `<li><a class="dropdown-item" href="#" data-value="${coating}">${coating}</a></li>`
+            `<li><a class="dropdown-item" href="#" data-value="${coating}" ${this.selectedCoating === coating ? 'active' : ''}>${coating}</a></li>`
         ).join('')}
                     </ul>
                 </div>
@@ -334,6 +336,8 @@ class Stock {
                 }
 
                 const row = document.createElement('tr');
+
+                row.style.display = (this.selectedCoating && this.selectedCoating !== coating) ? 'none' : '';
 
                 // Product name cell with category badge
                 const productCell = document.createElement('td');

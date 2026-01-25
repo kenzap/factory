@@ -122,7 +122,7 @@ export class OrderPane {
                         if (enteredValue) {
 
                             const matchedSuggestion = this.colorSuggestions.find(suggestion =>
-                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                                suggestion.toLowerCase() === enteredValue.toLowerCase() || (suggestion.includes(enteredValue) && !isNaN(enteredValue))
                             );
 
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {

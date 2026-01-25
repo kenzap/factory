@@ -36,7 +36,7 @@ export class Product {
     }
 
     get formattedTime() {
-        return formatTime(this.updated);
+        return formatTime(this.updated_at || this.updated * 1000);
     }
 }
 
@@ -212,7 +212,7 @@ export class ProductModal extends Component {
         this.modal = document.querySelector(".modal");
         this.modalInstance = new bootstrap.Modal(this.modal);
 
-        this.modal.querySelector(".modal-title").innerHTML = __html('Add Product');
+        this.modal.querySelector(".modal-title").innerHTML = __html('Add product');
         this.modal.querySelector(".modal-body").innerHTML = this.renderForm();
         this.modal.querySelector(".modal-footer").innerHTML = this.renderFooter();
 
@@ -233,7 +233,7 @@ export class ProductModal extends Component {
                     <label for="p-sdesc" class="form-label">${__html('Short description')}</label>
                     <input type="text" class="form-control" id="p-sdesc" autocomplete="off">
                 </div>
-                <div class="form-group mb-3">
+                <div class="form-group mb-3 d-none">
                     <label for="p-price" class="form-label">${__html('Price')}</label>
                     <input type="text" class="form-control" id="p-price" autocomplete="off">
                 </div>

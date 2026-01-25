@@ -259,7 +259,7 @@ export class TabGeneral {
                     <label class="col-sm-3 col-form-label">${__html('Order ID')}</label>
                     <div class="col-sm-9">
                         <input id="last_order_id" type="text" class="form-control inp" name="last_order_id" data-type="text">
-                        <p class="form-text">${__html('Define next new order ID number.')}</p>
+                        <p class="form-text">${__html('Last order ID number.')}</p>
                     </div>
                   </div>
               </div>
@@ -268,7 +268,7 @@ export class TabGeneral {
                     <label class="col-sm-3 col-form-label">${__html('Waybill ID')}</label>
                     <div class="col-sm-9">
                         <input id="waybill_last_number" type="text" class="form-control inp" name="waybill_last_number" data-type="text">
-                        <p class="form-text">${__html('Define next new waybill ID number.')}</p>
+                        <p class="form-text">${__html('Last waybill ID number.')}</p> 
                     </div>
                   </div>
               </div>

@@ -1,4 +1,5 @@
 import { __html, attr, html, onChange, onClick, onKeyUp, onlyNumbers, priceFormat, toast } from "../../helpers/global.js";
+import { TAX_REGIMES } from "../../helpers/tax/regimes.js";
 import { ProductPriceVariations } from "./product_price_variations.js";
 
 export class ProductPrice {
@@ -35,7 +36,7 @@ export class ProductPrice {
         document.querySelector('product-price').innerHTML = `
             <h4 id="product-price" class="card-title pt-0 mb-3">${__html('Price')}</h4>
             <div class="mb-3 mw">
-                <label class="form-label" for="calc_price">${__html('Calculate price')}</label>
+                <label class="form-label d-none" for="calc_price">${__html('Calculate price')}</label>
                 <select id="calc_price" class="form-select inp" >
                     <option value="variable">${__html('By variation')}</option>
                     <option value="sketch">${__html('By sketch')}</option>
@@ -48,7 +49,7 @@ export class ProductPrice {
                 <div class="d-flex align-items-center justify-content-between mb-2">
                     <input type="hidden" id="price" value="" />
                     <button class="btn btn-sm btn-outline-primary btn-view-variations " type="button">
-                        ${__html('View variations')}
+                        ${__html('Variations')}
                     </button>
                     <div class="ms-3 po copy-price-variations" title="${__html('Copy price variations')}"> 
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-copy" viewBox="0 0 16 16">
@@ -56,31 +57,31 @@ export class ProductPrice {
                         </svg>
                     </div>
                 </div>
-                <p class="form-text">${__html('Override default prices by clicking on the button above.')}</p>
+                <p class="form-text d-none">${__html('Override default prices by clicking on the button above.')}</p>
             </div>
             <div class="mb-3 mw formula_cont d-none">
-                <label class="form-label" for="formula">${__html('Square Footage')}</label>
+                <label class="form-label" for="formula">${__html('Square footage')}</label>
                 <input id="formula" type="text" class="form-control inp" placeholder="${__html('(A + B) * L')}">
                 <p class="form-text formula-hint">${__html('Square footage formula to calculate price.')}</p>
             </div>
             <div class="mb-3 mw fwl_cont">
                 <div class="row">
                     <div class="col-md-6">
-                        <label class="form-label" for="formula">${__html('Formula width')}</label>
+                        <label class="form-label" for="formula">${__html('Width')}</label>
                         <input id="formula_width" type="text" class="form-control inp" placeholder="${__html('A + B + C')}">
                         <p class="form-text formula_width-hint d-none">${__html('Product width in mm.')}</p>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label" for="formula">${__html('Formula length')}</label>
+                        <label class="form-label" for="formula">${__html('Length')}</label>
                         <input id="formula_length" type="text" class="form-control inp" placeholder="${__html('L')}">
-                        <p class="form-text formula_length-hint d-none-">${__html('Product length in mm.')}</p>
+                        <p class="form-text formula_length-hint d-none">${__html('Product length in mm.')}</p>
                     </div>
                 </div>
             </div>
             <div class="mb-3 mw formula_price_cont d-none">
                 <div class="d-flex justify-content-start flex-row">
                     <div class="me-3">
-                        <label class="form-label" for="color_coating">${__html('Color Coating')}</label>
+                        <label class="form-label" for="color_coating">${__html('Coating')}</label>
                         <select class="form-select color-coating-price" name="price_parent- " data-type="select">
                         ${this.settings.price.map((price, i) => {
 
@@ -95,21 +96,34 @@ export class ProductPrice {
                         </select>
                     </div>
                     <div class="me-3">
-                        <label class="form-label" for="material_cost">${__html('Material')}</label>
+                        <label class="form-label" for="material_cost">${__html('Material cost')}</label>
                         <input id="material_cost" type="text" disabled class="form-control inp" style="max-width: 90px;" placeholder="${__html('')}">
                     </div>
                     <div>
-                        <label class="form-label" for="formula_price">${__html('Markup')}</label>
+                        <label class="form-label" for="formula_price">${__html('Additional cost')}</label>
                         <input id="formula_price" type="text" class="form-control inp" placeholder="${__html('B>1000?1.80:0.90')}">
                     </div>
                 </div>
-                <p class="form-text formula_price-hint">${__html('Final price = Material Cost + Markup.')}</p>
+                <p class="form-text formula_price-hint">${__html('Final price = Material cost + Additional cost.')}</p>
             </div>
             <div class="mb-3 mw parts_cont d-none">
                 <h4 id="parts-h" class="card-title mb-3">${__html('Parts')}</h4>
                 <textarea id="parts" class="form-control mw" name="parts" rows="6" data-type="text" style="font-size:13px;font-family: monospace;"></textarea>
                 <p class="form-text formula_price">${__html('Provide one product ID per line.')}</p>
             </div>
+
+            <div class="mb-3 mw">
+                <label class="form-label" for="tax_regime">${__html('Tax regime')}</label>
+                <select id="tax_regime" class="form-select inp" name="tax_regime" data-type="select">
+                    <option value="">${__html('Select tax regime')}</option>
+                    ${Object.entries(TAX_REGIMES).map(([key, regime]) => {
+                if (regime.country !== self.settings.tax_region) return '';
+                return `<option value="${attr(key)}" data-rate="${attr(regime.rate)}" data-code="${attr(regime.peppolCode)}" ${self.product.tax_regime === key ? 'selected' : ''}>${html(regime.description)}</option>`;
+            }).join('')}
+                </select>
+                <p class="form-text">${__html('Select applicable tax regime for this product.')}</p>
+            </div>
+
             <div class="mb-3 mw ">
                 <label class="form-label" for="tax_id">${__html('Tax ID')}</label>
                 <input id="tax_id" class="form-control inp tax_id" name="tax_id" type="text" value="0" data-type="text">

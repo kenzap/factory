@@ -356,10 +356,6 @@ export class LeftPane {
         // Refresh totals
         bus.on('order:table:refreshed', (data) => {
 
-            // console.log('LeftPane, order:table:refreshed:', order);
-
-            // state.order = order;
-
             this.summary();
         });
 
@@ -376,7 +372,7 @@ export class LeftPane {
             state.order.entity = client.entity || 'company';
             state.order.vat_number = client.vat_number || '';
 
-            if (document.getElementById('clientFilter').value != client.legal_name && client.legal_name.length) {
+            if (document.getElementById('clientFilter').dataset._id != client._id && client.legal_name.length) {
                 document.getElementById('clientFilter').value = client.legal_name;
                 document.getElementById('clientFilter').dataset._id = client._id;
             }
@@ -406,15 +402,6 @@ export class LeftPane {
             state.clientAddressSearch.data();
             state.clientContactSearch.data();
         });
-
-
-        // bus.clear('client:updated');
-        // bus.on('client:updated', (data) => {
-
-        //     console.log('Client updated received:', data);
-        //     this.data();
-        //     console.log("ClientOrderSearch data called");
-        // });
 
         // Summary
         this.summary();
@@ -536,17 +523,15 @@ export class LeftPane {
         // Logic to save the order 42171
         const _id = document.getElementById('orderId').dataset._id || '';
         const id = document.getElementById('orderId').value;
+        const name = document.getElementById('clientFilter').value; // client entity name
         const eid = document.getElementById('clientFilter').dataset._id || ''; // entity id
         const draft = document.getElementById('draft').checked; // draft
-        const name = document.getElementById('clientFilter').value; // client entity name
         const contactPerson = document.getElementById('contactPerson').value;
         const contactPhone = document.getElementById('contactPhone').value;
         const contactEmail = document.getElementById('contactEmail').value;
         const address = document.getElementById('address').value;
         const due_date = document.getElementById('due_date').value;
         const notes = document.getElementById('notes').value;
-
-        // console.log('due_date', due_date);
 
         // Validate required fields
         let due_date_utc = null;
@@ -587,7 +572,6 @@ export class LeftPane {
 
         // Example of sending data to the server (replace with actual API call)
         // console.log('Order Data:', orderData);
-
         saveOrder(orderData, (response) => {
 
             // console.log('Order saved successfully:', response.order);

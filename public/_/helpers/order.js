@@ -27,10 +27,30 @@ export const getColors = (settings) => {
 }
 
 /**
+ * Enhances GDPR compliance by abbreviating names of non-corporate clients.
+ * Used by document generation to format client name for display.
+ * @param {Object} entity - The entity object containing client information
+ * @param {string} entity.legal_name - The legal name of the client
+ * @param {string} [entity.entity_type] - The type of entity (e.g., 'individual', 'company')
+ * @returns {string} Formatted client name
+ */
+export const formatClientName = (entity) => {
+
+    let legal_name = entity.legal_name || entity.name || '';
+
+    if (entity.entity && entity.entity.toLowerCase() === 'individual' && legal_name.indexOf(' ') > 0) {
+        const parts = legal_name.split(' ');
+        return parts[0].substring(0, 1) + parts[1].substring(0, 1);
+    }
+    return legal_name;
+}
+
+/**
  * The purpose of this function is to format a company name for display. And hide individual names for physical persons.
  * It checks if the company name contains certain abbreviations (like "SIA", "BDR", "AS") and if it does not,
  * it abbreviates the name to the first letter of the first two words.
  * @param {Object} settings - The settings object containing price information
+ * TODO: add detection based on entity type
  * @returns 
  */
 export const formatCompanyName = (order) => {

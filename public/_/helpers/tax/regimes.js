@@ -9,10 +9,37 @@ export const TAX_REGIMES = {
         peppolCode: 'S',
         rate: 21,
         display: 'VAT 21%',
+        description: '21% VAT — standard rate in Latvia',
         legalRef: null,
         legalText: null,
         country: 'LV',
         matcher: (id) => id === null || id === undefined || id === ''
+    },
+
+    // Latvia Reduced Rate 12%
+    LV_REDUCED_12: {
+        localId: 'RED12',
+        peppolCode: 'AA',
+        rate: 12,
+        display: 'VAT 12%',
+        description: '12% VAT - reduced rate in Latvia',
+        legalRef: null,
+        legalText: null,
+        country: 'LV',
+        matcher: (id) => id === 'RED12'
+    },
+
+    // Latvia Reduced Rate 5%
+    LV_REDUCED_5: {
+        localId: 'RED5',
+        peppolCode: 'AA',
+        rate: 5,
+        display: 'VAT 5%',
+        description: '5% VAT - reduced rate in Latvia',
+        legalRef: null,
+        legalText: null,
+        country: 'LV',
+        matcher: (id) => id === 'RED5'
     },
 
     // Latvia Reverse Charge - Construction (Art. 142)
@@ -21,6 +48,7 @@ export const TAX_REGIMES = {
         peppolCode: 'AE',
         rate: 0,
         display: 'ANM',
+        description: 'Reverse charge - construction services as per Art. 142',
         legalRef: '142',
         legalText: () => ('Reverse charge (Art. 142 - Construction)'),
         country: 'LV',
@@ -34,6 +62,7 @@ export const TAX_REGIMES = {
         peppolCode: 'AE',
         rate: 0,
         display: 'ANM',
+        description: 'Reverse charge - general as per Art. 143',
         legalRef: '143',
         legalText: () => ('Reverse charge (Art. 143)'),
         country: 'LV',
@@ -47,6 +76,7 @@ export const TAX_REGIMES = {
         peppolCode: 'AE',
         rate: 0,
         display: 'ANM',
+        description: 'Reverse charge - metal processing as per Art. 143.1',
         legalRef: '143.1',
         legalText: () => ('Reverse charge (Art. 143.1 - Metal processing)'),
         country: 'LV',
@@ -60,6 +90,7 @@ export const TAX_REGIMES = {
         peppolCode: 'AE',
         rate: 0,
         display: 'ANM',
+        description: 'Reverse charge - data processing as per Art. 143.1',
         legalRef: '143.1',
         legalText: () => ('Reverse charge (Art. 143.1 - Data processing)'),
         country: 'LV',
@@ -73,35 +104,12 @@ export const TAX_REGIMES = {
         peppolCode: 'AE',
         rate: 0,
         display: 'ANM / 7216',
+        description: 'Reverse charge - specific goods as per Art. 143.4',
         legalRef: '143.4',
         legalText: () => ('Reverse charge (Art. 143.4)'),
         country: 'LV',
         requiresVAT: true,
         matcher: (id) => id === '7216'
-    },
-
-    // Latvia Reduced Rate 12%
-    LV_REDUCED_12: {
-        localId: 'RED12',
-        peppolCode: 'AA',
-        rate: 12,
-        display: 'VAT 12%',
-        legalRef: null,
-        legalText: null,
-        country: 'LV',
-        matcher: (id) => id === 'RED12'
-    },
-
-    // Latvia Reduced Rate 5%
-    LV_REDUCED_5: {
-        localId: 'RED5',
-        peppolCode: 'AA',
-        rate: 5,
-        display: 'VAT 5%',
-        legalRef: null,
-        legalText: null,
-        country: 'LV',
-        matcher: (id) => id === 'RED5'
     },
 
     // Intra-Community Supply (Cross-border EU B2B)
@@ -110,6 +118,7 @@ export const TAX_REGIMES = {
         peppolCode: 'K',
         rate: 0,
         display: 'VAT 0%',
+        description: '0% VAT - Intra-community supply within EU',
         legalRef: '138',
         legalText: () => ('Intra-community supply (Art. 138 EU VAT Directive)'),
         country: 'EU',
@@ -118,7 +127,7 @@ export const TAX_REGIMES = {
     },
 
     // Export outside EU
-    EXPORT: {
+    EU_EXPORT: {
         localId: 'EXPORT',
         peppolCode: 'G',
         rate: 0,

@@ -33,7 +33,7 @@ async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0
             js->'data'->'cad_files' AS cad_files,
             js->'data'->'price' AS price,
             js->'data'->'priority' AS priority,
-            js->'data'->'updated' AS updated,
+            js->'data'->'updated_at' AS updated_at,
             js->'data'->'tax_id' AS tax_id
         FROM data
         WHERE ref = $1 AND sid = $2

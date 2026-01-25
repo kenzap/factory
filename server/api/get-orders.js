@@ -27,6 +27,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             js->'data'->>'due_date' as due_date,
             COALESCE((js->'data'->'draft')::boolean, false) as draft,
             js->'data'->'inventory' as inventory,
+            js->'data'->'entity' as entity,
             js->'data'->'invoice' as invoice,
             js->'data'->'payment' as payment,
             js->'data'->'waybill' as waybill,
@@ -46,6 +47,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
     const params = ['order', sid];
     let whereConditions = [];
+    let dateField = "js->'data'->>'date'";;
 
     // Build WHERE conditions dynamically
     if (filters.client?.eid) {
@@ -55,27 +57,17 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     }
 
     // Date filtering logic (consolidated)
-    const dateField = filters.type === 'waybills' ? "js->'data'->'waybill'->>'date'" : "js->'data'->>'date'";
-
-    if (filters.dateFrom?.trim()) {
-        whereConditions.push(`(${dateField} >= $${params.length + 1})`);
-        params.push(filters.dateFrom.trim());
+    // const dateField = filters.type === 'waybills' ? "js->'data'->'waybill'->>'date'" : "js->'data'->>'date'";
+    if (filters.for === 'waybills' || filters.type === 'waybills') {
+        dateField = "js->'data'->'waybill'->>'date'";
     }
 
-    if (filters.dateTo?.trim()) {
-        whereConditions.push(`(${dateField} <= $${params.length + 1})`);
-        params.push(filters.dateTo.trim());
-    }
-
-    // Type-specific filters
-    if (filters.type === 'draft') {
-        whereConditions.push(`(js->'data'->'draft')::boolean = true`);
-    }
-
+    // orders log
     if (filters.for === 'orders') {
         whereConditions.push(`((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)`);
     }
 
+    // transactions log
     if (filters.for === 'manufacturing') {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 1);
@@ -90,6 +82,11 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
                    OR item->'inventory'->>'isu_date' >= $${params.length + 1})
             )`);
         params.push(oneWeekAgo);
+    }
+
+    // Type-specific filters
+    if (filters.type === 'draft') {
+        whereConditions.push(`(js->'data'->'draft')::boolean = true`);
     }
 
     if (filters.type === 'manufacturing') {
@@ -108,6 +105,8 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             WHERE item->'inventory'->>'isu_date' IS NOT NULL 
                AND item->'inventory'->>'isu_date' != ''
         ) AND jsonb_array_length(js->'data'->'items') > 0`);
+
+        dateField = "js->'data'->'items'->0->'inventory'->>'rdy_date'";
     }
 
     if (filters.type === 'issued') {
@@ -117,6 +116,20 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
             WHERE item->'inventory'->>'isu_date' IS NOT NULL 
                AND item->'inventory'->>'isu_date' != ''
         ) AND jsonb_array_length(js->'data'->'items') > 0`);
+
+        dateField = "js->'data'->'items'->0->'inventory'->>'isu_date'";
+    }
+
+
+    // date range filtering
+    if (filters.dateFrom?.trim() && dateField) {
+        whereConditions.push(`(${dateField} >= $${params.length + 1})`);
+        params.push(filters.dateFrom.trim());
+    }
+
+    if (filters.dateTo?.trim() && dateField) {
+        whereConditions.push(`(${dateField} <= $${params.length + 1})`);
+        params.push(filters.dateTo.trim());
     }
 
     // Append all WHERE conditions

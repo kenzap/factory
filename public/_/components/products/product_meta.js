@@ -67,14 +67,14 @@ export class ProductMeta {
                         </div>
                     </div>
                     <div class="mb-3 mww">
-                        <label class="banner-descshort-l form-label" for="p-sdesc${id}">${__html('Short Description')} ${language != "Default" ? " in " + language : ""}</label>
+                        <label class="banner-descshort-l form-label" for="p-sdesc${id}">${__html('Short description')} ${language != "Default" ? " in " + language : ""}</label>
                         <textarea class="form-control ${id.length == 0 ? "inp" : ""}" id="p-sdesc${id}" placeholder=" " maxlength="120" rows="2">${this.product.locales[locale.locale]['sdesc'] || ""}</textarea>
                         <p class="form-text">${__html('Used when a product is previewed or shared on social media platforms.')}</p>
                     </div>
                     <div class="mb-3 mww">
                         <div style="clear:both;margin-top:16px;"></div>
                         <label class="form-label" for="p-keywords${id}">${__html('Keywords')} ${language != "Default" ? " in " + language : ""}</label>
-                        <textarea class="form-control form-keywords ${id.length == 0 ? "inp" : ""}" id="p-keywords${id}" placeholder=" " maxlength="2000" rows="2" >${this.product.locales[locale.locale]['keywords'] || ""}</textarea>
+                        <textarea class="form-control form-control-sm form-keywords ${id.length == 0 ? "inp" : ""}" id="p-keywords${id}" placeholder=" " maxlength="2000" rows="2" style="font-size: 0.8em;">${this.product.locales[locale.locale]['keywords'] || ""}</textarea>
                         <p class="form-text">${__html('Used by an AI assistant to find relevant products.')}</p>
                     </div>
                     <div class="form-quill mb-3 mww scrolling-container">
@@ -89,7 +89,7 @@ export class ProductMeta {
 
                 <div class="mb-3 mww">
                     <div style="clear:both;margin-top:16px;"></div>
-                    <label class="form-label" for="linked_products">${__html('Linked Products')}</label>
+                    <label class="form-label" for="linked_products">${__html('Linked products')}</label>
                     <textarea id="linked_products" class="form-control form-linked inp mw-" name="linked_products" rows="6" data-type="text" ></textarea>
                     <p class="form-text">${__html('Provide one product ID per line, ex: 73650c25e8452e7519db0f02042ef283646328bc.')}</p>
                 </div>

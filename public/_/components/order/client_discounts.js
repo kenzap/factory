@@ -34,7 +34,7 @@ export class ClientDiscounts {
 
     view = () => {
         document.querySelector('client-discounts').innerHTML = `
-            <div class="mb-4">
+            <div class="mb-5">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="bi bi-percent me-2"></i>${__html('Discount Rates')}</h5>
                 </div>
@@ -60,10 +60,10 @@ export class ClientDiscounts {
             const discountValue = this.client.discounts[category.id] || 0;
 
             discountsList.insertAdjacentHTML('beforeend', /*html*/`
-            <div class="discount-item d-flex align-items-center py-1 px-3 mb-1 bg-light border-sm" data-category-id="${category.id}">
+            <div class="discount-item d-flex align-items-center py-2 mb-0 bg-light border-sm border-bottom rounded-0 bg-white" data-category-id="${category.id}">
                 <div class="flex-grow-1 me-3">
-                    <label class="form-label fw-semibold mb-0">
-                        <i class="bi bi-tag me-2"></i>${__html(category.name)}
+                    <label class="form-label fw-normal mb-0">
+                        <i class="bi bi-tag me-2 text-primary-"></i>${__html(category.name)}
                     </label>
                 </div>
                 <div class="input-group" style="width: 84px;">

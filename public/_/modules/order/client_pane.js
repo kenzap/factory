@@ -7,6 +7,7 @@ import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
+import { ClientNotifications } from "../../components/order/client_notifications.js";
 import { __html, attr, countries, onChange, onClick, toast } from "../../helpers/global.js";
 import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { isEmail, isPhone } from "../../helpers/validation.js";
@@ -27,21 +28,22 @@ export class ClientPane {
 
     init = () => {
 
-        this.view();
-
         this.data();
     }
 
     data = () => {
 
-        // console.log('Fetching client details for ID:', state.client);
+        if (!state.client._id) {
 
-        if (!state.client._id) return;
+            this.view();
+
+            return;
+        }
 
         getClientDetails(state.client._id, (response) => {
+
             if (response && response.data) {
 
-                // console.log('Client data fetched:', response.data);
                 // Update client data with the response
                 state.client = response.data;
                 state.client.drivers = state.client.drivers || [];
@@ -51,6 +53,7 @@ export class ClientPane {
                 state.order.vat_number = state.client.vat_number || '';
                 state.order.vat_status = state.client.vat_status || '0';
                 state.order.discounts = state.client.discounts || {};
+                state.order.notifications = state.client.notifications || {};
                 state.order.entity = state.client.entity || 'company';
 
                 state.order.fname = state.client.fname || '';
@@ -74,15 +77,14 @@ export class ClientPane {
 
     view = () => {
 
-        console.log('Rendering client pane for client:', state.client, state.settings.tax_region);
-
         document.querySelector('.right-pane').innerHTML = /*html*/`
         <client-pane>
+
             <!-- Alert Notification -->
             <alert-notification></alert-notification>
 
             <!-- Right Pane -->
-            <h4 class="mb-4"><client-badge><i class="bi ${state.client.entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i></client-badge>${__html('Client Information')}<verified-badge></verified-badge></h4>
+            <h4 class="mb-4"><client-badge><i class="bi ${state.client.entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i></client-badge>${state.client._id ? __html('Edit Client') : __html('New Client')}<verified-badge></verified-badge></h4>
             
             <!-- Client Type -->
             <div class="row mb-3">
@@ -105,9 +107,9 @@ export class ClientPane {
             </div>
             
             <!-- Client Details -->
-            <div class="row mb-4">
+            <div class="row mb-5">
                 <div class="col-md-6 mb-3">
-                    <label for="reg_number" class="form-label">${__html('Registration Number')} <span class="ms-2 po verify_company"><i class="bi bi-arrow-left-right"></i></span> <span class="ms-2 po verify_company_locally"><i class="bi bi-search"></i></span></label>
+                    <label for="reg_number" class="form-label">${__html('Registration number')} <span class="ms-2 po verify_company"><i class="bi bi-arrow-left-right"></i></span> <span class="ms-2 po verify_company_locally"><i class="bi bi-search"></i></span></label>
                     <input type="text" class="form-control" id="reg_number" value="${state.client.reg_number || state.client.reg_num || ''}">
                 </div>
                 <div class="col-md-6 mb-3">
@@ -140,7 +142,7 @@ export class ClientPane {
                     <label for="reg_address" class="form-label">${__html('Registration address')}</label>
                     <input type="text" class="form-control" id="reg_address" value="${state.client.reg_address || ''}" >
                 </div>
-                <div class="col-12 mb-3">
+                <div class="col-12 mb-0">
                     <label for="client_notes" class="form-label">${__html('Internal note')}</label>
                     <textarea class="form-control" id="client_notes" rows="3" >${state.client.notes || ''}</textarea>
                 </div>
@@ -166,11 +168,14 @@ export class ClientPane {
             <!-- Construction Addresses -->
             <client-discounts></client-discounts>
 
+            <!-- Client Notifications -->
+            <client-notifications></client-notifications>
+
             <!-- Save Button -->
-            <div class="text-end">
+            <div class="text-end mb-3">
                 <div class="btn-group" role="group">
-                    <button class="btn btn-outline-primary btn-lg px-3" id="saveClientBtn"><i class="bi bi-floppy fs-5 me-2"></i> ${__html('Save')}</button>
-                    <button class="btn btn-outline-danger btn-lg px-3" id="removeClientBtn"><i class="bi bi-trash fs-5"></i></button>
+                    <button class="btn btn-outline-primary btn-lg- px-3" id="saveClientBtn"><i class="bi bi-floppy fs-6 me-2"></i> ${__html('Save')}</button>
+                    <button class="btn btn-outline-danger btn-lg- px-3" id="removeClientBtn"><i class="bi bi-trash fs-5"></i></button>
                 </div>
             </div>
         <client-pane>`;
@@ -182,6 +187,8 @@ export class ClientPane {
         new ClientAddresses(state.client);
 
         new ClientDiscounts(state.settings, state.client);
+
+        new ClientNotifications(state.client);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -201,10 +208,28 @@ export class ClientPane {
             if (entity == "individual") {
                 document.querySelector('.company-name-cont').classList.add('d-none');
                 [...document.querySelectorAll('.name-cont')].forEach(el => el.classList.remove('d-none'));
+
+                if (!state.client._id) {
+
+                    console.log('Setting individual default names');
+
+                    if (!state.client.fname && !state.client.lname && (state.client.legal_name || state.client.name)) {
+                        const nameParts = (state.client.legal_name || state.client.name).trim().split(' ');
+                        state.client.lname = nameParts[0] || '';
+                        state.client.fname = nameParts.slice(1).join(' ') || '';
+
+                        document.getElementById('fname').value = state.client.fname;
+                        document.getElementById('lname').value = state.client.lname;
+                    }
+                }
+
             } else {
                 document.querySelector('.company-name-cont').classList.remove('d-none');
                 [...document.querySelectorAll('.name-cont')].forEach(el => el.classList.add('d-none'));
             }
+
+            // udpate badge
+            document.querySelector('client-badge').innerHTML = /*html*/`<i class="bi ${entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i> `;
         });
 
         onChange('.vat_status', (event) => {
@@ -428,9 +453,20 @@ export class ClientPane {
         }
 
         if (hasErrors) {
+
             // Scroll to first invalid field
             const firstInvalidField = document.querySelector('.right-pane .is-invalid');
             if (firstInvalidField) {
+
+                // Check if the invalid field is visible
+                if (firstInvalidField.offsetParent === null) {
+                    // Field is hidden, scroll to top instead
+                    document.querySelector('.right-pane').scrollTop = 0;
+                } else {
+                    firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    firstInvalidField.focus();
+                }
+                console.log('Validation errors found in client data.');
                 firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidField.focus();
             }
@@ -457,7 +493,8 @@ export class ClientPane {
             discounts: state.client.discounts || {},
             drivers: state.client.drivers,
             addresses: state.client.addresses,
-            contacts: state.client.contacts
+            contacts: state.client.contacts,
+            notifications: state.client.notifications || {}
         };
 
         return clientData;
@@ -471,17 +508,11 @@ export class ClientPane {
 
         saveClient(clientData, (response) => {
 
-            // console.log('Saved successfully', response);
-
             if (!silent) toast('Changes applied');
 
             clientData._id = response.data._id;
 
-            state.order.vat_status = clientData.vat_status;
-            state.order.entity = clientData.entity;
-
-            state.client._id = response.data._id;
-            state.client = { ...state.client, ...clientData };
+            this.data();
 
             bus.emit('client:updated', clientData);
         });

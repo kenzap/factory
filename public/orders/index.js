@@ -28,7 +28,8 @@ class Orders {
             client: {},
             dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
-            type: '', // Default to 'All'
+            items: true,
+            type: '', // Default to 'All' 
             sort_by: 'id',
             sort_dir: 'desc',
         };

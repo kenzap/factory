@@ -35,7 +35,7 @@ export const getHtml = (response) => {
                 <!-- View toggle -->
                 <div class="stats-container view-toggle-container text-white small d-none d-xl-flex me-3 align-items-center">
                     <div class="form-check form-switch me-2 d-flex align-items-center">
-                        <input class="form-check-input me-2" type="checkbox" id="viewToggleSwitch" onchange="manufacturing.toggleView()" style="width: 2.6em; height: 1.3em; " ${response?.viewMode === 'warehouse' ? 'checked' : ''}>
+                        <input class="form-check-input me-2" type="checkbox" id="viewToggleSwitch" onchange="manufacturing.toggleView()" ${(localStorage.getItem('manufacturingViewMode') || 'compact') === 'warehouse' ? 'checked' : ''}>
                         <label class="form-check-label text-white mb-0 mt-1" for="viewToggleSwitch" id="viewToggleText">
                             ${__html('Warehouse')}
                         </label>

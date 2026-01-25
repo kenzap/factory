@@ -223,8 +223,18 @@ export function getProductionItemsTable(settings, order, locale) {
                 <tbody>
             `;
 
+            let totalTM = 0;
+
             // Add items for this group
             groupItems.forEach((item, i) => {
+
+                // Calculate total t/m for the item
+                let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : "";
+                if (tm) {
+                    tm = Math.round(tm * 1000) / 1000;
+                    totalTM += tm;
+                }
+
                 item.updated = 1;
                 if (item.total) {
                     tableContent += `
@@ -235,13 +245,24 @@ export function getProductionItemsTable(settings, order, locale) {
                                 ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                             </td>
                             <td>${item.qty}</td>
-                            <td>${item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : ""}</td>
+                            <td>${tm}</td >
                             <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
                         </tr>
-                    `;
+            `;
                     itemIndex++;
                 }
             });
+
+            // Add group total row
+            tableContent += `
+                <tr class="table-info">
+                    <th scope="row"></th>
+                    <td></td>
+                    <td><strong>${groupItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
+                    <td><strong>${totalTM ? totalTM : ""}</strong></td>
+                    <td></td>
+                </tr>
+            `;
 
             tableContent += '</tbody>';
         }
@@ -270,13 +291,23 @@ export function getProductionItemsTable(settings, order, locale) {
                     <th scope="col">${__html(locale, "t/m")}</th>
                     <th scope="col">${__html(locale, "Unit")}</th>
                 </tr>
-            </thead>
+            </thead >
             <tbody>
-        `;
+                `;
 
+        let totalTM = 0;
+
+        // Add ungrouped items
         ungroupedItems.forEach((item, i) => {
-            item.updated = 1;
 
+            // Calculate total t/m for the item
+            let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : "";
+            if (tm) {
+                tm = Math.round(tm * 1000) / 1000;
+                totalTM += tm;
+            }
+
+            item.updated = 1;
             if (item.total) {
                 tableContent += `
                     <tr class="${i == ungroupedItems.length - 1 ? "border-secondary" : ""}">
@@ -293,6 +324,17 @@ export function getProductionItemsTable(settings, order, locale) {
                 itemIndex++;
             }
         });
+
+        // Add group total row
+        tableContent += `
+                <tr class="table-info">
+                    <th scope="row"></th>
+                    <td></td>
+                    <td><strong>${ungroupedItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
+                    <td><strong>${totalTM ? totalTM : ""}</strong></td>
+                    <td></td>
+                </tr>
+            `;
 
         tableContent += '</tbody>';
     }

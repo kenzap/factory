@@ -122,6 +122,8 @@ class ProductList extends Component {
 
             const response = await this.productService.getProducts(params);
 
+            console.log(response);
+
             // init locale
             new Locale(response);
 

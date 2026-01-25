@@ -61,6 +61,7 @@ body {
     border-bottom: none;
 }
 
+.right-pane h6,
 .form-section h6 {
     color: #495057;
     font-weight: 600;

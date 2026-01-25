@@ -4,7 +4,7 @@ import { getProductBundles } from "../_/api/get_product_bundles.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { __html, attr, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
-import { formatCompanyName } from "../_/helpers/order.js";
+import { formatClientName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
@@ -307,7 +307,7 @@ class Manufacturing {
                         </div>
                     </div>
                     <div class="col-md-5 po px-0 py-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <div class="company-name">${formatCompanyName(order)}</div>
+                        <div class="company-name">${formatClientName(order)}</div>
                         <small class="text-muted elipsized">${order.notes}</small>
                     </div>
                     <div class="col-md-${this.mode == 'narrow' ? '2' : '1'} po" onclick="manufacturing.loadOrderDetails('${order.id}')">
@@ -1154,7 +1154,7 @@ class Manufacturing {
         localStorage.setItem('manufacturingViewMode', this.viewMode);
 
         // Rerender orders to apply the new view mode
-        this.renderOrders();
+        window.manufacturing.init();
     }
 
     destroy() {

@@ -27,7 +27,7 @@ export class ClientDrivers {
     view = () => {
 
         document.querySelector('client-drivers').innerHTML = `
-            <div class="mb-4">
+            <div class="mb-5">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0"><i class="bi bi-truck me-2"></i>${__html('Drivers')}</h5>
                     <button class="btn btn-outline-primary btn-sm" id="addDriverBtn">
@@ -62,30 +62,30 @@ export class ClientDrivers {
                         <button class="btn btn-outline-danger btn-remove-driver btn-sm" data-id="${driver.id}">
                             <i class="bi bi-trash"></i>
                         </button>
-                    </div>
+                    </div> 
                     <div class="row">
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Company Name')}</label>
+                            <label class="form-label">${__html('Company name')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="companyName_${driver.id}" value="${driver.companyName}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Registration Number')}</label>
+                            <label class="form-label">${__html('Registration number')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="companyRegNumber_${driver.id}" value="${driver.companyRegNumber}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Driver Name')}</label>
+                            <label class="form-label">${__html('Driver name')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="driverName_${driver.id}" value="${driver.driverName}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Driver Code')}</label>
+                            <label class="form-label">${__html('Driver code')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="driverCode_${driver.id}" value="${driver.driverCode}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Car Number')}</label>
+                            <label class="form-label">${__html('Car number')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="carNumber_${driver.id}" value="${driver.carNumber}">
                         </div>
                         <div class="col-md-6 mb-2">
-                            <label class="form-label">${__html('Car Model/Info')}</label>
+                            <label class="form-label">${__html('Car model/info')}</label>
                             <input type="text" class="form-control form-control-sm" autocomplete="off" name="carModel_${driver.id}" value="${driver.carModel}">
                         </div>
                         <div class="col-12 mb-3">
