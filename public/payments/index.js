@@ -93,6 +93,8 @@ class Transactions {
                             this.listeners();
                             this.table.setColumns(this.columns()); // Reapply columns to fix any localization
                             this.firstLoad = false;
+
+                            document.title = __html('Payments');
                         }
 
                         this.orders = response.orders;
@@ -144,9 +146,6 @@ class Transactions {
     header = () => {
 
         document.querySelector('filters-header').innerHTML = /*html*/`
-            <h2 class="mb-4 d-none">
-                <i class="fas fa-clipboard-list"></i> ${__html('Order Journal')}
-            </h2>
             <!-- Toolbar -->
             <div class="toolbar border-0 mb-0">
                 <div class="row align-items-center">

@@ -89,6 +89,9 @@ class Access {
 
             // first load
             this.state.firstLoad = false;
+
+            // title
+            document.title = __html('Access');
         });
     }
 

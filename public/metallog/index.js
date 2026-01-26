@@ -406,6 +406,8 @@ class MetalLog {
             this.updateSummary();
 
             this.firstLoad = false;
+
+            document.title = __html('Metal Log');
         });
     }
 

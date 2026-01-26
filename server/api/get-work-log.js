@@ -21,8 +21,9 @@ async function getUsers() {
             js->'data'->'fname' AS fname,
             js->'data'->'lname' AS lname
         FROM data
-        WHERE ref = $1 AND sid = $2 LIMIT 100
-    `;
+        WHERE ref = $1 AND sid = $2 AND js->'data'->'rights' ? 'manage_stock'
+        LIMIT 100
+        `;
 
         const result = await db.query(query, ['user', sid]);
         if (result.rows.length > 0) {

@@ -81,6 +81,10 @@ const calculateFormulaPrice = (settings, item, obj) => {
     // Get coating price per m2
     const coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
 
+    // console.log('getCoating settings:', settings);
+    // console.log('getCoating item:', item);
+    // console.log('getCoating price:', coatingPrice);
+
     // m2 calculation
     obj.formula = item.formula;
     obj.formula = replaceFormulaVariables(obj.formula, settings, item, coatingPrice);
@@ -177,6 +181,7 @@ const replaceInDimensions = (dimensions, item) => {
  * @param {Object} settings - Application settings containing currency information
  * @param {number|string} price - Price value to format
  * @returns {string} Formatted price string with currency symbol
+ * @deprecated
  */
 export const getTotalsHTML = (settings, order) => {
 

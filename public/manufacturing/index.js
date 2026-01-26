@@ -176,6 +176,8 @@ class Manufacturing {
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
             });
 
+            document.title = __html('Manufacturing');
+
             this.view();
 
             this.renderOrders();
@@ -355,6 +357,157 @@ class Manufacturing {
 
             if (!targetCard) return;
 
+            // Group items by their group property
+            const groupedItems = {};
+            order.items.forEach((item, i) => {
+                const groupId = item.group || 'ungrouped';
+                if (!groupedItems[groupId]) {
+                    groupedItems[groupId] = [];
+                }
+                groupedItems[groupId].push({ ...item, originalIndex: i });
+            });
+
+            console.log('Grouped items:', Object.keys(groupedItems));
+
+            // Generate rows following the order of this.settings?.groups
+            let itemRows = '', index = -1;
+
+            // First, add groups in the order they appear in settings
+            if (this.settings?.groups) {
+                this.settings.groups.forEach(group => {
+                    if (groupedItems[group.id]) {
+                        // Add group header row
+                        itemRows += `
+                            <tr class="group-header-row">
+                                <td colspan="0" class="d-none"></td>
+                                <td colspan="8" class="bg-light border-top border-2">
+                                    <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
+                                    <small class="text-dark text-group">${__html(group.name)}</small>
+                                </td>
+                            </tr>
+                        `;
+
+                        // Add items for this group
+                        groupedItems[group.id].forEach((item) => {
+                            const i = item.originalIndex;
+                            index += 1;
+                            itemRows += `
+                                <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
+                                    <td class="d-none">${i + 1}</td>
+                                    <td>
+                                        <div class="work-buttons">
+                                            <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                            <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                            <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                            <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                        </div>
+                                    </td> 
+                                    <td>
+                                        <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
+                                            <div>
+                                                <strong>${index + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
+                                                ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
+                                            </div>
+                                            <div class="dropdown itemsActionsCont ms-2">
+                                                <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                                </svg>
+                                                <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
+                                                    <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
+                                                    <li><hr class="dropdown-divider d-none"></li>
+                                                    <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                                    </td>
+                                    <td>${item.unit || "gab"}</td>
+                                    <td>${item.qty}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center action-ns">
+                                            <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                            <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                        </div>
+                                    </td>
+                                    <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
+                                    <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
+                                        <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
+                                    </td>
+                                    <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
+                                        
+                                    </td> 
+                                </tr>
+                            `;
+                        });
+                    }
+                });
+            }
+
+            // Then add ungrouped items at the end if they exist
+            if (groupedItems['ungrouped']) {
+                itemRows += `
+                    <tr class="group-header-row">
+                        <td colspan="0" class="d-none"></td>
+                        <td colspan="8" class="bg-light border-top border-2">
+                            <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
+                            <small class="text-dark text-group">${__html('Other')}</small>
+                        </td>
+                    </tr>
+                `;
+
+                groupedItems['ungrouped'].forEach((item) => {
+                    const i = item.originalIndex;
+                    index += 1;
+                    itemRows += `
+                        <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
+                            <td class="d-none">${i + 1}</td>
+                            <td>
+                                <div class="work-buttons">
+                                    <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                    <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                    <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                    <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                </div>
+                            </td> 
+                            <td>
+                                <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
+                                    <div>
+                                        <strong>${index + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
+                                        ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
+                                    </div>
+                                    <div class="dropdown itemsActionsCont ms-2">
+                                        <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                                            <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
+                                        </svg>
+                                        <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
+                                            <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
+                                            <li><hr class="dropdown-divider d-none"></li>
+                                            <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                            </td>
+                            <td>${item.unit || "gab"}</td>
+                            <td>${item.qty}</td>
+                            <td>
+                                <div class="d-flex align-items-center action-ns">
+                                    <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                    <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
+                                </div>
+                            </td>
+                            <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
+                            <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
+                                <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
+                            </td>
+                            <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
+                                
+                            </td> 
+                        </tr>
+                    `;
+                });
+            }
+
             // Create a new row for sub-items
             const subRow = document.createElement('div');
             subRow.className = `sub-items-row status-${order.status}`;
@@ -389,69 +542,23 @@ class Manufacturing {
                                 </tr>
                             </thead>
                             <tbody>
-                                ${order.items.map((item, i) => `
-                                    <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
-                                        <td class="d-none">${i + 1}</td>
-                                        <td>
-                                            <div class="work-buttons">
-                                                <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                                <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                                <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                                <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
-                                            </div>
-                                        </td> 
-                                        <td>
-                                            <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
-                                                <div>
-                                                    <strong>${i + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
-                                                    ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
-                                                </div>
-                                                <div class="dropdown itemsActionsCont ms-2">
-                                                    <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
-                                                        <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                                                    </svg>
-                                                    <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
-                                                        <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
-                                                        <li><hr class="dropdown-divider d-none"></li>
-                                                        <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                            <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
-                                        </td>
-                                        <td>${item.unit || "gab"}</td>
-                                        <td>${item.qty}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center action-ns">
-                                                <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                                <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                            </div>
-                                        </td>
-                                        <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
-                                        <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
-                                            <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
-                                        </td>
-                                        <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
-                                            
-                                        </td> 
-                                    </tr>
-                `).join('')}
-                                    <tr class="order-item-row-empty d-none">
-                                        <td class="d-none">0</td>
-                                        <td class="align-middle">
-                                            <div class="work-buttons">
-                                                <button class="work-btn btn btn-outline-primary btn-sm" >M</button>
-                                                <button class="work-btn btn btn-outline-success btn-sm" >L</button>
-                                                <button class="work-btn btn btn-outline-warning btn-sm" >K</button>
-                                                <button class="work-btn btn btn-outline-info btn-sm" >N</button>
-                                            </div>
-                                        </td>
-                                        <td colspan="6" class="text-center align-middle">
-                                            <div class="d-flex align-items-center justify-content-start h-100">
-                                                <span class="text-muted">${__html('No products found')}</span>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                ${itemRows}
+                                <tr class="order-item-row-empty d-none">
+                                    <td class="d-none">0</td>
+                                    <td class="align-middle">
+                                        <div class="work-buttons">
+                                            <button class="work-btn btn btn-outline-primary btn-sm" >M</button>
+                                            <button class="work-btn btn btn-outline-success btn-sm" >L</button>
+                                            <button class="work-btn btn btn-outline-warning btn-sm" >K</button>
+                                            <button class="work-btn btn btn-outline-info btn-sm" >N</button>
+                                        </div>
+                                    </td>
+                                    <td colspan="6" class="text-center align-middle">
+                                        <div class="d-flex align-items-center justify-content-start h-100">
+                                            <span class="text-muted">${__html('No products found')}</span>
+                                        </div>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -502,7 +609,7 @@ class Manufacturing {
 
                     // Remove any existing bundle rows that follow this item
                     let nextSibling = element.nextElementSibling;
-                    while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
+                    while (nextSibling && !nextSibling.classList.contains('order-item-row') && !nextSibling.classList.contains('group-header-row')) {
                         let toRemove = nextSibling;
                         nextSibling = nextSibling.nextElementSibling;
                         toRemove.remove();

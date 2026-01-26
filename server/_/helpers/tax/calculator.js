@@ -39,7 +39,15 @@ export class InvoiceCalculator {
             // console.log('Resolved regime for item', item.title, ':', regime);
 
             // Store regime info on item
-            item.taxRegime = regime;
+            item.tax = {
+                id: regime.id,
+                rate: regime.rate,
+                code: item.tax_id || "",
+                display: regime.display,
+                peppol_code: regime.peppolCode,
+                legal: regime.legalText ? regime.legalText(locale) : null
+            }
+
             item.tax_rate = regime.rate;
             item.tax_display = regime.display;
             item.tax_legal = regime.legalText ? regime.legalText(locale) : null;

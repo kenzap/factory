@@ -301,6 +301,8 @@ class Home {
                 { text: __html('Home') },
             ]
         );
+
+        document.title = __html('Home');
     }
 
     // init page listeners

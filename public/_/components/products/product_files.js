@@ -29,7 +29,7 @@ export class ProductFiles {
             <h4 id="elan" class="card-title pt-4 mb-3">${__html('Files')}</h4>
             <div class="sketch_upload_cont mb-3 mw">
                 <div class="d-flex align-items-center justify-content-between">
-                    <label class="form-label" for="tax_id">${__html('Supporting Files')}</label>
+                    <label class="form-label" for="cad_files">${__html('Supporting Files')}</label>
                     <input id="cad_files" class="form-control inp cad_files" name="cad_files" type="hidden" value="0" data-type="text">
                     <input id="u_file_upload" data-id="file" type="file" name="img[]" data-key="file" data-type="type" data-id="#file" data-source="cad-files" name="u_file_upload" class="file-upload form-control d-none"></input>
                     <input id="file_upload" type="hidden" data-key="file_upload" data-sizes="" data-type="file_upload" data-source="cad-files" class="image-input image-val inps" value="file_upload"></input>

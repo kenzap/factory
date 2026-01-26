@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
 
 /**
  * List orders
@@ -89,6 +89,11 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         whereConditions.push(`(js->'data'->'draft')::boolean = true`);
     }
 
+    // all except drafts
+    if (filters.type === 'all') {
+        whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
+    }
+
     if (filters.type === 'manufacturing') {
         whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
     }
@@ -119,7 +124,6 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
         dateField = "js->'data'->'items'->0->'inventory'->>'isu_date'";
     }
-
 
     // date range filtering
     if (filters.dateFrom?.trim() && dateField) {
@@ -200,7 +204,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 }
 
 // API route
-function getOrdersApi(app) {
+function getOrdersApi(app, logger) {
 
     app.post('/api/get-orders/', authenticateToken, async (req, res) => {
 
@@ -223,7 +227,7 @@ function getOrdersApi(app) {
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });
-            log(`Error getting orders: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+            logger.info(`Error getting orders: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });
 }

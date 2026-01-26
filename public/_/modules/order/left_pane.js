@@ -5,7 +5,6 @@ import { ClientContactSearch } from "../../components/order/client_contact_searc
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, log, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
-import { getTotalsHTML } from "../../helpers/price.js";
 import { InvoiceCalculator } from '../../helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { bus } from "../../modules/bus.js";
@@ -427,8 +426,6 @@ export class LeftPane {
         let options = {};
         let entity = { entity: state.order.entity, vat_status: state.order.vat_status, vat_number: state.order.vat_number };
 
-        console.log('Order:', state.order);
-
         // Determine countries for tax calculation
         const sellerCountry = options.sellerCountry ||
             state.settings?.tax_region ||
@@ -451,19 +448,22 @@ export class LeftPane {
         // Calculate totals with tax breakdown
         const _totals = calculator.calculateTotals();
 
+        // let totals = getTotalsHTML(state.settings, state.order);
 
-        let totals = getTotalsHTML(state.settings, state.order);
+        state.order.price = {
+            total: _totals.totalTaxableAmount,
+            tax_calc: "",
+            tax_total: _totals.totalTaxAmount,
+            grand_total: _totals.totalInvoiceAmount,
+            // tax_percent: 21
+        }
 
-        // log('entity:', entity);
-        // log('Order totals:', totals.price);
-        // log('Order totals:', _totals);
-
-        state.order.price = totals.price;
         state.order.tax_total = _totals.totalTaxAmount;
         state.order.total = _totals.totalTaxableAmount;
         state.order.grand_total = _totals.totalInvoiceAmount;
 
-        // document.querySelector('order-summary').innerHTML = /*html*/`<div class="totals">${totals.html || ""}</div>`;
+        console.log('Order:', state.order);
+
         document.querySelector('order-summary').innerHTML = this.getInvoiceTotals(state.settings, state.order, state.locale, _totals);
     }
 

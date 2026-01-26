@@ -123,6 +123,9 @@ class ProductEdit {
                 { text: __html('Product Edit') }
             ]);
 
+            // set page title
+            document.title = __html('Product Edit');
+
             // bind listeners
             self.listeners();
         });

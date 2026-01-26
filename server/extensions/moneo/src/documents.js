@@ -353,6 +353,7 @@ async function createInvoice(db, logger, order, client) {
 
     items.forEach(item => {
         const itemTotal = parseFloat(item.total || 0);
+        // TODO: use tax rate from item.tax.code
         const taxId = item.tax_id;
 
         if (taxId === '7216' || taxId === '0000') { // 21% VAT

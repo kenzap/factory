@@ -91,6 +91,10 @@ body {
     background: rgba(231, 76, 60, 0.4);
 }
 
+/* .status-urgent .text-group{
+    color: rgba(231, 76, 60, 0.4);
+} */
+
 .status-manufacturing {
     border-left: 8px solid var(--primary-color);
     background: rgba(23, 162, 184, 0.4);

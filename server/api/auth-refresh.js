@@ -21,7 +21,7 @@ function authRefreshTokenApi(app) {
 
             const refreshToken = req.cookies.refreshToken;
 
-            console.log('auth refresh token API called', refreshToken);
+            // console.log('auth refresh token API called', refreshToken);
 
             // Verify refresh token
             jwt.verify(refreshToken, JWT_REFRESH_SECRET, async (err, decoded) => {
@@ -31,7 +31,7 @@ function authRefreshTokenApi(app) {
                 }
 
                 // find user and verify refresh token
-                console.log(`Decoded refresh token: ${JSON.stringify(decoded)}`);
+                // console.log(`Decoded refresh token: ${JSON.stringify(decoded)}`);
 
                 const user = await getUserById(decoded.id);
                 if (!user.id) {

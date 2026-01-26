@@ -88,6 +88,9 @@ class Localization {
 
             // first load
             this.state.firstLoad = false;
+
+            // title
+            document.title = __html('Localization');
         });
     }
 

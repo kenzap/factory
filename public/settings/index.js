@@ -83,14 +83,15 @@ class Settings {
 
         let self = this;
 
-        // console.log(response);
-
         if (this.firstLoad) initBreadcrumbs(
             [
                 { link: link('/home/'), text: __html('Home') },
                 { text: __html('Settings') }
             ]
         );
+
+        // page title
+        document.title = __html('Settings');
 
         // setup coatings and prices
         let price = [];

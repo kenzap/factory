@@ -85,6 +85,8 @@ class Users {
             // listeners
             this.listeners();
 
+            document.title = __html('Users');
+
             this.firstLoad = false;
         });
     }

@@ -33,7 +33,8 @@ async function getProductSuggestions(filters) {
                 js->'data'->'cad_files' as cad_files,
                 js->'data'->'priority' as priority,
                 js->'data'->'group' as group,
-                js->'data'->'tax_id' as tax_id
+                js->'data'->'tax_id' as tax_id,
+                js->'data'->>'tax_regime' as tax_regime
             FROM data 
             WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0'
         `;

@@ -151,7 +151,7 @@ class WorkLog {
             const record = {
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
-                product_id: this.product ? this.product._id : '',
+                product_id: this.product ? this.product._id : this.record.product_id,
                 product_name: document.querySelector('#productName').value,
                 color: document.querySelector('#productColor').value.trim(),
                 coating: document.querySelector('#productCoating').value.trim(),
@@ -213,8 +213,10 @@ class WorkLog {
             this.view();
 
             this.renderRecords();
-            // this.updateSummary();
+
             this.populateFilters();
+
+            document.title = __html('Work Log');
 
             this.firstLoad = false;
         });
@@ -231,7 +233,7 @@ class WorkLog {
         // Populate employee filter
         if (this.users && this.users.length > 0) {
             if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('All')}</option>` + this.users.map(user => `
-            <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user.lname.charAt(0)}</option>
+            <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user?.lname?.charAt(0) || ''}</option>
             `).join('');
         } else {
             if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;

@@ -103,6 +103,8 @@ class CuttingList {
             this.html();
 
             this.listeners();
+
+            document.title = __html('%1$ %2$', this.color, this.coating);
         });
     }
 

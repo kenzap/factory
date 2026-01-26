@@ -98,6 +98,8 @@ class EmployeePerformance {
             this.renderCharts();
 
             this.firstLoad = false;
+
+            document.title = __html('Employee Performance')
         });
     }
 
@@ -109,7 +111,7 @@ class EmployeePerformance {
         // Populate employee filter
         if (this.users && this.users.length > 0) {
             if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('All')}</option>` + this.users.map(user => `
-            <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user.lname.charAt(0)}</option>
+            <option value="${user._id}" ${this.filters.user_id === user._id ? 'selected' : ''}>${user.fname} ${user.lname?.charAt(0) || ''}</option>
             `).join('');
         } else {
             if (employeeSelect) employeeSelect.innerHTML = `<option value="">${__html('No Employees')}</option>`;

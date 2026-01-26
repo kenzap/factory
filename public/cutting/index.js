@@ -73,6 +73,9 @@ class Cutting {
             this.html();
 
             this.listeners();
+
+            // set page title
+            document.title = __html('Metal Cutting');
         });
 
         // get cutting summary

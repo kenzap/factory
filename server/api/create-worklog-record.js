@@ -9,7 +9,7 @@ import { updateProductStock } from '../_/helpers/product.js';
  * @param {JSON} data - Worklog record data
  * @returns {JSON<Object>} - Response
 */
-async function createWorkLog(data) {
+async function createWorkLog(data, logger) {
 
     const db = getDbConnection();
 
@@ -48,7 +48,7 @@ async function createWorkLog(data) {
         // if origin set to w = warehouse, update inventory stock accordingly
         if (data.type && data.type === 'stock-replenishment') {
 
-            console.log('Creating stock replenishment action for worklog record:', data);
+            logger.info('Creating stock replenishment action for worklog record:', data);
 
             await updateProductStock(db, {
                 _id: data.product_id,
@@ -66,14 +66,14 @@ async function createWorkLog(data) {
 }
 
 // Simple API route
-function createWorkLogApi(app) {
+function createWorkLogApi(app, logger) {
 
     app.post('/api/create-worklog-record/', authenticateToken, async (_req, res) => {
 
         // console.log('/api/create-worklog-record/ _req.body', _req.body);
 
         const data = _req.body;
-        const response = await createWorkLog(data);
+        const response = await createWorkLog(data, logger);
 
         // console.log('/api/create-worklog-record/ response', response);
 

@@ -259,6 +259,8 @@ class Supplies {
             this.renderRecords();
             this.updateSummary();
 
+            document.title = __html('Supplies');
+
             this.firstLoad = false;
         });
     }

@@ -5,6 +5,7 @@
 export const TAX_REGIMES = {
     // Latvia Standard VAT
     LV_STANDARD: {
+        id: 'LV_STANDARD',
         localId: '',
         peppolCode: 'S',
         rate: 21,
@@ -18,6 +19,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reduced Rate 12%
     LV_REDUCED_12: {
+        id: 'LV_REDUCED_12',
         localId: 'RED12',
         peppolCode: 'AA',
         rate: 12,
@@ -31,6 +33,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reduced Rate 5%
     LV_REDUCED_5: {
+        id: 'LV_REDUCED_5',
         localId: 'RED5',
         peppolCode: 'AA',
         rate: 5,
@@ -44,6 +47,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reverse Charge - Construction (Art. 142)
     LV_RC_CONSTRUCTION: {
+        id: 'LV_RC_CONSTRUCTION',
         localId: '0000',
         peppolCode: 'AE',
         rate: 0,
@@ -58,6 +62,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reverse Charge - General (Art. 143)
     LV_RC_GENERAL: {
+        id: 'LV_RC_GENERAL',
         localId: '143',
         peppolCode: 'AE',
         rate: 0,
@@ -72,6 +77,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reverse Charge - Metal Processing (Art. 143.1)
     LV_RC_METAL: {
+        id: 'LV_RC_METAL',
         localId: 'MET',
         peppolCode: 'AE',
         rate: 0,
@@ -86,6 +92,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reverse Charge - Data Processing (Art. 143.1)
     LV_RC_DATA: {
+        id: 'LV_RC_DATA',
         localId: 'DAT',
         peppolCode: 'AE',
         rate: 0,
@@ -100,6 +107,7 @@ export const TAX_REGIMES = {
 
     // Latvia Reverse Charge - Specific goods (Art. 143.4)
     LV_RC_SPECIFIC: {
+        id: 'LV_RC_SPECIFIC',
         localId: '7216',
         peppolCode: 'AE',
         rate: 0,
@@ -114,6 +122,7 @@ export const TAX_REGIMES = {
 
     // Intra-Community Supply (Cross-border EU B2B)
     EU_INTRA_COMMUNITY: {
+        id: 'EU_INTRA_COMMUNITY',
         localId: 'EU_IC',
         peppolCode: 'K',
         rate: 0,
@@ -128,6 +137,7 @@ export const TAX_REGIMES = {
 
     // Export outside EU
     EU_EXPORT: {
+        id: 'EU_EXPORT',
         localId: 'EXPORT',
         peppolCode: 'G',
         rate: 0,

@@ -1,5 +1,5 @@
 import { getOrder } from "../_/api/get_order.js";
-import { hideLoader } from "../_/helpers/global.js";
+import { __html, hideLoader } from "../_/helpers/global.js";
 import { bus } from "../_/modules/bus.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
@@ -61,6 +61,9 @@ class OrderEdit {
 
             if (state.order.id && this.firstLoad) new OrderPane();
             if (!state.order.id && this.firstLoad) new ClientPane();
+
+            // set page title
+            document.title = state.order.id ? __html(`#%1$`, state.order.id) : __html('New Order');
 
             this.firstLoad = false;
         });

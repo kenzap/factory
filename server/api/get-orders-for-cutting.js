@@ -100,6 +100,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
                 js->'data'->'invoice' as invoice,
                 js->'data'->'payment' as payment,
                 js->'data'->'waybill' as waybill,
+                js->'data'->'entity' as entity,
                 js->'data'->'date' as date
                 ${filters.items === true ? `, js->'data'->'items' as items` : ''}
         FROM data 

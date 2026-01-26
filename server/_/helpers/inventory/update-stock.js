@@ -8,7 +8,7 @@ export const updateStock = async (db, actions) => {
 
     if (actions) {
 
-        console.log('updateStock actions:', actions);
+        // console.log('updateStock actions:', actions);
 
         // validate stock update data
         if (!actions.order_id || !actions.product_id ||

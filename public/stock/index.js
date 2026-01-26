@@ -207,8 +207,6 @@ class Stock {
         // get products
         getProducts(this.filters, (response) => {
 
-            // console.log(response);
-
             // show UI loader
             if (!response.success) return;
 
@@ -233,8 +231,7 @@ class Stock {
             this.renderTableHeader();
             this.renderTableStock();
 
-            // document.getElementById('loadingIndicator').style.display = 'none';
-            // document.getElementById('stockContainer').style.display = 'block';
+            document.title = __html('Stock');
 
             this.listeners();
         });

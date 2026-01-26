@@ -56,7 +56,7 @@ function findRegimeByTaxId(taxId, country) {
 
     // console.log('findRegimeByTaxId Finding regime for tax ID:', taxId, 'in country:', country);
 
-    for (const regime of Object.values(TAX_REGIMES)) {
+    for (const [key, regime] of Object.entries(TAX_REGIMES)) {
         if (regime.country === country && regime.matcher && regime.matcher(taxId)) {
             return regime;
         }
@@ -71,6 +71,7 @@ function getStandardRegime(countryCode) {
     const country = EU_COUNTRIES[countryCode];
     if (!country) {
         return {
+            id: 'EU_INTRA_COMMUNITY',
             localId: null,
             peppolCode: 'S',
             rate: 0,
@@ -83,6 +84,7 @@ function getStandardRegime(countryCode) {
     }
 
     return {
+        id: countryCode + '_STANDARD',
         localId: null,
         peppolCode: 'S',
         rate: country.standard,
@@ -107,7 +109,7 @@ export function resolveRegime(item, sellerCountry, buyerCountry, buyerEntity = {
 
         if (regime) {
 
-            // console.log('Found matching regime for domestic transaction:', regime, hasVAT, buyerEntity);
+            console.log('Found matching regime for domestic transaction:', regime, hasVAT, buyerEntity);
 
             // Check if regime requires VAT registration
             if (regime.requiresVAT && !hasVAT) {

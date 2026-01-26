@@ -26,7 +26,7 @@ export function getInvoiceItemsTable(settings, order, locale, calculator) {
                     <th scope="col">${__html(locale, "Total")}</th>
                     ${showTax ? `<th scope="col">${__html(locale, "Tax Rate")}</th>` : ''}
                     ${showTax ? `<th scope="col">${__html(locale, "Tax")}</th>` : ''}
-                    ${showTax ? `<th scope="col">${__html(locale, "Total with tax")}</th>` : ''}
+                    ${showTax ? `<th scope="col">${__html(locale, "Incl. tax")}</th>` : ''}
                 </tr>
             </thead>
             <tbody>
@@ -39,7 +39,7 @@ export function getInvoiceItemsTable(settings, order, locale, calculator) {
             ? item.price / (1 - item.discount / 100)
             : item.price;
 
-        const regime = item.taxRegime || {};
+        const regime = item.taxRegime || item.tax || {};
         const lineTotal = item.total;
         const lineTax = calculator?.calculateTaxAmount(lineTotal, regime.rate, regime.peppolCode) || 0;
         const lineTotalWithTax = lineTotal + lineTax;
@@ -103,10 +103,12 @@ export function getInvoiceTotals(settings, order, locale, totals) {
 
     html += `
         <tr>
-            <td class="text-start"><strong>${__html(locale, "Payment terms")}:</strong></td>
-            <td class="text-start">${order.due_date
+            <td colspan="2" class="text-start">
+                <strong>${__html(locale, "Payment terms")}:</strong>
+                ${order.due_date
             ? __html(locale, "Due date") + ' ' + new Date(order.due_date).toLocaleDateString(locale.code)
-            : '3 ' + __html(locale, "days")}</td>
+            : '3 ' + __html(locale, "days")}
+            </td>
         </tr>
     `;
 
@@ -126,8 +128,9 @@ export function getInvoiceTotals(settings, order, locale, totals) {
 
     html += `
         <tr>
-            <td class="text-start"><strong>${__html(locale, "Total in words")}:</strong></td>
-            <td class="text-start">${amountToWords(totals.totalInvoiceAmount, settings)}</td>
+            <td class="text-start" colspan="2">
+                <strong>${__html(locale, "Total in words")}:</strong> ${amountToWords(totals.totalInvoiceAmount, settings)}
+            </td>
         </tr>
     `;
 
@@ -259,7 +262,7 @@ export function getProductionItemsTable(settings, order, locale) {
                     <th scope="row"></th>
                     <td></td>
                     <td><strong>${groupItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
-                    <td><strong>${totalTM ? totalTM : ""}</strong></td>
+                    <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
                     <td></td>
                 </tr>
             `;
@@ -331,7 +334,7 @@ export function getProductionItemsTable(settings, order, locale) {
                     <th scope="row"></th>
                     <td></td>
                     <td><strong>${ungroupedItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
-                    <td><strong>${totalTM ? totalTM : ""}</strong></td>
+                    <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
                     <td></td>
                 </tr>
             `;

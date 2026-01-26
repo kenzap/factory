@@ -121,8 +121,6 @@ export const setProductStock = async (db, inventory, user_id) => {
  */
 export const updateProductStock = async (db, inventory, user_id) => {
 
-    // console.log('updateProductStock', inventory);
-
     // validate inventory data
     if (!inventory || !inventory._id || !inventory.coating || !inventory.color) {
         return { success: false, error: 'invalid inventory data' };
@@ -149,15 +147,15 @@ export const updateProductStock = async (db, inventory, user_id) => {
 
         if ((v.parent === inventory.coating || (v.parent == '-' && inventory.coating == '-')) && v.title === inventory.color) {
 
-            // console.log('Updated var_price:', v);
+            // console.log('A Updated var_price:', v);
 
             v.stock = (parseFloat(v.stock) || 0) + inventory.amount;
 
-            // console.log('Updated var_price:', v);
+            // console.log('B Updated var_price:', v);
         }
     });
 
-    console.log('Updated var_price:', var_price);
+    // console.log('C Updated var_price:', var_price);
 
     // update product stock
     const updateQuery = `
@@ -173,6 +171,8 @@ export const updateProductStock = async (db, inventory, user_id) => {
     if (updateResult.rows.length === 0) {
         throw new Error('Product not found or update failed');
     }
+
+    // console.log('updateResult.rows[0]:', updateResult.rows[0]);
 
     return updateResult.rows[0];
 }

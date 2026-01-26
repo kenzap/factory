@@ -29,7 +29,7 @@ class Orders {
             dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
             items: true,
-            type: '', // Default to 'All' 
+            type: 'all', // Default to 'All' 
             sort_by: 'id',
             sort_dir: 'desc',
         };
@@ -95,6 +95,7 @@ class Orders {
                             this.listeners();
                             this.table.setColumns(this.columns()); // Reapply columns to fix any localization
                             this.firstLoad = false;
+                            document.title = __html('Orders');
                         }
 
                         this.orders = response.orders;
@@ -166,7 +167,7 @@ class Orders {
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('Type:')}</label>
                         <select class="form-select border-0" id="typeFilter">
-                            <option value="">${__html('All')}</option>
+                            <option value="all">${__html('All')}</option>
                             <option value="draft">${__html('Estimates')}</option>
                             <option value="manufacturing">${__html('Manufacturing')}</option>
                             <option value="ready">${__html('Ready')}</option>

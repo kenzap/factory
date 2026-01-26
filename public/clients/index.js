@@ -89,6 +89,7 @@ class Clients {
                             this.listeners();
                             this.table.setColumns(this.columns()); // Reapply columns to fix any localization
                             this.firstLoad = false;
+                            document.title = __html('Clients Journal');
                         }
 
                         this.clients = response.clients;
