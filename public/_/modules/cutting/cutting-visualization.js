@@ -7,42 +7,36 @@ export class Visualization {
         this.items = items || [];
         this.settings = settings || {};
         this.sheets = [];
+        this.maxSheetLength = 3000; // 3 meters in mm
         this.init();
     }
 
     init = () => {
         const canvas = document.getElementById('cuttingCanvas');
 
-        this.CANVAS_HEIGHT = 400; // Reduced from 600 to 400
+        this.CANVAS_HEIGHT = 400;
         this.MARGIN = 0;
-        this.AVAILABLE_HEIGHT = this.CANVAS_HEIGHT - 2 * this.MARGIN; // 400px for sheet width
+        this.AVAILABLE_HEIGHT = this.CANVAS_HEIGHT - 2 * this.MARGIN;
 
-        // Calculate scale based on sheet width fitting in available height
         this.scale = this.AVAILABLE_HEIGHT / this.coil.width;
+        this.sheetWidth = this.coil.width * this.scale;
+        this.sheetHeight = this.coil.length * this.scale;
+        this.CANVAS_WIDTH = Math.max(600, this.sheetHeight + 2 * this.MARGIN);
 
-        this.sheetWidth = this.coil.width * this.scale; // Will be ~400px
-        this.sheetHeight = this.coil.length * this.scale; // Can be very long
-        this.CANVAS_WIDTH = Math.max(600, this.sheetHeight + 2 * this.MARGIN); // Reduced from 800 to 600
-
-        // Update canvas dimensions
         canvas.setAttribute('width', this.CANVAS_WIDTH);
         canvas.setAttribute('height', this.CANVAS_HEIGHT);
 
-        // Update scale display
         if (document.getElementById('scaleDisplay')) document.getElementById('scaleDisplay').textContent = `1:${Math.round(1 / this.scale)}`;
 
-        // Set sheet outline - rotated: width becomes height, length becomes width
         const sheetOutline = document.getElementById('sheetOutline');
-        sheetOutline.setAttribute('width', this.sheetHeight); // length on X-axis
-        sheetOutline.setAttribute('height', this.sheetWidth); // width on Y-axis
+        sheetOutline.setAttribute('width', this.sheetHeight);
+        sheetOutline.setAttribute('height', this.sheetWidth);
 
-        // Update grid pattern to match new dimensions
         const gridRect = canvas.querySelector('rect[fill="url(#grid)"]');
         gridRect.setAttribute('width', this.sheetHeight);
         gridRect.setAttribute('height', this.sheetWidth);
 
-        // Color palette for different items
-        this.colors = ['#fff3cd']; //  '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'
+        this.colors = ['#fff3cd'];
 
         this.renderLayout();
     }
@@ -50,141 +44,271 @@ export class Visualization {
     packItems = (items) => {
         const packed = [];
         const sortedItems = [...items].sort((a, b) => (b.formula_width_calc * b.formula_length_calc) - (a.formula_width_calc * a.formula_length_calc));
+        const sheets = [];
+        let currentSheetStart = 0;
 
-        // Track vertical strips - each strip represents a section between cuts
-        const strips = [];
-        let currentX = 0;
+        // Create virtual sheets of max 3m length
+        while (currentSheetStart < this.coil.length) {
+            const sheetEnd = Math.min(currentSheetStart + this.maxSheetLength, this.coil.length);
+            sheets.push({
+                start: currentSheetStart,
+                end: sheetEnd,
+                length: sheetEnd - currentSheetStart,
+                actualLength: 0, // Track actual used length
+                items: []
+            });
+            currentSheetStart = sheetEnd;
+        }
 
-        // Process items by creating vertical strips
-        for (const item of sortedItems) {
+        // Pack items into sheets
+        sortedItems.forEach((item) => {
             const width = parseFloat(item.formula_width_calc);
             const length = parseFloat(item.formula_length_calc);
             const qty = parseInt(item.qty);
 
             for (let q = 0; q < qty; q++) {
                 let placed = false;
-                let bestStripIndex = -1;
-                let bestY = 0;
-                let bestRotated = false;
-                let bestItemLength = 0;
 
-                // Try both orientations
-                const orientations = [
-                    { w: width, l: length, rotated: false },
-                    { w: length, l: width, rotated: true }
-                ];
+                // Try to place item in existing sheets
+                for (const sheet of sheets) {
+                    if (placed) break;
 
-                for (const orientation of orientations) {
-                    if (orientation.w > this.coil.width) continue;
+                    const orientations = [
+                        { w: width, l: length, rotated: false },
+                        { w: length, l: width, rotated: true }
+                    ];
 
-                    // Try to fit in existing strips
-                    for (let stripIndex = 0; stripIndex < strips.length; stripIndex++) {
-                        const strip = strips[stripIndex];
+                    for (const orientation of orientations) {
+                        if (placed) break;
 
-                        // Check if item fits in the strip width
-                        if (strip.x + orientation.l <= strip.x + strip.width) {
-                            // Find available Y position in this strip
-                            let y = 0;
-                            let canFit = true;
+                        // Check if item fits in sheet dimensions
+                        if (orientation.w > this.coil.width || orientation.l > sheet.length) continue;
 
-                            // Check for overlaps with existing items in this strip
-                            const stripItems = packed.filter(p =>
-                                p.x >= strip.x && p.x + p.length <= strip.x + strip.width
-                            );
+                        // Get positions from existing items in this sheet
+                        const xPositions = new Set([0]);
+                        const yPositions = new Set([0]);
 
-                            // Sort strip items by Y position
-                            stripItems.sort((a, b) => a.y - b.y);
+                        sheet.items.forEach(p => {
+                            xPositions.add(p.x - sheet.start);
+                            xPositions.add(p.x - sheet.start + p.length);
+                            yPositions.add(p.y);
+                            yPositions.add(p.y + p.width);
+                        });
 
-                            for (const stripItem of stripItems) {
-                                if (y + orientation.w <= stripItem.y) {
-                                    // Found space before this item
+                        // Sort X positions (length) to minimize sheet length
+                        const sortedXPositions = Array.from(xPositions)
+                            .filter(x => x <= sheet.length - orientation.l)
+                            .sort((a, b) => a - b);
+
+                        // Sort Y positions (width) 
+                        const sortedYPositions = Array.from(yPositions)
+                            .filter(y => y <= this.coil.width - orientation.w)
+                            .sort((a, b) => a - b);
+
+                        // Try X positions first (prioritize minimizing length)
+                        for (const x of sortedXPositions) {
+                            if (placed) break;
+                            for (const y of sortedYPositions) {
+                                const globalX = sheet.start + x;
+
+                                // Check overlaps within this sheet
+                                const overlaps = sheet.items.some(p =>
+                                    globalX < p.x + p.length && globalX + orientation.l > p.x &&
+                                    y < p.y + p.width && y + orientation.w > p.y
+                                );
+
+                                if (!overlaps) {
+                                    const packedItem = {
+                                        ...item,
+                                        x: globalX,
+                                        y: y,
+                                        width: orientation.rotated ? length : width,
+                                        length: orientation.rotated ? width : length,
+                                        rotated: orientation.rotated,
+                                        color: this.colors[packed.length % this.colors.length],
+                                        instanceId: `${item.order_id}_${q}`,
+                                        sheetIndex: sheets.indexOf(sheet)
+                                    };
+
+                                    packed.push(packedItem);
+                                    sheet.items.push(packedItem);
+
+                                    // Update actual used length for this sheet
+                                    sheet.actualLength = Math.max(sheet.actualLength, x + orientation.l);
+
+                                    placed = true;
                                     break;
                                 }
-                                y = stripItem.y + stripItem.width;
-                            }
-
-                            // Check if there's enough space at this Y position
-                            if (y + orientation.w <= this.coil.width) {
-                                bestStripIndex = stripIndex;
-                                bestY = y;
-                                bestRotated = orientation.rotated;
-                                bestItemLength = orientation.l;
-                                placed = true;
-                                break;
                             }
                         }
                     }
-
-                    if (placed) break;
-                }
-
-                // If not placed in existing strips, create a new strip
-                if (!placed) {
-                    for (const orientation of orientations) {
-                        if (orientation.w > this.coil.width || currentX + orientation.l > this.coil.length) continue;
-
-                        // Create new strip
-                        const newStrip = {
-                            x: currentX,
-                            width: orientation.l,
-                            maxY: orientation.w
-                        };
-
-                        strips.push(newStrip);
-                        bestStripIndex = strips.length - 1;
-                        bestY = 0;
-                        bestRotated = orientation.rotated;
-                        bestItemLength = orientation.l;
-                        currentX += orientation.l;
-                        placed = true;
-                        break;
-                    }
-                }
-
-                if (placed) {
-                    const strip = strips[bestStripIndex];
-                    packed.push({
-                        ...item,
-                        x: strip.x,
-                        y: bestY,
-                        width: bestRotated ? length : width,
-                        length: bestItemLength,
-                        rotated: bestRotated,
-                        color: this.colors[packed.length % this.colors.length],
-                        instanceId: `${item.order_id}_${q}`
-                    });
-
-                    // Update strip's max Y usage
-                    strip.maxY = Math.max(strip.maxY, bestY + (bestRotated ? length : width));
                 }
             }
-        }
+        });
+
+        // Optimize sheet lengths based on actual usage
+        this.optimizeSheetLengths(sheets);
 
         return packed;
     }
 
-    renderLayout = () => {
+    packItemsLegacy = (items) => {
+        const packed = [];
+        const sortedItems = [...items].sort((a, b) => (b.formula_width_calc * b.formula_length_calc) - (a.formula_width_calc * a.formula_length_calc));
+        const sheets = [];
+        let currentSheetStart = 0;
 
+        // Create virtual sheets of max 3m length
+        while (currentSheetStart < this.coil.length) {
+            const sheetEnd = Math.min(currentSheetStart + this.maxSheetLength, this.coil.length);
+            sheets.push({
+                start: currentSheetStart,
+                end: sheetEnd,
+                length: sheetEnd - currentSheetStart,
+                actualLength: 0, // Track actual used length
+                items: []
+            });
+            currentSheetStart = sheetEnd;
+        }
+
+        // Pack items into sheets
+        sortedItems.forEach((item) => {
+            const width = parseFloat(item.formula_width_calc);
+            const length = parseFloat(item.formula_length_calc);
+            const qty = parseInt(item.qty);
+
+            for (let q = 0; q < qty; q++) {
+                let placed = false;
+
+                // Try to place item in existing sheets
+                for (const sheet of sheets) {
+                    if (placed) break;
+
+                    const orientations = [
+                        { w: width, l: length, rotated: false },
+                        { w: length, l: width, rotated: true }
+                    ];
+
+                    for (const orientation of orientations) {
+                        if (placed) break;
+
+                        // Check if item fits in sheet dimensions
+                        if (orientation.w > this.coil.width || orientation.l > sheet.length) continue;
+
+                        // Get positions from existing items in this sheet
+                        const yPositions = new Set([0]);
+                        const xPositions = new Set([0]);
+
+                        sheet.items.forEach(p => {
+                            yPositions.add(p.y);
+                            yPositions.add(p.y + p.width);
+                            xPositions.add(p.x - sheet.start);
+                            xPositions.add(p.x - sheet.start + p.length);
+                        });
+
+                        const sortedYPositions = Array.from(yPositions)
+                            .filter(y => y <= this.coil.width - orientation.w)
+                            .sort((a, b) => a - b);
+
+                        const sortedXPositions = Array.from(xPositions)
+                            .filter(x => x <= sheet.length - orientation.l)
+                            .sort((a, b) => a - b);
+
+                        for (const y of sortedYPositions) {
+                            if (placed) break;
+                            for (const x of sortedXPositions) {
+                                const globalX = sheet.start + x;
+
+                                // Check overlaps within this sheet
+                                const overlaps = sheet.items.some(p =>
+                                    globalX < p.x + p.length && globalX + orientation.l > p.x &&
+                                    y < p.y + p.width && y + orientation.w > p.y
+                                );
+
+                                if (!overlaps) {
+                                    const packedItem = {
+                                        ...item,
+                                        x: globalX,
+                                        y: y,
+                                        width: orientation.rotated ? length : width,
+                                        length: orientation.rotated ? width : length,
+                                        rotated: orientation.rotated,
+                                        color: this.colors[packed.length % this.colors.length],
+                                        instanceId: `${item.order_id}_${q}`,
+                                        sheetIndex: sheets.indexOf(sheet)
+                                    };
+
+                                    packed.push(packedItem);
+                                    sheet.items.push(packedItem);
+
+                                    // Update actual used length for this sheet
+                                    sheet.actualLength = Math.max(sheet.actualLength, x + orientation.l);
+
+                                    placed = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Optimize sheet lengths based on actual usage
+        this.optimizeSheetLengths(sheets);
+
+        return packed;
+    }
+
+    optimizeSheetLengths = (sheets) => {
+        // Adjust sheet lengths and positions based on actual usage
+        let currentStart = 0;
+
+        sheets.forEach(sheet => {
+            if (sheet.items.length > 0) {
+                // Set sheet length to actual used length (rounded up to nearest 10mm for practical cutting)
+                sheet.optimizedLength = Math.ceil(sheet.actualLength / 10) * 10;
+            } else {
+                // Empty sheet - remove it
+                sheet.optimizedLength = 0;
+            }
+
+            // Update sheet boundaries
+            sheet.optimizedStart = currentStart;
+            sheet.optimizedEnd = currentStart + sheet.optimizedLength;
+
+            // Update item positions to reflect new sheet boundaries
+            sheet.items.forEach(item => {
+                const relativeX = item.x - sheet.start;
+                item.x = sheet.optimizedStart + relativeX;
+            });
+
+            currentStart = sheet.optimizedEnd;
+        });
+
+        // Store optimized sheets for rendering
+        this.optimizedSheets = sheets.filter(sheet => sheet.optimizedLength > 0);
+    }
+
+    renderLayout = () => {
         const packedItems = this.packItems(this.items);
         const itemsGroup = document.getElementById('itemsGroup');
         const labelsGroup = document.getElementById('labelsGroup');
         const itemsList = document.getElementById('itemsList');
 
-        // Clear previous render
         itemsGroup.innerHTML = '';
         labelsGroup.innerHTML = '';
 
-        // Add cutting lines visualization
-        const cuttingLines = this.getCuttingLines(packedItems);
-        this.renderCuttingLines(itemsGroup, cuttingLines);
+        // Add cutting lines between optimized sheets
+        this.renderOptimizedSheetBoundaries(itemsGroup);
 
         // Render items
-        packedItems.forEach((item, index) => {
+        packedItems.forEach((item) => {
             const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-            rect.setAttribute('x', this.MARGIN + item.x * this.scale); // length position
-            rect.setAttribute('y', this.MARGIN + item.y * this.scale); // width position
-            rect.setAttribute('width', item.length * this.scale); // length as width
-            rect.setAttribute('height', item.width * this.scale); // width as height
+            rect.setAttribute('x', this.MARGIN + item.x * this.scale);
+            rect.setAttribute('y', this.MARGIN + item.y * this.scale);
+            rect.setAttribute('width', item.length * this.scale);
+            rect.setAttribute('height', item.width * this.scale);
             rect.setAttribute('fill', item.color);
             rect.setAttribute('stroke', '#333');
             rect.setAttribute('stroke-width', '1');
@@ -193,7 +317,6 @@ export class Visualization {
 
             itemsGroup.appendChild(rect);
 
-            // Add text label if item is large enough
             if (item.length * this.scale > 30 && item.width * this.scale > 20) {
                 const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
                 text.setAttribute('x', this.MARGIN + item.x * this.scale + (item.length * this.scale) / 2);
@@ -202,13 +325,16 @@ export class Visualization {
                 text.setAttribute('dominant-baseline', 'middle');
                 text.setAttribute('font-size', '12');
                 text.setAttribute('fill', '#333');
-                text.textContent = item.width + '×' + item.length + (item.rotated ? ' ↻' : '');
+                if (item.rotated) {
+                    text.setAttribute('writing-mode', 'vertical-rl');
+                    text.setAttribute('text-orientation', 'mixed');
+                }
+                text.textContent = item.width + '×' + item.length;
 
                 labelsGroup.appendChild(text);
             }
         });
 
-        // Update items list
         const itemCounts = {};
         packedItems.forEach(item => {
             const key = item.order_id;
@@ -218,43 +344,82 @@ export class Visualization {
         itemsList.innerHTML = Object.entries(itemCounts).map(([orderId, count]) => {
             const item = this.items.find(i => i.order_id === orderId);
             return `
-                    <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
-                        <span>${item.title}</span>
-                        <span class="text-muted">x ${count}</span>
-                    </div>
-                `;
+                <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                    <span>${item.title}</span>
+                    <span class="text-muted">x ${count}</span>
+                </div>
+            `;
         }).join('');
 
-        // Calculate statistics
+        // Calculate metrics based on optimized sheets
         const totalItemArea = packedItems.reduce((sum, item) => sum + (item.width * item.length), 0);
-        const sheetArea = this.coil.width * this.coil.length;
-        const utilization = ((totalItemArea / sheetArea) * 100).toFixed(1);
+        const totalOptimizedArea = this.optimizedSheets ?
+            this.optimizedSheets.reduce((sum, sheet) => sum + (sheet.optimizedLength * this.coil.width), 0) : 0;
+        const totalOptimizedLength = this.optimizedSheets ?
+            this.optimizedSheets.reduce((sum, sheet) => sum + sheet.optimizedLength, 0) : 0;
 
-        // Calculate maximum utilized length
-        const maxLength = packedItems.length > 0
-            ? Math.max(...packedItems.map(item => item.x + item.length))
-            : 0;
+        const utilization = totalOptimizedArea > 0 ? ((totalItemArea / totalOptimizedArea) * 100).toFixed(1) : '0.0';
+        const wasteAreaMm2 = totalOptimizedArea - totalItemArea;
+        const wasteArea = (wasteAreaMm2 / 1000000).toFixed(2);
 
-        // Calculate waste area based on actual used sheet area (before last cut)
-        const usedSheetArea = this.coil.width * maxLength;
-        const wasteAreaMm2 = usedSheetArea - totalItemArea;
-        const wasteArea = (wasteAreaMm2 / 1000000).toFixed(2); // Convert mm² to m²
-        const length = maxLength.toFixed(0);
+        this.maxLength = totalOptimizedLength;
 
-        this.maxLength = maxLength;
-
-        // Update statistics display
         document.getElementById('totalItems').textContent = packedItems.length;
         document.getElementById('utilization').textContent = utilization + '%';
         document.getElementById('wasteArea').textContent = wasteArea;
-        document.querySelector('.total-taken-length').innerHTML = __html('Total: %1$ %2$', maxLength.toLocaleString('en-US', { maximumFractionDigits: 0 }), getDimUnit(this.settings));
-        document.getElementById('length').value = length;
+        document.querySelector('.total-taken-length').innerHTML = __html('Total: %1$ %2$ (%3$ sheets)', totalOptimizedLength.toLocaleString('en-US', { maximumFractionDigits: 0 }), getDimUnit(this.settings), this.optimizedSheets?.length || 0);
+        document.getElementById('length').value = totalOptimizedLength.toFixed(0);
+    }
+
+    renderOptimizedSheetBoundaries = (group) => {
+        // Draw vertical lines between optimized sheets
+        if (this.optimizedSheets) {
+            this.optimizedSheets.forEach((sheet, index) => {
+                if (index > 0) { // Don't draw line before first sheet
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', this.MARGIN + sheet.optimizedStart * this.scale);
+                    line.setAttribute('y1', this.MARGIN);
+                    line.setAttribute('x2', this.MARGIN + sheet.optimizedStart * this.scale);
+                    line.setAttribute('y2', this.MARGIN + this.sheetWidth);
+                    line.setAttribute('stroke', '#dc3545');
+                    line.setAttribute('stroke-width', '3');
+                    line.setAttribute('stroke-dasharray', '10,5');
+                    line.setAttribute('opacity', '0.8');
+
+                    group.appendChild(line);
+                }
+            });
+        }
+    }
+
+    renderSheetBoundaries = (group) => {
+        // Draw vertical lines every 3 meters (original method - kept for compatibility)
+        for (let x = this.maxSheetLength; x < this.coil.length; x += this.maxSheetLength) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', this.MARGIN + x * this.scale);
+            line.setAttribute('y1', this.MARGIN);
+            line.setAttribute('x2', this.MARGIN + x * this.scale);
+            line.setAttribute('y2', this.MARGIN + this.sheetWidth);
+            line.setAttribute('stroke', '#dc3545');
+            line.setAttribute('stroke-width', '3');
+            line.setAttribute('stroke-dasharray', '10,5');
+            line.setAttribute('opacity', '0.8');
+
+            group.appendChild(line);
+        }
     }
 
     getCuttingLines = (packedItems) => {
         const lines = new Set();
 
-        // Get all unique X positions where cuts would be made
+        // Add optimized sheet boundaries instead of fixed 3m boundaries
+        if (this.optimizedSheets) {
+            this.optimizedSheets.forEach(sheet => {
+                lines.add(sheet.optimizedEnd);
+            });
+        }
+
+        // Add item end positions within each sheet
         packedItems.forEach(item => {
             lines.add(item.x + item.length);
         });
@@ -279,7 +444,6 @@ export class Visualization {
     }
 
     getUsedOrderLength() {
-
         return parseFloat(this.maxLength) || 0;
     }
 }
