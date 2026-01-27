@@ -110,7 +110,7 @@ class WorkLog {
         // Add work log record
         onClick('.btn-add-worklog-record', (e) => {
 
-            console.log('Add work log record clicked');
+            // console.log('Add work log record clicked');
 
             e.preventDefault();
 
@@ -148,6 +148,8 @@ class WorkLog {
                 return;
             }
 
+            let user_id = document.getElementById('filterEmployee').value || this.user.id;
+
             const record = {
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
@@ -158,7 +160,7 @@ class WorkLog {
                 origin: document.querySelector('#origin').value,
                 time: parseInt(document.querySelector('#time').value) || 0,
                 type: document.querySelector('#type').value,
-                user_id: this.user.id,
+                user_id: user_id,
                 order_id: this.record.order_id ? this.record.order_id : '',
             }
 

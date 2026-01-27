@@ -11,15 +11,15 @@ export const getHtml = (record) => {
                     <div class="row g-3">
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="thickness" class="form-label d-none">${__html('Thickness')}</label>
-                            <input type="number" class="form-control border-0" id="thickness" placeholder="${__html('Thickness')}" value="" required>
+                            <input type="number" class="form-control border-0" id="thickness" placeholder="${__html('Thickness')}" value="0.5" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="width" class="form-label d-none">${__html('Width')}</label>
-                            <input type="number" class="form-control border-0" id="width" placeholder="${__html('Width')}" value="1250" required>
+                            <input type="number" class="form-control border-0" id="width" placeholder="${__html('Width (millimeters)')}" value="1250" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="length" class="form-label d-none">${__html('Length')}</label>
-                            <input type="number" class="form-control border-0" id="length" placeholder="${__html('Length')}" value="" required>
+                            <input type="number" class="form-control border-0" id="length" placeholder="${__html('Length (meters)')}" value="" required>
                         </div>
                         <div class="col-md-4 form-cont d-none" data-type="product">
                             <label for="productName" class="form-label d-none">${__html('Product')}</label>
@@ -90,7 +90,7 @@ export const getHtml = (record) => {
         <!-- Work Log Table -->
         <div class="work-log-table">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
+                <table class="table table-hover mb-0 table-striped">
                     <thead id="workLogHeader">
 
                     </thead>

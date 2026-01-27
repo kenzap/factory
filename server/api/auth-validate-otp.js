@@ -12,7 +12,7 @@ function validateOtpApi(app) {
     app.post('/api/auth/validate-otp', async (req, res) => {
         try {
 
-            const { email_or_phone, nonce, otp } = req.body;
+            let { email_or_phone, nonce, otp } = req.body;
 
             if (!email_or_phone || !otp || !nonce) {
                 res.status(400).json({ success: false, error: 'email, otp and nonce are required', code: 400 });
@@ -24,9 +24,20 @@ function validateOtpApi(app) {
                 return;
             }
 
+            if (isValidPhone(email_or_phone) && email_or_phone.startsWith('+')) {
+
+                email_or_phone = email_or_phone.substring(1); // remove leading +
+                email_or_phone = email_or_phone.replace(/\D/g, '');
+            }
+
+            if (isValidPhone(email_or_phone) && email_or_phone.length <= 8) {
+                // TODO: create setting for default country code
+                email_or_phone = '371' + email_or_phone; // default to Latvia country code. 
+            }
+
             // rate limiting for validation attempts
             const validationLimitKey = `otp_validation_${email_or_phone}`;
-            const maxValidationAttempts = 3;
+            const maxValidationAttempts = 5;
             const validationWindow = 15 * 60 * 1000;
 
             const validationCount = await getRequestCount(validationLimitKey);

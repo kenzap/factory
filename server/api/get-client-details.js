@@ -32,6 +32,7 @@ async function getClientDetails(id) {
             js->'data'->>'reg_num' as reg_num,
             js->'data'->>'vat_number' as "vat_number",
             js->'data'->>'vat_status' as "vat_status",
+            js->'data'->>'vat_last_verified' as "vat_last_verified",
             js->'data'->>'tax_region' as "tax_region",
             js->'data'->>'notes' as "notes",
             js->'data'->>'phone' as phone,

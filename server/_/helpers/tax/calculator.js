@@ -36,8 +36,6 @@ export class InvoiceCalculator {
                 this.buyerEntity
             );
 
-            // console.log('Resolved regime for item', item.title, ':', regime);
-
             // Store regime info on item
             item.tax = {
                 id: regime.id,

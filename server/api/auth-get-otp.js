@@ -31,6 +31,12 @@ function getOtpApi(app) {
                 email_or_phone = email_or_phone.replace(/\D/g, '');
             }
 
+            // add locall code if missing
+            if (isValidPhone(email_or_phone) && email_or_phone.length <= 8) {
+                // TODO: create setting for default country code
+                email_or_phone = '371' + email_or_phone; // default to Latvia country code. 
+            }
+
             // Check rate limiting - allow max 3 OTP requests per email per 15 minutes
             const rateLimitKey = `otp_requests_${email_or_phone}`;
             const maxRequests = 3;

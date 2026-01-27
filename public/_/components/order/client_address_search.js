@@ -78,6 +78,8 @@ export class ClientAddressSearch {
 
         addressInput.addEventListener('focus', (e) => {
 
+            e.target.select();
+
             const value = e.target.value.toLowerCase();
 
             loadSuggestions(value);

@@ -16,12 +16,30 @@ async function getClientSuggestions(filters) {
 
     let clients = {};
 
-    // Get clients 
     let query = `
-        SELECT COALESCE(js->'data'->>'legal_name', '') as name, COALESCE(js->'data'->>'fname', '') as fname, COALESCE(js->'data'->>'lname', '') as lname, COALESCE(js->'data'->>'entity', '') as entity, COALESCE(js->'data'->>'reg_address', '') as address, _id
+    SELECT 
+        COALESCE(d.js->'data'->>'legal_name', '') as name, 
+        COALESCE(d.js->'data'->>'fname', '') as fname, 
+        COALESCE(d.js->'data'->>'lname', '') as lname, 
+        COALESCE(d.js->'data'->>'entity', '') as entity, 
+        COALESCE(d.js->'data'->>'reg_address', '') as address, 
+        d._id,
+        COALESCE(order_counts.order_count, 0) as order_count
+    FROM data d
+    LEFT JOIN (
+        SELECT 
+            js->'data'->>'eid' as eid,
+            COUNT(*) as order_count
         FROM data 
-        WHERE ref = $1 AND sid = $2 AND js->'data'->>'legal_name' IS NOT NULL AND js->'data'->>'legal_name' != ''
-        `;
+        WHERE ref = 'order' 
+            AND sid = $2 
+            AND (js->'data'->>'date')::timestamp >= NOW() - INTERVAL '1 year'
+        GROUP BY js->'data'->>'eid'
+    ) order_counts ON d._id = order_counts.eid
+    WHERE d.ref = $1 
+        AND d.sid = $2 
+        AND d.js->'data'->>'legal_name' IS NOT NULL 
+        AND d.js->'data'->>'legal_name' != ''`;
 
     let params = ['entity', sid];
 
@@ -39,8 +57,8 @@ async function getClientSuggestions(filters) {
 
         // ORDER BY name
         query += `
-            ORDER BY js->'data'->'legal_name' ASC
-            LIMIT 100`;
+            ORDER BY order_count DESC, js->'data'->'legal_name' ASC
+            LIMIT 50`;
 
         const result = await client.query(query, params);
 

@@ -1,8 +1,49 @@
 import { authenticateToken } from '../_/helpers/auth.js';
+import { getDbConnection, sid } from '../_/helpers/index.js';
+
+/**
+ * Get Client Details
+ *
+ * @version 1.0
+ * @param {string} id - entity ID of the client
+ * @returns {Array<Object>} - Array of clients
+*/
+async function getClientIdByRegNumber(reg_number, cc) {
+
+    const client = getDbConnection();
+
+    let data = {};
+
+    // Querry 
+    const query = `
+        SELECT 
+            _id,
+            js->'data'->>'reg_number' as "reg_number",
+            js->'data'->>'legal_name' as "legal_name",
+            js->'data'->>'tax_region' as "tax_region"
+        FROM data 
+        WHERE ref = $1 AND sid = $2 AND js->'data'->>'reg_number' = $3
+    `;
+
+    try {
+
+        await client.connect();
+
+        const result = await client.query(query, ['entity', sid, reg_number]);
+
+        if (result.rows) data = result.rows[0] || {};
+
+    } finally {
+        await client.end();
+    }
+
+    return data;
+}
 
 function clean_firm(firm) {
     firm = firm.replace(/^SIA\s/, "");
     firm = firm.replace(/^Sabiedrība ar ierobežotu atbildību ražošanas komercfirma\s/, "");
+    firm = firm.replace(/^Firma SIA\s/, "");
     firm = firm.replace(/^Ražošanas komercfirma SIA\s/, "");
     firm = firm.replace(/^Sabiedrība ar ierobežotu atbildību\s/, "");
     // firm = firm.replace(/^SIA tirdzniecības uzņēmums\s/, "");
@@ -18,6 +59,9 @@ function get_type(firm) {
     let type = "";
 
     if (firm.startsWith('SIA ')) {
+        type = 'SIA';
+    }
+    if (firm.startsWith('Firma SIA ')) {
         type = 'SIA';
     }
     if (firm.startsWith('Sabiedrība ar ierobežotu atbildību ražošanas komercfirma ')) {
@@ -107,9 +151,10 @@ function verifyClientApi(app, logger) {
     app.post('/api/verify-client/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
-        const response = await verifyClient(data, logger);
+        const client = await verifyClient(data, logger);
+        const details = await getClientIdByRegNumber(data.reg_number, data.tax_region?.toUpperCase() || locale?.toUpperCase());
 
-        res.json({ success: true, client: response, message: 'client saved' });
+        res.json({ success: true, client: { ...client, ...details } });
     });
 }
 

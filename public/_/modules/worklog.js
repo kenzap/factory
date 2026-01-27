@@ -1,4 +1,4 @@
-import { __html } from "../helpers/global.js";
+import { __attr, __html } from "../helpers/global.js";
 
 export const getHtml = (record) => {
 
@@ -12,21 +12,21 @@ export const getHtml = (record) => {
                         <div class="col-md-3">
                             <label for="productName" class="form-label d-none">${__html('Product Name')}</label>
                             <div class="position-relative">
-                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="" value="${record.product_name}" >
+                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="${__attr('Product')}" value="${record.product_name}" >
                                 <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="" value="${record.color}" required>
+                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__attr('Color')}" value="${record.color}" required>
                         </div>
                         <div class="col-md-2">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="" value="${record.coating}" required>
+                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__attr('Coating')}" value="${record.coating}" required>
                         </div>
                         <div class="col-md-1">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
-                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="Qty" value="${record.qty}" required>
+                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="${__attr('Quantity')}" value="${record.qty}" required>
                         </div>
                         <div class="col-md-1">
                             <label for="time" class="form-label d-none">${__html('Time (min)')}</label>

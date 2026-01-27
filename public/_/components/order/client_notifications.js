@@ -48,8 +48,6 @@ export class ClientNotifications {
             { key: 'whatsapp', label: __html('WhatsApp'), icon: 'bi-whatsapp' }
         ];
 
-        console.log('Client notifications initialized:', this.client.notifications);
-
         this.init();
     }
 

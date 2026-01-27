@@ -36,7 +36,7 @@ async function getProductSuggestions(filters) {
                 js->'data'->'tax_id' as tax_id,
                 js->'data'->>'tax_regime' as tax_regime
             FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0'
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'status' != '0' AND js->'data'->>'calc_price' != 'complex'
         `;
 
     let params = ['product', sid, locale];
@@ -52,11 +52,22 @@ async function getProductSuggestions(filters) {
 
     query += `
             ORDER BY 
+                ${filters.s && filters.s.trim() !== '' ?
+            `CASE 
+                WHEN unaccent(lower(js->'data'->'locales'->$3->>'title')) LIKE unaccent(lower($${params.length + 1})) THEN 1
+                WHEN unaccent(lower(js->'data'->'locales'->$3->>'title')) LIKE unaccent(lower('%' || $${params.length + 1} || '%')) THEN 2
+                ELSE 3
+            END ASC,` : ''}
                 CASE 
                     WHEN js->'data'->>'priority' = '' OR js->'data'->>'priority' IS NULL THEN 1000000 
                     ELSE CAST(js->'data'->>'priority' AS INTEGER)
-                END ASC
+                END ASC,
+                js->'data'->'locales'->$3->>'title' ASC
             LIMIT 50`;
+
+    if (filters.s && filters.s.trim() !== '') {
+        params.push(filters.s.trim());
+    }
 
     // ORDER BY name ASC
     try {

@@ -68,7 +68,7 @@ export class ClientOrderSearch {
                                 name = (client.lname || '') + ' ' + (client.fname || '');
                             }
 
-                            console.log('Client name:', client.name);
+                            // console.log('Client name:', client.name);
                             return `<div class="autocomplete-item p-2 border-bottom cursor-pointer" data-_id="${client._id}" data-address="${attr(client.address)}" style="cursor: pointer;">${name}</div>`
                         }).join('');
                         suggestions.classList.remove('d-none');
@@ -138,7 +138,7 @@ export class ClientOrderSearch {
                     } else {
                         currentIndex = items.length - 1;
                     }
-                    console.log('Current Index:', currentIndex);
+                    // console.log('Current Index:', currentIndex);
                     this.highlightItem(items, currentIndex);
                 }
             } else if (e.key === 'Enter') {
@@ -169,7 +169,7 @@ export class ClientOrderSearch {
 
                 clientInput.dataset._id = "";
 
-                console.log("current value ", clientInput.value);
+                // console.log("current value ", clientInput.value);
             }
         });
 
@@ -204,6 +204,13 @@ export class ClientOrderSearch {
                 bus.emit('client:search:refresh', { _id: '', name: '' });
                 bus.emit('contact:search:refresh', { _id: '', name: '' });
             }
+        });
+
+        // Listen for external updates to the filter value
+        bus.on('client:search:update_filter', (filter) => {
+
+            if (filter?.value && filter.value !== clientInput.value) clientInput.value = filter.value;
+            if (filter?._id) clientInput.dataset._id = filter._id;
         });
     }
 

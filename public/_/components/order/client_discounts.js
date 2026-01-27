@@ -14,8 +14,6 @@ export class ClientDiscounts {
         // Initialize discounts structure if it doesn't exist
         this.client.discounts = this.client.discounts || {};
 
-        console.log('Client discounts initialized:', this.client.discounts, this.productCategories);
-
         // Ensure all categories have default discount values
         this.productCategories.forEach(category => {
             if (!this.client.discounts[category.id]) {

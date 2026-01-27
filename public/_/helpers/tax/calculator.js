@@ -36,8 +36,6 @@ export class InvoiceCalculator {
                 this.buyerEntity
             );
 
-            // console.log('Resolved regime for item', item.title, ':', regime);
-
             // Store regime info on item
             item.tax = {
                 id: regime.id,
@@ -51,8 +49,6 @@ export class InvoiceCalculator {
             item.tax_rate = regime.rate;
             item.tax_display = regime.display;
             item.tax_legal = regime.legalText ? regime.legalText(locale) : null;
-
-            console.log('Resolved regime for item', item);
 
             // Calculate tax
             const lineTotal = makeNumber(item.total);

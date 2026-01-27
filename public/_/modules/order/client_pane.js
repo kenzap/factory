@@ -8,7 +8,7 @@ import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
 import { ClientNotifications } from "../../components/order/client_notifications.js";
-import { __html, attr, countries, onChange, onClick, toast } from "../../helpers/global.js";
+import { __html, attr, countries, html, onChange, onClick, toast } from "../../helpers/global.js";
 import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
@@ -68,10 +68,15 @@ export class ClientPane {
                 }
 
                 console.log('Client data after fetch:', state.order);
+
+                bus.emit('order:client:data_loaded');
             }
 
             // Refresh the view with client data
             this.view();
+
+            // Show verified badge if applicable
+            this.showVerifiedBadge();
         });
     }
 
@@ -101,7 +106,7 @@ export class ClientPane {
                     <label for="tax_region" class="form-label">${__html('Tax region')}</label>
                     <select id="tax_region" class="form-select inp" name="tax_region" data-type="select">
                       <option value="">${__html('Select')}</option>
-                      ${countries.map(c => `<option value="${c.code}" ${(state.client.tax_region || state.settings.tax_region) === c.code ? 'selected' : ''}>${__html(c.name)}</option>`).join('')}
+                      ${countries.map(c => `<option value="${attr(c.code)}" ${(state.client.tax_region || state.settings.tax_region) === c.code ? 'selected' : ''}>${__html(c.name)}</option>`).join('')}
                     </select>
                 </div>
             </div>
@@ -110,12 +115,12 @@ export class ClientPane {
             <div class="row mb-5">
                 <div class="col-md-6 mb-3">
                     <label for="reg_number" class="form-label">${__html('Registration number')} <span class="ms-2 po verify_company"><i class="bi bi-arrow-left-right"></i></span> <span class="ms-2 po verify_company_locally"><i class="bi bi-search"></i></span></label>
-                    <input type="text" class="form-control" id="reg_number" value="${state.client.reg_number || state.client.reg_num || ''}">
+                    <input type="text" class="form-control" id="reg_number" value="${attr(state.client.reg_number || state.client.reg_num || '')}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <input class="form-check-input me-1 vat_status" type="checkbox" role="switch" ${state.client.vat_status === '1' ? 'checked' : ''} >
                     <label for="vat_number" class="form-label">${__html('VAT Number')}</label>
-                    <input type="text" class="form-control" id="vat_number" value="${state.client.vat_number || ''}">
+                    <input type="text" class="form-control" id="vat_number" value="${attr(state.client.vat_number || '')}">
                 </div>
                 <div class="col-md-6 mb-3 company-name-cont ${state.client.entity == "individual" ? 'd-none' : ''}">
                     <label id="label-company-name" for="legal_name" class="form-label">${__html('Company name')}</label>
@@ -136,15 +141,15 @@ export class ClientPane {
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="bank_acc" class="form-label">${__html('Bank account')}</label>
-                    <input type="text" class="form-control" id="bank_acc" value="${state.client.bank_acc || ''}">
+                    <input type="text" class="form-control" id="bank_acc" value="${attr(state.client.bank_acc || '')}">
                 </div>
                 <div class="col-md-6 mb-3">
                     <label for="reg_address" class="form-label">${__html('Registration address')}</label>
-                    <input type="text" class="form-control" id="reg_address" value="${state.client.reg_address || ''}" >
+                    <input type="text" class="form-control" id="reg_address" value="${attr(state.client.reg_address || '')}" >
                 </div>
                 <div class="col-12 mb-0">
                     <label for="client_notes" class="form-label">${__html('Internal note')}</label>
-                    <textarea class="form-control" id="client_notes" rows="3" >${state.client.notes || ''}</textarea>
+                    <textarea class="form-control" id="client_notes" rows="3" >${html(state.client.notes || '')}</textarea>
                 </div>
                 <div class="col-md-6 mb-3 d-none">
                     <label for="clientPhoneRight" class="form-label">${__html('Phone number')}</label>
@@ -278,61 +283,7 @@ export class ClientPane {
         // Verify company details 
         onClick('.verify_company', () => {
 
-            verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
-                if (response && response.success) {
-
-                    // console.log('Client verification response:', response);
-
-                    document.getElementById('vat_number').value = response.client.pvncode || '';
-
-                    // entity
-                    const entity = document.querySelector('input[name="entity"]:checked');
-
-                    if (!entity) {
-
-                        alert('Select a client type.');
-                        return false;
-                    }
-
-                    // clear previous alert
-                    document.querySelector('alert-notification').innerHTML = '';
-
-                    // trigger alert if client can not be verified
-                    if (response.client.vatStatus === '0' && entity.dataset.entity === 'company') {
-
-                        document.querySelector('alert-notification').innerHTML = /*html*/`
-                            <div class="alert alert-danger d-flex alert-dismissible mb-4" role="alert">
-                                <div class="align-items-center">
-                                    <i class="bi bi-exclamation-triangle fs-5 me-2"></i>
-                                    ${__html('Client status can not be verified')}
-                                </div>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                            </div>`
-                    }
-
-                    if (response.client.vatStatus === '1') {
-
-                        if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
-                        if (response.client.vatStatus) state.client.vat_status = response.client.vatStatus || '';
-                        if (response.client.adress_full) { state.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = state.client.reg_address; }
-
-                        const tax_region = extractCountryFromVAT(response.client.vatNumber || '');
-                        if (tax_region) document.querySelector('#tax_region').value = tax_region;
-                    }
-
-                    if (response.client.vatStatus === '1' && entity.dataset.entity === 'company') {
-
-                        document.querySelector('.vat_status').checked = true;
-                        document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
-
-                        this.save(true);
-                    }
-
-                    toast(__html('Client details verified'), 'success');
-                } else {
-                    toast(__html('Failed to verify client details'), 'error');
-                }
-            });
+            this.verifyCompany()
         });
 
         // Verify company details in local registry
@@ -390,6 +341,97 @@ export class ClientPane {
         });
 
         this.firstLoad = true;
+    }
+
+    verifyCompany = () => {
+
+        // entity
+        const entity = document.querySelector('input[name="entity"]:checked');
+
+        if (!entity) {
+
+            alert('Select a client type.');
+            return false;
+        }
+
+        verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
+            if (response && response.success) {
+
+                // console.log('Client verification response:', response);
+
+                document.getElementById('vat_number').value = response.client.pvncode || '';
+
+                // clear previous alert
+                document.querySelector('alert-notification').innerHTML = '';
+
+                if (response.client._id || response.client.klients_new) bus.emit('client:search:update_filter', { value: response.client.klients_new || '', _id: response.client._id || '' });
+
+                // client identified by vat_number, reload to avoid duplicates
+                if (response.client._id && state.client._id !== response.client._id) {
+                    state.client._id = response.client._id;
+                    // bus.emit('client:search:update_filter', '');
+                    this.data();
+                    return;
+                }
+
+                // add vat last verified date
+                state.client.vat_last_verified = new Date().toISOString();
+
+                // trigger alert if client can not be verified
+                if (response.client.vatStatus === '0' && entity.dataset.entity === 'company') {
+
+                    document.querySelector('alert-notification').innerHTML = /*html*/`
+                            <div class="alert alert-danger d-flex alert-dismissible mb-4" role="alert">
+                                <div class="align-items-center">
+                                    <i class="bi bi-exclamation-triangle fs-5 me-2"></i>
+                                    ${__html('Client status can not be verified')}
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>`
+                }
+
+                if (response.client.vatStatus === '1') {
+
+                    if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
+                    if (response.client.vatStatus) state.client.vat_status = response.client.vatStatus || '';
+                    if (response.client.adress_full) { state.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = state.client.reg_address; }
+
+                    const tax_region = extractCountryFromVAT(response.client.vatNumber || '');
+                    if (tax_region) document.querySelector('#tax_region').value = tax_region;
+                }
+
+                if (response.client.vatStatus === '1' && entity.dataset.entity === 'company') {
+
+                    document.querySelector('.vat_status').checked = true;
+
+                    this.showVerifiedBadge()
+
+                    this.save(true);
+                }
+
+                toast(__html('Client details verified'), 'success');
+            } else {
+                toast(__html('Failed to verify client details'), 'error');
+            }
+        });
+    }
+
+    showVerifiedBadge = () => {
+
+        // Early return if not a company with VAT status
+        if (state.client.reg_number?.length < 2 || state.client.entity !== 'company') {
+            return;
+        }
+
+        const lastVerified = state.client.vat_last_verified ? new Date(state.client.vat_last_verified) : 0;
+
+        const nineHoursAgo = new Date(Date.now() - 9 * 60 * 60 * 1000);
+
+        if (lastVerified > nineHoursAgo) {
+            document.querySelector('verified-badge').innerHTML = /*html*/`<i class="bi bi-check-circle ms-2 text-success"></i>`;
+        } else {
+            this.verifyCompany();
+        }
     }
 
     getValidatedClientData = () => {
@@ -479,6 +521,7 @@ export class ClientPane {
             vat_status,
             reg_number,
             vat_number,
+            vat_last_verified: state.client.vat_last_verified || null,
             legal_name,
             tax_region,
             fname,

@@ -4,7 +4,7 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, log, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { __attr, __html, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { InvoiceCalculator } from '../../helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../../helpers/tax/index.js';
 import { bus } from "../../modules/bus.js";
@@ -328,7 +328,7 @@ export class LeftPane {
 
                     event.preventDefault();
 
-                    console.log('Enter key pressed, moving to next input', element.value, state.order.id);
+                    // console.log('Enter key pressed, moving to next input', element.value, state.order.id);
 
                     // Find all focusable elements with tabindex consideration
                     const focusableElements = Array.from(document.querySelectorAll('.left-pane input, .left-pane textarea'))
@@ -379,16 +379,21 @@ export class LeftPane {
             this.summary();
         });
 
+        bus.on('order:client:data_loaded', () => {
+
+            this.summary();
+        });
+
         // bus.clear('client:removed');
         bus.on('client:removed', (data) => {
 
-            console.log('LeftPane removed received:', data);
+            //console.log('LeftPane removed received:', data);
 
             // state.clientOrderSearch.data();
             state.clientAddressSearch.data();
             state.clientContactSearch.data();
 
-            console.log("LeftPane data called");
+            //console.log("LeftPane data called");
         });
 
         bus.clear('contact:search:refresh');
@@ -396,10 +401,12 @@ export class LeftPane {
 
             state.order.eid = data._id;
 
-            console.log('LeftPane contact search received:', data);
+            // console.log('LeftPane contact search received:', data);
             // state.clientOrderSearch.data();
             state.clientAddressSearch.data();
             state.clientContactSearch.data();
+
+            this.summary();
         });
 
         // Summary
@@ -410,7 +417,7 @@ export class LeftPane {
 
         if (date) return;
 
-        log('Formatting due date:', date);
+        // log('Formatting due date:', date);
 
         const now = new Date();
         now.setDate(now.getDate() + 2); // two days ahead
@@ -448,21 +455,18 @@ export class LeftPane {
         // Calculate totals with tax breakdown
         const _totals = calculator.calculateTotals();
 
-        // let totals = getTotalsHTML(state.settings, state.order);
-
         state.order.price = {
             total: _totals.totalTaxableAmount,
             tax_calc: "",
             tax_total: _totals.totalTaxAmount,
             grand_total: _totals.totalInvoiceAmount,
-            // tax_percent: 21
         }
 
         state.order.tax_total = _totals.totalTaxAmount;
         state.order.total = _totals.totalTaxableAmount;
         state.order.grand_total = _totals.totalInvoiceAmount;
 
-        console.log('Order:', state.order);
+        console.log('Summary:', state.order);
 
         document.querySelector('order-summary').innerHTML = this.getInvoiceTotals(state.settings, state.order, state.locale, _totals);
     }

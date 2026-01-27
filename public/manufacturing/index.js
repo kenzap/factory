@@ -379,10 +379,10 @@ class Manufacturing {
                         // Add group header row
                         itemRows += `
                             <tr class="group-header-row">
-                                <td colspan="0" class="d-none"></td>
-                                <td colspan="8" class="bg-light border-top border-2">
+                                <td colspan="1" class="d-none-"></td>
+                                <td colspan="7" class="bg-light border-top border-2 pt-2 pb-2">
                                     <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
-                                    <small class="text-dark text-group">${__html(group.name)}</small>
+                                    <small class="text-dark text-group pb-2" style="border-bottom: 1px solid #212529;">${__html(group.name)}</small>
                                 </td>
                             </tr>
                         `;
@@ -447,10 +447,10 @@ class Manufacturing {
             if (groupedItems['ungrouped']) {
                 itemRows += `
                     <tr class="group-header-row">
-                        <td colspan="0" class="d-none"></td>
-                        <td colspan="8" class="bg-light border-top border-2">
+                        <td colspan="1" class="d-none-"></td>
+                        <td colspan="7" class="bg-light border-top border-2 pt-3 pb-2">
                             <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
-                            <small class="text-dark text-group">${__html('Other')}</small>
+                            <small class="text-dark text-group pb-2" style="border-bottom: 1px solid #212529;" >${__html('Other')}</small>
                         </td>
                     </tr>
                 `;
@@ -525,7 +525,7 @@ class Manufacturing {
                                     <th>
                                         <div class="d-flex align-items-center text-bold product-name ${attr(this.mode)}">
                                             <div class="d-none">${__html('Product')}</div>
-                                            <select class="form-select- form-select-sm- bg-transparent ps-0 p-0 border-0 fw-bold" id="groupFilter-${orderId}" style="width: auto;" onchange="manufacturing.filterByGroup('${order._id}', this.value)">
+                                            <select class="form-select- form-select-sm- bg-transparent ps-0 p-0 border-0 fw-bold d-none-" id="groupFilter-${orderId}" style="width: auto; margin-left:-3px;" onchange="manufacturing.filterByGroup('${order._id}', this.value)">
                                                 <option value="">${__html('Products')}</option>
                                                 ${this.settings?.groups ? this.settings.groups.map(group => `
                                                     <option value="${group.id}" class="fw-700">${__html(group.name)}</option>

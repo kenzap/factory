@@ -94,8 +94,22 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
     }
 
+    // orders in manufacturing process (exclude drafts, ready and issued)
     if (filters.type === 'manufacturing') {
-        whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
+
+        whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
+            AND NOT EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'rdy_date' IS NOT NULL 
+               AND item->'inventory'->>'rdy_date' != ''
+            )
+            AND NOT EXISTS (
+            SELECT 1 
+            FROM jsonb_array_elements(js->'data'->'items') AS item 
+            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
+               AND item->'inventory'->>'isu_date' != ''
+            )`);
     }
 
     if (filters.type === 'ready') {

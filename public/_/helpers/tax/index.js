@@ -109,7 +109,7 @@ export function resolveRegime(item, sellerCountry, buyerCountry, buyerEntity = {
 
         if (regime) {
 
-            console.log('Found matching regime for domestic transaction:', regime, hasVAT, buyerEntity);
+            // console.log('Found matching regime for domestic transaction:', regime, hasVAT, buyerEntity);
 
             // Check if regime requires VAT registration
             if (regime.requiresVAT && !hasVAT) {
