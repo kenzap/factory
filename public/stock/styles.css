@@ -1,4 +1,4 @@
-@import url("../_/helpers/global.css");
+@import url("../assets/css/global.css");
   
 body {
     min-height: 100vh;
@@ -8,12 +8,6 @@ body {
 #app {
   overflow: hidden;
   margin-top: 76px;
-}
-
-.navbar {
-    background: var(--gray-color) !important;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 2px 20px rgba(0,0,0,0.1);
 }
 
 .search-container {

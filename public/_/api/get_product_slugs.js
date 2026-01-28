@@ -1,10 +1,9 @@
-import { H, getAPI, hideLoader } from '@kenzap/k-cloud';
-import { parseApiError } from "../../_/_helpers.js";
+import { API, H, hideLoader, parseApiError } from "../helpers/global.js";
 
 export const getProductSlugs = (state) => {
 
     // do API query
-    fetch(getAPI(), {
+    fetch(API() + '/api/get-product-slugs/', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({

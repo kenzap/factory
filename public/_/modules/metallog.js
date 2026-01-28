@@ -109,7 +109,7 @@ export const getHtml = (record) => {
                 <tbody>
                     <tr>
                         <td></td>
-                        <td><span class="summary-label">${__html('Records:')}</span> <span class="summary-value" id="s1">0</span></td>
+                        <td><span class="summary-label">#</span> <span class="summary-value" id="s1">0</span></td>
                         <td></td>
                         <td><span class="summary-label d-none">${__html('Products:')}</span> <span class="summary-value" id="s2">0</span></td>
                         <td></td>

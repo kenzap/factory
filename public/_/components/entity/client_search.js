@@ -1,6 +1,6 @@
-import { getClientSuggestions } from "/_/api/get_client_suggestions.js";
-import { __html, attr } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { getClientSuggestions } from "../../api/get_client_suggestions.js";
+import { __html, attr } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
 
 /**
  * A client search component that provides autocomplete functionality for searching clients.

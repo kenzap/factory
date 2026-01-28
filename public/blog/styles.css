@@ -1,7 +1,6 @@
-@import url("../_/helpers/global.css");
-@import url("../_/components/blog/quill.css");
-@import url("../_/components/blog/blog.css");
-  
+@import url("../assets/css/global.css");
+@import url("../assets/css/quill.css");
+@import url("../assets/css/blog.css");
 
 /* product list */
 .table-p-list thead tr th:nth-child(1){width:44px;} 

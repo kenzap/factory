@@ -1,4 +1,4 @@
-@import url("../_/helpers/global.css");
+@import url("../assets/css/global.css");
 
 body {
     background-color: var(--gray-color-light);
@@ -20,8 +20,8 @@ body {
 
 /* .table input, */
 
-.table select,
-.table th {
+.table thead select,
+.table thead th {
     background-color: inherit;
     border: none;
     font-weight: 600;
@@ -93,9 +93,9 @@ body {
 .summary-table td {
     background: #f8f9fa;
     border: none;
-    padding: 0.75rem 0.5rem;
+    padding: 4px;
     text-align: center;
-    font-weight: 600;
+    /* font-weight: 600; */
     font-size: 0.875rem;
 }
 
@@ -107,9 +107,9 @@ body {
 }
 
 .summary-table .summary-value {
-    color: var(--primary-color);
-    font-size: 1.1rem;
-    font-weight: bold;
+    /* color: var(--primary-color); */
+    /* font-size: 1.1rem;
+    font-weight: bold; */
 }
 
 /* Adjust main content to account for fixed summary */

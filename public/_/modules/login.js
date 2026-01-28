@@ -1,5 +1,5 @@
-import { __attr, __html, onClick } from "/_/helpers/global.js";
-import { bus } from "/_/modules/bus.js";
+import { __attr, __html, onClick } from "../helpers/global.js";
+import { bus } from "../modules/bus.js";
 
 export class Login {
 

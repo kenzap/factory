@@ -1,5 +1,6 @@
 import { getSettings } from "../_/api/get_settings.js";
 import { saveSettings } from "../_/api/save_settings.js";
+import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -10,7 +11,6 @@ import { TabGeneral } from "../_/modules/settings/tab_general.js";
 import { TabParameters } from "../_/modules/settings/tab_parameters.js";
 import { TabTemplates } from "../_/modules/settings/tab_templates.js";
 import { getHtml } from "../_/modules/settings/tabs.js";
-import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "/_/helpers/global.js";
 
 /** 
  * Settings page of the dashboard.

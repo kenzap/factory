@@ -4,7 +4,7 @@ export const getHtml = (response) => {
 
     return /*html*/`
     <!-- Navigation -->
-    <nav class="stock-cont px-3 navbar navbar-expand-lg navbar-dark fixed-top">
+    <nav class="stock-cont px-3 navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
         <div class="container-fluid">
             <a class="navbar-brand fw-bold" href="/home/">
                 <i class="bi bi-boxes me-2"></i>${__html('Stock')}

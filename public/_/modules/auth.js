@@ -2,9 +2,9 @@ import { getOTP } from "../api/auth_get_otp.js";
 import { validateOTP } from "../api/auth_validate_otp.js";
 import { __html, onClick } from "../helpers/global.js";
 import { isEmail, isPhone } from "../helpers/validation.js";
-import { bus } from "/_/modules/bus.js";
-import { Login } from "/_/modules/login.js";
-import { Modal } from "/_/modules/modal.js";
+import { bus } from "../modules/bus.js";
+import { Login } from "../modules/login.js";
+import { Modal } from "../modules/modal.js";
 
 export class Auth {
 

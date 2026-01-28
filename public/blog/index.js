@@ -1,5 +1,6 @@
+import { BlogPostRow } from "../_/components/blog/blog_post_row.js";
 import { EditPost } from "../_/components/blog/edit_post.js";
-import { BlogPostRow, BlogService, SearchComponent } from "../_/components/blog/helpers.js";
+import { BlogService, SearchComponent } from "../_/components/blog/helpers.js";
 import { Component } from "../_/components/component.js";
 import { getPageNumber, getPagination, replaceQueryParam } from "../_/components/products/helpers.js";
 import { __html, hideLoader, initBreadcrumbs, link, parseApiError, showLoader, toast } from "../_/helpers/global.js";
@@ -191,8 +192,6 @@ class Blog extends Component {
     async handleDeletePost(postId) {
 
         await this.blogService.deletePost(postId);
-
-
 
         toast('Post removed successfully', 'success');
 

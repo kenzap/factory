@@ -1,5 +1,5 @@
-import { getContacts } from "/_/api/get_contacts.js";
-import { __html } from "/_/helpers/global.js";
+import { getContacts } from "../../api/get_contacts.js";
+import { __html } from "../../helpers/global.js";
 
 /**
  * A contact search component that provides autocomplete functionality for searching contacts.

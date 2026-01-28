@@ -1,7 +1,7 @@
 import { build } from 'esbuild';
 
 build({
-    entryPoints: ['./public/main.js'],
+    entryPoints: ['./dist/main.js'],
     bundle: true,
     minify: true,
     outfile: './build/app.js',

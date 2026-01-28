@@ -3,13 +3,13 @@ import { getTransactions } from "../_/api/get_transactions.js";
 import { saveTransaction } from "../_/api/save_transaction.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
+import { __html, hideLoader, log, priceFormat, toast } from "../_/helpers/global.js";
+import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
+import { bus } from "../_/modules/bus.js";
+import { Footer } from "../_/modules/footer.js";
 import { Locale } from "../_/modules/locale.js";
-import { __html, hideLoader, log, priceFormat, toast } from "/_/helpers/global.js";
-import { TabulatorFull } from '/_/libs/tabulator_esm.min.mjs';
-import { bus } from "/_/modules/bus.js";
-import { Footer } from "/_/modules/footer.js";
-import { Modal } from "/_/modules/modal.js";
-import { Session } from "/_/modules/session.js";
+import { Modal } from "../_/modules/modal.js";
+import { Session } from "../_/modules/session.js";
 
 /**
  * Transaction Log

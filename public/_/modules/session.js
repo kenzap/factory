@@ -1,4 +1,4 @@
-import { authRefresh } from "/_/api/auth_refresh.js";
+import { authRefresh } from "../api/auth_refresh.js";
 
 /**
  * Class representing the Session module.

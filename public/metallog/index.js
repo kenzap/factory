@@ -5,7 +5,7 @@ import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { SupplierSuggestion } from "../_/components/metal/supplier_suggestion.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
-import { __html, getDimUnit, hideLoader, onChange, onClick, priceFormat, toast, unescape } from "../_/helpers/global.js";
+import { __html, hideLoader, onChange, onClick, parseUnit, priceFormat, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -434,16 +434,16 @@ class MetalLog {
             <th>${__html('Color')}</th>
             <th>${__html('Status')}</th>
             <th>${__html('Thickness')}</th>
-            <th class="d-none">${__html('Coating')}</th>
             <th>
                 <div class="position-relative" >
-                    <select class="form-select form-select-sm border-0 bg-transparent ms-4 py-0" id="widthFilter" onchange="metallog.applyFilters()" style="width:auto; height:21px;">
-                        <option value="">${__html('All')}</option>
+                    <select class="form-select ms-0 form-select-sm text-start border-0 bg-transparent ms-0 ps-0 py-0" id="widthFilter" onchange="metallog.applyFilters()" style="width:auto; height:21px;">
+                        <option value="">${__html('Width')}</option>
                         <option value="1250" ${this.filters.width === '1250' ? 'selected' : ''}>~1250</option>
                         <option value="1249" ${this.filters.width === '1249' ? 'selected' : ''}>&lt;1250</option>
                     </select>
                 </div>
             </th>
+            <th>${__html('Length')}</th>
             <th>${__html('Qty')}</th>
             <th>${__html('Supplier')}</th>
             <th>${__html('Parameters')}</th>
@@ -491,8 +491,8 @@ class MetalLog {
 
                 coatingHeader = `
                 <tr class="thead-dark bg-dark d-none">
-                    <th colspan="11" class="bg-dark text-white fw-bold py-2 border-0">
-                        ${coating} ${totalLength.toLocaleString()} t/m | ${totalArea.toFixed(2)} m² | ${priceFormat(this.settings, totalPrice)}
+                    <th colspan="12" class="bg-dark text-white fw-bold py-2 border-0">
+                        ${coating} ${parseUnit(this.settings, totalLength.toLocaleString(), "t/m")} | ${parseUnit(this.settings, totalArea.toFixed(2), "m²")} | ${priceFormat(this.settings, totalPrice)}
                     </th>
                 </tr>
             `;
@@ -516,8 +516,8 @@ class MetalLog {
                 // Color subheader (only show if there are multiple colors or totals are significant)
                 const colorHeader = availableColorEntries.length > 0 ? `
                 <tr class="bg-light">
-                    <th colspan="11" class="bg-light text-dark fw-normal py-1 border-0 ps-2" >
-                        <strong>${coating} - ${color}</strong> - ${colorTotalLength.toLocaleString()} t/m | ${colorTotalArea.toFixed(2)} m² | ${priceFormat(this.settings, colorTotalPrice)}
+                    <th colspan="12" class="bg-light text-dark fw-normal py-1 border-0 ps-2" >
+                        <strong class="text-uppercase">${coating} - ${color}</strong> - ${parseUnit(colorTotalLength.toLocaleString(), this.settings, "t/m")} | ${parseUnit(colorTotalArea.toFixed(2), this.settings, "m²")} | ${priceFormat(this.settings, colorTotalPrice)}
                     </th>
                 </tr>
             ` : '';
@@ -538,12 +538,10 @@ class MetalLog {
                     ${this.supplyStatusBadge(entry)}
                 </td>
                 <td style="width:80px;" class="align-middle">
-                    ${entry.thickness} ${getDimUnit(this.settings)}
+                    ${this.renderDimension(entry, 'thickness')}
                 </td>
-                <td style="width:120px;" class="d-none align-middle">
-                    ${entry.coating || '-'}
-                </td>
-                <td style="width:500px;" class="align-middle"><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
+                <td style="width:50px;" class="align-middle">${this.renderDimension(entry, 'width')}</td>
+                <td style="width:180px;" class="align-middle">${this.renderDimension(entry, 'length')}</td>
                 <td class="align-middle"><strong>${entry.qty}</strong></td>
                 <td style="width:80px;" class="text-truncate align-middle">
                     <input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.supplier}" data-coil-id="${entry._id}" data-field="supplier" placeholder="">
@@ -569,138 +567,6 @@ class MetalLog {
             }).join('');
 
             return coatingHeader + colorRows;
-        }).join('');
-    }
-
-
-    renderRecordsLegacy() {
-
-        const theader = document.getElementById('workLogHeader');
-        const tbody = document.getElementById('workLogBody');
-        const entriesToShow = this.filteredEntries.length > 0 ? this.filteredEntries : this.records;
-
-        if (entriesToShow.length === 0) {
-            tbody.innerHTML = `
-                        <tr>
-                            <td colspan="12" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
-                                ${__html('No supply entries found')}
-                            </td>
-                        </tr>
-                    `;
-            return;
-        }
-
-        if (this.firstLoad) theader.innerHTML = `
-            <tr>
-                <th>${__html('Color')}</th>
-                <th>${__html('Status')}</th>
-                <th>${__html('Thickness')}</th>
-                <th class="d-none">${__html('Coating')}</th>
-                <th>
-                    <div class="position-relative" >
-                        <select class="form-select form-select-sm border-0 bg-transparent ms-4 py-0" id="widthFilter" onchange="metallog.applyFilters()" style="width:auto; height:21px;">
-                            <option value="">${__html('All')}</option>
-                            <option value="1250" ${this.filters.width === '1250' ? 'selected' : ''}>~1250</option>
-                            <option value="1249" ${this.filters.width === '1249' ? 'selected' : ''}>&lt;1250</option>
-                        </select>
-                    </div>
-                </th>
-                <th>${__html('Qty')}</th>
-                <th>${__html('Supplier')}</th>
-                <th>${__html('Parameters')}</th>
-                <th>${__html('Price')}</th>
-                <th>${__html('Notes')}</th>
-                <th>${__html('Document')}</th>
-                <th></th>
-            </tr>
-        `;
-
-        // Group entries by coating
-        const entriesByCoating = entriesToShow.reduce((groups, entry) => {
-            const coating = entry.coating || 'No Coating';
-            if (!groups[coating]) {
-                groups[coating] = [];
-            }
-            groups[coating].push(entry);
-            return groups;
-        }, {});
-
-        let lastCoating = null;
-        tbody.innerHTML = Object.entries(entriesByCoating).map(([coating, entries]) => {
-            let coatingHeader = '';
-            if (lastCoating !== coating) {
-                // Filter entries to only include those with status 'available'
-                const availableEntries = entries.filter(entry => entry.status === 'available');
-
-                // Calculate total length for this coating group (only available entries)
-                const totalLength = Math.round(availableEntries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
-
-                // Calculate total price for this coating group (only available entries)
-                const totalPrice = availableEntries.reduce((sum, entry) => {
-                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
-                    return sum + (area * parseFloat(entry.price || 0));
-                }, 0);
-
-                // Calculate total area for this coating group (only available entries)
-                const totalArea = availableEntries.reduce((sum, entry) => {
-                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000); // Convert mm to m²
-                    return sum + area;
-                }, 0);
-
-                coatingHeader = `
-                    <tr class="thead-dark bg-dark">
-                        <th colspan="11" class="bg-dark text-white fw-bold py-2 border-0">
-                            ${coating} ${totalLength.toLocaleString()} t/m | ${totalArea.toFixed(2)} m² | ${priceFormat(this.settings, totalPrice)}
-                        </th>
-                    </tr>
-                `;
-                lastCoating = coating;
-            }
-
-            // Sort entries by color ascending
-            const sortedEntries = entries.sort((a, b) => {
-                const colorA = (a.color || '').toLowerCase();
-                const colorB = (b.color || '').toLowerCase();
-                return colorA.localeCompare(colorB);
-            });
-
-            return coatingHeader + sortedEntries.map((entry, i) => `
-            <tr class="${i % 2 === 0 ? 'table-light' : ''}">
-                <td style="width:80px;" class="align-middle">
-                    ${entry.color || '-'}
-                </td>
-                <td style="width:80px;" class="align-middle">
-                    ${this.supplyStatusBadge(entry)}
-                </td>
-                <td style="width:80px;" class="align-middle">
-                    ${entry.thickness} ${getDimUnit(this.settings)}
-                </td>
-                <td style="width:120px;" class="d-none align-middle">
-                    ${entry.coating || '-'}
-                </td>
-                <td style="width:500px;" class="align-middle"><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
-                <td class="align-middle"><strong>${entry.qty}</strong></td>
-                <td style="width:80px;" class="text-truncate align-middle">
-                    <input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.supplier}" data-coil-id="${entry._id}" data-field="supplier" placeholder="">
-                </td>
-                  <td style="width:160px;" class="align-middle">
-                    ${this.renderParameters(entry)}
-                </td>
-                <td style="width:160px;" class="align-middle">
-                    ${priceFormat(this.settings, entry?.price,)}
-                </td>
-                <td style="width:160px;" class="align-middle">
-                    <div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.notes}" data-field="notes" data-coil-id="${entry._id}" placeholder=""></div>
-                </td>
-                <td style="width:160px;" class="align-middle">
-                    <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
-                </td>
-                <td class="text-end align-middle">
-                    ${this.supplyActions(entry, i)}
-                </td>
-            </tr>`).join('');
-
         }).join('');
     }
 
@@ -731,6 +597,21 @@ class MetalLog {
             </div>`;
     }
 
+    renderDimension(entry, type) {
+
+        if (type === 'thickness') {
+            return `<span class="dimension-entry">${parseUnit(entry.thickness, this.settings, "mm")}</span>`;
+        }
+
+        if (type === 'width') {
+            return `<span class="dimension-entry">${parseUnit(entry.width, this.settings, "mm")}</span>`;
+        }
+
+        if (type === 'length') {
+            return `<span class="dimension-entry">${this.formatCoilLength(entry.length)}</span>`;
+        }
+    }
+
     renderProductName(entry) {
 
         if (entry.type === 'product') {
@@ -738,10 +619,17 @@ class MetalLog {
         }
 
         if (entry.type === 'metal') {
-            return `<span class="product-name">${entry.width} x ${Number(entry.length).toLocaleString()} ${getDimUnit(this.settings)}</span>`;
+            return `<span class="product-name">${entry.width} x ${this.formatCoilLength(entry.length)}</span>`;
         }
 
         return `<span class="product-name">${entry.product_name}</span>`;
+    }
+
+    // ${getDimUnit(this.settings)}
+    formatCoilLength(length) {
+
+        if (!length) return '0 m';
+        return `${parseUnit((length / 1000), this.settings, "m")}`;
     }
 
     renderParameters(entry) {

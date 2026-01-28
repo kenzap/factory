@@ -1,0 +1,189 @@
+// Find plugins: https://github.com/rollup/awesome
+import babel from "@rollup/plugin-babel"
+import commonjs from "@rollup/plugin-commonjs"
+import { nodeResolve } from "@rollup/plugin-node-resolve"
+import terser from "@rollup/plugin-terser"
+import fs from 'fs'
+import glob from "glob"
+import path from "path"
+import copy from 'rollup-plugin-copy'
+import livereload from 'rollup-plugin-livereload'
+import replaceHtmlVars from 'rollup-plugin-replace-html-vars'
+
+// get build mode
+const prodEnv = process.env.BABEL_ENV === "production"
+const targetFolder = "dist/"
+const srcFolder = "public/"
+const absolutePath = (dirPath) => path.resolve(__dirname, dirPath)
+
+/**
+ * This is a simple build pipeline for JavaScript files.
+ *
+ * It works by checking for any `.js` files without a leading `_`
+ * in the name. If so, rollup processes the file using
+ * the defined babel configuration and spits it out (folder
+ * paths in tact) in the project's dist folder.
+ *
+ * It's intended to be simple and get out of the way as much
+ * as possible. Unlike other front-end pipelines, this one
+ * does not associate file names to any particular layout
+ * or view. Developers have full control over which files
+ * get loaded by requiring them to add a script tag.
+ *
+ * Additionally, the npm scripts are set up to process
+ * scripts using terser for additional optimization when
+ * the build is in "production" mode (see `netlify.tml`
+ * and `package.json`).
+ */
+
+const terserPlugin = terser({
+	output: {
+		comments: (_, comment) => {
+			const { value, type } = comment
+			if (type === "comment2") {
+				return /@preserve|@license|@cc_on/i.test(value)
+			}
+		},
+	},
+})
+
+let workingFolders = [];
+
+/* prepare script import paths */
+let scriptFiles = glob.sync(absolutePath(srcFolder + "!(_)*/!(_)*.js"))
+const scriptInputs = scriptFiles.reduce((files, input) => {
+	const parts = input.split(srcFolder)
+	const fileKey = parts[parts.length - 1]
+	return { [fileKey]: absolutePath(input), ...files }
+}, {})
+
+const scriptPaths = Object.keys(scriptInputs)
+const scriptOutputs = scriptPaths.reduce((files, file) => {
+	const inputPath = scriptInputs[file]
+	const parts = inputPath.split("/")
+	const pathIndex = parts.indexOf("index.js") - 1
+
+	const outputPath = parts.slice(pathIndex).join("/")
+
+	workingFolders.push(parts[parts.length - 2]);
+	return { [file]: absolutePath(targetFolder + outputPath), ...files }
+
+}, {})
+
+/**
+ * Do localizations here. Get through every .js file and find i18n occurances, ex.: __()
+ * extract all texts and save under public/locales/default.json file.
+ * 
+ * Prepare scripts for localization. Automatically run in production mode only
+ */
+
+if (prodEnv) {
+
+	// set locales folder
+	if (!fs.existsSync(targetFolder + 'locales/')) { fs.mkdirSync(targetFolder + 'locales/'); }
+	fs.writeFileSync(targetFolder + 'locales/default.json', '{ "language": "default", "texts": {} }', { flag: 'w' }); // set defaults
+
+	let scriptFilesAll = glob.sync(absolutePath(srcFolder + "**/*.js"))
+	scriptFilesAll.forEach((input) => { i18n(input); });
+
+	function i18n(key) { // export i18n
+
+		// get current strings
+		var def = fs.readFileSync(targetFolder + '/locales/default.json', { encoding: 'utf8', flag: 'r' });
+		var defJS = JSON.parse(def);
+
+		// find strings
+		if (fs.existsSync(key)) {
+
+			var temp = fs.readFileSync(key, { encoding: 'utf8', flag: 'r' });
+			var regex = [
+				new RegExp(/__\('(.*?)'/g),
+				new RegExp(/__\("(.*?)"/g),
+				new RegExp(/__html\('(.*?)'/g),
+				new RegExp(/__html\("(.*?)"/g),
+				new RegExp(/__attr\('(.*?)'/g),
+				new RegExp(/__attr\("(.*?)"/g),
+				new RegExp(/__src\('(.*?)'/g),
+				new RegExp(/__src\("(.*?)"/g)
+			]
+
+			var result; regex.forEach(reg => {
+				while (result = reg.exec(temp)) {
+
+					defJS['texts'][result[1]] = result[1];
+
+				}
+			});
+
+			// write default locale
+			fs.writeFileSync(targetFolder + 'locales/default.json', JSON.stringify(defJS));
+		}
+	}
+}
+
+const bundles = scriptPaths.map((key) => {
+
+	let sourcemap = true
+
+	// plugin list for any build mode
+	const plugins = [
+		nodeResolve({
+			preferBuiltins: false,
+			browser: true,  // Tell it we're bundling for browser
+			extensions: ['.js', '.json'],
+			moduleDirectories: ['node_modules']
+		}),
+		commonjs(),
+		babel({
+			babelHelpers: "bundled",
+			exclude: "node_modules/**",
+			comments: false,
+		}),
+		copy({
+			targets: [
+				{ src: [targetFolder + "home/*"], dest: targetFolder }
+			],
+			// flatten: false
+		})
+	]
+
+	// plugin list for production mode
+	if (prodEnv) {
+
+		plugins.push(terserPlugin)
+		plugins.push(
+			replaceHtmlVars({
+				files: targetFolder + "*/index.html",
+				from: /\${timestamp}/g,
+				to: new Date().getTime(),
+			})
+		)
+		sourcemap = false
+
+		// plugin list development mode
+	} else {
+
+
+		plugins.push(
+			livereload({
+				watch: [
+					path.resolve(__dirname, targetFolder),
+				],
+				delay: 500,
+				exts: ['html', 'js', 'scss', 'sass', 'css']
+			})
+		)
+	}
+
+	return {
+		input: scriptInputs[key],
+		output: {
+			file: scriptOutputs[key],
+			format: "es",
+			sourcemap,
+		},
+		plugins,
+	}
+})
+
+export default bundles

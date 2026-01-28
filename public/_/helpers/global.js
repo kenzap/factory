@@ -1,4 +1,4 @@
-import { Auth } from "/_/modules/auth.js";
+// import { Auth } from "../../_/modules/auth.js";
 
 export const CDN = "https://cdn.kenzap.cloud";
 export const FILES = "https://render.factory.app.kenzap.cloud";
@@ -45,7 +45,10 @@ export const parseApiError = (data) => {
         case 401:
         case 403:
 
-            new Auth();
+            if (window.location.pathname !== '/login' && window.location.pathname !== '/login/') {
+                window.location = "/login";
+            }
+            // new Auth();
 
             break;
         // something else
@@ -108,6 +111,71 @@ export const getMediaAPI = () => {
     return window.location.host.indexOf("localhost") == 0 ? "https://api.media.app.kenzap.cloud" : "https://api.media.app.kenzap.cloud";
 }
 
+/**
+ * Parses a value and appends the appropriate unit based on the system of units in settings.
+ * 
+ * @param {string|number} val - The value to be formatted with a unit
+ * @param {Object} settings - Configuration object containing system preferences
+ * @param {string} settings.system_of_units - The unit system to use ("imperial" or "metric")
+ * @param {string} unit - The unit type to convert/format ("m", "mm", "t/m", "m²", "m2")
+ * @returns {string} The value with the appropriate unit appended, or the original value if no matching unit system/type
+ */
+export const parseUnit = (val, settings, unit) => {
+
+    if (!settings || !settings.system_of_units) return val;
+    switch (settings.system_of_units) {
+
+        case "imperial":
+
+            switch (unit) {
+                case "m": return formatNumber(val) + " ft";
+                case "mm": return formatNumber(val) + " in";
+                case "t/m": return formatNumber(val) + " ft";
+                case "m²": return formatNumber(val) + " ft²";
+                case "m2": return formatNumber(val) + " ft²";
+            }
+            break;
+        case "metric":
+
+            switch (unit) {
+                case "m": return formatNumber(val) + " <small>m</small>";
+                case "mm": return formatNumber(val) + " <small>mm</small>";
+                case "t/m": return formatNumber(val) + " <small>t/m</small>";
+                case "m²": return formatNumber(val) + " <small>m²</small>";
+                case "m2": return formatNumber(val) + " <small>m²</small>";
+            }
+            break;
+    }
+    return val;
+}
+
+/**
+ * Formats a number by adding comma separators for thousands.
+ * 
+ * @param {string|number} val - The value to format. Can be a string or number.
+ * @returns {string|*} The formatted number with comma separators, or the original value if invalid/NaN.
+ * 
+ * @example
+ * formatNumber(1234567) // Returns "1,234,567"
+ * formatNumber("1234.56") // Returns "1,234.56"
+ * formatNumber("invalid") // Returns "invalid"
+ * formatNumber(null) // Returns null
+ */
+export const formatNumber = (val) => {
+
+    // Format number with commas for thousands separator
+    if (!val || isNaN(val)) return val;
+
+    // Convert to number and back to string to handle various input formats
+    let num = parseFloat(val);
+
+    // Use toLocaleString to add comma separators
+    return num.toLocaleString();
+}
+
+/*
+* @deprecated
+*/
 export const getDimUnit = (settings) => {
 
     if (!settings || !settings.system_of_units) return " mm";
@@ -118,6 +186,9 @@ export const getDimUnit = (settings) => {
     }
 }
 
+/*
+* @deprecated
+*/
 export const getDimMUnit = (settings) => {
 
     if (!settings || !settings.system_of_units) return " mm";
@@ -1331,7 +1402,7 @@ export const toast = (text, type = 'success') => {
 
 export const mapHexColor = (slug) => {
 
-    this.colors = { 'RR11': { hex_bg: '#14360f', hex_text: '#ffffff' }, 'RR20': { hex_bg: '#f5f9fc', hex_text: '#000000' }, 'RR21': { hex_bg: '#c0c0c0', hex_text: '#000000' }, 'RR22': { hex_bg: '#878a89', hex_text: '#000000' }, 'RR23': { hex_bg: '#37383d', hex_text: '#ffffff' }, 'RR29': { hex_bg: '#681a11', hex_text: '#ffffff' }, 'RR30': { hex_bg: '#cebb7f', hex_text: '#000000' }, 'RR32': { hex_bg: '#2f2218', hex_text: '#ffffff' }, 'RR33': { hex_bg: '#000000', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#32211f', hex_text: '#ffffff' }, 'RR750': { hex_bg: '#7e2f0d', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#37130d', hex_text: '#ffffff' }, 'RR946': { hex_bg: '#afafaf', hex_text: '#000000' }, '2H3': { hex_bg: '#28292b', hex_text: '#ffffff' } };
+    const colors = { 'RR11': { hex_bg: '#14360f', hex_text: '#ffffff' }, 'RR20': { hex_bg: '#f5f9fc', hex_text: '#000000' }, 'RR21': { hex_bg: '#c0c0c0', hex_text: '#000000' }, 'RR22': { hex_bg: '#878a89', hex_text: '#000000' }, 'RR23': { hex_bg: '#37383d', hex_text: '#ffffff' }, 'RR29': { hex_bg: '#681a11', hex_text: '#ffffff' }, 'RR30': { hex_bg: '#cebb7f', hex_text: '#000000' }, 'RR32': { hex_bg: '#2f2218', hex_text: '#ffffff' }, 'RR33': { hex_bg: '#000000', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#32211f', hex_text: '#ffffff' }, 'RR750': { hex_bg: '#7e2f0d', hex_text: '#ffffff' }, 'RR887': { hex_bg: '#37130d', hex_text: '#ffffff' }, 'RR946': { hex_bg: '#afafaf', hex_text: '#000000' }, '2H3': { hex_bg: '#28292b', hex_text: '#ffffff' } };
 
     if (colors.hasOwnProperty(slug)) {
         return colors[slug];

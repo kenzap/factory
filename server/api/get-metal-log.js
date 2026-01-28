@@ -103,7 +103,7 @@ function getMetalLogApi(app) {
             const records = await getMetalLog(req.body.filters);
             const locale = await getLocale(req.headers?.locale);
             const locales = await getLocales();
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price"]);
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "system_of_units"]);
 
             res.send({ success: true, settings, locale, locales, records: records, user: req.user });
         } catch (err) {

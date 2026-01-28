@@ -17,7 +17,7 @@ dotenv.config();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
-const PUBLIC_DIR = path.join(__dirname, '../public');
+const PUBLIC_DIR = path.join(__dirname, process.env.NODE_ENV === 'production' ? '../dist' : '../public');
 const API_DIR = path.join(__dirname, 'api');
 const DOCUMENT_DIR = path.join(__dirname, 'document');
 const EXTENSIONS_DIR = path.join(__dirname, 'extensions');

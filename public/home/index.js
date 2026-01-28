@@ -11,7 +11,7 @@ import { Session } from "../_/modules/session.js";
  * Loads HTMLContent from _cnt_home.js file.
  * Renders menu items in a list view manner
  * 
- * @version 1.0
+ * @version 1.0 
  */
 class Home {
 

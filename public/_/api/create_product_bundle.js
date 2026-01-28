@@ -1,4 +1,4 @@
-import { API, H, hideLoader, parseApiError } from "/_/helpers/global.js";
+import { API, H, hideLoader, parseApiError } from "../../_/helpers/global.js";
 
 export const createProductBundle = (product, cb) => {
 
