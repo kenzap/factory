@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Retrieves client entities from the database with optional filtering capabilities.
@@ -138,7 +139,7 @@ function getClientsApi(app) {
     app.post('/api/get-clients/', authenticateToken, async (req, res) => {
         try {
 
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};
             const clients = await getClients(filters);
 

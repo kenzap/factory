@@ -1,6 +1,27 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
+/**
+ * Retrieves the count of order items grouped by color and coating combination.
+ * 
+ * @async
+ * @function getOrderItemsCountByColorCoating
+ * @param {Object} [filters={ cm: false }] - Filter options for the query
+ * @param {boolean} [filters.cm=false] - Client material flag filter. 
+ *   - true: includes only items with client material
+ *   - false: excludes items with client material
+ *   - undefined: includes all items regardless of client material status
+ * @returns {Promise<Array<Object>>} Promise that resolves to an array of objects containing:
+ *   - color {string} - The color of the item
+ *   - coating {string} - The coating of the item  
+ *   - count {string} - The number of items with this color/coating combination
+ * @description This function queries the database for order items that are:
+ *   - Not deleted, not draft, and not transaction records
+ *   - Not issued (no isu_date) and not written off (no wrt_date)
+ *   - Groups results by color and coating, ordered by count (descending), then color and coating
+ * @throws {Error} Database connection or query errors
+ */
 async function getOrderItemsCountByColorCoating(filters = { cm: false }) {
 
     const db = getDbConnection();

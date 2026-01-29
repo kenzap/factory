@@ -33,3 +33,5 @@ readme.txt
 
 dist/
 etc/
+
+build.sh

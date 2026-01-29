@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { __html, getDbConnection, getLocale, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * execWaybillsReport 
@@ -83,7 +84,7 @@ function execWaybillsReportApi(app) {
 
         const data = _req.query;
 
-        const locale = await getLocale(_req.headers.locale);
+        const locale = await getLocale(_req.headers);
         const report = await execWaybillsReport(data);
 
         // Generate HTML report

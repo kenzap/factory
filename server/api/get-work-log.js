@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Retrieves a list of users from the database.
@@ -21,7 +22,7 @@ async function getUsers() {
             js->'data'->'fname' AS fname,
             js->'data'->'lname' AS lname
         FROM data
-        WHERE ref = $1 AND sid = $2 AND js->'data'->'rights' ? 'manage_stock'
+        WHERE ref = $1 AND sid = $2 AND (js->'data'->>'portal' IS NOT NULL AND js->'data'->>'portal' <> '')
         LIMIT 100
         `;
 
@@ -59,6 +60,7 @@ async function getWorkLog(filters) {
             js->'data'->'coating' AS coating,
             js->'data'->'origin' AS origin,
             js->'data'->'user_id' AS user_id,
+            js->'data'->'order_ids' AS order_ids,
             js->'data'->'type' AS type,
             js->'data'->'date' AS date,
             js->'data'->'time' AS time,
@@ -123,11 +125,11 @@ function getWorkLogApi(app) {
 
             const users = await getUsers();
             const records = await getWorkLog(req.body.filters);
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const locales = await getLocales();
             const settings = await getSettings(["work_categories", "currency", "currency_symb", "currency_symb_loc", "price"]);
 
-            res.send({ success: true, settings, locale, locales, records: records, users: users, user: req.user });
+            res.send({ success: true, user: req.user, settings, locale, locales, records: records, users: users });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

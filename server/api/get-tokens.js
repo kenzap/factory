@@ -1,5 +1,6 @@
 import { authenticateToken, getUserById } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, sid } from '../_/helpers/index.js';
+import { getDbConnection, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 async function getTokens() {
 
@@ -54,7 +55,7 @@ function getTokensApi(app, logger) {
             }
 
             const tokens = await getTokens(filters);
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers);
 
             logger.info('!Registering /api/get-tokens/ route', user.rights);
 

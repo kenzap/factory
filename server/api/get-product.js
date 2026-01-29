@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Get Product
@@ -83,7 +84,7 @@ function getProductApi(app) {
         try {
 
             const records = await getProduct(req.body.id);
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const locales = await getLocales();
             const settings = await getSettings(["var_parent", "currency", "currency_symb", "currency_symb_loc", "system_of_units", "textures", "tax_calc", "tax_region", "price", "taxes", "groups", "stock_categories"]);
 

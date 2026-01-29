@@ -1,9 +1,10 @@
 import { chromium } from 'playwright';
-// import { authenticateToken } from '../_/helpers/auth.js';
+import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
-import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
+import { __html, getDbConnection } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
 
@@ -109,8 +110,8 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 // API route for waybill generation
 function viewWaybillApi(app, logger) {
 
-    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
-    app.get('/document/waybill/', async (req, res) => {
+    app.get('/document/waybill/', authenticateToken, async (req, res) => {
+        // app.get('/document/waybill/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;
@@ -120,7 +121,7 @@ function viewWaybillApi(app, logger) {
                 return res.status(400).json({ error: 'Waybill ID is required' });
             }
 
-            const locale = await getLocale(lang);
+            const locale = await getLocale(req.headers);
 
             // Additional options
             const options = {

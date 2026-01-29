@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Get Supply Log
@@ -95,7 +96,7 @@ function getSupplyLogApi(app) {
         try {
 
             const records = await getSupplyLog(req.body.filters);
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const locales = await getLocales();
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price"]);
 

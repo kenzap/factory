@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Retrieves a list of users from the database.
@@ -250,7 +251,7 @@ function getEmployeePerformanceApi(app) {
             const employee_performance = await getWorkCategoriesStats(req.body.filters, 'employee_performance');
             const work_categories_stats = await getWorkCategoriesStats(req.body.filters);
             const work_categories_by_day_stats = await getWorkCategoriesByDayStats(req.body.filters);
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const locales = await getLocales();
             const settings = await getSettings(["work_categories", "currency", "currency_symb", "currency_symb_loc", "price"]);
 

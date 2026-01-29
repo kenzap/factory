@@ -70,12 +70,8 @@ function createWorkLogApi(app, logger) {
 
     app.post('/api/create-worklog-record/', authenticateToken, async (_req, res) => {
 
-        // console.log('/api/create-worklog-record/ _req.body', _req.body);
-
         const data = _req.body;
         const response = await createWorkLog(data, logger);
-
-        // console.log('/api/create-worklog-record/ response', response);
 
         res.json({ success: true, response });
     });

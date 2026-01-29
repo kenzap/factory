@@ -1,6 +1,26 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
+/**
+ * Retrieves metal stock data from the database based on provided filters.
+ * 
+ * @async
+ * @function getMetalStock
+ * @param {Object} [filters={}] - Filter criteria for metal stock query
+ * @param {Object} [filters.client] - Client information (not used in current implementation)
+ * @param {string} [filters.client.name=""] - Client name (not used in current implementation)
+ * @param {string} [filters.dateFrom=""] - Start date filter (not used in current implementation)
+ * @param {string} [filters.dateTo=""] - End date filter (not used in current implementation)
+ * @param {string} [filters.type=""] - Type filter (not used in current implementation)
+ * @param {boolean} [filters.items=false] - Items flag (not used in current implementation)
+ * @param {string} [filters.color] - Color filter for metal stock
+ * @param {string} [filters.coating] - Coating filter for metal stock
+ * @param {boolean} [filters.cm] - Custom material flag filter
+ * @returns {Promise<Array>} Array of metal stock records with properties including supplier, qty, type, status, product details, dimensions, and pricing
+ * @throws {Error} Database connection or query execution errors
+ * @description Queries the database for available metal stock items with length > 0, ordered by width (desc), length (desc), and date (desc). Limited to 100 results.
+ */
 async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dateTo: '', type: '', items: false }) {
 
     const db = getDbConnection();
@@ -211,7 +231,7 @@ function getOrdersForCuttingApi(app) {
 
             console.log('/api/get-orders/', req.body.filters);
 
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};
             const orders = await getOrdersForCutting(filters);
             const stock = await getMetalStock(filters);

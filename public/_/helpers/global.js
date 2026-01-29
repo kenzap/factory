@@ -1128,11 +1128,14 @@ export const checkHeader = () => {
  */
 export const H = () => {
 
+    let locale = localStorage.getItem('locale') ? localStorage.getItem('locale') : "en";
+
     return {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + localStorage.getItem('token'),
-        'Locale': localStorage.getItem('locale') ? localStorage.getItem('locale') : "en",
+        'Locale': locale,
+        'Locale-Checksum': sessionStorage.getItem('locale_checksum_' + locale) ? sessionStorage.getItem('locale_checksum_' + locale) : "",
         'Kenzap-Sid': spaceID()
     }
 }

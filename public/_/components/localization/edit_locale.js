@@ -204,6 +204,8 @@ export class EditLocale {
 
 			data['extension'] = {};
 			data['content'] = {};
+			data['locale'] = this.locale.locale;
+			data['ext'] = this.locale.ext;
 
 			// get all translation strings
 			for (let trans of this.modal.querySelectorAll(".edit-translated")) {

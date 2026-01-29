@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Get Product List
@@ -92,7 +93,7 @@ function getUsersApi(app) {
 
     app.post('/api/get-users/', authenticateToken, async (_req, res) => {
 
-        const locale = await getLocale(_req.headers.locale);
+        const locale = await getLocale(_req.headers);
         const settings = await getSettings();
         const users = await getUsers(_req.body.filters || {});
 

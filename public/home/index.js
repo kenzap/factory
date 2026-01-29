@@ -28,8 +28,6 @@ class Home {
 
         getHome((response) => {
 
-            // console.log(response.user.rights);
-
             // show UI loader
             if (!response.success) return;
 
@@ -38,9 +36,8 @@ class Home {
 
             this.settings = response.settings;
             this.user = response.user;
-            // this.user.rights.push('localization_management');
 
-            console.log(this.user.rights);
+            // console.log(this.user.rights);
 
             // locale
             new Locale(response);
@@ -123,7 +120,7 @@ class Home {
                 id: 'finance',
                 title: __html('Finance'),
                 desc: __html('Manage payments and transactions, generate reports.'),
-                visible: this.user?.rights.includes('finance_management'),
+                visible: this.user?.rights.includes('payments_journal'),
                 icon: '<i class="bi bi-bank me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {

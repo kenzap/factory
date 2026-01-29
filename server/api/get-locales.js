@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 async function getLocales() {
 
@@ -41,7 +42,7 @@ function getLocalesApi(app) {
         try {
             const filters = req.body.filters || {};
             const locales = await getLocales(filters);
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers);
 
             res.send({ success: true, locales, locale, user: req?.user });
         } catch (err) {

@@ -219,7 +219,6 @@ async function execWriteoffAction(data) {
     return response;
 }
 
-
 /**
  * Create worklog record
  *
@@ -250,9 +249,6 @@ async function createWorkLog(data) {
         record.created = Math.floor(Date.now() / 1000);
         record.updated = Math.floor(Date.now() / 1000);
         record.date = new Date().toISOString();
-
-
-        // delete record.items;
 
         // Get orders
         let query = `

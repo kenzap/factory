@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocales, getSettings, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Get Metal Log
@@ -101,7 +102,7 @@ function getMetalLogApi(app, logger) {
         try {
 
             const records = await getMetalLog(req.body.filters);
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const locales = await getLocales();
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "system_of_units"]);
 

@@ -1,3 +1,4 @@
+import { createClient } from 'redis';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 
@@ -41,8 +42,11 @@ async function saveLocale(_id, data) {
         RETURNING _id
     `;
 
-    // console.log('saveLocale params:', params);
-    // console.log('saveLocale query:', query);
+    // clear locale cache
+    const redisClient = createClient({ url: process.env.REDIS_URL });
+    await redisClient.connect();
+    await redisClient.del(`locale_values:${sid}:${data.locale}:${data.ext}`);
+    await redisClient.quit();
 
     try {
 

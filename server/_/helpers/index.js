@@ -55,39 +55,6 @@ export const makeId = () => {
     return str;
 }
 
-export const getLocale = async (locale) => {
-
-    if (!locale) locale = process.env.LOCALE || 'en'; // Default to 'en' if not set
-
-    const db = getDbConnection();
-    await db.connect();
-
-    let response = { values: {} };
-
-    try {
-
-        // Get locales
-        const query = `
-            SELECT 
-                js->'data'->'content' as locale
-            FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'locale' = $3 AND js->'data'->>'ext' = 'dashboard'
-            LIMIT 1
-        `;
-
-        const result = await db.query(query, ['locale', sid, locale]);
-        if (result.rows.length > 0) {
-
-            response.values = result.rows[0].locale || {};
-        }
-
-    } finally {
-        await db.end();
-    }
-
-    return response;
-}
-
 export const getLocales = async () => {
 
     const client = getDbConnection();

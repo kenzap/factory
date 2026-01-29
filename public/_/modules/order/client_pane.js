@@ -355,7 +355,7 @@ export class ClientPane {
         }
 
         verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
-            if (response && response.success) {
+            if (response && response.success && response.client.success) {
 
                 // console.log('Client verification response:', response);
 
@@ -409,9 +409,20 @@ export class ClientPane {
                     this.save(true);
                 }
 
-                toast(__html('Client details verified'), 'success');
+                toast('VAT status verified');
             } else {
-                toast(__html('Failed to verify client details'), 'error');
+
+                document.querySelector('alert-notification').innerHTML = /*html*/`
+                    <div class="alert alert-danger d-flex alert-dismissible mb-4" role="alert">
+                        <div class="align-items-center">
+                            <i class="bi bi-exclamation-triangle fs-5 me-2"></i>
+                            ${response.client.error ? __html(response.client.error) : __html('Failed to verify VAT status')}
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>`
+
+
+                toast('Failed to verify VAT status');
             }
         });
     }

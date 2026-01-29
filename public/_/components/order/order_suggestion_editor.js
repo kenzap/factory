@@ -50,9 +50,22 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
     });
 
     let lastKeyPressed = '';
+    let datalistOpen = false;
+
+    // Track when datalist opens/closes
+    input.addEventListener("focus", () => {
+        datalistOpen = true;
+    });
 
     input.addEventListener("keydown", (e) => {
         lastKeyPressed = e.key;
+
+        // Prevent arrow keys from navigating table cells when datalist is open
+        if (datalistOpen && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+            e.stopPropagation();
+            e.preventDefault();
+            return false;
+        }
 
         console.log('Key pressed in suggestion editor:', lastKeyPressed);
     });
@@ -62,6 +75,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
         const selectedValue = e.target.value;
         if (editorParams.suggestions.includes(selectedValue) && lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
             console.log('User selected from datalist:', selectedValue);
+            datalistOpen = false;
             // Handle the selection here
             success(selectedValue);
             editorParams.navigateToNextCell(cell);
@@ -75,6 +89,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
     document.body.appendChild(datalist);
 
     input.addEventListener("blur", () => {
+        datalistOpen = false;
         success(input.value);
         if (datalist.parentNode) {
             document.body.removeChild(datalist);
@@ -84,7 +99,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
     input.addEventListener("keydown", (e) => {
 
         if (e.key === "Enter") {
-
+            datalistOpen = false;
             success(input.value);
 
             // Navigate to next or previous cell based on shift key
@@ -99,6 +114,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
             }
 
         } else if (e.key === "Escape") {
+            datalistOpen = false;
             cancel();
             if (datalist.parentNode) {
                 document.body.removeChild(datalist);

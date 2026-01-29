@@ -3,7 +3,8 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
 import { getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
-import { __html, getDbConnection, getLocale } from '../_/helpers/index.js';
+import { __html, getDbConnection } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
 import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
 
@@ -103,7 +104,7 @@ function viewQuotationApi(app, logger) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
-            const locale = await getLocale(lang);
+            const locale = await getLocale(req.headers);
 
             // Additional options
             const options = {

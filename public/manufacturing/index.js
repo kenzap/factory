@@ -242,9 +242,25 @@ class Manufacturing {
         const container = document.getElementById('ordersContainer');
         container.innerHTML = '';
 
-        this.ordersSorted = { urgent: [], today: [], manufacturing: [], ready: [], issued: [] };
+        let ordersSorted = this.sortOrders(this.orders);
 
-        this.orders.forEach((order, index) => {
+        // Output orders in the chronological sequence from this.ordersSorted
+        // const orderSequence = ['urgent', 'manufacturing', 'ready', 'issued'];
+        Object.keys(ordersSorted).forEach(status => {
+            ordersSorted[status].forEach((order, index) => {
+                const orderElement = this.createOrderRow(order, index);
+                container.appendChild(orderElement);
+
+                this.refreshButtons(order._id);
+            });
+        });
+    }
+
+    sortOrders(orders) {
+
+        let ordersSorted = { urgent: [], today: [], manufacturing: [], ready: [], issued: [] };
+
+        orders.forEach((order, index) => {
 
             // Check if due_date is past the current time
             const dueDate = new Date(order.due_date);
@@ -254,23 +270,14 @@ class Manufacturing {
             order.isIssued = this.isOrderIssued(order);
             order.isToday = dueDate.getDate() === now.getDate()
 
-            if (order.isOverdue && !order.isReady && !order.isIssued) { order.status = "urgent"; this.ordersSorted.urgent.push(order); }
-            if (order.isReady && !order.isIssued) { order.status = "ready"; this.ordersSorted.ready.push(order); }
-            if (order.isReady && order.isIssued) { order.status = "issued"; this.ordersSorted.issued.push(order); }
-            if (!order.isOverdue && !order.isReady && !order.isIssued && !order.isToday) { order.status = "manufacturing"; this.ordersSorted.manufacturing.push(order); }
-            if (!order.isOverdue && !order.isReady && !order.isIssued && order.isToday) { order.status = "today"; this.ordersSorted.today.push(order); }
+            if (order.isOverdue && !order.isReady && !order.isIssued) { order.status = "urgent"; ordersSorted.urgent.push(order); }
+            if (order.isReady && !order.isIssued) { order.status = "ready"; ordersSorted.ready.push(order); }
+            if (order.isReady && order.isIssued) { order.status = "issued"; ordersSorted.issued.push(order); }
+            if (!order.isOverdue && !order.isReady && !order.isIssued && !order.isToday) { order.status = "manufacturing"; ordersSorted.manufacturing.push(order); }
+            if (!order.isOverdue && !order.isReady && !order.isIssued && order.isToday) { order.status = "today"; ordersSorted.today.push(order); }
         });
 
-        // Output orders in the chronological sequence from this.ordersSorted
-        // const orderSequence = ['urgent', 'manufacturing', 'ready', 'issued'];
-        Object.keys(this.ordersSorted).forEach(status => {
-            this.ordersSorted[status].forEach((order, index) => {
-                const orderElement = this.createOrderRow(order, index);
-                container.appendChild(orderElement);
-
-                this.refreshButtons(order._id);
-            });
-        });
+        return ordersSorted;
     }
 
     isOrderReady(order) {
@@ -403,10 +410,10 @@ class Manufacturing {
                                     <td class="d-none">${i + 1}</td>
                                     <td>
                                         <div class="work-buttons pt-1 me-5">
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('bending', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                         </div>
                                     </td> 
                                     <td>
@@ -470,10 +477,10 @@ class Manufacturing {
                             <td class="d-none">${i + 1}</td>
                             <td>
                                 <div class="work-buttons pt-1 me-5">
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('bending', '${order.id}','${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                 </div>
                             </td> 
                             <td>
@@ -1061,13 +1068,13 @@ class Manufacturing {
         }
     }
 
-    openWork(type, order_id, product_id, product_name, color, coating, qty) {
+    openWork(type, id, order_id, product_id, product_name, color, coating, qty) {
 
         color = color || '';
         coating = coating || '';
         qty = qty || 0;
 
-        new PreviewWorkLog({ type, order_id, product_id, product_name, color, coating, qty }, (response) => {
+        new PreviewWorkLog({ type, id, order_id, product_id, product_name, color, coating, qty }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;
@@ -1131,11 +1138,15 @@ class Manufacturing {
         const container = document.getElementById('ordersContainer');
         container.innerHTML = '';
 
-        orders.forEach((order, index) => {
-            const orderElement = this.createOrderRow(order, index);
-            container.appendChild(orderElement);
+        let ordersSorted = this.sortOrders(orders);
 
-            this.refreshButtons(order._id);
+        Object.keys(ordersSorted).forEach(status => {
+            ordersSorted[status].forEach((order, index) => {
+                const orderElement = this.createOrderRow(order, index);
+                container.appendChild(orderElement);
+
+                this.refreshButtons(order._id);
+            });
         });
 
         // Auto-expand details if only one order is shown

@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { __html, getDbConnection, getLocale, getSettings, priceFormat, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, getSettings, priceFormat, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * execDebitorReport
@@ -122,7 +123,7 @@ function execDebitorReportApi(app) {
 
         const data = _req.query;
 
-        const locale = await getLocale(_req.headers.locale);
+        const locale = await getLocale(_req.headers);
         const report = await execDebitorReport(data);
         const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "groups"]);
 

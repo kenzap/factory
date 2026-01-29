@@ -383,7 +383,7 @@ export const getUserSessionById = async (id) => {
 
         if (user) { user = JSON.parse(user); }
 
-        console.log(`Retrieved user session for user ID: ${id}`, user);
+        // console.log(`Retrieved user session for user ID: ${id}`, user);
 
         await redisClient.quit();
 
@@ -391,7 +391,8 @@ export const getUserSessionById = async (id) => {
 
     } catch (error) {
 
-        console.error('Error getting user session by ID:', error);
+        // console.error('Error getting user session by ID:', error);
+
         throw error;
     }
 }

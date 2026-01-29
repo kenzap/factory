@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * List orders
@@ -228,7 +229,7 @@ function getOrdersApi(app, logger) {
 
             console.log('/api/get-orders/', req.body.filters);
 
-            const locale = await getLocale(req.headers.locale);
+            const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};
             const orders = await getOrders(filters);
 

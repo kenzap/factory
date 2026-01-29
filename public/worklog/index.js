@@ -31,7 +31,10 @@ class WorkLog {
             dateTo: ""
         };
 
+        this.btnWorkLogHTML = `<i class="bi bi-plus-circle me-1"></i>`;
+
         this.record = {
+            id: new URLSearchParams(window.location.search).get('id') || "",
             order_id: new URLSearchParams(window.location.search).get('order_id') || "",
             product_id: new URLSearchParams(window.location.search).get('product_id') || "",
             product_name: unescape(new URLSearchParams(window.location.search).get('product_name')) || "",
@@ -40,6 +43,8 @@ class WorkLog {
             qty: new URLSearchParams(window.location.search).get('qty') || 0,
             type: new URLSearchParams(window.location.search).get('type') || '',
         }
+
+        // console.log('Worklog record initialized:', this.record);
 
         this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
 
@@ -163,17 +168,25 @@ class WorkLog {
                 type: document.querySelector('#type').value,
                 user_id: user_id,
                 order_id: this.record.order_id ? this.record.order_id : '',
+                order_ids: this.record.id ? [this.record.id] : []
             }
+
+            this.btnWorkLogHTML = e.currentTarget.innerHTML;
+            e.currentTarget.disabled = true;
+            e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
 
             // insert record
             createWorklogRecord(record, (response) => {
 
                 if (response.success) {
 
-                    console.log('Work log record created:', response);
                     this.data(); // Refresh data
                 } else {
-                    console.error('Error creating work log record:', response.error);
+
+                    document.querySelector('.btn-add-worklog-record').innerHTML = this.btnWorkLogHTML;
+                    document.querySelector('.btn-add-worklog-record').disabled = false;
+
+                    toast(__html(`Failed to create work log record: %1$s`, response.error));
                 }
             });
         });
@@ -205,6 +218,9 @@ class WorkLog {
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
 
+            // pre-select user if called from manufacturing journal
+            this.filters.user_id = this.record.id ? this.user.id : "";
+
             // session
             new Session();
             new Header({
@@ -223,6 +239,9 @@ class WorkLog {
             this.populateFilters();
 
             document.title = __html('Work Log');
+
+            document.querySelector('.btn-add-worklog-record').innerHTML = this.btnWorkLogHTML;
+            document.querySelector('.btn-add-worklog-record').disabled = false;
 
             this.firstLoad = false;
         });
@@ -292,10 +311,11 @@ class WorkLog {
                     <th style="width:160px;">
                        <select class="form-select form-select-sm border-0 bg-transparent p-0" id="filterEmployee" onchange="workLog.applyFilters()" ></select>
                     </th>
+                    <th>${__html('ID')}</th>
                     <th>${__html('Color')}</th>
                     <th>${__html('Coating')}</th>
-                    <th style="width:500px;">
-                        <div class="position-relative" style="width:500px;">
+                    <th style="">
+                        <div class="position-relative" style=";">
                             <input type="text" class="form-control form-control-sm- border-0 bg-transparent ms-4 pe-4" id="productFilter" onchange="workLog.applyFilters()" onkeyup="workLog.applyFilters()" placeholder="${__html('Search product')}" value="${this.filters.product}" style="width: auto; height:21px; padding: 0; padding-right: 1rem;">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y me-2" style="font-size: 0.8rem;"></i>
                         </div>
@@ -341,8 +361,11 @@ class WorkLog {
                 <td style="width:80px;">
                     <span class="time-badge">${this.formatTime(entry.date)}</span>
                 </td>
-                <td style="width:160px;">
+                <td style="width:160px;white-space:nowrap;">
                     <span class="employee-tag" >${this.getUserName(entry.user_id)}</span>
+                </td>
+                <td style="width:60px;white-space:nowrap;">
+                    ${this.formatIds(entry.order_ids)}
                 </td>
                 <td tyle="width:80px;">
                     ${entry.color || '-'}
@@ -350,7 +373,7 @@ class WorkLog {
                 <td tyle="width:80px;">
                     ${entry.coating || '-'}
                 </td>
-                <td style="width:500px;" ><span style="max-width:450px;">${entry.product_name || entry.title}</span></td>
+                <td style="" ><span style="">${entry.product_name || entry.title}</span></td>
                 <td>
                     <span class="badge ${this.getTypeClass(entry.type)} stage-badge">
                         ${__html(entry.type.charAt(0).toUpperCase() + entry.type.slice(1).replace('-', ' '))}
@@ -385,9 +408,6 @@ class WorkLog {
         };
 
         this.data();
-
-        // this.renderEntries();
-        // this.updateSummary();
     }
 
     updateSummary() {
@@ -439,7 +459,8 @@ class WorkLog {
 
                 if (!response.success) {
 
-                    console.error('Error deleting work log record:', response.error);
+                    toast(__html(`Failed to delete work log record: %1$s`, response.error));
+
                     return;
                 }
 
@@ -449,9 +470,6 @@ class WorkLog {
 
                 // Refresh data after deletion
                 this.data();
-
-                // this.renderEntries();
-                // this.updateSummary();
             });
         }
     }
@@ -461,6 +479,14 @@ class WorkLog {
 
         const user = this.users.find(u => u._id === userId);
         return user ? user.fname + ' ' + user.lname.charAt(0) : userId;
+    }
+
+    formatIds(ids) {
+
+        ids = ids ? ids.join(', ') : '-';
+        if (ids.length > 8) ids = ids.substring(0, 8) + '...';
+
+        return ids;
     }
 }
 

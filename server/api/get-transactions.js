@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * Get Transactions
@@ -168,7 +169,7 @@ function getTransactionsApi(app) {
     app.post('/api/get-transactions/', authenticateToken, async (req, res) => {
         try {
 
-            const locale = await getLocale(req.headers?.locale);
+            const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};
             const orders = await getTransactions(filters);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);

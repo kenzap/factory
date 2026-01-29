@@ -1,4 +1,5 @@
-import { getDbConnection, getLocale, getMinPrice, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getMinPrice, log, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 
 /**
  * 3D Factory Product Export API
@@ -16,7 +17,7 @@ async function exportProductsXML(lang) {
     await client.connect();
 
     try {
-        const locale = await getLocale(client, sid, lang);
+        const locale = await getLocale({ 'locale': lang, 'locale-checksum': '' });
         const state = { settings: {}, sk_settings: {} };
 
         // Get ecommerce settings

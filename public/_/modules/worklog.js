@@ -45,7 +45,7 @@ export const getHtml = (record) => {
                             <select class="form-select border-0" id="type" required></select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
-                            <button type="submit" class="btn btn-dark  border-0 btn-add-worklog-record w-100">
+                            <button type="submit" class="btn btn-dark border-0 btn-add-worklog-record w-100">
                                 <i class="bi bi-plus-circle me-1"></i>
                             </button>
                         </div>

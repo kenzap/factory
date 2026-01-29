@@ -111,8 +111,6 @@ async function verifyClient(data, logger) {
         success: true,
         pvncode: "",
         pvnStatus: "0",
-        vatNumber: "",
-        vatStatus: "0",
         statuss: "0",
         adress_full: "",
         client_update: false
@@ -134,6 +132,13 @@ async function verifyClient(data, logger) {
             output.type = get_type(js.name);
             output.firm = clean_firm(js.name);
             output.klients_new = clean_firm(js.name) + " " + output.type;
+        } else if (js.userError === "SERVICE_UNAVAILABLE") {
+            output.success = false;
+            output.error = "Service temporarily unavailable";
+            output.statuss = "0";
+        } else {
+            output.success = false;
+            output.statuss = "0";
         }
 
         return output;

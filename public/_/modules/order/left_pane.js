@@ -5,8 +5,8 @@ import { ClientContactSearch } from "../../components/order/client_contact_searc
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
-import { InvoiceCalculator } from '../../helpers/tax/calculator.js';
-import { extractCountryFromVAT } from '../../helpers/tax/index.js';
+import { InvoiceCalculator } from "../../helpers/tax/calculator.js";
+import { extractCountryFromVAT } from "../../helpers/tax/index.js";
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";

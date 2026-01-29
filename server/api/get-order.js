@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getSettings, sid } from '../_/helpers/index.js';
+import { getDbConnection, getSettings, sid } from '../_/helpers/index.js';
+import { getLocale } from '../_/helpers/locale.js';
 import { getClientDiscounts } from '../_/helpers/order.js';
 
 /**
@@ -70,7 +71,7 @@ function getOrderApi(app) {
 
     app.post('/api/get-order/', authenticateToken, async (_req, res) => {
 
-        const locale = await getLocale(_req.headers.locale);
+        const locale = await getLocale(_req.headers);
         let order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
         order.discounts = await getClientDiscounts(order.eid);
 

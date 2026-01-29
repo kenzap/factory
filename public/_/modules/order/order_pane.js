@@ -350,9 +350,6 @@ export class OrderPane {
                     headerSort: false,
                     formatter: function (cell) {
                         const i = cell.getRow().getPosition();
-                        const currentRowData = cell.getRow().getData();
-                        const currentCoating = currentRowData.coating || '';
-                        const currentColor = currentRowData.color || '';
 
                         return /*html*/`
                             <div class="dropdown tableActionsCont">
@@ -360,10 +357,11 @@ export class OrderPane {
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
                                 <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
-                                    <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${__html('CM')}</a></li>
-                                    <li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${currentColor}</a></li>
-                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-arrow-return-right"></i> ${currentCoating}</a></li>
-                                    <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-link-45deg"></i> ${__html('Sketch')}</a></li>
+                                    <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-check2-square"></i> ${__html('CM')}</a></li>
+                                    <li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-palette"></i> ${__html('Color')}</a></li>
+                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-droplet"></i> ${__html('Coating')}</a></li>
+                                    <li><a class="dropdown-item po update-discount" href="#" data-index="${i}"><i class="bi bi-percent"></i> ${__html('Discount')}</a></li>
+                                    <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-pencil-square"></i> ${__html('Sketch')}</a></li>
                                     <li><hr class="dropdown-divider"></li>
                                     <li><a class="dropdown-item po delete-row" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
                                 </ul>
@@ -392,8 +390,9 @@ export class OrderPane {
                             const currentRowData = cell.getRow().getData();
                             const currentCM = currentRowData.cm;
                             if (currentCM !== null && currentCM !== undefined) {
+
                                 // Update CM for all rows
-                                const allRows = self.table.getRows();
+                                const allRows = state.table.getRows();
                                 allRows.forEach(row => {
                                     row.update({ cm: currentCM });
                                 });
@@ -415,7 +414,7 @@ export class OrderPane {
                             if (currentCoating && currentCoating !== '-') {
 
                                 // Update coating for all rows except those with '-'
-                                const allRows = self.table.getRows();
+                                const allRows = state.table.getRows();
                                 allRows.forEach(row => {
                                     const rowData = row.getData();
                                     if (rowData.coating !== '-') {
@@ -444,18 +443,46 @@ export class OrderPane {
                             if (currentColor && currentColor !== '-') {
 
                                 // Update color for all rows except those with '-'
-                                const allRows = self.table.getRows();
+                                const allRows = state.table.getRows();
                                 allRows.forEach(row => {
                                     const rowData = row.getData();
                                     if (rowData.color !== '-') {
                                         row.update({ color: currentColor });
                                     }
+
+                                    const firstCell = row.getCells()[2]; // Get any cell from the row
+                                    updateCalculations(firstCell, state.settings);
                                 });
 
                                 // Sync items after update
                                 self.syncItems();
                                 self.refreshTable();
-                                // self.table.redraw(true);
+                                // state.table.redraw(true);
+
+                                bus.emit('order:table:refreshed', state.order);
+                            }
+                        }
+
+                        if (e.target.classList.contains('update-discount')) {
+
+                            e.preventDefault();
+                            const currentRowData = cell.getRow().getData();
+                            const currentDiscount = currentRowData.discount;
+                            if (currentDiscount !== null && currentDiscount !== undefined) {
+
+                                // Update discount for all rows
+                                const allRows = state.table.getRows();
+                                allRows.forEach(row => {
+                                    row.update({ discount: currentDiscount });
+
+                                    const firstCell = row.getCells()[2]; // Get any cell from the row
+                                    updateCalculations(firstCell, state.settings);
+                                });
+
+                                // Sync items after update
+                                self.syncItems();
+                                self.refreshTable();
+                                // state.table.redraw(true);
 
                                 bus.emit('order:table:refreshed', state.order);
                             }
@@ -470,7 +497,6 @@ export class OrderPane {
                                 // Sync items and trigger refresh
                                 self.syncItems();
                                 self.refreshTable();
-                                // self.table.redraw(true);
 
                                 bus.emit('order:table:refreshed', state.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
