@@ -1,11 +1,10 @@
 
 import express from 'express';
-import { getRequestCount, incrementRequestCount, isValidEmail, isValidPhone, sendOtpEmail, storeNonce, storeOtp } from '../_/helpers/auth.js';
+import { getRequestCount, incrementRequestCount, isUserAllowedPortalAccess, isValidEmail, isValidPhone, sendOtpEmail, storeNonce, storeOtp } from '../_/helpers/auth.js';
 import { eventBus } from '../_/helpers/extensions/events.js';
-import { log } from '../_/helpers/index.js';
 
 // API route for product export
-function getOtpApi(app) {
+function getOtpApi(app, logger) {
 
     // Add middleware to parse JSON bodies
     app.use(express.json());
@@ -39,7 +38,7 @@ function getOtpApi(app) {
 
             // Check rate limiting - allow max 3 OTP requests per email per 15 minutes
             const rateLimitKey = `otp_requests_${email_or_phone}`;
-            const maxRequests = 3;
+            const maxRequests = 10;
             const timeWindow = 15 * 60 * 1000; // 15 minutes
 
             // You'll need to implement getRequestCount and incrementRequestCount
@@ -61,6 +60,18 @@ function getOtpApi(app) {
 
             await incrementRequestCount(rateLimitKey, timeWindow);
 
+            // Check if user is allowed to access portal
+            const isAllowed = await isUserAllowedPortalAccess(email_or_phone);
+
+            if (!isAllowed) {
+                res.status(403).json({
+                    success: false,
+                    error: 'user is not allowed to access portal',
+                    code: 403
+                });
+                return;
+            }
+
             // Generate a 6-digit OTP
             const otp = Math.floor(100000 + Math.random() * 900000).toString();
             const nonce = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 12);
@@ -74,13 +85,14 @@ function getOtpApi(app) {
             if (isValidEmail(email_or_phone)) await sendOtpEmail(email_or_phone, otp);
             if (isValidPhone(email_or_phone)) eventBus.emit('otp.requested', { phone: email_or_phone, otp }); // await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
 
-            log(`OTP generated for ${email_or_phone} - ${otp}`);
+            logger.info(`OTP generated for ${email_or_phone} - ${otp}`);
 
             res.json({ success: true, code: 200, nonce: nonce, message: 'otp sent successfully' });
         } catch (err) {
 
+            logger.error(`Error requesting OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+
             res.status(500).json({ success: false, error: 'failed to request otp', code: 500 });
-            log(`Error requesting OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });
 }

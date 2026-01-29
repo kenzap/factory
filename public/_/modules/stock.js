@@ -44,18 +44,13 @@ export const getHtml = (response) => {
                         ${response?.user?.fname}${response?.user?.lname ? ' ' + response.user.lname.charAt(0) + '.' : ''}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/home/">
-                            <i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
-                        <li><a class="dropdown-item" href="/manufacturing/" >
-                            <i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
-                        <li><a class="dropdown-item" href="/worklog/">
-                            <i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
+                        <li><a class="dropdown-item" href="/home/" target="_self"><i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
+                        <li><a class="dropdown-item" href="/manufacturing/" target="_self"><i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
+                        <li><a class="dropdown-item" href="/worklog/" target="_self"><i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">
-                            <i class="bi bi-person me-2"></i>${__html('My Profile')}</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>${__html('My Profile')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger sign-out" href="#">
-                            <i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
+                        <li><a class="dropdown-item text-danger sign-out" href="#"><i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
                     </ul>
                 </div>
             </div>

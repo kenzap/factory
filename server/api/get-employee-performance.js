@@ -254,7 +254,7 @@ function getEmployeePerformanceApi(app) {
             const locales = await getLocales();
             const settings = await getSettings(["work_categories", "currency", "currency_symb", "currency_symb_loc", "price"]);
 
-            res.send({ success: true, settings, locale, locales, work_categories_stats, work_categories_by_day_stats, employee_performance, users: users, user: req.user });
+            res.send({ success: true, user: req?.user, settings, locale, locales, work_categories_stats, work_categories_by_day_stats, employee_performance, users: users });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

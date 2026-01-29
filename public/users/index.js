@@ -6,13 +6,14 @@ import { getHtml } from "../_/components/users/html.js";
 import { AddUser } from "../_/components/users/modal_add_user.js";
 import { EditUser } from "../_/components/users/modal_edit_user.js";
 import { ManageUserRights } from "../_/components/users/modal_manage_user_rights.js";
-import { __html, hideLoader, initBreadcrumbs, link, log, onClick, onKeyUp } from "../_/helpers/global.js";
+import { __html, hideLoader, initBreadcrumbs, link, log, onChange, onClick, onKeyUp } from "../_/helpers/global.js";
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * Users dashboard page
@@ -29,6 +30,7 @@ class Users {
         // query filters
         this.filters = {
             s: '',
+            portal: '',
             offset: 0,
             limit: 50,
         };
@@ -50,15 +52,19 @@ class Users {
             // show UI loader
             if (!response.success) return;
 
+            // hide UI loader
+            hideLoader();
+
             // init locale
             new Locale(response);
 
-            // hide UI loader
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'user_management')) return
 
             this.settings = response.settings;
             this.users = response.users.users;
             this.meta = response.users.meta;
+            this.user = response.user;
 
             // session
             new Session();
@@ -127,6 +133,9 @@ class Users {
                         <span>${user.email || ""}</span>
                     </td>
                     <td>
+                        <div class="badge ${!user.portal ? 'bg-dark d-none' : 'bg-primary'} fw-light">${!user.portal ? __html('No access') : __html('With access')}</div>
+                    </td>
+                    <td>
                         <div style="max-width: 300px;">${this.formatRoles(user.rights)}</div>
                     </td>
                     <td>
@@ -142,7 +151,7 @@ class Users {
                                         ${__html('Edit')}
                                     </a>
                                 </li>
-                                <li>
+                                <li class="${this.user?.rights.includes('user_rights_management') ? '' : 'd-none'}" >
                                     <a class="dropdown-item po action" href="#" data-type="access" data-id="${user._id}" data-index="${i}">
                                         <i class="bi bi-key me-2"></i>
                                         ${__html('Access')}
@@ -175,7 +184,7 @@ class Users {
 
             return rights.map(right => {
 
-                return `<div class="badge ${r[right].class} fw-light me-2">` + r[right].text + `</div>`;
+                return `<div class="badge ${r[right]?.class || 'bg-secondary'} fw-light me-2">` + (r[right]?.text || right) + `</div>`;
 
             }).join('');
 
@@ -227,6 +236,12 @@ class Users {
 
         // search products activation
         onClick('.bi-search', this.searchUserActivate);
+
+        // portal filter
+        onChange('.portal-filter', e => {
+            this.filters.portal = e.currentTarget.value;
+            this.init();
+        });
 
         // refresh state
         bus.on('user-updated', (data) => {

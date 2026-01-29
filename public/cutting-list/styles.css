@@ -1,4 +1,4 @@
-@import url("../_/helpers/global.css");
+@import url("../assets/css/global.css");
   
 #app{
     font-size: 18px;
@@ -11,7 +11,7 @@
 
 /* header */
 .search-container {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(113, 94, 94, 0.1);
     border-radius: 8px;
     padding: 10px;
     backdrop-filter: blur(10px);

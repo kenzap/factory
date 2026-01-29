@@ -28,7 +28,7 @@ class Home {
 
         getHome((response) => {
 
-            // console.log(response);
+            // console.log(response.user.rights);
 
             // show UI loader
             if (!response.success) return;
@@ -37,6 +37,10 @@ class Home {
             hideLoader();
 
             this.settings = response.settings;
+            this.user = response.user;
+            // this.user.rights.push('localization_management');
+
+            console.log(this.user.rights);
 
             // locale
             new Locale(response);
@@ -76,6 +80,7 @@ class Home {
                 id: 'orders',
                 title: __html('Orders'),
                 desc: __html('Manage and create new orders, generate order reports.'),
+                visible: this.user?.rights.includes('order_management'),
                 icon: '<i class="bi bi-bookmark-check me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -94,6 +99,7 @@ class Home {
                 id: 'factory',
                 title: __html('Factory'),
                 desc: __html('Manage manufacturing processes, prepare orders for cutting.'),
+                visible: this.user?.rights.includes('manufacturing_journal') || this.user?.rights.includes('cutting_journal') || this.user?.rights.includes('work_log_journal'),
                 icon: '<i class="bi bi-box-seam me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -117,6 +123,7 @@ class Home {
                 id: 'finance',
                 title: __html('Finance'),
                 desc: __html('Manage payments and transactions, generate reports.'),
+                visible: this.user?.rights.includes('finance_management'),
                 icon: '<i class="bi bi-bank me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -130,6 +137,7 @@ class Home {
                 id: 'entities',
                 title: __html('Clients'),
                 desc: __html('Manage corporate and private entities, individual records.'),
+                visible: this.user?.rights.includes('client_management'),
                 icon: '<i class="bi bi-layout-wtf me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -143,6 +151,7 @@ class Home {
                 id: 'warehouse',
                 title: __html('Warehouse'),
                 desc: __html('Manage product listings, inventory, prices, and suppliers.'),
+                visible: this.user?.rights.includes('warehouse_management'),
                 icon: '<i class="bi bi-boxes me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -166,6 +175,7 @@ class Home {
                 id: 'settings',
                 title: __html('Settings'),
                 desc: __html('Modify tax and other settings, configure templates and notifications.'),
+                visible: this.user?.rights.includes('settings_management'),
                 icon: '<i class="bi bi-gear me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -179,6 +189,7 @@ class Home {
                 id: 'analytics',
                 title: __html('Analytics'),
                 desc: __html('Generate sales reports, view top sellings products.'),
+                visible: this.user?.rights.includes('analytics_access'),
                 icon: '<i class="bi bi-graph-up me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -192,6 +203,7 @@ class Home {
                 id: 'portal',
                 title: __html('Portal'),
                 desc: __html('Adjust public portal settings, create announcements.'),
+                visible: this.user?.rights.includes('portal_management'),
                 icon: '<i class="bi bi-pip me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -205,6 +217,7 @@ class Home {
                 id: 'localization',
                 title: __html('Localization'),
                 desc: __html('Localize any part of your portal or landing page.'),
+                visible: this.user?.rights.includes('localization_management'),
                 icon: '<i class="bi bi-translate me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -218,6 +231,7 @@ class Home {
                 id: 'media',
                 title: __html('Files'),
                 desc: __html('View your file library and manage cloud storage.'),
+                visible: this.user?.rights.includes('file_management'),
                 icon: '<i class="bi bi-database me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -231,6 +245,7 @@ class Home {
                 id: 'access',
                 title: __html('Access & Security'),
                 desc: __html('Grant API access or revoke existing tokens to this portal.'),
+                visible: this.user?.rights.includes('access_management'),
                 icon: '<i class="bi bi-shield-lock me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -244,6 +259,7 @@ class Home {
                 id: 'users',
                 title: __html('Users'),
                 desc: __html('Grant new user or revoke existing user access to this portal.'),
+                visible: this.user?.rights.includes('user_management'),
                 icon: '<i class="bi bi-person me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
@@ -266,6 +282,9 @@ class Home {
                 </div>
                 <div class="row">
                 ${this.blocks.map((block) => {
+
+            if (!block.visible) return '';
+
             return `
                         <div class="col-lg-4 grid-margin stretch-card mb-4">
                             <div class="card border-white shadow-sm p-sm-2 anm br" >

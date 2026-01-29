@@ -1,5 +1,5 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { getDbConnection, getLocale, getLocales, getSettings, log, sid } from '../_/helpers/index.js';
+import { getDbConnection, getLocale, getLocales, getSettings, sid } from '../_/helpers/index.js';
 
 /**
  * Get Metal Log
@@ -95,7 +95,7 @@ async function getMetalLog(filters) {
 }
 
 // API route for product export
-function getMetalLogApi(app) {
+function getMetalLogApi(app, logger) {
 
     app.post('/api/get-metal-log/', authenticateToken, async (req, res) => {
         try {
@@ -105,11 +105,12 @@ function getMetalLogApi(app) {
             const locales = await getLocales();
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "system_of_units"]);
 
-            res.send({ success: true, settings, locale, locales, records: records, user: req.user });
+            res.send({ success: true, user: req.user, settings, locale, locales, records: records });
         } catch (err) {
 
+            logger.error(`Error: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+
             res.status(500).json({ error: 'failed to get records' });
-            log(`Error: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });
 }

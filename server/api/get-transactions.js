@@ -173,7 +173,7 @@ function getTransactionsApi(app) {
             const orders = await getTransactions(filters);
             const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc"]);
 
-            res.send({ success: true, settings, orders, locale });
+            res.send({ success: true, user: req.user, settings, orders, locale });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

@@ -7,6 +7,7 @@ import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 // Main Product List Component
 class ProductList extends Component {
@@ -122,13 +123,17 @@ class ProductList extends Component {
 
             const response = await this.productService.getProducts(params);
 
-            console.log(response);
+            // console.log(response);
+
+            hideLoader();
 
             // init locale
             new Locale(response);
 
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'products_management')) return
 
+            // initialize session
             if (this.state.firstLoad) {
 
                 document.querySelector('#app').innerHTML = this.getTemplate();

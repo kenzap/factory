@@ -11,6 +11,7 @@ import { TabGeneral } from "../_/modules/settings/tab_general.js";
 import { TabParameters } from "../_/modules/settings/tab_parameters.js";
 import { TabTemplates } from "../_/modules/settings/tab_templates.js";
 import { getHtml } from "../_/modules/settings/tabs.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /** 
  * Settings page of the dashboard.
@@ -42,6 +43,9 @@ class Settings {
 
             // init locale
             new Locale(response);
+
+            // check if authorized
+            if (!isAuthorized(response, 'settings_management')) return
 
             // initialize session
             new Session();

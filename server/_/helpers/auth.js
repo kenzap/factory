@@ -30,6 +30,9 @@ export const authenticateToken = async (req, res, next) => {
             return res.status(403).json({ code: 403, error: 'unauthorised' });
         }
 
+        // Merge session data with JWT user data
+        req.user = { ...req.user, ...session };
+
         next();
     });
 };
@@ -298,6 +301,24 @@ export const getUserById = async (id) => {
     }
 }
 
+// Check if user is allowed portal access
+export const isUserAllowedPortalAccess = async (email_or_phone) => {
+
+    let user = null;
+
+    if (isValidEmail(email_or_phone)) {
+        user = await getUserByEmail(email_or_phone);
+    } else if (isValidPhone(email_or_phone)) {
+        user = await getUserByPhone(email_or_phone);
+    }
+
+    if (user && user.portal && user.portal !== '') {
+        return true;
+    }
+
+    return false;
+}
+
 // Cache user session
 export const cacheUserSession = async (user) => {
 
@@ -309,7 +330,7 @@ export const cacheUserSession = async (user) => {
         const key = `user:${user.id}`;
 
         // Store user session in Redis with a TTL of 1 hour
-        await redisClient.setEx(key, 3600 * 24 * 7, JSON.stringify(user));
+        await redisClient.setEx(key, 3600 * 10, JSON.stringify(user));
 
         await redisClient.quit();
 
@@ -341,6 +362,7 @@ export const clearUserSession = async (id) => {
     } catch (error) {
 
         console.error('Error clearing user session:', error);
+
         throw error;
     }
 }
@@ -360,6 +382,8 @@ export const getUserSessionById = async (id) => {
         user = await redisClient.get(key) || "";
 
         if (user) { user = JSON.parse(user); }
+
+        console.log(`Retrieved user session for user ID: ${id}`, user);
 
         await redisClient.quit();
 

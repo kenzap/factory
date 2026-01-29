@@ -11,6 +11,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/supplies.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * Supplies Log
@@ -231,11 +232,14 @@ class Supplies {
             // show UI loader
             if (!response.success) return;
 
+            // hide UI loader
+            hideLoader();
+
             // init locale
             new Locale(response);
 
-            // hide UI loader
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'warehouse_management')) return
 
             this.user = response.user;
             this.users = response.users;

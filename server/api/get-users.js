@@ -41,6 +41,13 @@ async function getUsers(filters = { limit: 50, s: '' }) {
             userParams.push(`%${filters.s}%`);
         }
 
+        // Portal filter
+        if (filters.portal && filters.portal === 'no-access') {
+            userQuery += ` AND (js->'data'->>'portal' IS NULL OR js->'data'->>'portal' = '') `;
+        } else if (filters.portal && filters.portal === 'access') {
+            userQuery += ` AND (js->'data'->>'portal' IS NOT NULL AND js->'data'->>'portal' <> '') `;
+        }
+
         // Pagination
         const limit = Number.isInteger(filters.limit) && filters.limit > 0 ? filters.limit : 50;
         const offset = Number.isInteger(filters.offset) && filters.offset > 0 ? filters.offset : 0;
@@ -62,6 +69,8 @@ async function getUsers(filters = { limit: 50, s: '' }) {
             SELECT COUNT(_id) FROM data
             WHERE ref = $1 AND sid = $2
             ${filters.s && filters.s.trim() !== '' ? ` AND (unaccent(js->'data'->>'email') ILIKE unaccent($3) OR (unaccent(js->'data'->>'fname') ILIKE unaccent($3) OR unaccent(js->'data'->>'lname') ILIKE unaccent($3))) ` : ''}
+            ${filters.portal && filters.portal === 'no-access' ? ` AND (js->'data'->>'portal' IS NULL OR js->'data'->>'portal' = '') ` : ''}
+            ${filters.portal && filters.portal === 'access' ? ` AND (js->'data'->>'portal' IS NOT NULL AND js->'data'->>'portal' <> '') ` : ''}
         `;
         const countParams = userParams.slice(0, filters.s && filters.s.trim() !== '' ? 3 : 2);
 
@@ -82,8 +91,6 @@ async function getUsers(filters = { limit: 50, s: '' }) {
 function getUsersApi(app) {
 
     app.post('/api/get-users/', authenticateToken, async (_req, res) => {
-
-        // console.log('/api/get-users/', _req.body.filters);
 
         const locale = await getLocale(_req.headers.locale);
         const settings = await getSettings();

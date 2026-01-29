@@ -8,6 +8,7 @@ import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * This page displays a list of orders for cutting based on selected color and coating.
@@ -49,11 +50,14 @@ class CuttingList {
             // show UI loader
             if (!response.success) return;
 
+            // hide UI loader
+            hideLoader();
+
             // init locale
             new Locale(response);
 
-            // hide UI loader
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'cutting_journal')) return
 
             this.user = response.user;
             this.settings = response.settings;
@@ -168,7 +172,7 @@ class CuttingList {
                             ${order.items ? order.items.map((item, index) => `
                             <div class="order-item ${this.getStatusClass(item)}">
                                 <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
-                                <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}">${order.id}</a></span>
+                                <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}" target="/manufacturing/">${order.id}</a></span>
                                 <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
                                 <span class="item-dimensions">
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 

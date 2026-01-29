@@ -49,20 +49,14 @@ export const getHtml = (response) => {
                         ${response?.user?.fname ? response?.user?.fname : ""}${response?.user?.lname ? ' ' + response.user.lname.charAt(0) + '.' : ''}
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('stock', '/stock/')">
-                            <i class="bi bi-boxes me-2"></i>${__html('Stock')}</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('cutting', '/cutting/')">
-                            <i class="bi bi-scissors me-2"></i>${__html('Cutting')}</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('metallog', '/metallog/')">
-                            <i class="bi bi-lightning-charge me-2"></i>${__html('Metal')}</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('triangle', '/triangle/')">
-                            <i class="bi bi-triangle me-2"></i>${__html('Triangle')}</a></li>
+                        <li><a class="dropdown-item" href="/stock/" target="_self"><i class="bi bi-boxes me-2"></i>${__html('Stock')}</a></li>
+                        <li><a class="dropdown-item" href="/cutting/" target="_self"><i class="bi bi-scissors me-2"></i>${__html('Cutting')}</a></li>
+                        <li><a class="dropdown-item" href="/metallog/" target="/metallog/" ><i class="bi bi-lightning-charge me-2"></i>${__html('Metal')}</a></li>
+                        <li><a class="dropdown-item" href="/triangle/" target="/triangle/"><i class="bi bi-triangle me-2"></i>${__html('Triangle')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#" onclick="manufacturing.openWindow('worklog', '/worklog/')">
-                            <i class="bi bi-journal-text me-2"></i>${__html('Work Log')}</a></li>
+                        <li><a class="dropdown-item" href="/worklog/" target="/worklog/"><i class="bi bi-journal-text me-2"></i>${__html('Work Log')}</a></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger sign-out" href="#">
-                            <i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
+                        <li><a class="dropdown-item text-danger sign-out" href="#"><i class="bi bi-box-arrow-right me-2"></i>${__html('Log out')}</a></li>
                     </ul>
                 </div>
             </div>

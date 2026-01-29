@@ -35,6 +35,15 @@ export const getHtml = () => {
                                                         <span>${__html("Name")}</span>
                                                     </th>
                                                     <th class="align-middle">${__html("Email")}</th>
+                                                    <th class="align-middle">
+                                                        <div class="position-relative d-flex flex-column">
+                                                            <select class="form-select portal-filter ms-0 form-select-sm text-start fs-6 fw-bold border-0 bg-transparent ms-0 ps-0 py-0" style="max-width: 150px;">
+                                                                <option value="">${__html('Portal')}</option>
+                                                                <option value="no-access">${__html('No access')}</option>
+                                                                <option value="access">${__html('With access')}</option>
+                                                            </select>
+                                                        </div>
+                                                    </th>
                                                     <th class="align-middle">${__html("Rights")}</th>
                                                     <th class="align-middle">${__html("Notes")}</th>
                                                     <th class="align-middle"></th>

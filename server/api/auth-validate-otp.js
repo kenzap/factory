@@ -1,10 +1,9 @@
 
 import express from 'express';
 import { cacheUserSession, deleteOtpByEmailOrPhone, generateTokens, getOtpByEmailOrPhone, getRequestCount, getUserByEmail, getUserByPhone, incrementRequestCount, isValidEmail, isValidPhone } from '../_/helpers/auth.js';
-import { log } from '../_/helpers/index.js';
 
 // API route for product export
-function validateOtpApi(app) {
+function validateOtpApi(app, logger) {
 
     // Add middleware to parse JSON bodies
     app.use(express.json());
@@ -69,7 +68,7 @@ function validateOtpApi(app) {
 
             await deleteOtpByEmailOrPhone(email_or_phone);
 
-            log(`OTP validated for ${email_or_phone}`);
+            logger.info(`OTP validated for ${email_or_phone}`);
 
             let user = null;
 
@@ -83,7 +82,7 @@ function validateOtpApi(app) {
                 return;
             }
 
-            log(`User found`, user);
+            logger.info(`User validated`, user);
 
             // cache user session
             await cacheUserSession(user);
@@ -110,8 +109,9 @@ function validateOtpApi(app) {
             });
         } catch (err) {
 
+            logger.error(`Error validating OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+
             res.status(500).json({ success: false, error: 'failed to request otp', code: 500 });
-            log(`Error validating OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
         }
     });
 }

@@ -12,6 +12,7 @@ import { Locale } from "../_/modules/locale.js";
 import { getHtml } from "../_/modules/metallog.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * MetalLog
@@ -378,6 +379,9 @@ class MetalLog {
 
             // init locale
             new Locale(response);
+
+            // check if authorized
+            if (!isAuthorized(response, 'metal_stock_management')) return
 
             // hide UI loader
             hideLoader();

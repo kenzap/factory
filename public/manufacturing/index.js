@@ -12,6 +12,7 @@ import { getHtml } from "../_/modules/manufacturing/html.js";
 import { Inventory } from "../_/modules/manufacturing/inventory.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /** 
  * Manufacturing log. 
@@ -161,9 +162,14 @@ class Manufacturing {
             // hide UI loader
             hideLoader();
 
+            // check if authorized
+            if (!isAuthorized(response, 'manufacturing_journal')) return
+
+            // cache variables
             this.response = response;
             this.settings = response.settings;
             this.orders = response.orders.records;
+            this.user = response.user;
 
             // session
             new Session();
@@ -176,6 +182,7 @@ class Manufacturing {
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
             });
 
+            // set page title
             document.title = __html('Manufacturing');
 
             this.view();
@@ -395,11 +402,11 @@ class Manufacturing {
                                 <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                                     <td class="d-none">${i + 1}</td>
                                     <td>
-                                        <div class="work-buttons">
-                                            <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                            <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                            <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                            <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                        <div class="work-buttons pt-1 me-5">
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                         </div>
                                     </td> 
                                     <td>
@@ -462,11 +469,11 @@ class Manufacturing {
                         <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                             <td class="d-none">${i + 1}</td>
                             <td>
-                                <div class="work-buttons">
-                                    <button class="work-btn btn btn-outline-primary btn-sm" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                    <button class="work-btn btn btn-outline-success btn-sm" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                    <button class="work-btn btn btn-outline-warning btn-sm" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                    <button class="work-btn btn btn-outline-info btn-sm" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
+                                <div class="work-buttons pt-1 me-5">
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('marking', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('bending', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('pipe-forming', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
+                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
                                 </div>
                             </td> 
                             <td>
@@ -535,7 +542,7 @@ class Manufacturing {
                                     </th>
                                     <th>${__html('Unit')}</th>
                                     <th>${__html('Quantity')}</th>
-                                    <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp-&nbsp;&nbsp;&nbsp&nbsp;S</th>
+                                    <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;S</th>
                                     <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Stock')}</th>
                                     <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Taken')}</th>
                                     <th class="text-end">${__html('Action')}</th>
@@ -546,11 +553,11 @@ class Manufacturing {
                                 <tr class="order-item-row-empty d-none">
                                     <td class="d-none">0</td>
                                     <td class="align-middle">
-                                        <div class="work-buttons">
-                                            <button class="work-btn btn btn-outline-primary btn-sm" >M</button>
-                                            <button class="work-btn btn btn-outline-success btn-sm" >L</button>
-                                            <button class="work-btn btn btn-outline-warning btn-sm" >K</button>
-                                            <button class="work-btn btn btn-outline-info btn-sm" >N</button>
+                                        <div class="work-buttons pt-1 me-5">
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >M</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >L</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >K</button>
+                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" >N</button>
                                         </div>
                                     </td>
                                     <td colspan="6" class="text-center align-middle">

@@ -10,6 +10,7 @@ import { Footer } from "../_/modules/footer.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * Transaction Log
@@ -87,6 +88,10 @@ class Transactions {
                         if (this.firstLoad) {
                             this.settings = response.settings;
                             new Locale(response);
+
+                            // check if authorized
+                            if (!isAuthorized(response, 'payments_journal')) return
+
                             new Session();
                             new Footer(response);
                             this.header();

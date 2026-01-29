@@ -63,7 +63,8 @@ export class EditUser {
                 <div class="mb-3 form_cont">
                     <label class="form-label" for="userPortal">${__html('Portal')}</label>
                     <select class="form-control" type="select" id="userPortal" autocomplete="off">  
-                        <option value="home" ${this.user.portal == "home" ? "selected" : ""}>${__html('Default')}</option>
+                        <option value="" ${this.user.portal == "" ? "selected" : ""}>${__html('No access')}</option>
+                        <option value="home" ${this.user.portal == "home" ? "selected" : ""}>${__html('Home')}</option>
                         <option value="manufacturing" ${this.user.portal == "manufacturing" ? "selected" : ""}>${__html('Manufacturing')}</option>
                         <option value="cutting" ${this.user.portal == "cutting" ? "selected" : ""}>${__html('Cutting')}</option>
                         <option value="stock" ${this.user.portal == "stock" ? "selected" : ""}>${__html('Inventory')}</option>

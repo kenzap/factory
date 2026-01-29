@@ -7,6 +7,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { getHtml } from "../_/modules/stock.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
  * Stock log.
@@ -210,11 +211,14 @@ class Stock {
             // show UI loader
             if (!response.success) return;
 
+            // hide UI loader
+            hideLoader();
+
             // init locale
             new Locale(response);
 
-            // hide UI loader
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'warehouse_management')) return
 
             this.settings = response.settings;
             this.products = response.products;

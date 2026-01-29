@@ -185,9 +185,9 @@ body {
 
 .work-btn {
     width: 42px;
-    height: 42px;
-    border-radius: 50%;
-    border: none;
+    height: 32px;
+    /* border-radius: 50%; */
+    /* border: none; */
     font-size: 0.8rem;
     font-weight: bold;
     transition: all 0.3s ease;

@@ -6,6 +6,7 @@ import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**  
  * Main navigation menu page of the dashboard.
@@ -41,6 +42,9 @@ class Cutting {
 
             // init locale
             new Locale(response);
+
+            // check if authorized
+            if (!isAuthorized(response, 'cutting_journal')) return
 
             // session
             new Session();

@@ -1,5 +1,3 @@
-// import { Auth } from "../../_/modules/auth.js";
-
 export const CDN = "https://cdn.kenzap.cloud";
 export const FILES = "https://render.factory.app.kenzap.cloud";
 export const API_KEY = "";

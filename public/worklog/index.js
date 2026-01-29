@@ -9,6 +9,7 @@ import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 import { getHtml } from "../_/modules/worklog.js";
 
 /**
@@ -188,11 +189,14 @@ class WorkLog {
             // show UI loader
             if (!response.success) return;
 
+            // hide UI loader
+            hideLoader();
+
             // init locale
             new Locale(response);
 
-            // hide UI loader
-            hideLoader();
+            // check if authorized
+            if (!isAuthorized(response, 'work_log_journal')) return
 
             this.user = response.user;
             this.users = response.users;
