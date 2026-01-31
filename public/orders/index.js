@@ -2,7 +2,7 @@ import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getOrders } from "../_/api/get_orders.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
-import { __html, hideLoader, log, openLink, priceFormat, toast } from "../_/helpers/global.js";
+import { __html, hideLoader, log, priceFormat, toast } from "../_/helpers/global.js";
 import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
@@ -263,9 +263,6 @@ class Orders {
 
         this.firstLoad = false;
     }
-
-    // open link
-    openLink = (url) => openLink(url);
 
     // define table columns
     columns = () => {

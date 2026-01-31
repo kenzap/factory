@@ -12,6 +12,7 @@ export class PreviewWorkLog {
         this.color = o.color;
         this.coating = o.coating;
         this.qty = o.qty;
+        this.user_id = o.user_id;
 
         this.cb = cb;
 
@@ -35,7 +36,7 @@ export class PreviewWorkLog {
 
         this.modal.querySelector(".modal-body").innerHTML = `
             <div class="form-cont" style="height: 100vh;">
-                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&id=' + escape(this.id + "") + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&mini=true'}"></iframe>
+                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&id=' + escape(this.id + "") + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&user_id=' + this.user_id + '&mini=true'}"></iframe>
             </div>`;
 
         this.modal.querySelector(".modal-header").classList.add('bg-light');

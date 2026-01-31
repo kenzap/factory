@@ -466,7 +466,7 @@ export class LeftPane {
         state.order.total = _totals.totalTaxableAmount;
         state.order.grand_total = _totals.totalInvoiceAmount;
 
-        console.log('Summary:', state.order);
+        // console.log('Summary:', state.order);
 
         document.querySelector('order-summary').innerHTML = this.getInvoiceTotals(state.settings, state.order, state.locale, _totals);
     }

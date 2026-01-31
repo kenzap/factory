@@ -28,7 +28,8 @@ class WorkLog {
             user_id: "",
             type: "",
             dateFrom: "",
-            dateTo: ""
+            dateTo: "",
+            user_id: "",
         };
 
         this.btnWorkLogHTML = `<i class="bi bi-plus-circle me-1"></i>`;
@@ -43,6 +44,12 @@ class WorkLog {
             qty: new URLSearchParams(window.location.search).get('qty') || 0,
             type: new URLSearchParams(window.location.search).get('type') || '',
         }
+
+        this.filters.user_id = new URLSearchParams(window.location.search).get('user_id') || "";
+
+        // pre-select user if called from manufacturing journal
+        // if (!this.filters.user_id) this.filters.user_id = this.record.id ? this.user.id : "";
+        // if (!this.filters.user_id) this.filters.user_id = this.record.id ? this.user.id : "";
 
         // console.log('Worklog record initialized:', this.record);
 
@@ -156,6 +163,9 @@ class WorkLog {
 
             let user_id = document.getElementById('filterEmployee').value || this.user.id;
 
+            // console.log('Selected user ID for work log record:', document.getElementById('filterEmployee').value, this.user.id);
+            // return;
+
             const record = {
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
@@ -217,9 +227,6 @@ class WorkLog {
             this.records = response.records;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
-
-            // pre-select user if called from manufacturing journal
-            this.filters.user_id = this.record.id ? this.user.id : "";
 
             // session
             new Session();

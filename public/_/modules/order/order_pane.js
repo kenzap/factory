@@ -1,4 +1,4 @@
-import { updateCalculations } from "../../components/order/order_calculations.js";
+import { refreshRowCalculations } from "../../components/order/order_calculations.js";
 import { numberEditor } from "../../components/order/order_number_editor.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
 import { sketchEditor } from "../../components/order/order_sketch_editor.js";
@@ -182,29 +182,31 @@ export class OrderPane {
                 },
                 {
                     title: "",
-                    field: "sketch",
+                    field: "sketch_attached",
                     width: 40,
                     headerSort: false,
                     formatter: function (cell) {
                         const value = cell.getValue() || '';
                         const row = cell.getRow().getData();
 
-                        row.sketch_attached = true;
+                        // row.sketch_attached = true;
 
-                        if (row.sketch_attached) return /*html*/`
+                        console.log('sketch_attached:', row.sketch_attached);
+
+                        return /*html*/`
                             <div class="d-flex align-items-center">
-                                <span class="flex-grow-1">${value}</span>
-                                <i class="bi bi-link-45deg text-primary fs-5 po product-edit-icon" 
+                                <i class="bi bi-link-45deg ${row.sketch_attached == true ? 'text-primary' : 'text-dark'} fs-5 po product-edit-icon" 
                                    style="cursor:pointer;z-index:10;" 
                                    data-row-index="${cell.getRow().getPosition()}"></i>
                             </div>
                         `;
 
-                        if (!row.sketch_attached) return value;
+                        // if (!row.sketch_attached) return value;
                     },
                     cellClick: function (e, cell) {
                         if (e.target.classList.contains('product-edit-icon')) {
                             e.preventDefault();
+
                             console.log('Edit sketch icon clicked for row:', cell.getRow().getData());
                             // cell.edit();
                             sketchEditor(cell, state.settings, state.order, (data) => {
@@ -213,6 +215,8 @@ export class OrderPane {
                                 self.syncItems();
                                 self.refreshTable();
                                 // self.table.redraw(true);
+
+                                refreshRowCalculations(cell, state.settings);
 
                                 bus.emit('order:table:refreshed', state.order);
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
@@ -427,7 +431,7 @@ export class OrderPane {
 
                                 allRows.forEach(row => {
                                     const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    updateCalculations(firstCell, state.settings);
+                                    refreshRowCalculations(firstCell, state.settings);
                                 });
 
                                 self.syncItems();
@@ -451,7 +455,7 @@ export class OrderPane {
                                     }
 
                                     const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    updateCalculations(firstCell, state.settings);
+                                    refreshRowCalculations(firstCell, state.settings);
                                 });
 
                                 // Sync items after update
@@ -476,7 +480,7 @@ export class OrderPane {
                                     row.update({ discount: currentDiscount });
 
                                     const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    updateCalculations(firstCell, state.settings);
+                                    refreshRowCalculations(firstCell, state.settings);
                                 });
 
                                 // Sync items after update
@@ -525,7 +529,7 @@ export class OrderPane {
             console.log('Cell edited:', cell.getField(), cell.getValue());
 
             // You can perform specific actions based on the field or value
-            updateCalculations(cell, state.settings);
+            refreshRowCalculations(cell, state.settings);
 
             this.syncItems();
             this.refreshTable();

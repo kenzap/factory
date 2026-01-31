@@ -1,4 +1,3 @@
-
 import { sid } from './index.js';
 
 /**
@@ -155,7 +154,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
         }
     });
 
-    // console.log('C Updated var_price:', var_price);
+    // console.log('var_price:', var_price);
 
     // update product stock
     const updateQuery = `

@@ -56,7 +56,7 @@ function findRegimeByTaxId(taxId, country) {
 
     // console.log('findRegimeByTaxId Finding regime for tax ID:', taxId, 'in country:', country);
 
-    for (const regime of Object.values(TAX_REGIMES)) {
+    for (const [key, regime] of Object.entries(TAX_REGIMES)) {
         if (regime.country === country && regime.matcher && regime.matcher(taxId)) {
             return regime;
         }
@@ -71,6 +71,7 @@ function getStandardRegime(countryCode) {
     const country = EU_COUNTRIES[countryCode];
     if (!country) {
         return {
+            id: 'EU_INTRA_COMMUNITY',
             localId: null,
             peppolCode: 'S',
             rate: 0,
@@ -83,6 +84,7 @@ function getStandardRegime(countryCode) {
     }
 
     return {
+        id: countryCode + '_STANDARD',
         localId: null,
         peppolCode: 'S',
         rate: country.standard,
@@ -147,7 +149,7 @@ export function calculateTax(baseAmount, regime) {
     if (!regime || regime.rate === 0) {
         return 0;
     }
-    return Math.round((baseAmount * (regime.rate / 100)) * 100) / 100;
+    return Math.round((baseAmount * (regime.rate / 100)) * 10000) / 10000;
 }
 
 
@@ -165,22 +167,4 @@ export function extractCountryFromVAT(vatNumber) {
         'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'];
 
     return euCountries.includes(countryCode) ? countryCode : null;
-}
-
-/**
- * Converts a price value to a properly formatted number with two decimal places.
- * 
- * @param {number|string} price - The price value to convert. Can be a number or string representation of a number.
- * @returns {number} The converted price rounded to 2 decimal places. Returns 0 if input is falsy.
- * 
- * @example
- * makeNumber(10.456) // returns 10.46
- * makeNumber("5.789") // returns 5.79
- * makeNumber(null) // returns 0
- * makeNumber(undefined) // returns 0
- */
-export function makeNumber(price) {
-    price = price || 0;
-    price = parseFloat(price);
-    return Math.round(price * 100) / 100;
 }

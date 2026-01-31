@@ -1,7 +1,7 @@
 // calculator.js
 // Simplified calculator using unified tax regimes
 
-import { calculateTax, makeNumber, resolveRegime } from './index.js';
+import { calculateTax, resolveRegime } from './index.js';
 
 /**
  * Invoice Calculator
@@ -24,6 +24,9 @@ export class InvoiceCalculator {
         this.taxGroups.clear();
 
         if (!this.order.items) this.order.items = [];
+
+        let tax_total = 0;
+        let taxable_amount = 0;
 
         this.order.items.forEach(item => {
             if (!item.total || item.total === 0) return;
@@ -51,8 +54,12 @@ export class InvoiceCalculator {
             item.tax_legal = regime.legalText ? regime.legalText(locale) : null;
 
             // Calculate tax
-            const lineTotal = makeNumber(item.total);
+            const lineTotal = item.total;
             const taxAmount = calculateTax(lineTotal, regime);
+
+            tax_total += taxAmount;
+            taxable_amount += lineTotal;
+            // console.log('Line Total:', lineTotal, 'Tax Amount:', taxAmount);
 
             // Group by display + legal reference
             const groupKey = `${regime.display}_${regime.legalRef || 'none'}`;
@@ -76,6 +83,8 @@ export class InvoiceCalculator {
             group.items.push(item);
         });
 
+        // console.log('Total Tax:', tax_total, taxable_amount);
+
         return this.generateTotals();
     }
 
@@ -93,12 +102,12 @@ export class InvoiceCalculator {
             totalTaxAmount += group.taxAmount;
         });
 
-        const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 100) / 100;
+        const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 1000) / 1000;
 
         return {
             taxBreakdown,
-            totalTaxableAmount: Math.round(totalTaxableAmount * 100) / 100,
-            totalTaxAmount: Math.round(totalTaxAmount * 100) / 100,
+            totalTaxableAmount: Math.round(totalTaxableAmount * 1000) / 1000,
+            totalTaxAmount: Math.round(totalTaxAmount * 1000) / 1000,
             totalInvoiceAmount,
             currency: this.settings.currency || 'EUR'
         };
@@ -111,6 +120,6 @@ export class InvoiceCalculator {
         if (['AE', 'K', 'G', 'E', 'Z', 'O'].includes(peppolCode)) {
             return 0;
         }
-        return Math.round((baseAmount * (rate / 100)) * 100) / 100;
+        return Math.round((baseAmount * (rate / 100)) * 10000) / 10000;
     }
 }

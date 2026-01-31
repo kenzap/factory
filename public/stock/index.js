@@ -22,6 +22,7 @@ class Stock {
         this.subItems = new Map();
         this.autoUpdateInterval = null;
         this.mouseTime = Date.now() / 1000;
+        this.firstLoad = true;
         this.filters = {
             for: 'stock',
             client: '',
@@ -32,11 +33,6 @@ class Stock {
             cat: 'rainwater-system-square',
             type: '2' // Default to 'All'
         };
-
-        this.stats = {
-            latest: [],
-            issued: []
-        }
 
         this.init();
     }
@@ -67,6 +63,7 @@ class Stock {
             e.target.closest('.dropdown').querySelectorAll('.dropdown-item').forEach(item => item.classList.remove('active'));
             e.target.classList.add('active');
             this.filters.cat = category;
+            this.selectedCoating = "";
 
             this.data();
         });
@@ -114,6 +111,12 @@ class Stock {
     }
 
     editCell(cell) {
+
+        console.log('Editing cell:', cell);
+
+        // Skip if already being edited
+        if (cell.contentEditable === 'true') return;
+
         const currentValue = cell.textContent;
 
         // Make cell editable
@@ -169,16 +172,26 @@ class Stock {
             setTimeout(() => {
                 cell.style.transform = 'scale(1)';
             }, 200);
+
+            // Remove event listeners
+            cell.removeEventListener('input', inputHandler);
+            cell.removeEventListener('blur', saveEdit);
+            cell.removeEventListener('keydown', keydownHandler);
         };
 
         const cancelEdit = () => {
             cell.contentEditable = false;
             cell.textContent = currentValue;
             cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
+
+            // Remove event listeners
+            cell.removeEventListener('input', inputHandler);
+            cell.removeEventListener('blur', saveEdit);
+            cell.removeEventListener('keydown', keydownHandler);
         };
 
         // Prevent non-numeric input in real-time
-        cell.addEventListener('input', (e) => {
+        const inputHandler = () => {
             const value = cell.textContent.replace(/[^\d]/g, '');
             if (cell.textContent !== value) {
                 cell.textContent = value;
@@ -188,10 +201,11 @@ class Stock {
                 selection.removeAllRanges();
                 selection.addRange(range);
             }
-        });
+        };
 
-        cell.addEventListener('blur', saveEdit);
-        cell.addEventListener('keydown', (e) => {
+        const keydownHandler = (e) => {
+            // console.log('Keydown event:', e);
+
             if (e.key === 'Enter') {
                 e.preventDefault();
                 saveEdit();
@@ -200,7 +214,12 @@ class Stock {
                 e.preventDefault();
                 cancelEdit();
             }
-        });
+        };
+
+        // Add event listeners
+        cell.addEventListener('input', inputHandler);
+        cell.addEventListener('blur', saveEdit);
+        cell.addEventListener('keydown', keydownHandler);
     }
 
     async data() {
@@ -237,7 +256,10 @@ class Stock {
 
             document.title = __html('Stock');
 
+            // if (!this.firstLoad) 
             this.listeners();
+
+            this.firstLoad = false;
         });
     }
 

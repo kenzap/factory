@@ -121,7 +121,7 @@ function viewWaybillApi(app, logger) {
                 return res.status(400).json({ error: 'Waybill ID is required' });
             }
 
-            const locale = await getLocale(req.headers);
+            const locale = await getLocale({ locale: req.headers.locale, 'locale-checksum': 0 });
 
             // Additional options
             const options = {
@@ -130,7 +130,7 @@ function viewWaybillApi(app, logger) {
                 buyerCountry: req.query.buyer_country
             };
 
-            logger.info(`Generating waybill for ID: ${id}, User: ${req.user?.username || 'guest'}`);
+            logger.info(`Generating waybill for ID: ${id}, User: ${req.user?.username || 'guest'} locale: ${locale}, format: ${format}`);
 
             // Generate waybill
             const waybillData = await viewWaybill(id, req.user, locale, lang, options, logger);

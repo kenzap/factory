@@ -227,7 +227,7 @@ function getOrdersApi(app, logger) {
 
         try {
 
-            console.log('/api/get-orders/', req.body.filters);
+            // console.log('/api/get-orders/', req.body.filters);
 
             const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};

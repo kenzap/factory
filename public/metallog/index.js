@@ -132,7 +132,7 @@ class MetalLog {
 
             let type = 'metal';
             let cm = document.querySelector('#clientMaterial').checked ? true : false;
-            let hasErrors = false;
+            let hasErrors = false, softErrors = false;
 
             // Validate required fields
             for (const field of requiredFields) {
@@ -179,7 +179,7 @@ class MetalLog {
                 feedback.textContent = 'Invalid color selected';
                 colorElement.parentNode.appendChild(feedback);
 
-                hasErrors = true;
+                softErrors = true;
             }
 
             // Validate coating selection
@@ -192,13 +192,19 @@ class MetalLog {
                 feedback.textContent = 'Invalid coating selected';
                 coatingElement.parentNode.appendChild(feedback);
 
-                hasErrors = true;
+                softErrors = true;
             }
 
             // If there are validation errors, show toast and return
             if (hasErrors) {
                 toast(__html('Please fix the validation errors'));
                 return;
+            }
+
+            if (softErrors) {
+                if (!confirm(__html('Some fields have warnings. Do you want to proceed?'))) {
+                    return;
+                }
             }
 
             const record = {
@@ -596,7 +602,7 @@ class MetalLog {
                     ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
                     ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry('${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                    <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry(event, '${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
                 </ul>
             </div>`;
     }
@@ -762,8 +768,13 @@ class MetalLog {
         }
     }
 
-    deleteEntry(id) {
+    deleteEntry(event, id) {
+
+        event.preventDefault();
+
         if (confirm('Delete this record?')) {
+            // Save current scroll position
+            const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
 
             deleteSupplyRecord({ id }, (response) => {
 
@@ -779,6 +790,11 @@ class MetalLog {
 
                 // Refresh data after deletion
                 this.data();
+
+                // Restore scroll position after DOM updates
+                setTimeout(() => {
+                    window.scrollTo(0, scrollPosition);
+                }, 100);
 
                 // this.renderEntries();
                 this.updateSummary();

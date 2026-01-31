@@ -180,7 +180,7 @@ export class ProductMeta {
                 ${this.locales.map((locale) => {
 
             // this.state.locales.push(locale.locale);
-            return `<option value="${attr(locale.locale)}">${__html(languages.find(lang => lang.code === locale.locale)?.name || locale.language)
+            return `<option value="${attr(locale.locale)}" ${localStorage.locale === locale.locale ? 'selected' : ''} >${__html(languages.find(lang => lang.code === locale.locale)?.name || locale.language)
                 }</option > `
         }).join('')
             }
@@ -190,15 +190,25 @@ export class ProductMeta {
 
             let locale = e.currentTarget.value = e.currentTarget.value || "default";
 
+            switchLocale(locale);
+        });
+
+        const switchLocale = (locale) => {
+
             document.querySelectorAll('.meta-locale').forEach((el) => {
 
-                if (el.id == `meta-locale-${locale}`) {
+                if (el.id == `meta-locale-${locale}` || (locale == 'en' && el.id == 'meta-locale-default')) {
                     el.classList.remove('d-none');
                 } else {
                     el.classList.add('d-none');
                 }
             });
-        });
+
+            // document.querySelector("product-meta #locale-picker").value = locale;
+        }
+
+        // switch to default locale
+        switchLocale(localStorage.locale || 'default');
     }
 
     bind() {

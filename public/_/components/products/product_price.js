@@ -115,7 +115,6 @@ export class ProductPrice {
             <div class="mb-3 mw">
                 <label class="form-label" for="tax_regime">${__html('Tax regime')}</label>
                 <select id="tax_regime" class="form-select inp" name="tax_regime" data-type="select">
-                    <option value="">${__html('Select tax regime')}</option>
                     ${Object.entries(TAX_REGIMES).map(([key, regime]) => {
                 if (regime.country !== self.settings.tax_region) return '';
                 return `<option value="${attr(key)}" data-rate="${attr(regime.rate)}" data-code="${attr(regime.peppolCode)}" ${self.product.tax_regime === key ? 'selected' : ''}>${html(regime.description)}</option>`;
@@ -312,7 +311,7 @@ export class ProductPrice {
         // update price
         onKeyUp('.price-price', e => { self.updatePrice(e); });
 
-        // price public
+        // price public 
         onClick('.price-public', e => { self.publicPrice(e); });
     }
 
@@ -321,13 +320,13 @@ export class ProductPrice {
         document.querySelector('.formula_cont').classList.add("d-none");
         document.querySelector('.formula_price_cont').classList.add("d-none");
         document.querySelector('.parts_cont').classList.add("d-none");
-        document.querySelector('.variable_prices_cont').classList.add("d-none");
+        // document.querySelector('.variable_prices_cont').classList.add("d-none");
 
         let calc_price = document.querySelector('#calc_price').value;
 
         if (calc_price == "variable") {
 
-            document.querySelector('.variable_prices_cont').classList.remove("d-none");
+            // document.querySelector('.variable_prices_cont').classList.remove("d-none");
         }
 
         if (calc_price == "formula") {

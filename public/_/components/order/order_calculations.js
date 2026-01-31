@@ -1,121 +1,70 @@
-import { calculateItemTotal, getPrice } from "../../helpers/price.js";
+import { getPrice } from "../../helpers/price.js";
 import { bus } from "../../modules/bus.js";
 
 /**
- * A client search component that provides autocomplete functionality for searching clients.
- * Example, in the orders journal.
- *  
- * @class ClientSearch  
+ * Refreshes calculations for a table row and updates the row data with computed values.
+ * 
+ * @param {Object} cell - The table cell object that triggered the refresh
+ * @param {Object} settings - Configuration settings used for price calculations
+ * @description This function recalculates area, price per unit, and total values for a table row,
+ * updates the row with the new calculated data, and emits events to notify other components
+ * of the changes. The calculations include area based on width and length formulas,
+ * price per unit calculations, and item totals based on quantity and price.
+ * @fires order:table:sync:items - Emitted to synchronize table items with other components
+ * @fires order:table:refreshed - Emitted to notify that the table has been refreshed
  */
-export const updateCalculations = (cell, settings) => {
+export const refreshRowCalculations = (cell, settings) => {
 
-    // console.log('Updating calculations for cell:', cell.getField());
-
+    // get row data
     const row = cell.getRow();
     const data = row.getData();
-    const cellField = cell.getField();
 
-    let coating = data.coating || "";
-    let color = data.color || "";
-    let price = { price: 0, formula_width_calc: "", formula_length_calc: "" };
-
-    // update product price in the row | based on sketch data
-    if (data._id && !data.input_fields_values) {
-
-        // console.log('getPrice settings:', settings);
-        price = getPrice(settings, { ...data, coating: coating, color: color });
-
-        row.update({
-            price: price.price,
-        });
-    }
-
-    // update product price when formula_length = L | no sketch data
-    // console.log('Data before calculation:', data);
-    if (data._id && ((data.formula_length && /^[^A-KM-Z]*L[^A-KM-Z]*$/i.test(data.formula_length)) || (data.formula_width && /^[^A-JX-Z]*W[^A-JX-Z]*$/i.test(data.formula_width)))) {
-
-        // data.input_fields[0].default = data.length || 0;
-
-        if (!data.input_fields_values) { data.input_fields_values = {}; }
-        if (data.formula_width) data.input_fields_values.inputW = data.formula_width_calc || 0;
-        if (data.formula_length) data.input_fields_values.inputL = data.formula_length_calc || 0;
-
-        if (!data.input_fields) { data.input_fields = []; }
-        if (data.formula_width) {
-            const existingW = data.input_fields.find(field => field.label === "W");
-            if (existingW) {
-                existingW.default = data.input_fields_values.inputW;
-            } else {
-                data.input_fields.push({ label: "W", default: data.input_fields_values.inputW });
-            }
-        }
-        if (data.formula_length) {
-            const existingL = data.input_fields.find(field => field.label === "L");
-            if (existingL) {
-                existingL.default = data.input_fields_values.inputL;
-            } else {
-                data.input_fields.push({ label: "L", default: data.input_fields_values.inputL });
-            }
-        }
-
-        price = getPrice(settings, { ...data, coating: coating, color: color, input_fields: data.input_fields, input_fields_values: data.input_fields_values });
-
-        row.update({
-            price: price.price,
-            // price_length: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : price.price / (price.formula_length_calc / 1000) || "",
-        });
-    }
-
-    // update product width and length in the row
-    if (cellField == "title" && data._id && !data.input_fields_values) {
-
-        row.update({
-            product: data.title,
-            width: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : data.formula_width_calc || "",
-            length: (data.formula_length_calc && !isNaN(data.formula_length_calc)) ? "" : data.formula_length_calc || "",
-        });
-    }
-
-    // Calculate square footage
+    // calculate area, price per meter and total
+    const price = getPrice(settings, { ...data });
     const area = calculateArea(data.formula_width_calc, data.formula_length_calc);
-    const price_length = calculatePriceLength(data, price);
+    const price_length = calculatePricePerUnit(data, price);
+    const total = calculateItemTotal(data.qty, price.price);
 
-    console.log('Calculated area:', price_length);
+    // update row data
+    row.update({
+        area: area,
+        price_length: price_length,
+        discount: parseFloat(data.discount),
+        price: price.price,
+        total: total,
+    });
 
-    // if (!data.sketch_attached) 
-    row.update({ area: isNaN(area) ? "" : area });
-    // if (!data.sketch_attached) 
-    row.update({ price_length: isNaN(price_length) ? "" : price_length });
-
-    // Calculate total price
-    const total = calculateItemTotal(
-        data.qty,
-        price.price,
-        data.adj,
-        data.discount,
-        data.formula_length_calc
-    );
-    row.update({ discount: parseFloat(data.discount), total: total });
-
+    // notify other components
     bus.emit('order:table:sync:items');
-
     bus.emit('order:table:refreshed');
+}
 
-    // bus.emit('order:table:refreshed', order);
-    // console.log('Updating', row.getData());
+// Function to calculate item total price
+const calculateItemTotal = (qty, price) => {
+
+    let basePrice = (parseFloat(qty) || 0) * (parseFloat(price) || 0);
+
+    return Math.round(basePrice * 100) / 100;
 }
 
 // Function to calculate square footage
 const calculateArea = (width, length) => {
+
+    let area = "";
     if (width && length) {
-        return ((width * length) / 1000000).toFixed(3); // Convert mm² to m²
+        area = (Math.round((width * length) / 1000) / 1000); // Convert mm² to m²
     }
-    return 0;
+
+    return isNaN(area) ? "" : area;
 }
 
-const calculatePriceLength = (data, price) => {
+// Function to calculate price per meter or other unit
+const calculatePricePerUnit = (data, price) => {
+
+    let length_price = "";
     if (data.formula_length_calc && !isNaN(data.formula_length_calc)) {
-        return (price.price / (data.formula_length_calc / 1000)).toFixed(2); // Price per meter
+        length_price = Math.round((price.price / (data.formula_length_calc / 1000)) * 100) / 100; // Price per meter
     }
-    return 0;
+
+    return isNaN(length_price) ? "" : length_price;
 }

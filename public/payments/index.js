@@ -312,7 +312,7 @@ class Transactions {
                 formatter: (cell) => {
                     const value = cell.getValue();
                     if (!value) return `<span class="item-status status-danger">${__html('Transaction')}</span>`;
-                    return `<a href="/order/?id=${value}" target="_blank" class="text-decoration-none fw-bold text-primary">${value}</a>`;
+                    return `<a href="/order/?id=${value}" target="order-edit" class="text-decoration-none fw-bold text-primary">${value}</a>`;
                 }
             },
             {

@@ -104,7 +104,7 @@ function viewQuotationApi(app, logger) {
                 return res.status(400).json({ error: 'Order ID is required' });
             }
 
-            const locale = await getLocale(req.headers);
+            const locale = await getLocale({ locale: req.headers.locale, 'locale-checksum': 0 });
 
             // Additional options
             const options = {

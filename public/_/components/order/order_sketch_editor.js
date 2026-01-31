@@ -1,4 +1,5 @@
 import { __html, getCookie } from "../../helpers/global.js";
+import { calculate } from "../../helpers/price.js";
 
 export const sketchEditor = (cell, settings, order, cb) => {
 
@@ -47,83 +48,53 @@ export const sketchEditor = (cell, settings, order, cb) => {
 
                 updatedRowData.sketch_attached = true;
 
-                // Update price and total from sketch data
-                if (data.price) {
-                    updatedRowData.price = parseFloat(data.price);
-                }
-                if (data.total) {
-                    updatedRowData.total = parseFloat(data.total);
-                }
                 if (data.coating) {
                     updatedRowData.coating = data.coating;
                 }
+
                 if (data.color) {
                     updatedRowData.color = data.color;
                 }
+
                 if (data.qty) {
                     updatedRowData.qty = parseFloat(data.qty);
                 }
+
                 if (data.input_fields_values) {
                     updatedRowData.input_fields_values = data.input_fields_values;
                 }
 
-                // Update width from formula_width
-                if (data.formula_width && !isNaN(data.formula_width)) {
-                    updatedRowData.formula_width_calc = parseInt(data.formula_width);
-                }
-
-                // Update length from formula_length
-                if (data.formula_length && !isNaN(data.formula_length)) {
-                    updatedRowData.formula_length_calc = parseInt(data.formula_length);
-                }
-
-                // Update width based on input fields
-                if (data.input_fields_values && isNaN(data.formula_width)) {
-                    // Formula references an input field, try to resolve it
-                    let formula_width_calc = 0;
-                    Object.keys(data.input_fields_values).forEach(key => {
-                        if (data.formula_width.includes(key.replace('input', ''))) {
-                            formula_width_calc += parseInt(data.input_fields_values[key]);
+                // calculate width and length using input_fields_values
+                if (data.input_fields_values) {
+                    const updateFormula = (formulaKey, targetKey) => {
+                        let formula = data[formulaKey];
+                        if (formula) {
+                            Object.keys(data.input_fields_values).forEach(key => {
+                                const cleanKey = key.replace('input', '');
+                                if (formula.includes(cleanKey)) {
+                                    formula = formula.replaceAll(cleanKey, data.input_fields_values[key]);
+                                }
+                            });
+                            updatedRowData[targetKey] = calculate(formula);
                         }
-                    });
-                    if (formula_width_calc) updatedRowData.formula_width_calc = formula_width_calc;
-                }
+                    };
 
-                console.log('input_fields_values:', data.input_fields_values);
-                console.log('formula_width:', data.formula_width);
-                console.log('formula_width_calc:', updatedRowData.formula_width_calc);
-
-                // Update length based on input fields
-                if (data.input_fields_values && isNaN(data.formula_length)) {
-                    // Formula references an input field, try to resolve it
-                    let formula_length_calc = 0;
-                    Object.keys(data.input_fields_values).forEach(key => {
-                        if (data.formula_length.includes(key.replace('input', ''))) {
-                            formula_length_calc += parseInt(data.input_fields_values[key]);
-                        }
-                    });
-                    if (formula_length_calc) updatedRowData.formula_length_calc = formula_length_calc;
-                }
-
-                // Calculate area if both width and length are available
-                if (updatedRowData.formula_width_calc && updatedRowData.formula_length_calc) {
-                    updatedRowData.area = (updatedRowData.formula_width_calc * updatedRowData.formula_length_calc / 1000000).toFixed(3);
+                    updateFormula('formula_length', 'formula_length_calc');
+                    updateFormula('formula_width', 'formula_width_calc');
                 }
 
                 // Update the row in the table
                 cell.getRow().update(updatedRowData);
 
-                console.log(updatedRowData);
+                // console.log(updatedRowData);
 
                 cb(event.data);
 
-                // updateExtra(locid, extra);
                 break;
 
             case 'delete':
-                console.log('delete');
-                // document.getElementById("attach-sketch").classList.remove("open");
-                // updateExtra(locid, "");
+
+                // Remove sketch data from the row
                 break;
         }
 

@@ -1,7 +1,8 @@
 import { getProductSuggestions } from "../../api/get_product_suggestions.js";
-import { updateCalculations } from "../../components/order/order_calculations.js";
+import { refreshRowCalculations } from "../../components/order/order_calculations.js";
 import { FILES, toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
+import { calculate } from "../../helpers/price.js";
 
 let productSuggestions = [];
 
@@ -399,10 +400,31 @@ const productSelected = (suggestion, cell, settings, discounts) => {
     updatedData.formula_width_calc = updatedData.formula_width || "";
     updatedData.formula_length_calc = updatedData.formula_length || "";
     updatedData.discount = discounts[updatedData.group] || 0;
+    updatedData.input_fields = updatedData.input_fields || [];
+    updatedData.input_fields_values = updatedData.input_fields_values || {};
+    updatedData = calcWidthLength(settings, updatedData);
 
     // Update the row with all suggestion properties
     cell.getRow().update(updatedData);
 
     // Update calculations after mapping the suggestion data
-    updateCalculations(cell, settings);
+    refreshRowCalculations(cell, settings);
+}
+
+const calcWidthLength = (settings, updatedData) => {
+
+    updatedData.input_fields.forEach(field => {
+
+        updatedData.formula_width_calc = updatedData.formula_width_calc.replace(field.label, updatedData.input_fields_values[field.label] || field.default || "");
+        updatedData.formula_length_calc = updatedData.formula_length_calc.replace(field.label, updatedData.input_fields_values[field.label] || field.default || "");
+    });
+
+    updatedData.formula_width_calc = calculate(updatedData.formula_width_calc);
+    updatedData.formula_length_calc = calculate(updatedData.formula_length_calc);
+    updatedData.width = isNaN(updatedData.formula_width_calc) ? "" : updatedData.formula_width_calc;
+    updatedData.length = isNaN(updatedData.formula_length_calc) ? "" : updatedData.formula_length_calc;
+
+    console.log('Calculating width/length for:', updatedData);
+
+    return updatedData;
 }
