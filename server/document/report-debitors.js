@@ -28,13 +28,14 @@ async function execDebitorReport(data) {
                 js->'data'->>'name' as name,
             ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as total_amount_due,
             ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
-            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as outstanding_balance,
+            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'waybill'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'waybill'->>'amount')::numeric ELSE 0 END), 2) as outstanding_balance,
             COUNT(*) as order_count
             FROM data
-            WHERE ref = $1 AND sid = $2 AND (js->'data' ? 'payment' OR js->'data' ? 'waybill') 
+            WHERE ref = $1 AND sid = $2 AND ((js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '') OR (js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '')) 
             AND js->'data'->'deleted' IS NULL
             `;
 
+        // AND ((js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != "") OR (js->'data'->'waybill'->>'amount' IS NOT NULL AND js->'data'->'waybill'->>'amount' != ""))
         const queryParams = ['order', sid];
         let paramIndex = 3;
 
@@ -120,6 +121,7 @@ async function execDebitorReport(data) {
 function execDebitorReportApi(app) {
 
     app.get('/report/debitors/', authenticateToken, async (_req, res) => {
+        // app.get('/report/debitors/', async (_req, res) => {
 
         const data = _req.query;
 
@@ -173,11 +175,12 @@ function execDebitorReportApi(app) {
                     <tbody>
                 `;
 
+        let rowIndex = 1;
         report.forEach((debitor, index) => {
 
             debitor.outstanding_balance != 0 ? htmlReport += `
                             <tr>
-                                <td>${index + 1}</td>
+                                <td>${rowIndex++}</td>
                                 <td>${debitor.name}</td>
                                 <td class="amount">${priceFormat(settings, debitor.outstanding_balance)}</td>
                             </tr>

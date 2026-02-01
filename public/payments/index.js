@@ -473,7 +473,7 @@ class Transactions {
                     const bgClass = isEdited ? 'bg-warning bg-opacity-25' : '';
                     return `<span class="fw-bold- ${amount < 0 ? 'text-danger' : 'text-success-'} ${bgClass}">${amount ? priceFormat(this.settings, amount) : ""}</span>`;
                 },
-                cellClick: (e, cell) => {
+                cellClick: (event, cell) => {
 
                     // Create date input element
                     const input = document.createElement('input');
@@ -499,7 +499,6 @@ class Transactions {
                         const rowData = cell.getRow().getData();
                         const totalValue = parseFloat(rowData.total) || 0;
                         input.value = totalValue.toFixed(2);
-                        cell.setValue({ ...payment, amount: input.value });
                     }
 
                     document.body.appendChild(input);
@@ -532,9 +531,19 @@ class Transactions {
 
                     // Handle value change
                     input.addEventListener('change', () => {
-                        const currentPayment = cell.getValue() || {};
-                        cell.setValue({ ...currentPayment, amount: input.value });
-                        document.body.removeChild(input);
+                        try {
+                            const currentPayment = cell.getValue() || {};
+                            const newPayment = { ...currentPayment, amount: input.value };
+                            cell.setValue(newPayment);
+                            if (document.body.contains(input)) {
+                                document.body.removeChild(input);
+                            }
+                        } catch (error) {
+                            console.error('Error updating cell value:', error);
+                            if (document.body.contains(input)) {
+                                document.body.removeChild(input);
+                            }
+                        }
                     });
 
                     // Handle blur (click away)
@@ -549,9 +558,19 @@ class Transactions {
                     // Handle Enter key
                     input.addEventListener('keydown', (e) => {
                         if (e.key === 'Enter') {
-                            const currentPayment = cell.getValue() || {};
-                            cell.setValue({ ...currentPayment, amount: input.value });
-                            document.body.removeChild(input);
+                            try {
+                                const currentPayment = cell.getValue() || {};
+                                const newPayment = { ...currentPayment, amount: input.value };
+                                cell.setValue(newPayment);
+                                if (document.body.contains(input)) {
+                                    document.body.removeChild(input);
+                                }
+                            } catch (error) {
+                                console.error('Error updating cell value:', error);
+                                if (document.body.contains(input)) {
+                                    document.body.removeChild(input);
+                                }
+                            }
                         }
                     });
                 },

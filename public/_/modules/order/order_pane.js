@@ -122,7 +122,13 @@ export class OrderPane {
                         if (enteredValue) {
 
                             const matchedSuggestion = this.colorSuggestions.find(suggestion =>
-                                suggestion.toLowerCase() === enteredValue.toLowerCase() || (suggestion.includes(enteredValue) && !isNaN(enteredValue))
+                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                            ) || this.colorSuggestions.find(suggestion =>
+                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 3))
+                            ) || this.colorSuggestions.find(suggestion =>
+                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 2))
+                            ) || this.colorSuggestions.find(suggestion =>
+                                suggestion.toLowerCase().includes(enteredValue.toLowerCase())
                             );
 
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {
@@ -148,7 +154,9 @@ export class OrderPane {
                         if (enteredValue) {
 
                             const matchedSuggestion = this.coatingSuggestions.find(suggestion =>
-                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                                suggestion.toLowerCase() === enteredValue.toLowerCase() ||
+                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 2)) ||
+                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 3))
                             );
 
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {
@@ -631,7 +639,7 @@ export class OrderPane {
 
         bus.on('client:updated', (client) => {
 
-            console.log('Client updated:', client);
+            console.log('Order pane client updated:', client);
 
             this.refreshTable();
         });

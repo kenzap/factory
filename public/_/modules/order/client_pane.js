@@ -262,10 +262,19 @@ export class ClientPane {
             }
         });
 
-        // remove cient
+        // remove client listener
         onClick('#removeClientBtn', () => {
+
+            // ensure client is selected
+            if (!state.client._id) {
+                toast('Choose client first');
+                return;
+            }
+
+            // confirm deletion
             if (confirm(__html('Delete client?'))) {
-                // Call the API to remove the client
+
+                // remove the client
                 deleteClient({ id: state.client._id }, (response) => {
 
                     toast('Successfully removed');
@@ -357,19 +366,14 @@ export class ClientPane {
         verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
             if (response && response.success && response.client.success) {
 
-                // console.log('Client verification response:', response);
-
-                document.getElementById('vat_number').value = response.client.pvncode || '';
+                console.log('Client verification response:', response);
 
                 // clear previous alert
                 document.querySelector('alert-notification').innerHTML = '';
 
-                if (response.client._id || response.client.klients_new) bus.emit('client:search:update_filter', { value: response.client.klients_new || '', _id: response.client._id || '' });
-
                 // client identified by vat_number, reload to avoid duplicates
                 if (response.client._id && state.client._id !== response.client._id) {
                     state.client._id = response.client._id;
-                    // bus.emit('client:search:update_filter', '');
                     this.data();
                     return;
                 }
@@ -388,6 +392,8 @@ export class ClientPane {
                                 </div>
                                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                             </div>`
+
+                    return;
                 }
 
                 if (response.client.vatStatus === '1') {
@@ -408,6 +414,11 @@ export class ClientPane {
 
                     this.save(true);
                 }
+
+                // update UI
+                document.getElementById('vat_number').value = response.client.pvncode || '';
+
+                if (response.client._id || response.client.klients_new) bus.emit('client:search:update_filter', { value: response.client.klients_new || '', _id: response.client._id || '' });
 
                 toast('VAT status verified');
             } else {
@@ -564,11 +575,13 @@ export class ClientPane {
 
             if (!silent) toast('Changes applied');
 
-            clientData._id = response.data._id;
+            let client = { ...clientData, _id: response.data._id };
+
+            state.client._id = client._id;
 
             this.data();
 
-            bus.emit('client:updated', clientData);
+            bus.emit('client:updated', client);
         });
     }
 }

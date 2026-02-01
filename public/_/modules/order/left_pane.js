@@ -361,7 +361,7 @@ export class LeftPane {
         // Update order summary when client is updated
         bus.on('client:updated', (client) => {
 
-            console.log('Client updated:', client);
+            console.log('Left pane client updated:', client);
 
             // state.clientOrderSearch.data();
             state.clientAddressSearch.data();
@@ -370,6 +370,8 @@ export class LeftPane {
             state.order.vat_status = client.vat_status || '0';
             state.order.entity = client.entity || 'company';
             state.order.vat_number = client.vat_number || '';
+            state.order.name = client.legal_name || '';
+            state.order.eid = client._id || '';
 
             if (document.getElementById('clientFilter').dataset._id != client._id && client.legal_name.length) {
                 document.getElementById('clientFilter').value = client.legal_name;

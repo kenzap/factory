@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { updateWaybillNumber } from '../_/helpers/document/index.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
+import { clearSettingsCache } from '../_/helpers/settings.js';
 
 /**
  * Delete waybill
@@ -73,6 +74,9 @@ async function deleteOrderWaybill(id, user, logger) {
                 user_id_del: user.user_id
             }
         });
+
+        // Clear settings cache
+        clearSettingsCache();
 
     } finally {
         await db.end();

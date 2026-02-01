@@ -11,7 +11,7 @@ function getSettingsApi(app) {
         try {
 
             const locale = await getLocale(req.headers);
-            const settings = await getSettings();
+            const settings = await getSettings(true);
             const extensions = loadIntegrationManifests();
 
             res.send({ success: true, settings, extensions, locale, sid: 0, user: req.user, });

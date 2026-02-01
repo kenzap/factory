@@ -1,6 +1,7 @@
 
 import { sid } from '../index.js';
 import { formatClientName } from '../order.js';
+import { clearSettingsCache } from '../settings.js';
 
 export async function getDocumentData(client, type, _id, user, locale) {
 
@@ -120,8 +121,6 @@ export async function updateWaybillNumber(db, order) {
 
 export async function updateInvoiceNumber(db, order) {
 
-    // console.log(`updateInvoiceNumber: ${order.id}, invoice_number: ${order.invoice.number}`);
-
     let invoice = order.invoice || {};
 
     // Update entire waybill object in the database
@@ -208,12 +207,13 @@ export async function getWaybillNextNumber(db, order, settings, user) {
         const annulledNumbers = settings.waybill_anulled_list.trim().split('\n').filter(num => num.trim());
         if (annulledNumbers.length > 0) {
 
-            // Use the first annulled number and remove it from the list
-            const reusedNumber = annulledNumbers.shift().trim();
+            // Use the last annulled number and remove it from the list
+            const reusedNumber = annulledNumbers.pop().trim();
             settings.waybill_anulled_list = annulledNumbers.join('\n');
 
             order.waybill = {
                 number: reusedNumber,
+                amount: order.price ? order.price.grand_total : null,
                 date: new Date().toISOString(),
                 user_id: user?.id || null
             }
@@ -228,7 +228,8 @@ export async function getWaybillNextNumber(db, order, settings, user) {
             `;
             await db.query(updateSettingsQuery, [JSON.stringify(settings.waybill_anulled_list), sid]);
 
-            console.log(`Reused annulled waybill number: ${reusedNumber}`);
+            // console.log(`Reused annulled waybill number: ${reusedNumber}`);
+            // console.log('Updated annulled list:', settings.waybill_anulled_list);
 
             return order.waybill;
         }
@@ -256,6 +257,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
 
     order.waybill = {
         number: waybill_prefix + "-" + waybill_next_number,
+        amount: order.price ? order.price.grand_total : null,
         date: new Date().toISOString(),
         user_id: user?.id || null
     }
@@ -271,6 +273,9 @@ export async function getWaybillNextNumber(db, order, settings, user) {
     if (order.waybill.number) await db.query(settingsQuery, [JSON.stringify(order.waybill.number), sid]);
 
     await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+
+    // Clear settings cache
+    clearSettingsCache();
 
     return order.waybill;
 }
