@@ -410,7 +410,7 @@ export const parseDocument = (document, data) => {
         : removeField(document, 'waybill_totals');
 
     document = data.user?.fname
-        ? document.replace(/\{\{operator_name\}\}/g, data.user?.fname || '' + ' ' + data.user?.lname || '')
+        ? document.replace(/\{\{operator_name\}\}/g, (data.user?.fname || '') + ' ' + (data.user?.lname || ''))
         : removeField(document, 'operator_name');
 
     // invoice specific fields

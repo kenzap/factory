@@ -1,6 +1,7 @@
 import { getProducts } from "../_/api/get_products.js";
 import { saveStockAmount } from "../_/api/save_stock_amount.js";
 import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
+import { signOut } from "../_/helpers/auth.js";
 import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -93,6 +94,14 @@ class Stock {
 
             // Filter the table based on selected coating
             this.filterTableByCoating(coating);
+        });
+
+        // sing out
+        onClick('.sign-out', (e) => {
+
+            e.preventDefault();
+
+            signOut();
         });
     }
 

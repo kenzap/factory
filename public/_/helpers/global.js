@@ -44,8 +44,12 @@ export const parseApiError = (data) => {
         case 403:
 
             if (window.location.pathname !== '/login' && window.location.pathname !== '/login/') {
+
+                // Store current path for redirect after login
+                sessionStorage.setItem('redirect_path', window.location.pathname + window.location.search);
                 window.location = "/login";
             }
+
             // new Auth();
 
             break;

@@ -13,34 +13,34 @@ export class ClientNotifications {
         // Initialize notifications structure if it doesn't exist
         this.client.notifications = this.client.notifications || (this.client._id ?
             {
-                orderReceived: { email: false, whatsapp: false },
-                orderConfirmed: { email: false, whatsapp: false },
-                orderReady: { email: false, whatsapp: false },
-                orderCancelled: { email: false, whatsapp: false },
-                paymentReceived: { email: false, whatsapp: false },
+                order_received: { email: false, whatsapp: false },
+                order_confirmed: { email: false, whatsapp: false },
+                order_ready: { email: false, whatsapp: false },
+                order_cancelled: { email: false, whatsapp: false },
+                payment_received: { email: false, whatsapp: false },
                 promotions: { email: false, whatsapp: false },
-                askFeedback: { email: false, whatsapp: false }
+                ask_feedback: { email: false, whatsapp: false }
             }
             :
             {
-                orderReceived: { email: true, whatsapp: true },
-                orderConfirmed: { email: true, whatsapp: true },
-                orderReady: { email: true, whatsapp: true },
-                orderCancelled: { email: false, whatsapp: false },
-                paymentReceived: { email: false, whatsapp: false },
+                order_received: { email: true, whatsapp: true },
+                order_confirmed: { email: true, whatsapp: true },
+                order_ready: { email: true, whatsapp: true },
+                order_cancelled: { email: false, whatsapp: false },
+                payment_received: { email: false, whatsapp: false },
                 promotions: { email: false, whatsapp: false },
-                askFeedback: { email: true, whatsapp: false }
+                ask_feedback: { email: true, whatsapp: false }
             })
             ;
 
         this.notificationTypes = [
-            { key: 'orderReceived', label: __html('Order Received'), icon: 'bi-inbox' },
-            { key: 'orderConfirmed', label: __html('Order Confirmed'), icon: 'bi-clipboard-check' },
-            { key: 'orderReady', label: __html('Order Ready'), icon: 'bi-check-circle' },
-            { key: 'orderCancelled', label: __html('Order Cancelled'), icon: 'bi-x-circle' },
-            { key: 'paymentReceived', label: __html('Payment Received'), icon: 'bi-credit-card' },
+            { key: 'order_received', label: __html('Order Received'), icon: 'bi-inbox' },
+            { key: 'order_confirmed', label: __html('Order Confirmed'), icon: 'bi-clipboard-check' },
+            { key: 'order_ready', label: __html('Order Ready'), icon: 'bi-check-circle' },
+            { key: 'order_cancelled', label: __html('Order Cancelled'), icon: 'bi-x-circle' },
+            { key: 'payment_received', label: __html('Payment Received'), icon: 'bi-credit-card' },
             { key: 'promotions', label: __html('Promotions & Offers'), icon: 'bi-gift' },
-            { key: 'askFeedback', label: __html('Ask Feedback'), icon: 'bi-chat-heart' }
+            { key: 'ask_feedback', label: __html('Ask Feedback'), icon: 'bi-chat-heart' }
         ];
 
         this.channels = [

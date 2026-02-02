@@ -125,7 +125,7 @@ function execDebitorReportApi(app) {
 
         const data = _req.query;
 
-        const locale = await getLocale(_req.headers);
+        const locale = await getLocale({ locale: _req.headers.locale, 'locale-checksum': 0 });
         const report = await execDebitorReport(data);
         const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "price", "groups"]);
 
@@ -202,11 +202,11 @@ function execDebitorReportApi(app) {
                     </tbody>
                     <tfoot>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
-                            <td colspan="2" class="form-text">${__html(locale, 'Debit')}</td>
+                            <td colspan="2" class="form-text">${__html(locale, 'Credit')}</td>
                             <td class="amount">${priceFormat(settings, positiveTotal)}</td>
                         </tr>
                         <tr style="font-weight: bold; font-size:0.8rem; background-color: #f9f9f9;">
-                            <td colspan="2" class="form-text">${__html(locale, 'Credit')}</td>
+                            <td colspan="2" class="form-text">${__html(locale, 'Debit')}</td>
                             <td class="amount">${priceFormat(settings, negativeTotal)}</td>
                         </tr>
                         <tr style="font-weight: bold; background-color: #e9e9e9;">

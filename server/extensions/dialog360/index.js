@@ -1,4 +1,5 @@
-import { getOrdersReadyForNotification } from './src/get-orders-ready-for-notification.js';
+import { getOrdersReady } from './src/get-orders-ready.js';
+import { markOrderReady } from './src/mark-order-ready.js';
 // import { notifyOrderNewAdmin } from './src/notify-order-new-admin.js';
 import { notifyOrderReady } from './src/notify-order-ready.js';
 import { sendOtp } from './src/send-otp.js';
@@ -22,6 +23,26 @@ import { sendOtp } from './src/send-otp.js';
  * @note In the cron expression '0 9,10,15,16 * * 1-5', the '1-5' represents
  *       Monday through Friday (1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday)
  */
+/**
+ * Registers the dialog360 extension with the application framework.
+ * Sets up event handlers, API routes, and cron jobs for order notifications via WhatsApp.
+ * 
+ * @param {Object} params - The registration parameters
+ * @param {Object} params.router - Express router instance for defining HTTP routes
+ * @param {Object} params.cron - Cron service for scheduling recurring tasks
+ * @param {Object} params.config - Application configuration object
+ * @param {Object} params.events - Event emitter for handling application events
+ * @param {Object} params.db - Database connection/service instance
+ * @param {Object} params.logger - Logger instance for application logging
+ * 
+ * @description
+ * - Listens for "otp.requested" events to send OTP messages
+ * - Provides GET /orders-ready endpoint to retrieve orders ready for notification
+ * - Provides GET /order-ready-test/:id endpoint for testing order notifications
+ * - Schedules a cron job to automatically notify customers of ready orders during business hours (9AM-6PM, Monday-Friday)
+ * 
+ * Note: In the cron expression '0 9,10,11,12,13,14,15,16,18 * * 1-5', the '1-5' represents Monday through Friday (where 1=Monday, 5=Friday)
+ */
 export function register({ router, cron, config, events, db, logger }) {
 
     logger.info('Registering dialog360 extension')
@@ -41,7 +62,7 @@ export function register({ router, cron, config, events, db, logger }) {
         //     return res.status(404).json({ error: 'Not found' })
         // }
 
-        const orders = await getOrdersReadyForNotification(db, logger);
+        const orders = await getOrdersReady(db, logger);
 
         logger.info('orders:', orders);
 
@@ -52,29 +73,61 @@ export function register({ router, cron, config, events, db, logger }) {
         })
     })
 
-    // Test route for order ready notification
+    // Test route for order ready notification, ex: http://localhost:3000/extension/dialog360/order-ready-test/43006
     router.get('/order-ready-test/:id', async (req, res) => {
 
-        const response = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, config, db, logger);
+        const notify = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, config, db, logger);
+
+        // const otp = await sendOtp("6581500872", "1234", config, logger);
+
+        const mark = await markOrderReady(req.params.id, db, logger);
+
+        logger.error('cron test: orders ready for notification');
 
         // const response = await notifyOrderNewAdmin({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, db, logger);
 
-        res.json({ response });
+        res.json({ notify, markOrderReady: mark });
     });
+
+    // cron every minute for testing
+    // cron.register(
+    //     'test',
+    //     '*/20 * * * * *', // every 10 seconds
+    //     async () => {
+
+    //         const orders = await getOrdersReady(db, logger);
+
+    //         logger.info('cron test: orders ready for notification:', orders);
+
+    //         for (const order of orders) {
+
+    //             // await notifyOrderReady({ orderId: order.id, phone: order.phone }, { sid: auth.sid, permission: auth.permission }, db, logger);
+    //             await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+
+    //             await markOrderReady(order.id, db, logger);
+    //         }
+    //     },
+    //     { timezone: 'Europe/Riga' }
+    // )
 
     // Register cron
     cron.register(
         'sync',
-        '0 9,10,15,16 * * 1-5', // every weekday at 9am, 10am, 3pm, 4pm
+        '0 9,10,11,12,13,14,15,16,18,19 * * 1-5', // every weekday at 9am, 10am, 3pm, 4pm
         async (ctx) => {
 
-            const orders = await getOrdersReadyForNotification(db);
+            const orders = await getOrdersReady(db, logger);
 
-            // for (const order of orders) {
-            //     await notifyOrderReady({ order_id: order._id }, { sid: auth.sid, permission: auth.permission }, db, logger);
-            // }
+            logger.info('cron test: orders ready for notification:', orders);
 
-            db.close();
+            for (const order of orders) {
+
+                // TODO: enable in production
+                // await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
+                await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+
+                await markOrderReady(order.id, db, logger);
+            }
 
             logger.info('cron test:', orders);
         },

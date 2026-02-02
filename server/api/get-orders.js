@@ -92,6 +92,11 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
 
     // all except drafts
     if (filters.type === 'all') {
+        // whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
+    }
+
+    // all orders except drafts
+    if (filters.type === 'orders') {
         whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)`);
     }
 

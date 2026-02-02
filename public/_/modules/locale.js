@@ -41,8 +41,6 @@ export class Locale {
 
             const locale_data = JSON.parse(locale_cached);
 
-            // console.log('Locale found locally:', locale_data);
-
             // initialize i18n
             window.i18n = { state: { locale: { values: locale_data.values } } };
 

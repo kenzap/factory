@@ -30,6 +30,7 @@ readme.txt
 .DS_Store
 
 .vscode/
+server.code-workspace
 
 dist/
 etc/

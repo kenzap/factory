@@ -300,18 +300,6 @@ class WorkLog {
         const tbody = document.getElementById('workLogBody');
         const entriesToShow = this.filteredEntries.length > 0 ? this.filteredEntries : this.records;
 
-        if (entriesToShow.length === 0) {
-            tbody.innerHTML = `
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
-                                <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
-                                ${__html('No work entries found')}
-                            </td>
-                        </tr>
-                    `;
-            return;
-        }
-
         if (this.firstLoad) theader.innerHTML = `
                 <tr>
                     <th style="width:84px;"><i class="bi bi-calendar me-2" id="calendarIcon" style="cursor: pointer;" data-bs-toggle="modal" data-bs-target="#dateRangeModal"></i> ${__html('Time')}</th>
@@ -335,6 +323,18 @@ class WorkLog {
                     <th></th>
                 </tr>
         `;
+
+        if (entriesToShow.length === 0) {
+            tbody.innerHTML = `
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
+                                ${__html('No work entries found')}
+                            </td>
+                        </tr>
+                    `;
+            return;
+        }
 
         let lastDate = null;
         tbody.innerHTML = entriesToShow.map(entry => {

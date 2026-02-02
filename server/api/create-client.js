@@ -58,7 +58,7 @@ function saveClientApi(app) {
         const data = _req.body;
         const response = await saveClient(data);
 
-        console.log('/api/create-client/ response', response);
+        // console.log('/api/create-client/ response', response);
 
         res.json({ success: true, response, message: 'client saved' });
     });

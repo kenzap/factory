@@ -7,7 +7,7 @@
  * - Have a non-empty items array
  * 
  * @async
- * @function getOrdersReadyForNotification
+ * @function getOrdersReady
  * @param {Object} db - Database connection object with query method
  * @returns {Promise<Array<Object>>} Array of order objects with id, phone, and _id properties, or empty array if error occurs
  * @throws {Error} Logs error to console if database query fails
@@ -16,7 +16,7 @@
  * const orders = await getOrdersReadyForNotification(dbConnection);
  * // Returns: [{ _id: '123', id: 'order_456', phone: '+1234567890' }, ...]
  */
-export const getOrdersReadyForNotification = async (db, logger) => {
+export const getOrdersReady = async (db, logger) => {
 
     let response = [];
 
@@ -25,25 +25,36 @@ export const getOrdersReadyForNotification = async (db, logger) => {
         // Get orders ready for notification
         const query = `
             SELECT
-            _id,
-            js->'data'->>'id' as id,
-            js->'data'->>'eid' as eid,
-            js->'data'->>'phone' as phone
-            FROM data 
+            "order"._id,
+            "order".js->'data'->>'id' as id,
+            "order".js->'data'->>'eid' as eid,
+            "order".js->'data'->>'name' as name,
+            "order".js->'data'->>'phone' as phone,
+            "order".js->'data'->'notifications'->>'order_ready_wa_sent_at' as order_ready_wa_sent_at,
+            "entity".notifications as notifications
+            FROM data "order"
+            LEFT JOIN (
+                SELECT 
+                    _id as _id,
+                    js->'data'->'notifications' as notifications
+                FROM data 
+                WHERE ref = 'entity' AND sid = $2
+            ) "entity" ON "order".js->'data'->>'eid' = "entity"._id
             WHERE ref = $1 
                 AND sid = $2 
-                AND (js->'data'->'notifications'->>'order_ready_sent_at' IS NULL)
+                AND ("order".js->'data'->'notifications'->>'order_ready_wa_sent_at' IS NULL)
                 AND NOT EXISTS (
                     SELECT 1 
-                    FROM jsonb_array_elements(js->'data'->'items') AS item 
+                    FROM jsonb_array_elements("order".js->'data'->'items') AS item 
                     WHERE item->'inventory'->>'rdy_date' IS NULL 
                     OR item->'inventory'->>'rdy_date' = ''
                 ) AND NOT EXISTS (
                     SELECT 1 
-                    FROM jsonb_array_elements(js->'data'->'items') AS item 
+                    FROM jsonb_array_elements("order".js->'data'->'items') AS item 
                     WHERE item->'inventory'->>'isu_date' IS NOT NULL 
                     AND item->'inventory'->>'isu_date' != ''
-                ) AND jsonb_array_length(js->'data'->'items') > 0
+                ) AND jsonb_array_length("order".js->'data'->'items') > 0
+                AND ("entity".notifications->'order_ready'->'whatsapp' = 'true')
             LIMIT 100
         `;
 

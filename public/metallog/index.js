@@ -540,7 +540,7 @@ class MetalLog {
                 });
 
                 const entryRows = sortedEntries.map((entry, i) => `
-            <tr class="${i % 2 === 0 ? 'table-light' : ''}">
+            <tr data-id="${entry._id}" class="${i % 2 === 0 ? 'table-light' : ''}">
                 <td style="width:80px;" class="align-middle ps-5">
                     ${entry.color || '-'}
                 </td>

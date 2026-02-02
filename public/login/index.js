@@ -1,6 +1,7 @@
 import { getHome } from "../_/api/get_home.js";
 import { __html, initBreadcrumbs } from "../_/helpers/global.js";
 import { Auth } from "../_/modules/auth.js";
+import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 
 /**
@@ -22,6 +23,8 @@ class Login {
     init = () => {
 
         new Modal();
+
+        new Locale({});
 
         new Auth();
 

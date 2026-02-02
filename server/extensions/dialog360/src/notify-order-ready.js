@@ -38,7 +38,7 @@
  *   console.log("Notification sent successfully");
  * }
  */
-export const notifyOrderReady = async (query, access, config, db, logger) => {
+export const notifyOrderReady = async (query, config, db, logger) => {
     try {
         // 360dialog API configuration production
         const url = config.get('DIALOG_URL') || "https://waba-v2.360dialog.io/messages";

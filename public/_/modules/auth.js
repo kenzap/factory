@@ -71,11 +71,11 @@ export class Auth {
                         <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="#d1d8de" class="bi bi-shield-lock my-1" viewBox="0 0 16 16">
                             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
                         </svg>
-                        <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address or phone')}</label>
+                        <label for="otp-email" class="form-label col-lg-12 col-form-label text-center fw-bold fs-5">${__html('Email address or phone number')}</label>
                         <div class="col-lg-12">
                             <input type="email" class="form-control form-control-lg" id="otp-email" autocomplete="off" placeholder="email@example.com" aria-describedby="emailHelp" value="${self.email}">
                             <div class="invalid-feedback otp-email-notice text-center"></div>
-                            <p class="form-text text-center">${__html('*You will receive a one-time password to your email address.')}</p>
+                            <p class="form-text text-center">${__html('*You will receive a one-time password.')}</p>
                             <div class="text-center">
                                 <div class="form-check form-switch d-inline-block form-text mt-4">
                                     <input class="form-check-input" type="checkbox" id="trust-device" ${self.email.length > 0 ? 'checked' : ''}>
@@ -452,7 +452,13 @@ export class Auth {
 
             // reload the page to refresh user session
             if (response.user.portal) {
-                window.open(window.location.origin + '/' + response.user.portal + '/', '_self');
+
+                if (sessionStorage.getItem('redirect_path')) {
+                    window.open(window.location.origin + sessionStorage.getItem('redirect_path'), '_self');
+                    sessionStorage.removeItem('redirect_path');
+                } else {
+                    window.open(window.location.origin + '/' + response.user.portal + '/', '_self');
+                }
             } else {
                 location.reload();
             }

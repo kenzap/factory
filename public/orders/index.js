@@ -173,6 +173,7 @@ class Orders {
                         <label class="form-label d-none">${__html('Type:')}</label>
                         <select class="form-select border-0" id="typeFilter">
                             <option value="all">${__html('All')}</option>
+                            <option value="orders">${__html('Orders')}</option>
                             <option value="draft">${__html('Estimates')}</option>
                             <option value="manufacturing">${__html('Manufacturing')}</option>
                             <option value="ready">${__html('Ready')}</option>

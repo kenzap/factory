@@ -3,6 +3,7 @@ import { getOrders } from "../_/api/get_orders.js";
 import { getProductBundles } from "../_/api/get_product_bundles.js";
 import { getProductStock } from "../_/api/get_product_stock.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
+import { signOut } from "../_/helpers/auth.js";
 import { __html, attr, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
 import { formatClientName } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
@@ -121,6 +122,13 @@ class Manufacturing {
                 document.getElementById('orderSearch').focus();
             }, 1500);
         });
+    }
+
+    signOut(e) {
+
+        e.preventDefault();
+
+        signOut();
     }
 
     setupEventListeners() {
@@ -259,6 +267,13 @@ class Manufacturing {
     sortOrders(orders) {
 
         let ordersSorted = { urgent: [], today: [], manufacturing: [], ready: [], issued: [] };
+
+        // Sort orders by company name alphabetically first
+        orders.sort((a, b) => {
+            const aCompanyName = (a?.legal_name || a?.name || '').toLowerCase();
+            const bCompanyName = (b?.legal_name || b?.name || '').toLowerCase();
+            return aCompanyName.localeCompare(bCompanyName);
+        });
 
         orders.forEach((order, index) => {
 

@@ -154,9 +154,13 @@ export class OrderPane {
                         if (enteredValue) {
 
                             const matchedSuggestion = this.coatingSuggestions.find(suggestion =>
-                                suggestion.toLowerCase() === enteredValue.toLowerCase() ||
-                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 2)) ||
+                                suggestion.toLowerCase() === enteredValue.toLowerCase()
+                            ) || this.coatingSuggestions.find(suggestion =>
                                 suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 3))
+                            ) || this.coatingSuggestions.find(suggestion =>
+                                suggestion.toLowerCase().startsWith(enteredValue.toLowerCase().substring(0, 2))
+                            ) || this.coatingSuggestions.find(suggestion =>
+                                suggestion.toLowerCase().includes(enteredValue.toLowerCase())
                             );
 
                             if (matchedSuggestion && matchedSuggestion !== enteredValue) {
