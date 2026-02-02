@@ -52,7 +52,7 @@ export function register({ router, cron, config, events, db, logger }) {
         logger.info("OTP Request received:", phone, otp);
 
         await sendOtp(phone, otp, config, logger);
-    })
+    });
 
     // Route to get orders ready for notification
     router.get('/orders-ready', async (req, res) => {
@@ -70,23 +70,25 @@ export function register({ router, cron, config, events, db, logger }) {
             id: "-",
             total: orders.length,
             status: "processing"
-        })
-    })
+        });
+    });
 
     // Test route for order ready notification, ex: http://localhost:3000/extension/dialog360/order-ready-test/43006
     router.get('/order-ready-test/:id', async (req, res) => {
 
-        const notify = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, config, db, logger);
+        // const notify = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, config, db, logger);
+
+        events.emit("email.send", { email: "pavel@kenzap.com", subject: `Order #${req.params.id} is ready`, body: `Order ${req.params.id} ready notification sent.` });
 
         // const otp = await sendOtp("6581500872", "1234", config, logger);
 
-        const mark = await markOrderReady(req.params.id, db, logger);
+        // const mark = await markOrderReady(req.params.id, db, logger);
 
-        logger.error('cron test: orders ready for notification');
+        // logger.error('cron test: orders ready for notification');
 
         // const response = await notifyOrderNewAdmin({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, db, logger);
 
-        res.json({ notify, markOrderReady: mark });
+        res.json({ status: 'ok' });
     });
 
     // cron every minute for testing
@@ -113,7 +115,7 @@ export function register({ router, cron, config, events, db, logger }) {
     // Register cron
     cron.register(
         'sync',
-        '0 9,10,11,12,13,14,15,16,18,19 * * 1-5', // every weekday at 9am, 10am, 3pm, 4pm
+        '0,15,30,45 9,10,11,12,13,14,15,16 * * 1-5', // every weekday at 9:00, 9:30, 10:00, 10:30 .. 4:00, 4:30
         async (ctx) => {
 
             const orders = await getOrdersReady(db, logger);

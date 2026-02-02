@@ -34,7 +34,7 @@ export const markOrderReady = async (id, db, logger) => {
                     COALESCE(js->'data'->'notifications', '{}'),
                     true
                 ),
-                '{data,notifications,order_ready_wa_sent_at}', 
+                '{data,notifications,order_ready_sent_at}', 
                 to_jsonb($4::text),
                 true
             )

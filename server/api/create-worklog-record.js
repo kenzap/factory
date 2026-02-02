@@ -58,6 +58,49 @@ async function createWorkLog(data, logger) {
             }, data.user_id);
         }
 
+        // if data.item_id is set, update worklog_id in order item
+        if (data.item_id && data.item_id !== '') {
+
+            query = `SELECT _id, js FROM data WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1`;
+
+            const itemParams = ['order', sid, data.order_id];
+
+            const itemResult = await db.query(query, itemParams);
+
+            const orderRecord = itemResult.rows[0];
+
+            if (orderRecord) {
+
+                const orderData = orderRecord.js;
+
+                let items = orderData.data.items || [];
+
+                items = items.map(item => {
+                    if (item.id === data.item_id) {
+
+                        if (!item.worklog) item.worklog = {};
+
+                        item.worklog[data.type] = { qty: data.qty, time: data.time, worklog_id: data._id };
+                    }
+                    return item;
+                });
+
+                orderData.data.items = items;
+
+                const updateQuery = `
+                    UPDATE data 
+                    SET js = $1
+                    WHERE _id = $2
+                `;
+
+                const updateParams = [JSON.stringify(orderData), orderRecord._id];
+
+                await db.query(updateQuery, updateParams);
+
+                logger.info('Updated order item with worklog_id:', data.item_id, data._id);
+            }
+        }
+
     } finally {
         await db.end();
     }

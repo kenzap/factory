@@ -2,7 +2,34 @@ import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 import { updateProductStock } from '../_/helpers/product.js';
 
-async function revertCuttingAction(db, data) {
+/**
+ * Reverts a cutting action by restoring the original coil length, removing stock sheets, 
+ * and clearing order item statuses that were modified during the cutting operation.
+ * 
+ * @async
+ * @function revertCuttingAction
+ * @param {Object} db - Database connection object with query method
+ * @param {Object} data - Cutting action data to revert
+ * @param {string} data.coil_id - ID of the coil that was cut
+ * @param {number} data.qty - Quantity/length to restore to the original coil
+ * @param {Array<Object>} [data.sheets] - Array of sheet objects created during cutting
+ * @param {string} data.sheets[].type - Type of sheet (only "stock" sheets are removed)
+ * @param {number} data.sheets[].length - Length of the sheet to remove
+ * @param {number} data.sheets[].width - Width of the sheet to remove
+ * @param {Array<Object>} [data.items] - Array of order items affected by the cutting
+ * @param {string} data.items[].order_id - ID of the order containing the item
+ * @param {string} data.items[].id - ID of the order item
+ * @returns {Promise<Array>} Array containing database operation results
+ * @description
+ * This function performs three main operations:
+ * 1. Restores the original coil length by adding back the cut quantity
+ * 2. Removes stock sheets that were added to inventory during cutting
+ * 3. Clears writeoff data and inventory timestamps from affected order items
+ * 
+ * The function groups order items by order_id to optimize database operations
+ * and only processes orders that actually exist in the database.
+ */
+const revertCuttingAction = async (db, data) => {
 
     let response = [], res;
 
@@ -108,7 +135,21 @@ async function revertCuttingAction(db, data) {
     if (res) response.push(res.rows[0] || {});
 }
 
-function revertStockReplenishmentAction(db, data) {
+/**
+ * Reverts a stock replenishment action by reducing the product stock by the replenished amount.
+ * 
+ * @async
+ * @function revertStockReplenishmentAction
+ * @param {Object} db - Database connection object
+ * @param {Object} data - The worklog data containing replenishment information
+ * @param {string} data.product_id - The ID of the product to revert stock for
+ * @param {string} data.coating - The coating type of the product
+ * @param {string} data.color - The color of the product
+ * @param {number} data.qty - The quantity that was replenished (will be negated)
+ * @param {string} data.user_id - The ID of the user performing the action
+ * @returns {Promise} Promise that resolves when the stock update is complete
+ */
+const revertStockReplenishmentAction = async (db, data) => {
 
     console.log('Reverting stock replenishment action:', data);
 
@@ -121,6 +162,71 @@ function revertStockReplenishmentAction(db, data) {
         color: data.color,
         amount: -1 * data.qty
     }, data.user_id);
+}
+
+/**
+ * Reverts a worklog entry from a specific item in an order record.
+ * Removes the worklog entry of the specified type from the order item and updates the database.
+ * If the worklog becomes empty after removal, the entire worklog property is deleted.
+ *
+ * @async
+ * @function revertWorklogFromOrderItem
+ * @param {Object} db - Database connection object with query method
+ * @param {Object} data - Data object containing worklog reversion details
+ * @param {string} data.order_id - The ID of the order containing the item
+ * @param {string} data.item_id - The ID of the specific item to revert worklog from
+ * @param {string} data.type - The type of worklog entry to remove
+ * @returns {Promise<void>} Resolves when the worklog has been successfully reverted
+ * @throws {Error} May throw database-related errors during query execution
+ */
+const revertWorklogFromOrderItem = async (db, data) => {
+
+    // console.log('Reverting worklog from order item:', data);
+
+    // Query to get the order record
+    let query = `SELECT _id, js FROM data WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1`;
+
+    const itemParams = ['order', sid, data.order_id];
+
+    const itemResult = await db.query(query, itemParams);
+
+    const orderRecord = itemResult.rows[0];
+
+    if (orderRecord) {
+        const orderData = orderRecord.js;
+
+        let items = orderData.data.items || [];
+
+        items = items.map(item => {
+            if (item.id === data.item_id) {
+                // Remove the worklog entry for this type
+                if (item.worklog && item.worklog[data.type]) {
+                    delete item.worklog[data.type];
+
+                    // If worklog is empty, remove it entirely
+                    if (Object.keys(item.worklog).length === 0) {
+                        delete item.worklog;
+                    }
+                }
+            }
+            return item;
+        });
+
+        orderData.data.items = items;
+
+        const updateQuery = `
+            UPDATE data 
+            SET js = $1
+            WHERE _id = $2
+        `;
+
+        const updateParams = [JSON.stringify(orderData), orderRecord._id];
+
+        await db.query(updateQuery, updateParams);
+
+        console.log('Reverted worklog from order item:', data.item_id, data.type);
+    }
+
 }
 
 /**
@@ -162,6 +268,7 @@ async function deleteWorklogRecord(id, user_id) {
 
         if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data);
         if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data);
+        if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data);
 
         // Delete worklog record
         let query = `

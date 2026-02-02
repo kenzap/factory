@@ -5,6 +5,7 @@ export class PreviewWorkLog {
     constructor(o, cb) {
 
         this.id = [o.id];
+        this.item_id = o.item_id;
         this.order_id = o.order_id;
         this.product_id = o.product_id;
         this.product_name = o.product_name;
@@ -36,7 +37,7 @@ export class PreviewWorkLog {
 
         this.modal.querySelector(".modal-body").innerHTML = `
             <div class="form-cont" style="height: 100vh;">
-                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&id=' + escape(this.id + "") + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&user_id=' + this.user_id + '&mini=true'}"></iframe>
+                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&id=' + escape(this.id + "") + '&item_id=' + this.item_id + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&user_id=' + this.user_id + '&mini=true'}"></iframe>
             </div>`;
 
         this.modal.querySelector(".modal-header").classList.add('bg-light');
@@ -44,5 +45,9 @@ export class PreviewWorkLog {
         this.modal.querySelector(".modal-body").classList.add('p-0');
 
         this.modal_cont.show();
+
+        this.modal.addEventListener('hidden.bs.modal', () => {
+            this.cb({ success: true });
+        });
     }
 }

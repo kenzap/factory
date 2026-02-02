@@ -6,7 +6,8 @@
     "kenzap": ">=2.0.0"
   },
   "events": [
-    "otp.requested"
+    "otp.requested",
+    "email.send"
   ],
   "config": {
     "DIALOG_KEY": { "title": "Dialog Key", "type": "token", "required": true, "default": "" },

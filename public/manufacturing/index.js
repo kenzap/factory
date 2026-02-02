@@ -424,12 +424,7 @@ class Manufacturing {
                                 <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                                     <td class="d-none">${i + 1}</td>
                                     <td>
-                                        <div class="work-buttons pt-1 me-5">
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('bending', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
-                                        </div>
+                                        ${this.renderWorkButtons(order, item)}
                                     </td> 
                                     <td>
                                         <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
@@ -491,12 +486,7 @@ class Manufacturing {
                         <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                             <td class="d-none">${i + 1}</td>
                             <td>
-                                <div class="work-buttons pt-1 me-5">
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">M</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('bending', '${order.id}','${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">L</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">K</button>
-                                    <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">N</button>
-                                </div>
+                                ${this.renderWorkButtons(order, item)}
                             </td> 
                             <td>
                                 <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
@@ -605,6 +595,38 @@ class Manufacturing {
             console.error('Error loading order details:', error);
             toast('Error ' + error);
         }
+    }
+
+    renderWorkButtons(order, item) {
+
+        return `
+            <div class="work-buttons pt-1 me-5">
+                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
+                    M
+                    ${item.worklog?.marking ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
+                    ${item.worklog.marking.qty}
+                    <span class="visually-hidden">unread messages</span>
+                    </span>` : ''}
+                </button>
+                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('bending', '${order.id}','${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
+                    L
+                    ${item.worklog?.bending ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
+                    ${item.worklog.bending.qty}
+                    </span>` : ''}
+                </button>
+                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
+                    K
+                    ${item.worklog?.['pipe-forming'] ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
+                    ${item.worklog['pipe-forming'].qty}
+                    </span>` : ''}
+                </button>
+                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
+                    N
+                    ${item.worklog?.assembly ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
+                    ${item.worklog.assembly.time}
+                    </span>` : ''}
+                </button>
+            </div>`;
     }
 
     getBundles(orderId) {
@@ -1083,16 +1105,19 @@ class Manufacturing {
         }
     }
 
-    openWork(type, id, order_id, product_id, product_name, color, coating, qty) {
+    openWork(type, id, order_id, item_id, product_id, product_name, color, coating, qty) {
 
         color = color || '';
         coating = coating || '';
         qty = qty || 0;
 
-        new PreviewWorkLog({ type, id, order_id, product_id, product_name, color, coating, qty, user_id: this.user.id }, (response) => {
+        new PreviewWorkLog({ type, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: this.user.id }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;
+            }
+            if (response.success) {
+                this.loadOrders();
             }
         });
     }

@@ -36,6 +36,7 @@ class WorkLog {
 
         this.record = {
             id: new URLSearchParams(window.location.search).get('id') || "",
+            item_id: new URLSearchParams(window.location.search).get('item_id') || "",
             order_id: new URLSearchParams(window.location.search).get('order_id') || "",
             product_id: new URLSearchParams(window.location.search).get('product_id') || "",
             product_name: unescape(new URLSearchParams(window.location.search).get('product_name')) || "",
@@ -169,6 +170,7 @@ class WorkLog {
             const record = {
                 title: document.querySelector('#productName').value.trim(),
                 qty: parseFloat(document.querySelector('#qty').value),
+                item_id: this.record.item_id ? this.record.item_id : '',
                 product_id: this.product ? this.product._id : this.record.product_id,
                 product_name: document.querySelector('#productName').value,
                 color: document.querySelector('#productColor').value.trim(),
@@ -353,11 +355,19 @@ class WorkLog {
                     dateLabel = new Date(entry.date).toLocaleDateString();
                 }
 
+                // Calculate totals for this date
+                const entriesForDate = entriesToShow.filter(e => new Date(e.date).toDateString() === entryDate);
+                const totalQtyForDate = entriesForDate.reduce((sum, e) => sum + parseFloat(e.qty || 0), 0);
+                const totalTimeForDate = entriesForDate.reduce((sum, e) => sum + parseFloat(e.time || 0), 0);
+
                 dateHeader = `
                 <tr>
-                    <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
+                    <td colspan="7" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >
                         ${dateLabel}
                     </td>
+                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >${totalQtyForDate}</td>
+                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >${totalTimeForDate}</td>
+                    <td></td>
                 </tr>
             `;
                 lastDate = entryDate;

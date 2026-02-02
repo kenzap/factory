@@ -30,7 +30,7 @@ export const getOrdersReady = async (db, logger) => {
             "order".js->'data'->>'eid' as eid,
             "order".js->'data'->>'name' as name,
             "order".js->'data'->>'phone' as phone,
-            "order".js->'data'->'notifications'->>'order_ready_wa_sent_at' as order_ready_wa_sent_at,
+            "order".js->'data'->'notifications'->>'order_ready_sent_at' as order_ready_sent_at,
             "entity".notifications as notifications
             FROM data "order"
             LEFT JOIN (
@@ -42,7 +42,7 @@ export const getOrdersReady = async (db, logger) => {
             ) "entity" ON "order".js->'data'->>'eid' = "entity"._id
             WHERE ref = $1 
                 AND sid = $2 
-                AND ("order".js->'data'->'notifications'->>'order_ready_wa_sent_at' IS NULL)
+                AND ("order".js->'data'->'notifications'->>'order_ready_sent_at' IS NULL)
                 AND NOT EXISTS (
                     SELECT 1 
                     FROM jsonb_array_elements("order".js->'data'->'items') AS item 
