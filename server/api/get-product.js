@@ -33,6 +33,7 @@ async function getProduct(id) {
             js->'data'->'formula_width' AS formula_width,
             js->'data'->'formula_length' AS formula_length,
             js->'data'->'formula_price' AS formula_price,
+            js->'data'->'formula_cost' AS formula_cost,
             js->'data'->'formula' AS formula,
             js->'data'->'img' AS img,
             js->'data'->'status' AS status,

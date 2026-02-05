@@ -159,15 +159,15 @@ class Transactions {
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('From:')}</label>
-                        <input type="date" class="form-control border-0" id="dateFrom" value="${this.filters.dateFrom ? new Date(new Date(this.filters.dateFrom).getTime() - new Date(this.filters.dateFrom).getTimezoneOffset() * 60000).toISOString().split('T')[0] : ''}">
+                        <input type="date" class="form-control border-0-" id="dateFrom" value="${this.filters.dateFrom ? new Date(new Date(this.filters.dateFrom).getTime() - new Date(this.filters.dateFrom).getTimezoneOffset() * 60000).toISOString().split('T')[0] : ''}">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('To:')}</label>
-                        <input type="date" class="form-control border-0" id="dateTo">
+                        <input type="date" class="form-control border-0-" id="dateTo">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('Type:')}</label>
-                        <select class="form-select border-0" id="typeFilter">
+                        <select class="form-select border-0-" id="typeFilter">
                             <option value="">${__html('All')}</option>
                             <option value="paid">${__html('Paid')}</option>
                             <option value="unpaid">${__html('Unpaid')}</option>
@@ -337,6 +337,19 @@ class Transactions {
                 }
             },
             {
+                title: __html("Estimate"),
+                field: "draft",
+                width: 110,
+                headerSort: false,
+                formatter: function (cell) {
+                    const value = cell.getValue();
+                    if (value === true) {
+                        return `<div class="d-flex align-items-center justify-content-start h-100"><span class="item-status status-warning">${__html('Estimate')}</span></div>`;
+                    }
+                    return "";
+                }
+            },
+            {
                 title: __html("Total"),
                 field: "total",
                 width: 120,
@@ -363,11 +376,20 @@ class Transactions {
                     return `<span class="item-status status-success">${date.toLocaleDateString()}</span>`;
                 },
                 cellClick: (e, cell) => {
+
                     // Create date input element
                     const input = document.createElement('input');
                     input.type = 'date';
                     input.className = 'form-control';
                     const payment = cell.getValue() || {};
+
+                    // check if not estimate
+                    const draft = cell.getRow().getData().draft;
+                    if (draft === true) {
+
+                        toast(__html('Estimates cannot be edited.'));
+                        return;
+                    }
 
                     // Position the input over the cell
                     const cellElement = cell.getElement();
@@ -420,8 +442,6 @@ class Transactions {
                 cellEdited: (cell) => {
                     const rowData = cell.getRow().getData();
                     const rowId = rowData.id;
-
-                    console.log('Cell edited');
 
                     // Initialize editedRows array if it doesn't exist
                     if (!this.editedRows) {
@@ -481,6 +501,14 @@ class Transactions {
                     input.className = 'form-control';
                     const payment = cell.getValue() || {};
                     input.value = payment.amount || '';
+
+                    // check if not estimate
+                    const draft = cell.getRow().getData().draft;
+                    if (draft === true) {
+
+                        toast(__html('Estimates cannot be edited.'));
+                        return;
+                    }
 
                     // Position the input over the cell
                     const cellElement = cell.getElement();

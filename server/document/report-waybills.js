@@ -65,7 +65,7 @@ async function execWaybillsReport(data) {
             }
         }
 
-        query += ` ORDER BY js->'data'->>'name', js->'data'->'waybill'->>'number'`;
+        query += ` ORDER BY js->'data'->'waybill'->>'number', js->'data'->>'name'`;
 
         const result = await db.query(query, queryParams);
         if (result.rows) response = result.rows || [];
@@ -84,7 +84,7 @@ function execWaybillsReportApi(app) {
 
         const data = _req.query;
 
-        const locale = await getLocale(_req.headers);
+        const locale = await getLocale({ locale: _req.headers.locale, 'locale-checksum': 0 });
         const report = await execWaybillsReport(data);
 
         // Generate HTML report

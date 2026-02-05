@@ -98,29 +98,13 @@
 
 .stock-item {
     background: white;
-    /* border: 2px solid #e1e5e9; */
     border-radius: 8px;
     margin-bottom: 0.5rem;
-    /* padding: 0.75rem; */
     cursor: pointer;
     transition: all 0.3s ease;
     position: relative;
     border-left: 20px solid var(--base-color-4);
-    /* border-left: 20px solid #0f5132;
-    color: #d1e7dd; */
-    /* border-top-left-radius: 0;
-    border-bottom-left-radius: 0; */
 }
-
-/* .pending-item{
-    border-left: 8px solid var(--base-color-6);
-}
-
-.complete-item{
-    border-left: 8px solid var(--base-color-4);
-    border-left: 8px solid #6c757d;
-    background: rgba(108, 117, 125, 0.4);
-} */
 
 .stock-item.parent {
     border-left-color: var(--primary-color);
@@ -250,6 +234,7 @@
 }
 
 .order-group {
+    background: white;
     margin-bottom: 1.5rem;
     border-radius: 10px;
     overflow: hidden;
@@ -257,11 +242,9 @@
 }
 
 .order-header {
-    /* background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%); */
     background: white;
     padding: 0.75rem 1rem;
     font-weight: 500;
-    /* color: #8b4513; */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -273,7 +256,7 @@
 
 .order-item {
     display: grid;
-    grid-template-columns: 40px 80px 1fr 200px 100px 80px;
+    grid-template-columns: 40px 80px 1fr 200px 100px;
     align-items: center;
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #f0f0f0;
@@ -287,6 +270,10 @@
 
 .order-item:last-child {
     border-bottom: none;
+}
+
+.complete-item{
+    background: rgba(40, 167, 69, 0.1);
 }
 
 .checkbox {
@@ -325,21 +312,6 @@
     font-weight: 500;
     text-align: center;
 }
-
-/* .status-waiting {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.status-cutting {
-    background: #d4edda;
-    color: #155724;
-}
-
-.status-complete {
-    background: #d1ecf1;
-    color: #0c5460;
-} */
 
 .selection-info {
     background: linear-gradient(135deg, #667eea20, #764ba220);

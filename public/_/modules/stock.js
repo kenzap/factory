@@ -1,4 +1,5 @@
 import { __html } from "../helpers/global.js";
+import { isAuthorized } from "../modules/unauthorized.js";
 
 export const getHtml = (response) => {
 
@@ -47,6 +48,8 @@ export const getHtml = (response) => {
                         <li><a class="dropdown-item" href="/home/" target="_self"><i class="bi bi-boxes me-2"></i>${__html('Home')}</a></li>
                         <li><a class="dropdown-item" href="/manufacturing/" target="_self"><i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
                         <li><a class="dropdown-item" href="/worklog/" target="_self"><i class="bi bi-clock-history me-2"></i>${__html('Work Log')}</a></li>
+                        ${isAuthorized(response, 'inventory_report') ? `<li><a class="dropdown-item inventory-report" href="#" target="_self"><i class="bi bi-filetype-pdf me-2"></i>${__html('Inventory Report')}</a></li>` : ''}
+                        ${isAuthorized(response, 'employee_performance_report') ? `<li><a class="dropdown-item performance-report" href="/report-employee-performance/" target="report-employee-performance"><i class="bi bi-graph-up-arrow me-2"></i>${__html('Performance Report')}</a></li>` : ''}
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#"><i class="bi bi-person me-2"></i>${__html('My Profile')}</a></li>
                         <li><hr class="dropdown-divider"></li>

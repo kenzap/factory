@@ -189,12 +189,17 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
                 if (order.items) {
                     const filteredItems = order.items.filter(item => {
                         let matches = false;
+
+                        if (!item.cm) item.cm = false
+
                         if (item.cm == false && filters.color && item.color === filters.color) {
                             matches = true;
                         }
+
                         if (item.cm == false && filters.coating && item.coating === filters.coating) {
                             matches = true;
                         }
+
                         return matches;
                     });
                     return { ...order, items: filteredItems };

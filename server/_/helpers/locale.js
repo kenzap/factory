@@ -27,7 +27,7 @@ export const getLocale = async (headers) => {
     let response = { values: {} };
 
     let locale = headers?.['locale'] || process.env.LOCALE || 'en'; // Default to 'en' if not set
-    let checksum = headers?.['locale-checksum'] || '';
+    let checksum = parseInt(headers?.['locale-checksum']) || 0;
 
     // clear locale cache
     const key = `locale_values:${sid}:${locale}:dashboard`;
@@ -48,7 +48,7 @@ export const getLocale = async (headers) => {
     }
 
     // if checksums don't match, try to get from cache
-    if (checksum_cached && checksum_cached !== checksum) {
+    if (checksum_cached && checksum_cached !== checksum && checksum && checksum != 0) {
 
         response.values = JSON.parse(await redisClient.get(key)) || {};
     }

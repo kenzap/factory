@@ -100,11 +100,20 @@ export class ProductPrice {
                         <input id="material_cost" type="text" disabled class="form-control inp" style="max-width: 90px;" placeholder="${__html('')}">
                     </div>
                     <div>
-                        <label class="form-label" for="formula_price">${__html('Additional cost')}</label>
+                        <label class="form-label" for="formula_price">${__html('Additional margin')}</label>
                         <input id="formula_price" type="text" class="form-control inp" placeholder="${__html('B>1000?1.80:0.90')}">
                     </div>
                 </div>
-                <p class="form-text formula_price-hint">${__html('Final price = Material cost + Additional cost.')}</p>
+                <p class="form-text formula_price-hint">${__html('Final price = Material cost + Additional margin.')}</p>
+            </div>
+            <div class="mb-3 mw">
+                <div class="row">
+                    <div class="col-md-6-">
+                        <label class="form-label" for="formula">${__html('Cost formula')}</label>
+                        <input id="formula_cost" type="text" class="form-control inp" placeholder="${__html('A + B + C')}">
+                        <p class="form-text formula_cost-hint d-none">${__html('Formula cost in mm.')}</p>
+                    </div>
+                </div>
             </div>
             <div class="mb-3 mw parts_cont d-none">
                 <h4 id="parts-h" class="card-title mb-3">${__html('Parts')}</h4>
@@ -146,6 +155,10 @@ export class ProductPrice {
         d.querySelector("#formula_price").value = self.product.formula_price;
         d.querySelector("#formula_width").value = self.product.formula_width;
         d.querySelector("#formula_length").value = self.product.formula_length;
+        d.querySelector("#formula_cost").value = self.product.formula_cost;
+
+        // tax regime
+        d.querySelector("#tax_regime").value = self.product.tax_regime ? self.product.tax_regime : '';
         d.querySelector("#tax_id").value = self.product.tax_id;
 
         // parts

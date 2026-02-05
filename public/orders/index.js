@@ -163,15 +163,15 @@ class Orders {
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('From:')}</label>
-                        <input type="date" class="form-control border-0" id="dateFrom">
+                        <input type="date" class="form-control border-0-" id="dateFrom">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('To:')}</label>
-                        <input type="date" class="form-control border-0" id="dateTo">
+                        <input type="date" class="form-control border-0-" id="dateTo">
                     </div>
                     <div class="col-md-1">
                         <label class="form-label d-none">${__html('Type:')}</label>
-                        <select class="form-select border-0" id="typeFilter">
+                        <select class="form-select border-0-" id="typeFilter">
                             <option value="all">${__html('All')}</option>
                             <option value="orders">${__html('Orders')}</option>
                             <option value="draft">${__html('Estimates')}</option>

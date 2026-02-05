@@ -22,7 +22,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
     // Check if editing is allowed for this row
     const rowData = cell.getRow().getData();
     const is = isAllowedToEdit(rowData);
-    if (!is.allow) {
+    if (!is.allow && editorParams.field !== 'discount') {
 
         toast(is.reason || 'You are not allowed to edit this row.');
         cancel();
@@ -124,6 +124,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
 
     onRendered(() => {
         input.focus();
+        if (editorParams.field === 'discount') input.select();
     });
 
     return input;

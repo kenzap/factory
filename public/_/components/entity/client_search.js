@@ -29,7 +29,7 @@ export class ClientSearch {
             <div class="autocomplete-container position-relative">
             <input 
                 type="text" 
-                class="form-control border-0" 
+                class="form-control border-0-" 
                 id="clientFilter" 
                 placeholder="${__html('Search..')}"
                 autocomplete="off"
@@ -134,6 +134,11 @@ export class ClientSearch {
                     }
                 }, 0);
             }
+        });
+
+        // Select all text when input is focused
+        clientInput.addEventListener('focus', (e) => {
+            e.target.select();
         });
     }
 

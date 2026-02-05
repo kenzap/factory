@@ -237,8 +237,7 @@ export class Auth {
                                 <div class="p-2 text-center">
                                     <h6>${__html('Please enter a one-time password %1$ to verify your account.', '<br>')}</h6> 
                                 <div>
-                                <span class="form-text">${__html('A password has been sent to')}</span> 
-                                <small>${email_or_phone}</small>
+                                <span class="form-text">${__html('A code has been sent to %1$', email_or_phone)}</span>
                             </div>
                             <div id="otp" class="inputs d-flex flex-row justify-content-center mt-2"> 
                                 <input class="m-1 m-sm-2 text-center form-control rounded" type="text" id="f1" autocomplete="off" maxlength="1" /> 
@@ -275,7 +274,7 @@ export class Auth {
         let display = document.querySelector('.btn-validate-otp');
         self.startTimer(60 * 5, display);
 
-        // jump between otp input fields
+        // jump between otp input fields 
         const inputs = document.querySelectorAll('#otp > *[id]');
         for (let i = 0; i < inputs.length; i++) {
 

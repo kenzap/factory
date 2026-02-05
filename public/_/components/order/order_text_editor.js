@@ -15,7 +15,7 @@ export const textEditor = (cell, onRendered, success, cancel, editorParams) => {
     // Check if editing is allowed for this row
     const rowData = cell.getRow().getData();
     const is = isAllowedToEdit(rowData);
-    if (!is.allow) {
+    if (!is.allow && editorParams.field !== 'note') {
 
         toast(is.reason || 'You are not allowed to edit this row.');
         cancel();

@@ -164,9 +164,9 @@ class CuttingList {
                 <div id="waitingOrders" class="tab-content">
                     ${this.orders && this.orders.length > 0 ? this.orders.map(order => `
                     <div class="order-group">
-                        <div class="order-header">
+                        <div class="order-header ${this.getEntireOrderStatusClass(order)}">
                             <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - ${formatClientName(order) || 'N/A'} (${formatDate(order.due_date) || 'N/A'})</span>
-                            <span class="me-2 form-text">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
+                            <span class="me-2 form-text text-dark">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
                         </div>
                         <div class="order-items">
                             ${order.items ? order.items.map((item, index) => `
@@ -179,7 +179,6 @@ class CuttingList {
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
                                 </span>
                                 <span class="item-quantity">${item.qty || 1}</span>
-                                ${this.formatStatus(item)}
                             </div>
                             `).join('') : ''}
                         </div>
@@ -189,6 +188,17 @@ class CuttingList {
             </div>
         </div>
         `;
+    }
+
+    getEntireOrderStatusClass(order) {
+
+        const allComplete = order.items.every(item => this.getStatusClass(item) === "complete-item");
+
+        if (allComplete) {
+            return "complete-item";
+        } else {
+            return "pending-item";
+        }
     }
 
     getStatusClass(item) {
@@ -201,9 +211,9 @@ class CuttingList {
 
     formatStatus(item) {
         if (item?.inventory?.wrt_date === undefined || item?.inventory?.wrt_date === null) {
-            return `<span class="item-status status-warning">${__html('Pending')}</span>`;
+            return `<span class="item-status status-secondary">${__html('Pending')}</span>`;
         } else {
-            return `<span class="item-status status-success">${__html('Complete')}</span>`;
+            return `<span class="item-status status-secondary">${__html('Complete')}</span>`;
         }
     }
 

@@ -160,7 +160,7 @@ class Settings {
         document.querySelector('.price-parent').innerHTML = parent_options;
 
         // add price listener
-        onClick('.remove-price', e => this.removePrice(this, e));
+        onClick('.remove-price', (e) => { this.removePrice(this, e) });
 
         // only nums for price
         onlyNumbers(".price-price", [8, 46]);
@@ -178,14 +178,13 @@ class Settings {
     listeners() {
 
         // add product modal
-        onClick('.btn-save', e => this.saveSettings(this, e));
+        onClick('.btn-save', e => { this.saveSettings(this, e) });
 
         // add price listener
-        onClick('.add-price', e => this.addPrice(this, e));
-
+        onClick('.add-price', e => { this.addPrice(this, e) });
 
         // remove price listener
-        // onClick('.remove-price', _this.listeners.removePrice);
+        // onClick('.remove-price', (e) => { this.removePrice(this, e) });
     }
 
     addPrice(self, e) {
@@ -217,23 +216,23 @@ class Settings {
         }
 
         // add price listener
-        onClick('.remove-price', this.removePrice);
+        onClick('.remove-price', (e) => { this.removePrice(this, e) });
 
         // only nums for price
         onlyNumbers(".price-price", [8, 46]);
 
         // update price
-        onKeyUp('.price-price', this.updatePrice(this, e));
+        onKeyUp('.price-price', (e) => { this.updatePrice(this, e) });
 
         // price public
-        onClick('.price-public', this.publicPrice(this, e));
+        onClick('.price-public', (e) => { this.publicPrice(this, e) });
     }
 
-    removePrice(e) {
+    removePrice(self, e) {
 
         e.preventDefault();
 
-        let c = confirm(__html('Remove this record?'));
+        let c = confirm(__html('Remove?'));
 
         if (!c) return;
 
@@ -361,7 +360,7 @@ class Settings {
                 </td>
                 <td class="price">
                     <div class="me-1 me-sm-3 my-1">
-                        ${obj.unit}
+                        ${__html(obj.unit)}
                     </div>
                 </td>
                 <td class="align-middle text-center pt-2"> 

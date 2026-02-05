@@ -24,6 +24,7 @@ export const getRights = () => {
         warehouse_management: { text: __html('Warehouse Management'), category: 'warehouse', class: 'text-dark bg-light', note: __html('Allows managing warehouse stock and inventory.') },
         products_management: { text: __html('Publish or Remove Products'), category: 'warehouse', class: 'text-dark bg-light', note: __html('Allows creating, updating, and removing products.') },
         metal_stock_management: { text: __html('Metal Stock Management'), category: 'warehouse', class: 'text-dark bg-light', note: __html('Allows managing metal stock and inventory.') },
+        inventory_report: { text: __html('Inventory Report'), category: 'warehouse', class: 'text-dark bg-light', note: __html('Allows viewing and generating inventory reports.') },
 
         // Settings
         settings_management: { text: __html('Settings Management'), category: 'settings', class: 'text-dark bg-light', note: __html('Allows updating system settings and configurations.') },

@@ -133,5 +133,6 @@ For testing with remote PostgreSQL instances, you can use port forwarding when t
 
 ```bash
 kubectl get svc -n db-eu --kubeconfig=kubeconfig-GJDmHH.yaml
-kubectl -n db-eu port-forward svc/app 5432:5432 --kubeconfig=kubeconfig-GJDmHH.yaml
+kubectl --kubeconfig=kubeconfig-GJDmHH.yaml \                                      
+  -n db-eu port-forward pod/pg-forward 5433:5432
 ```

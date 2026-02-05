@@ -46,8 +46,9 @@ export class PreviewWorkLog {
 
         this.modal_cont.show();
 
-        this.modal.addEventListener('hidden.bs.modal', () => {
-            this.cb({ success: true });
-        });
+        // callback to refresh UI asynchronously
+        // this.modal.addEventListener('hidden.bs.modal', () => {
+        //     this.cb({ success: true });
+        // });
     }
 }

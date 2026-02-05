@@ -5,15 +5,23 @@ const { Client } = pkg;
 export const sid = 1002170; // Default space ID
 export const locale = "lv"; // Default locale
 
-export function __html(locales, key) {
+export function __html(locales, key, ...p) {
     // This function should return the HTML for the given key
     // For now, it just returns the key itself
     locales = locales || {};
-    if (locales.values && locales.values[key]) {
-        return locales.values[key];
+
+    let match = (input, pa) => {
+        pa.forEach((param, i) => {
+            input = input.replace('%' + (i + 1) + '$', param);
+        });
+        return input;
     }
 
-    return key;
+    if (locales.values && locales.values[key]) {
+        return match(locales.values[key], p);
+    }
+
+    return match(key, p);
 }
 
 export function attr(key) {
@@ -203,6 +211,12 @@ export function priceFormat(settings, price) {
         settings.currency_symb = 'kr';
         price = (parseFloat(price) * 12).toFixed(2);
     }
+
+    // Add thousand separators for large numbers
+    price = parseFloat(price).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    });
 
     switch (settings.currency_symb_loc) {
         case 'left':

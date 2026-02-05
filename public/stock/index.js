@@ -1,5 +1,6 @@
 import { getProducts } from "../_/api/get_products.js";
 import { saveStockAmount } from "../_/api/save_stock_amount.js";
+import { PreviewReport } from "../_/components/payments/preview_report.js";
 import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
 import { signOut } from "../_/helpers/auth.js";
 import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
@@ -102,6 +103,19 @@ class Stock {
             e.preventDefault();
 
             signOut();
+        });
+
+        // Inventory report
+        onClick('.inventory-report', (e) => {
+
+            e.preventDefault();
+
+            new PreviewReport(`/report/inventory/?format=pdf`, (response) => {
+                if (!response.success) {
+                    toast(__html('Error opening report'));
+                    return;
+                }
+            });
         });
     }
 

@@ -124,11 +124,12 @@ export function register({ router, cron, config, events, db, logger }) {
 
             for (const order of orders) {
 
-                // TODO: enable in production
-                // await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
-                await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                // keep sending while in debug mode
+                // if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
 
-                await markOrderReady(order.id, db, logger);
+                if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
+                if (process.env.NODE_ENV === 'production') await markOrderReady(order.id, db, logger);
             }
 
             logger.info('cron test:', orders);

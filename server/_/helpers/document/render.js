@@ -1,6 +1,3 @@
-// render.js
-// Invoice rendering using unified tax regimes
-
 import { __html, priceFormat } from '../index.js';
 import { amountToWords } from './totals.js';
 
@@ -89,6 +86,20 @@ function formatItemDescription(item, locale) {
 
 /**
  * Generate invoice totals
+ * 
+ * Kopā bez PVN: €150.50
+ * Ar PVN 21% apliekamā summa: xx EUR
+ * Apgrieztā nodokļa maksāšana (143.4. pants): €0.00
+ * PVN 21%: €11.79
+ * Kopā apmaksai: €162.29
+ * 
+ * Kopā bez PVN: €150.50
+ * Apgrieztā nodokļa maksāšana (143.4. pants): €0.00
+ * PVN 21% (no xx EUR): €11.79
+ * Kopā apmaksai: €162.29
+ * 
+ * Metālapstrāde R7
+ * Metāllūžni R2
  */
 export function getInvoiceTotals(settings, order, locale, totals) {
     if (!totals) return '';
@@ -101,16 +112,40 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     // Left side - Payment info and legal notes
     html += '<div class="totals-left"><table>';
 
-    html += `
-        <tr>
-            <td colspan="2" class="text-start">
-                <strong>${__html(locale, "Payment terms")}:</strong>
-                ${order.due_date
-            ? __html(locale, "Due date") + ' ' + new Date(order.due_date).toLocaleDateString(locale.code)
-            : '3 ' + __html(locale, "days")}
-            </td>
-        </tr>
-    `;
+    // html += `
+    //     <tr>
+    //         <td colspan="2" class="text-start">
+    //             <strong>${__html(locale, "Payment terms")}:</strong>
+    //             ${order.due_date
+    //         ? __html(locale, "Due date") + ' ' + new Date(order.due_date).toLocaleDateString(locale.code)
+    //         : '3 ' + __html(locale, "days")}
+    //         </td>
+    //     </tr>
+    // `; 
+
+    // Only show payment terms if there's AE peppol code in tax breakdown
+    if (breakdown.some(tax => tax.peppolCode === 'AE')) {
+        html += `
+            <tr>
+                <td colspan="2" class="text-start">
+                    <strong>${__html(locale, "Transaction type")}:</strong>
+                    R7
+                </td>
+            </tr>
+        `;
+    }
+
+    // for metal waste
+    if (breakdown.some(tax => tax.peppolCode === 'AE' && tax.localId === 'MET')) {
+        html += `
+            <tr>
+                <td colspan="2" class="text-start">
+                    <strong>${__html(locale, "Transaction type")}:</strong>
+                    R7
+                </td>
+            </tr>
+        `;
+    }
 
     // Legal references for special tax treatments
     const legalNotes = breakdown.filter(tax => tax.legalText);
@@ -137,12 +172,12 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     html += '</table></div>';
 
     // Right side - Totals breakdown
-    html += '<div class="totals-right"><table class="totals-table">';
+    html += '<div class="totals-right"><table class="totals totals-table">';
 
     // Subtotal
     html += `
         <tr>
-            <td class="text-end"><strong>${__html(locale, "Subtotal")}:</strong></td>
+            <td class="text-end"><strong>${__html(locale, "Subtotal without TAX")}:</strong></td>
             <td class="text-end">${priceFormat(settings, totals.totalTaxableAmount)}</td>
         </tr>
     `;
@@ -151,7 +186,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     if (breakdown.length > 0) {
         breakdown.forEach(tax => {
             const label = tax.rate > 0
-                ? `${__html(locale, tax.display)}:`
+                ? `${__html(locale, tax.display)} (${__html(locale, "from ")} ${priceFormat(settings, tax.taxableAmount)}):`
                 : `${__html(locale, tax.legalText)}:`;
 
             html += `
@@ -183,6 +218,7 @@ export function getProductionItemsTable(settings, order, locale) {
     let groups = settings.groups ? JSON.parse(settings.groups) : [];
 
     let tableContent = '';
+    let summaryContent = '';
     let itemIndex = 1;
 
     groups.forEach(group => {
@@ -196,18 +232,18 @@ export function getProductionItemsTable(settings, order, locale) {
 
         // Sort group items by priority first (with default 1000), then alphabetically by product name
         groupItems.sort((a, b) => {
-            const priorityA = a.priority !== '' ? a.priority : 1000;
-            const priorityB = b.priority !== '' ? b.priority : 1000;
+            // const priorityA = a.priority !== '' ? a.priority : 1000;
+            // const priorityB = b.priority !== '' ? b.priority : 1000;
 
-            // First sort by priority
-            if (priorityA !== priorityB) {
-                return priorityA - priorityB;
-            }
+            // // First sort by priority
+            // if (priorityA !== priorityB) {
+            //     return priorityA - priorityB;
+            // }
 
             // If priorities are equal, sort alphabetically by product name
             const nameA = (a.title || '').toLowerCase();
             const nameB = (b.title || '').toLowerCase();
-            return nameA.localeCompare(nameB);
+            return nameB.localeCompare(nameA);
         });
 
         // Only create group section if there are items for this group
@@ -218,9 +254,10 @@ export function getProductionItemsTable(settings, order, locale) {
                     <tr>
                         <th scope="col"></th>
                         <th scope="col">${__html(locale, group.name)}</th>
+                        <th scope="col">${__html(locale, "Width")}</th>
+                        <th scope="col">${__html(locale, "Length")}</th>
                         <th scope="col">${__html(locale, "Qty")}</th>
                         <th scope="col">${__html(locale, "t/m")}</th>
-                        <th scope="col">${__html(locale, "Unit")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -228,9 +265,11 @@ export function getProductionItemsTable(settings, order, locale) {
 
             let totalTM = 0;
 
+            // Group items by width
+            const itemSummary = new Map();
+
             // Add items for this group
             groupItems.forEach((item, i) => {
-
                 // Calculate total t/m for the item
                 let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : "";
                 if (tm) {
@@ -240,34 +279,79 @@ export function getProductionItemsTable(settings, order, locale) {
 
                 item.updated = 1;
                 if (item.total) {
+                    // Create a key for grouping by width
+                    const groupKey = item.formula_width_calc || 'no-width';
+
+                    if (!itemSummary.has(groupKey)) {
+                        itemSummary.set(groupKey, {
+                            width: item.formula_width_calc,
+                            items: [],
+                            totalQty: 0,
+                            totalTM: 0,
+                            totalMeters: 0
+                        });
+                    }
+
+                    const summary = itemSummary.get(groupKey);
+                    summary.items.push(item);
+                    summary.totalQty += item.qty || 0;
+                    summary.totalTM += tm || 0;
+                    summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : 0;
+
                     tableContent += `
                         <tr class="${i == groupItems.length - 1 ? "border-secondary" : ""}">
                             <th scope="row">${itemIndex}</th>
                             <td>
-                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color} ${item.formula_width_calc ? item.formula_width_calc + " x " : ""} ${item.formula_length_calc ? item.formula_length_calc : ""} ${item.formula_width_calc || item.formula_length_calc ? "mm" : ""}</div>
+                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color}</div>
                                 ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                             </td>
+                            <td>${item.formula_width_calc ? item.formula_width_calc : ""}</td>
+                            <td>${item.formula_length_calc ? item.formula_length_calc : ""}</td>
                             <td>${item.qty}</td>
-                            <td>${tm}</td >
-                            <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
+                            <td>${tm}</td>
                         </tr>
-            `;
+                    `;
                     itemIndex++;
                 }
             });
 
+            tableContent += '</tbody>';
+
+            // Add summary for this group to separate table
+            summaryContent += `
+                <thead class="table-secondary">
+                    <tr>
+                        <th scope="col" colspan="2">${__html(locale, group.name)}</th>
+                        <th scope="col">${__html(locale, "Qty")}</th>
+                        <th scope="col">${__html(locale, "t/m")}</th>   
+                    </tr>
+                </thead>
+                <tbody>
+            `;
+
+            // Add summary rows for each width (show all widths, not just multiple items)
+            itemSummary.forEach((summary) => {
+                if (summary.width) {
+                    summaryContent += `
+                        <tr>
+                            <td colspan="2"><strong>${summary.width}mm</strong></td>
+                            <td>${summary.totalQty}</td>
+                            <td>${summary.totalTM ? Math.round(summary.totalTM * 1000) / 1000 : ""}</td>
+                        </tr>
+                    `;
+                }
+            });
+
             // Add group total row
-            tableContent += `
+            summaryContent += `
                 <tr class="table-info">
-                    <th scope="row"></th>
-                    <td></td>
+                    <td colspan="2"><strong>${__html(locale, "Total")}</strong></td>
                     <td><strong>${groupItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
                     <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
-                    <td></td>
                 </tr>
             `;
 
-            tableContent += '</tbody>';
+            summaryContent += '</tbody>';
         }
     });
 
@@ -290,15 +374,17 @@ export function getProductionItemsTable(settings, order, locale) {
                 <tr>
                     <th scope="col"></th>
                     <th scope="col">${__html(locale, "Product")}</th>
+                    <th scope="col">${__html(locale, "Width")}</th>
+                    <th scope="col">${__html(locale, "Length")}</th>
                     <th scope="col">${__html(locale, "Qty")}</th>
                     <th scope="col">${__html(locale, "t/m")}</th>
-                    <th scope="col">${__html(locale, "Unit")}</th>
                 </tr>
-            </thead >
+            </thead>
             <tbody>
-                `;
+        `;
 
         let totalTM = 0;
+        const ungroupedSummary = new Map();
 
         // Add ungrouped items
         ungroupedItems.forEach((item, i) => {
@@ -312,6 +398,25 @@ export function getProductionItemsTable(settings, order, locale) {
 
             item.updated = 1;
             if (item.total) {
+                // Create a key for grouping by width
+                const groupKey = item.formula_width_calc || 'no-width';
+
+                if (!ungroupedSummary.has(groupKey)) {
+                    ungroupedSummary.set(groupKey, {
+                        width: item.formula_width_calc,
+                        items: [],
+                        totalQty: 0,
+                        totalTM: 0,
+                        totalMeters: 0
+                    });
+                }
+
+                const summary = ungroupedSummary.get(groupKey);
+                summary.items.push(item);
+                summary.totalQty += item.qty || 0;
+                summary.totalTM += tm || 0;
+                summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : 0;
+
                 tableContent += `
                     <tr class="${i == ungroupedItems.length - 1 ? "border-secondary" : ""}">
                         <th scope="row">${itemIndex}</th>
@@ -319,37 +424,78 @@ export function getProductionItemsTable(settings, order, locale) {
                             <div>${item.title} ${item.coating} ${item.color}</div>
                             ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                         </td>
+                        <td>${item.formula_width_calc ? item.formula_width_calc : ""}</td>
+                        <td>${item.formula_length_calc ? item.formula_length_calc : ""}</td>
                         <td>${item.qty}</td>
-                        <td>${item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : ""}</td>
-                        <td>${item.unit ? item.unit : __html(locale, "pc")}</td>
+                        <td>${tm}</td>
                     </tr>
                 `;
                 itemIndex++;
             }
         });
 
-        // Add group total row
-        tableContent += `
-                <tr class="table-info">
-                    <th scope="row"></th>
-                    <td></td>
-                    <td><strong>${ungroupedItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
-                    <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
-                    <td></td>
-                </tr>
-            `;
-
         tableContent += '</tbody>';
+
+        // Add ungrouped items summary to separate table
+        summaryContent += `
+            <thead class="table-secondary">
+                <tr>
+                    <th scope="col" colspan="5">${__html(locale, "Ungrouped items")} - ${__html(locale, "Summary")}</th>
+                </tr>
+                <tr>
+                    <th scope="col">${__html(locale, "Width")}</th>
+                    <th scope="col">${__html(locale, "Total meters")}</th>
+                    <th scope="col">${__html(locale, "Qty")}</th>
+                    <th scope="col">${__html(locale, "t/m")}</th>
+                    <th scope="col"></th>
+                </tr>
+            </thead>
+            <tbody>
+        `;
+
+        // Add summary rows for each width in ungrouped items (show all widths)
+        ungroupedSummary.forEach((summary) => {
+            if (summary.width) {
+                summaryContent += `
+                    <tr>
+                        <td><strong>${summary.width}mm</strong></td>
+                        <td><strong>${Math.round(summary.totalMeters * 1000) / 1000}m</strong></td>
+                        <td><strong>${summary.totalQty}</strong></td>
+                        <td><strong>${summary.totalTM ? Math.round(summary.totalTM * 1000) / 1000 : ""}</strong></td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+        });
+
+        // Add group total row
+        summaryContent += `
+            <tr class="table-info">
+                <td><strong>${__html(locale, "Total")}</strong></td>
+                <td></td>
+                <td><strong>${ungroupedItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
+                <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
+                <td></td>
+            </tr>
+        `;
+
+        summaryContent += '</tbody>';
     }
 
-    let table = `
+    let tables = `
         <!-- Items Table -->
-        <table class="items-table">
+        <table class="items-table production-items-table">
             ${tableContent}
+        </table>
+        
+        <!-- Summary Table -->
+        <h4 class="mt-3 mb-1">${__html(locale, "Summary")}</h4>
+        <table class="items-table summary-table">
+            ${summaryContent}
         </table>
     `;
 
-    return table;
+    return tables;
 }
 
 /**

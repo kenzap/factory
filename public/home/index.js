@@ -191,7 +191,7 @@ class Home {
                 links: [
                     {
                         text: __html('Works'),
-                        link: link('/employee-performance/'),
+                        link: link('/report-employee-performance/'),
                         target: '_blank',
                     }
                 ],

@@ -175,3 +175,69 @@ export const updateProductStock = async (db, inventory, user_id) => {
 
     return updateResult.rows[0];
 }
+
+/**
+ * Executes a cost calculation formula for a product by replacing variables with actual values.
+ * 
+ * @async
+ * @function execCostFormula
+ * @param {Object} settings - Configuration object containing price data
+ * @param {Array} settings.price - Array of price entries with id, parent, title, and price properties
+ * @param {Object} product - Product object containing formula and variation data
+ * @param {string} product.formula_cost - The cost calculation formula string (e.g., "price * 1.21")
+ * @param {Array} product.var_price - Array of product price variations with parent and title properties
+ * @returns {Promise<number>} The calculated cost result as a float, or 0 if formula is empty or execution fails
+ * @throws {Error} Logs error to console if formula execution fails, but returns 0 instead of throwing
+ * 
+ * @description
+ * This function processes a cost formula by:
+ * 1. Replacing price entry IDs with their corresponding price values
+ * 2. Replacing "COATING" keyword with matching price values based on parent/title variations
+ * 3. Safely evaluating the resulting mathematical expression
+ * 4. Returning the calculated result or 0 on error
+ * 
+ * @example
+ * const settings = {
+ *   price: [
+ *     { id: 'base_price', price: 100 },
+ *     { parent: 'coating', title: 'premium', price: 1.5 }
+ *   ]
+ * };
+ * const product = {
+ *   formula_cost: 'base_price * COATING',
+ *   var_price: [{ parent: 'coating', title: 'premium' }]
+ * };
+ * const result = await execCostFormula(settings, product); // Returns 150
+ */
+export const execCostFormula = async (settings, product) => {
+
+    let formula = product.formula_cost || '';
+
+    if (!formula || formula.trim() === '') {
+        return 0;
+    }
+
+    // Simple formula execution (e.g., "price * 1.21")
+    try {
+
+        settings.price.forEach(priceEntry => {
+            if (priceEntry.id) formula = formula.replace(new RegExp(`\\b${priceEntry.id}\\b`, 'g'), priceEntry.price);
+
+            if (priceEntry.parent && priceEntry.title) {
+                product.var_price.forEach(variation => {
+                    if (variation.parent === priceEntry.parent && variation.title === priceEntry.title) {
+                        formula = formula.replace(new RegExp(`\\bCOATING\\b`, 'g'), priceEntry.price);
+                    }
+                });
+            }
+        });
+
+        // Evaluate the formula safely
+        const result = Function(`"use strict"; return (${formula})`)();
+        return parseFloat(result);
+
+    } catch (error) {
+        console.error('Error executing formula:', error);
+        return 0;
+    }
+}

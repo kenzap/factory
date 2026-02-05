@@ -70,6 +70,8 @@ export class TabGeneral {
                             <option value="m2">${__html('㎡')}</option>
                             <option value="hour">${__html('Hour')}</option>
                             <option value="unit">${__html('Unit')}</option>
+                            <option value="meter">${__html('Meter')}</option>
+                            <option value="inch">${__html('Inch')}</option>
                           </select>
                         </div>
                     </td>

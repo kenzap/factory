@@ -23,8 +23,8 @@ export class ClientNotifications {
             }
             :
             {
-                order_received: { email: true, whatsapp: true },
-                order_confirmed: { email: true, whatsapp: true },
+                order_received: { email: false, whatsapp: false },
+                order_confirmed: { email: false, whatsapp: false },
                 order_ready: { email: true, whatsapp: true },
                 order_cancelled: { email: false, whatsapp: false },
                 payment_received: { email: false, whatsapp: false },

@@ -9,7 +9,7 @@ import { getLocale } from '../_/helpers/locale.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getTransactions(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false, draft: false, sort_by: 'id', sort_dir: 'desc' }) {
+async function getTransactions(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false, sort_by: 'id', sort_dir: 'desc' }) {
 
     const db = getDbConnection();
 
@@ -21,6 +21,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 COALESCE(js->'data'->>'id', '') as id, 
                 COALESCE(js->'data'->>'from', '') as from, 
                 COALESCE(js->'data'->>'name', '') as name, 
+                COALESCE((js->'data'->'draft')::boolean, false) as draft,
                 COALESCE(js->'data'->>'notes', '') as notes,
                 COALESCE(js->'data'->>'operator', '') as operator,
                 COALESCE(js->'data'->'price'->>'grand_total', '') as total,
@@ -61,26 +62,33 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         params.push(`${filters.client.name.trim()}`);
     }
 
-    if (filters.dateFrom && filters.dateFrom.trim() !== '') {
-        // query += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
-        // query_summary += ` AND js->'data'->'payment'->>'date' >= $${params.length + 1}`;
+    // filter by payment date
+    if (filters.dateFrom.trim() !== '' && filters.for === 'transactions' && filters.type === 'paid') {
+        chunk = ` AND (js->'data'->'payment'->>'date' >= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
+        params.push(filters.dateFrom.trim());
+    }
+
+    if (filters.dateTo.trim() !== '' && filters.for === 'transactions' && filters.type === 'paid') {
+        chunk = ` AND (js->'data'->'payment'->>'date' <= $${params.length + 1})`;
+        query += chunk;
+        query_summary += chunk
+        params.push(filters.dateTo.trim());
+    }
+
+    // filter by payment date or waybill date
+    if (filters.dateFrom.trim() !== '' && filters.for === 'transactions' && filters.type !== 'paid') {
         chunk = ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
         params.push(filters.dateFrom.trim());
     }
 
-    if (filters.dateTo && filters.dateTo.trim() !== '') {
-        // query += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
-        // query_summary += ` AND js->'data'->'payment'->>'date' <= $${params.length + 1}`;
+    if (filters.dateTo.trim() !== '' && filters.for === 'transactions' && filters.type !== 'paid') {
         chunk = ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
         query += chunk;
         query_summary += chunk
-
-        // const endDate = new Date(filters.dateTo.trim());
-        // endDate.setDate(endDate.getDate() + 1);
-        // params.push(endDate.toISOString());
-
         params.push(filters.dateTo.trim());
     }
 

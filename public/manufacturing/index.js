@@ -421,7 +421,7 @@ class Manufacturing {
                             const i = item.originalIndex;
                             index += 1;
                             itemRows += `
-                                <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
+                                <tr class="order-item-row ${item?.inventory?.isu_date ? "row-issued" : ""}" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                                     <td class="d-none">${i + 1}</td>
                                     <td>
                                         ${this.renderWorkButtons(order, item)}
@@ -457,7 +457,7 @@ class Manufacturing {
                                     <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
                                         <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                                     </td>
-                                    <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
+                                    <td class="action-items-col text-end pe-3" data-order-id="${order._id}" data-item-i="${i}">
                                         
                                     </td> 
                                 </tr>
@@ -483,7 +483,7 @@ class Manufacturing {
                     const i = item.originalIndex;
                     index += 1;
                     itemRows += `
-                        <tr class="order-item-row" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
+                        <tr class="order-item-row ${item?.inventory?.isu_date ? "row-issued" : ""}" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
                             <td class="d-none">${i + 1}</td>
                             <td>
                                 ${this.renderWorkButtons(order, item)}
@@ -519,7 +519,7 @@ class Manufacturing {
                             <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
                                 <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
                             </td>
-                            <td class="action-items-col text-end" data-order-id="${order._id}" data-item-i="${i}">
+                            <td class="action-items-col text-end pe-3" data-order-id="${order._id}" data-item-i="${i}">
                                 
                             </td> 
                         </tr>
@@ -534,13 +534,12 @@ class Manufacturing {
 
             // Render sub-items as a table
             subRow.innerHTML = `
-                <div class="p-3">
+                <div class="p-3-">
                     <div class="table-responsive">
                         <table class="table table-sm table-bordered- mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="d-none">${__html('Nr.')}</th>
-                                    <th>${__html('Works')}</th>
+                                    <th class="ps-3">${__html('Works')}</th>
                                     <th>
                                         <div class="d-flex align-items-center text-bold product-name ${attr(this.mode)}">
                                             <div class="d-none">${__html('Product')}</div>
@@ -557,7 +556,7 @@ class Manufacturing {
                                     <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;S</th>
                                     <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Stock')}</th>
                                     <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Taken')}</th>
-                                    <th class="text-end">${__html('Action')}</th>
+                                    <th class="text-end pe-3">${__html('Action')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -600,7 +599,7 @@ class Manufacturing {
     renderWorkButtons(order, item) {
 
         return `
-            <div class="work-buttons pt-1 me-5">
+            <div class="work-buttons pt-1 me-5 ps-3">
                 <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
                     M
                     ${item.worklog?.marking ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
@@ -700,7 +699,7 @@ class Manufacturing {
                     }
 
                     let row = ` 
-                        <tr data-bundle-id="${bundleItem.bundle_id}" class="view-${attr(this.viewMode)}">
+                        <tr data-bundle-id="${bundleItem.bundle_id}" class="view-${attr(this.viewMode)} ${orderItem?.inventory?.isu_date ? "row-issued" : ""}">
                             <td class="d-none py-0"></td>
                             <td class="py-0">
 
@@ -718,7 +717,7 @@ class Manufacturing {
                             </td>
                             <td class="py-0">
                                 <div class="d-flex align-items-center action-ns">
-                                    <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${bundleItem?.product_id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''}  >
+                                    <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${bundleItem?.product_id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''} ${orderItem?.inventory?.isu_date ? 'disabled' : ''} >
                                 </div>
                             </td>
                             <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
@@ -729,7 +728,7 @@ class Manufacturing {
                             <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
                                 <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${bundleItem?.product_id}" value="${bundleAmount}" style="width: 80px;">
                             </td>
-                            <td class="py-0 action-items-col- text-end" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
+                            <td class="py-0 action-items-col- text-end pe-3" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
                             </td> 
                         </tr>`;
 

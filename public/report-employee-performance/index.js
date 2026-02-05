@@ -86,7 +86,7 @@ class EmployeePerformance {
             new Header({
                 hidden: this.mini || false,
                 title: __html('Employee Performance'),
-                icon: 'people',
+                icon: 'graph-up-arrow',
                 style: 'navbar-light',
                 user: response?.user,
                 menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`

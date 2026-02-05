@@ -74,6 +74,7 @@ export class OrderPane {
                         <i class="bi bi-box-arrow-up-right me-2"></i>
                         ${__html('Manufacturing')}
                     </a>
+                    
                 </div>
                 <div id="order-table"></div>
             </div>`;
@@ -301,6 +302,7 @@ export class OrderPane {
                     headerSort: false,
                     editor: numberEditor,
                     editorParams: {
+                        field: "adj",
                         navigateToNextCell: navigateToNextCell,
                         navigateToPreviousCell: navigateToPreviousCell,
                         step: 0.01
@@ -316,6 +318,7 @@ export class OrderPane {
                     headerSort: false,
                     editor: suggestionEditor,
                     editorParams: {
+                        field: "discount",
                         suggestions: this.discountSuggestions,
                         navigateToNextCell: navigateToNextCell,
                         navigateToPreviousCell: navigateToPreviousCell
@@ -352,6 +355,7 @@ export class OrderPane {
                     headerSort: false,
                     editor: textEditor,
                     editorParams: {
+                        field: "note",
                         navigateToNextCell: navigateToNextCell,
                         navigateToPreviousCell: navigateToPreviousCell
                     },
@@ -372,7 +376,7 @@ export class OrderPane {
                                 <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
-                                <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
+                                <ul class="dropdown-menu ${isAllowedToEdit(cell.getRow().getData()).allow ? '' : 'd-none'}" aria-labelledby="tableActions${i}">
                                     <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-check2-square"></i> ${__html('CM')}</a></li>
                                     <li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-palette"></i> ${__html('Color')}</a></li>
                                     <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-droplet"></i> ${__html('Coating')}</a></li>

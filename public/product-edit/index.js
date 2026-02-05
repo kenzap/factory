@@ -3,6 +3,7 @@ import { getProduct } from "../_/api/get_product.js";
 import { saveProduct } from "../_/api/save_product.js";
 import { FileUpload } from "../_/components/file/upload.js";
 import { ProductFiles } from "../_/components/products/product_files.js";
+import { ProductInventory } from "../_/components/products/product_inventory.js";
 import { ProductMeta } from "../_/components/products/product_meta.js";
 import { ProductPrice } from "../_/components/products/product_price.js";
 import { ProductSidebar } from "../_/components/products/product_sidebar.js";
@@ -117,6 +118,9 @@ class ProductEdit {
             // file uplaod management
             self.FileUpload = new FileUpload(this.product);
 
+            // inventory
+            self.ProductInventory = new ProductInventory(this.product, this.locales, this.settings);
+
             // product price
             self.ProductPrice = new ProductPrice(this.product, this.settings);
 
@@ -190,6 +194,21 @@ class ProductEdit {
                                     </div>
                                 </div>
                             </div>
+                            <div class="row">
+                                <div class="col-12 grid-margin stretch-card mt-4">
+                                    <div class="sections" id="sections-2" role="tablist" style="width:100%;">
+                                        <div class="row">
+                                            <div class="col-12 grid-margin stretch-card">
+                                                <div class="card border-white shadow-sm p-sm-3">
+                                                    <div class="card-body">
+                                                        <product-inventory></product-inventory>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-3 mt-3 mt-lg-0 grid-margin grid-margin-lg-0 grid-margin-md-0">
@@ -236,13 +255,6 @@ class ProductEdit {
             if (!data["cats"].includes(category)) data["cats"].push(category);
         }
 
-        // todo:
-        // upload gallery images
-        // self.ProductImages.uploadImages();
-
-        // upload sketch image if any
-        // self.SketchUpload.uploadImages();
-
         // link uploaded images
         data["img"] = [];
         for (let img of document.querySelectorAll('.p-img')) {
@@ -251,18 +263,8 @@ class ProductEdit {
             data["img"].push(tf);
         }
 
-        // discount list
-        // data["discounts"] = JSON.parse(decodeURIComponent(document.querySelector('.discount-blocks').dataset.data));
-
         // inventory
-        data["stock"] = {};
-        data['stock']['sku'] = document.querySelector('#sku_number').value;
-        data['stock']['gtin'] = document.querySelector('#gtin_number').value;
-        data['stock']['mpn'] = document.querySelector('#mpn_number').value;
-        data['stock']['management'] = document.querySelector('#stock_management').checked;
-        data['stock']['qty'] = document.querySelector('#stock_quantity').value;
-        data['stock']['low_threshold'] = document.querySelector('#stock_low_threshold').value;
-        data['stock']['category'] = Array.from(document.querySelector('#stock-category').selectedOptions).map(option => option.value);
+        data["stock"] = self.ProductInventory.getStockData();
 
         // status
         data["status"] = document.querySelector('input[name="p-status"]:checked').value;
@@ -282,6 +284,7 @@ class ProductEdit {
         data['formula_price'] = document.querySelector('#formula_price').value.trim();
         data['formula_width'] = document.querySelector('#formula_width').value.trim();
         data['formula_length'] = document.querySelector('#formula_length').value.trim();
+        data['formula_cost'] = document.querySelector('#formula_cost').value.trim();
         data['linked_products'] = document.querySelector('#linked_products').value.trim();
         data['cad_files'] = self.product.cad_files;
         data['slugs'] = self.product.slugs;

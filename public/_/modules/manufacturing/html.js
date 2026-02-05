@@ -78,7 +78,7 @@ export const getHtml = (response) => {
     </div>
 
     <!-- Close Button (for narrow mode) -->
-    <button class="close-btn text-dark d-xl-none" id="closeBtn" onclick="window.close()">
+    <button class="close-btn text-dark d-xl-none" id="closeBtn" onclick="if(window.opener) { window.opener.focus();  } else { window.history.back(); }">
         <i class="bi bi-x-lg"></i>
     </button>
     `;
