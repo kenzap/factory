@@ -13,7 +13,7 @@ import { updateStock } from '../_/helpers/inventory/update-stock.js';
  * @param {JSON} actions - Object containing actions to perform on the order item.
  * @returns {Array<Object>} - Response
 */
-async function execOrderItemAction(actions) {
+async function execOrderItemAction(actions, user) {
 
     const db = getDbConnection();
 
@@ -25,9 +25,9 @@ async function execOrderItemAction(actions) {
 
         if (!actions) return { success: false, error: 'no data provided' };
 
-        response.update_item = await updateItem(db, actions.update_item);
+        response.update_item = await updateItem(db, actions.update_item, user);
 
-        response.update_stock = await updateStock(db, actions.update_stock);
+        response.update_stock = await updateStock(db, actions.update_stock, user);
 
         response.issue = await issueItem(db, actions.issue)
 
@@ -45,7 +45,7 @@ function execOrderItemActionApi(app) {
 
         const data = _req.body;
         data.user_id = _req.user.id;
-        const response = await execOrderItemAction(data);
+        const response = await execOrderItemAction(data, _req.user);
 
         // console.log('response', response);
 

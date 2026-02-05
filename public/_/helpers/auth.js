@@ -12,3 +12,9 @@ export const signOut = () => {
         location.reload();
     });
 }
+
+export const getAuthToken = () => {
+
+    // Get token from localStorage, sessionStorage, or cookie
+    return localStorage.getItem('token');
+}

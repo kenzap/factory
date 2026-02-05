@@ -26,7 +26,7 @@ export const getHtml = (response) => {
                         </ul>
                     </div>
                 </div>
-                <button class="btn btn-outline-light action-btn me-2" onclick="stock.init()">
+                <button class="btn btn-outline-light action-btn me-2 d-none" onclick="stock.init()">
                     <i class="bi bi-arrow-clockwise"></i> ${__html('Refresh')}
                 </button>
             </div>

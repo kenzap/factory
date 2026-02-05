@@ -1,3 +1,4 @@
+import { sseManager } from '../helpers/sse.js';
 import { sid } from './index.js';
 
 /**
@@ -30,7 +31,7 @@ import { sid } from './index.js';
  *   amount: '50'
  * }, 'user456');
  */
-export const setProductStock = async (db, inventory, user_id) => {
+export const setProductStock = async (db, inventory, user) => {
 
     // console.log('setProductStock', inventory);
 
@@ -75,7 +76,7 @@ export const setProductStock = async (db, inventory, user_id) => {
         });
     }
 
-    // console.log('Updated var_price:', var_price);
+    // console.log('Updated stock:', user);
 
     // update product stock
     const updateQuery = `
@@ -91,6 +92,16 @@ export const setProductStock = async (db, inventory, user_id) => {
     if (updateResult.rows.length === 0) {
         throw new Error('Product not found or update failed');
     }
+
+    sseManager.broadcast({
+        type: 'stock-update',
+        product_id: inventory._id,
+        coating: inventory.coating,
+        color: inventory.color,
+        amount: inventory.amount,
+        updated_by: { user_id: user?.id, name: user?.fname },
+        timestamp: new Date().toISOString()
+    });
 
     return updateResult.rows[0];
 }
@@ -118,7 +129,7 @@ export const setProductStock = async (db, inventory, user_id) => {
  *   amount: 10
  * }, 'user456');
  */
-export const updateProductStock = async (db, inventory, user_id) => {
+export const updateProductStock = async (db, inventory, user) => {
 
     // validate inventory data
     if (!inventory || !inventory._id || !inventory.coating || !inventory.color) {
@@ -141,6 +152,8 @@ export const updateProductStock = async (db, inventory, user_id) => {
     const varResult = await db.query(varQuery, [inventory._id, 'product', sid]);
     let var_price = varResult.rows[0]?.var_price || [];
 
+    let final_amount = 0;
+
     // find product by color and coating
     var_price.forEach(v => {
 
@@ -149,6 +162,7 @@ export const updateProductStock = async (db, inventory, user_id) => {
             // console.log('A Updated var_price:', v);
 
             v.stock = (parseFloat(v.stock) || 0) + inventory.amount;
+            final_amount = v.stock;
 
             // console.log('B Updated var_price:', v);
         }
@@ -170,6 +184,16 @@ export const updateProductStock = async (db, inventory, user_id) => {
     if (updateResult.rows.length === 0) {
         throw new Error('Product not found or update failed');
     }
+
+    sseManager.broadcast({
+        type: 'stock-update',
+        product_id: inventory._id,
+        coating: inventory.coating,
+        color: inventory.color,
+        amount: final_amount,
+        updated_by: { user_id: user?.id, name: user?.fname },
+        timestamp: new Date().toISOString()
+    });
 
     // console.log('updateResult.rows[0]:', updateResult.rows[0]);
 

@@ -35,7 +35,7 @@ if (process.env.NODE_ENV !== 'production') {
         const startTime = Date.now();
         res.on('finish', () => {
             const duration = Date.now() - startTime;
-            logger.info(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
+            // logger.info(`${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`);
         });
         next();
     });

@@ -9,7 +9,7 @@ import { setProductStock } from '../_/helpers/product.js';
  * @param {JSON} data - Stock data
  * @returns {Array<Object>} - Orders
 */
-async function saveStockAmount(data) {
+async function saveStockAmount(data, user) {
 
     const db = getDbConnection();
 
@@ -21,7 +21,7 @@ async function saveStockAmount(data) {
 
         if (!data) return { success: false, error: 'no data provided' };
 
-        response = await setProductStock(db, data, data.user_id)
+        response = await setProductStock(db, data, user)
 
     } finally {
         await db.end();
@@ -36,7 +36,7 @@ function saveStockAmountApi(app) {
     app.post('/api/save-stock-amount/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
-        const response = await saveStockAmount(data);
+        const response = await saveStockAmount(data, _req.user);
 
         res.json({ success: true, response });
     });

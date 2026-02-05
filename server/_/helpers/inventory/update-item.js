@@ -1,7 +1,7 @@
 
 import { sid } from './../index.js';
 
-export const updateItem = async (db, actions) => {
+export const updateItem = async (db, actions, user) => {
 
     let response = null;
 

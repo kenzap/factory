@@ -2,7 +2,7 @@
 import { makeId, sid } from './../index.js';
 import { updateProductStock } from './../product.js';
 
-export const updateStock = async (db, actions) => {
+export const updateStock = async (db, actions, user) => {
 
     let response = null;
 
@@ -60,7 +60,7 @@ export const updateStock = async (db, actions) => {
                     amount: parseFloat(last_writeoff_amount),
                     coating: actions.coating,
                     color: actions.color
-                }, actions.user_id);
+                }, user);
             }
 
             // apply new stock change if amount is not zero
@@ -74,7 +74,7 @@ export const updateStock = async (db, actions) => {
                     amount: -1 * new_amount,
                     coating: actions.coating,
                     color: actions.color
-                }, actions.user_id);
+                }, user);
             }
 
             // Insert or update writeofflog record
@@ -86,9 +86,9 @@ export const updateStock = async (db, actions) => {
                 writeoff_amount: new_amount,
                 coating: actions.coating,
                 color: actions.color,
-                user_id: actions.user_id,
+                user_id: user.id,
                 updated_at: new Date().toISOString(),
-                updated_by: actions.user_id
+                updated_by: user.id
             };
 
             if (itemResult.rows.length > 0) {

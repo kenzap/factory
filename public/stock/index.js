@@ -2,12 +2,13 @@ import { getProducts } from "../_/api/get_products.js";
 import { saveStockAmount } from "../_/api/save_stock_amount.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
 import { AddStockSupply } from "../_/components/stock/add_stock_supply.js";
-import { signOut } from "../_/helpers/auth.js";
+import { getAuthToken, signOut } from "../_/helpers/auth.js";
 import { __html, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { stockSSE } from "../_/modules/sse/stock_sse.js";
 import { getHtml } from "../_/modules/stock.js";
 import { isAuthorized } from "../_/modules/unauthorized.js";
 
@@ -45,7 +46,86 @@ class Stock {
 
         this.data();
 
+        this.setupSSE();
+
         hideLoader();
+    }
+
+    /**
+ * Setup SSE connection for real-time stock updates
+ */
+    setupSSE() {
+
+        console.log('Setting up SSE connection for stock updates');
+
+        const token = getAuthToken(); // Get your auth token
+
+        if (!token) {
+            console.warn('No auth token, skipping SSE connection');
+            return;
+        }
+
+        // Connect to SSE (using POST for security)
+        stockSSE.connectWithPost(token);
+
+        // Subscribe to stock updates
+        this.sseUnsubscribe = stockSSE.subscribe((data) => {
+            this.handleStockUpdate(data);
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (this.sseUnsubscribe) {
+                this.sseUnsubscribe();
+            }
+            stockSSE.disconnect();
+        });
+    }
+
+    /**
+    * Handle incoming stock update from SSE
+    */
+    handleStockUpdate(data) {
+        if (data.type !== 'stock-update') return;
+
+        console.log('Received stock update:', data);
+
+        // Find and update the cell
+        const cell = document.querySelector(
+            `td.editable-cell[data-product_id="${data.product_id}"][data-coating="${data.coating}"][data-color="${data.color}"]`
+        );
+
+        console.log('Updating cell:', cell?.textContent, 'to', data.amount);
+
+        if (cell) {
+            // Update cell value
+            cell.textContent = data.amount;
+            cell.className = `editable-cell`;
+
+            // Visual feedback - highlight the updated cell
+            cell.style.transition = 'background-color 0.5s';
+            cell.style.backgroundColor = '#fff3cd'; // light yellow
+
+            setTimeout(() => {
+                cell.style.backgroundColor = '';
+                cell.style.transition = '';
+                cell.className = `editable-cell ${this.getStockClass(data.amount)}`;
+            }, 2000);
+
+            // Show toast notification
+            toast(__html(`Stock updated by %1$`, data.updated_by.name));
+        }
+
+        // Also update the product data in memory
+        const product = this.products.find(p => p._id === data.product_id);
+        if (product && product.var_price) {
+            const varPrice = product.var_price.find(
+                vp => vp.parent === data.coating && vp.title === data.color
+            );
+            if (varPrice) {
+                varPrice.stock = data.amount;
+            }
+        }
     }
 
     view() {
@@ -172,7 +252,7 @@ class Stock {
                 color: cell.dataset.color,
                 coating: cell.dataset.coating,
                 amount: newValue,
-                _id: cell.dataset.productId,
+                _id: cell.dataset.product_id,
             }
 
             console.log('Saving stock:', stock);
@@ -417,7 +497,7 @@ class Stock {
 
                     cell.className = `editable-cell ${this.getStockClass(quantity)} `;
                     cell.textContent = quantity;
-                    cell.dataset.productId = product._id;
+                    cell.dataset.product_id = product._id;
                     cell.dataset.coating = coating;
                     cell.dataset.color = color;
 

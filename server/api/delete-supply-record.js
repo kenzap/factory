@@ -11,7 +11,7 @@ import { updateProductStock } from '../_/helpers/product.js';
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteSupplyRecord(id) {
+async function deleteSupplyRecord(id, user) {
 
     const db = getDbConnection();
 
@@ -52,7 +52,7 @@ async function deleteSupplyRecord(id) {
                 amount: -1 * supplyData.qty,
                 _id: supplyData.product_id
             };
-            await updateProductStock(db, data, data.user_id);
+            await updateProductStock(db, data, user);
         }
 
     } finally {
@@ -67,7 +67,7 @@ function deleteSupplyRecordApi(app) {
 
     app.post('/api/delete-supply-record/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteSupplyRecord(_req.body.id);
+        const response = await deleteSupplyRecord(_req.body.id, user);
 
         // console.log('delete response', response);
 

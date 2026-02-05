@@ -9,7 +9,7 @@ import { updateProductStock } from '../_/helpers/product.js';
  * @param {JSON} data - Supply record data
  * @returns {JSON<Object>} - Response
 */
-async function createSupplyRecord(data) {
+async function createSupplyRecord(data, user) {
 
     const db = getDbConnection();
 
@@ -45,7 +45,7 @@ async function createSupplyRecord(data) {
 
         response = result.rows[0] || {};
 
-        await updateProductStock(db, { coating: data.coating, color: data.color, amount: data.qty, _id: data.product_id }, data.user_id);
+        await updateProductStock(db, { coating: data.coating, color: data.color, amount: data.qty, _id: data.product_id }, user);
 
     } finally {
         await db.end();
@@ -62,7 +62,7 @@ function createSupplyRecordApi(app) {
         // console.log('/api/create-worklog-record/ _req.body', _req.body);
 
         const data = _req.body;
-        const supply = await createSupplyRecord(data);
+        const supply = await createSupplyRecord(data, user);
 
         // console.log('/api/create-worklog-record/ response', response);
 

@@ -9,7 +9,7 @@ import { updateProductStock } from '../_/helpers/product.js';
  * @param {JSON} data - Worklog record data
  * @returns {JSON<Object>} - Response
 */
-async function createWorkLog(data, logger) {
+async function createWorkLog(logger, data, user) {
 
     const db = getDbConnection();
 
@@ -55,7 +55,7 @@ async function createWorkLog(data, logger) {
                 coating: data.coating,
                 color: data.color,
                 amount: data.qty
-            }, data.user_id);
+            }, user);
         }
 
         // if data.item_id is set, update worklog_id in order item
@@ -114,7 +114,7 @@ function createWorkLogApi(app, logger) {
     app.post('/api/create-worklog-record/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
-        const response = await createWorkLog(data, logger);
+        const response = await createWorkLog(logger, data, user);
 
         res.json({ success: true, response });
     });

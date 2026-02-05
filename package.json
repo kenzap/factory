@@ -4,6 +4,7 @@
     "author": "Kenzap",
     "description": "A simple vanilla ES6 Node.js template with Rollup bundler",
     "license": "Unlicense",
+    "type": "module",
     "scripts": {
         "dev": "nodemon --delay 2 server/server.js",
         "build": "rm -R -f dist; mkdir dist; npm-run-all build:*",

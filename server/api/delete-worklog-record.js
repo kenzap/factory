@@ -29,7 +29,7 @@ import { updateProductStock } from '../_/helpers/product.js';
  * The function groups order items by order_id to optimize database operations
  * and only processes orders that actually exist in the database.
  */
-const revertCuttingAction = async (db, data) => {
+const revertCuttingAction = async (db, data, user) => {
 
     let response = [], res;
 
@@ -149,11 +149,9 @@ const revertCuttingAction = async (db, data) => {
  * @param {string} data.user_id - The ID of the user performing the action
  * @returns {Promise} Promise that resolves when the stock update is complete
  */
-const revertStockReplenishmentAction = async (db, data) => {
+const revertStockReplenishmentAction = async (db, data, user) => {
 
-    console.log('Reverting stock replenishment action:', data);
-
-    // return;
+    console.log('Reverting stock replenishment action:', data, 'by user:', user?.id);
 
     // simply reduce stock by the replenished amount
     return updateProductStock(db, {
@@ -161,7 +159,7 @@ const revertStockReplenishmentAction = async (db, data) => {
         coating: data.coating,
         color: data.color,
         amount: -1 * data.qty
-    }, data.user_id);
+    }, user);
 }
 
 /**
@@ -238,7 +236,7 @@ const revertWorklogFromOrderItem = async (db, data) => {
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteWorklogRecord(id, user_id) {
+async function deleteWorklogRecord(id, user) {
 
     const db = getDbConnection();
 
@@ -264,10 +262,10 @@ async function deleteWorklogRecord(id, user_id) {
 
         let worklogRecord = checkResult.rows[0];
 
-        worklogRecord.js.data.user_id = user_id;
+        worklogRecord.js.data.user_id = user.id;
 
         if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data);
-        if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data);
+        if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data, user);
         if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data);
 
         // Delete worklog record
@@ -295,7 +293,7 @@ function deleteWorklogRecordApi(app) {
 
     app.post('/api/delete-worklog-record/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteWorklogRecord(_req.body.id, _req.user.id);
+        const response = await deleteWorklogRecord(_req.body.id, _req.user);
 
         // console.log('delete response', response);
 
