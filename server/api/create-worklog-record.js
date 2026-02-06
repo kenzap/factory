@@ -114,7 +114,7 @@ function createWorkLogApi(app, logger) {
     app.post('/api/create-worklog-record/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
-        const response = await createWorkLog(logger, data, user);
+        const response = await createWorkLog(logger, data, _req.user);
 
         res.json({ success: true, response });
     });

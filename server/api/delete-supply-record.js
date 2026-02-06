@@ -67,9 +67,7 @@ function deleteSupplyRecordApi(app) {
 
     app.post('/api/delete-supply-record/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteSupplyRecord(_req.body.id, user);
-
-        // console.log('delete response', response);
+        const response = await deleteSupplyRecord(_req.body.id, _req.user);
 
         res.json({ success: true, response });
     });

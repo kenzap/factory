@@ -59,12 +59,8 @@ function createSupplyRecordApi(app) {
 
     app.post('/api/create-supply-record/', authenticateToken, async (_req, res) => {
 
-        // console.log('/api/create-worklog-record/ _req.body', _req.body);
-
         const data = _req.body;
-        const supply = await createSupplyRecord(data, user);
-
-        // console.log('/api/create-worklog-record/ response', response);
+        const supply = await createSupplyRecord(data, _req.user);
 
         res.json({ success: true, supply });
     });

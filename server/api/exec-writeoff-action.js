@@ -139,7 +139,7 @@ async function execWriteoffAction(data) {
             response.push(res.rows[0] || {});
         }
 
-        console.log('record.order_ids', record.order_ids);
+        // console.log('record.order_ids', record.order_ids);
 
         // update order items status if needed
         for (let order_id of record.order_ids) {

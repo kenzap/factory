@@ -429,6 +429,174 @@ class MetalLog {
 
         if (entriesToShow.length === 0) {
             tbody.innerHTML = `
+                <tr>
+                    <td colspan="12" class="text-center text-muted py-4">
+                        <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
+                        ${__html('No supply entries found')}
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        if (this.firstLoad) theader.innerHTML = `
+    <tr>
+        <th>${__html('Color')}</th>
+        <th>${__html('Status')}</th>
+        <th>${__html('Thickness')}</th>
+        <th>
+            <div class="position-relative" >
+                <select class="form-select ms-0 form-select-sm text-start border-0 bg-transparent ms-0 ps-0 py-0" id="widthFilter" onchange="metallog.applyFilters()" style="width:auto; height:21px;">
+                    <option value="">${__html('Width')}</option>
+                    <option value="1250" ${this.filters.width === '1250' ? 'selected' : ''}>~1250</option>
+                    <option value="1249" ${this.filters.width === '1249' ? 'selected' : ''}>&lt;1250</option>
+                </select>
+            </div>
+        </th>
+        <th>${__html('Length')}</th>
+        <th>${__html('Qty')}</th>
+        <th>${__html('Supplier')}</th>
+        <th>${__html('Parameters')}</th>
+        <th>${__html('Price')}</th>
+        <th>${__html('Notes')}</th>
+        <th>${__html('Document')}</th>
+        <th></th>
+    </tr>
+`;
+
+        // Group entries by coating, then by color
+        const entriesByCoatingAndColor = entriesToShow.reduce((groups, entry) => {
+            const coating = entry.coating || 'No Coating';
+            const color = entry.color || 'No Color';
+
+            if (!groups[coating]) {
+                groups[coating] = {};
+            }
+            if (!groups[coating][color]) {
+                groups[coating][color] = [];
+            }
+            groups[coating][color].push(entry);
+            return groups;
+        }, {});
+
+        // Sort coatings alphabetically, then sort colors within each coating
+        const sortedCoatings = Object.keys(entriesByCoatingAndColor).sort();
+
+        let lastCoating = null;
+        tbody.innerHTML = sortedCoatings.map(coating => {
+            const colorGroups = entriesByCoatingAndColor[coating];
+            let coatingHeader = '';
+            let colorRows = '';
+
+            // Calculate totals for the entire coating group
+            if (lastCoating !== coating) {
+                const allCoatingEntries = Object.values(colorGroups).flat();
+                const availableCoatingEntries = allCoatingEntries.filter(entry => entry.status === 'available');
+
+                const totalLength = Math.round(availableCoatingEntries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
+                const totalPrice = availableCoatingEntries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+                    return sum + (area * parseFloat(entry.price || 0));
+                }, 0);
+                const totalArea = availableCoatingEntries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+                    return sum + area;
+                }, 0);
+
+                coatingHeader = `
+            <tr class="thead-dark bg-dark d-none">
+                <th colspan="12" class="bg-dark text-white fw-bold py-2 border-0">
+                    ${coating} ${parseUnit(this.settings, totalLength.toLocaleString(), "t/m")} | ${parseUnit(this.settings, totalArea.toFixed(2), "m²")} | ${priceFormat(this.settings, totalPrice)}
+                </th>
+            </tr>
+        `;
+                lastCoating = coating;
+            }
+
+            // Sort colors alphabetically within each coating
+            const sortedColors = Object.keys(colorGroups).sort();
+
+            // Process each color group within the coating
+            colorRows = sortedColors.map(color => {
+                const entries = colorGroups[color];
+
+                // Calculate totals for this color group
+                const availableColorEntries = entries.filter(entry => entry.status === 'available');
+                const colorTotalLength = Math.round(availableColorEntries.reduce((sum, entry) => sum + parseFloat(entry.length || 0), 0) / 1000, 0);
+                const colorTotalPrice = availableColorEntries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+                    return sum + (area * parseFloat(entry.price || 0));
+                }, 0);
+                const colorTotalArea = availableColorEntries.reduce((sum, entry) => {
+                    const area = (parseFloat(entry.width || 0) / 1000) * (parseFloat(entry.length || 0) / 1000);
+                    return sum + area;
+                }, 0);
+
+                // Color subheader (only show if there are multiple colors or totals are significant)
+                const colorHeader = availableColorEntries.length > 0 ? `
+            <tr class="bg-light">
+                <th colspan="12" class="bg-light text-dark fw-normal py-1 border-0 ps-2" >
+                    <strong class="text-uppercase">${coating} - ${color}</strong> - ${parseUnit(colorTotalLength.toLocaleString(), this.settings, "t/m")} | ${parseUnit(colorTotalArea.toFixed(2), this.settings, "m²")} | ${priceFormat(this.settings, colorTotalPrice)}
+                </th>
+            </tr>
+        ` : '';
+
+                // Sort entries by width and length
+                const sortedEntries = entries.sort((a, b) => {
+                    const widthDiff = parseFloat(a.width || 0) - parseFloat(b.width || 0);
+                    if (widthDiff !== 0) return widthDiff;
+                    return parseFloat(a.length || 0) - parseFloat(b.length || 0);
+                });
+
+                const entryRows = sortedEntries.map((entry, i) => `
+        <tr data-id="${entry._id}" class="${i % 2 === 0 ? 'table-light' : ''}">
+            <td style="width:80px;" class="align-middle ps-5">
+                ${entry.color || '-'}
+            </td>
+            <td style="width:80px;" class="align-middle">
+                ${this.supplyStatusBadge(entry)}
+            </td>
+            <td style="width:80px;" class="align-middle">
+                ${this.renderDimension(entry, 'thickness')}
+            </td>
+            <td style="width:50px;" class="align-middle">${this.renderDimension(entry, 'width')}</td>
+            <td style="width:180px;" class="align-middle">${this.renderDimension(entry, 'length')}</td>
+            <td class="align-middle"><strong>${entry.qty}</strong></td>
+            <td style="width:80px;" class="text-truncate align-middle">
+                <input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.supplier}" data-coil-id="${entry._id}" data-field="supplier" placeholder="">
+            </td>
+            <td style="width:160px;" class="align-middle">
+                ${this.renderParameters(entry)}
+            </td>
+            <td style="width:160px;" class="align-middle">
+                ${priceFormat(this.settings, entry?.price,)}
+            </td>
+            <td style="width:160px;" class="align-middle">
+                <div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${entry?.notes}" data-field="notes" data-coil-id="${entry._id}" placeholder=""></div>
+            </td>
+            <td style="width:160px;" class="align-middle">
+                <span class="item-status status-primary ${!entry?.document?.id ? "d-none" : ""}" >${entry?.document?.id}</span>
+            </td>
+            <td class="text-end align-middle">
+                ${this.supplyActions(entry, i)}
+            </td>
+        </tr>`).join('');
+
+                return colorHeader + entryRows;
+            }).join('');
+
+            return coatingHeader + colorRows;
+        }).join('');
+    }
+
+    renderRecordsLegacy() {
+
+        const theader = document.getElementById('workLogHeader');
+        const tbody = document.getElementById('workLogBody');
+        const entriesToShow = this.filteredEntries.length > 0 ? this.filteredEntries : this.records;
+
+        if (entriesToShow.length === 0) {
+            tbody.innerHTML = `
                     <tr>
                         <td colspan="12" class="text-center text-muted py-4">
                             <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
@@ -584,6 +752,7 @@ class MetalLog {
 
         if (!entry.status) return ``;
         if (entry.status == 'ordered') return `<span class="item-status status-warning">${__html('Ordered')}</span>`;
+        if ((entry.status == 'available' || entry?.status == 'instock') && entry['length'] == 0) return `<span class="item-status status-danger">${__html('Written-off')}</span>`;
         if (entry.status == 'available') return `<span class="item-status status-success">${__html('Available')}</span>`;
         if (entry.status == 'used') return `<span class="item-status status-secondary">${__html('Used')}</span>`;
 
@@ -598,11 +767,15 @@ class MetalLog {
                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                 </svg>
                 <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
-                    ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
-                    ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
-                    ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus('${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
+                    ${entry?.status == 'used' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus(event, '${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'ordered' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus(event, '${entry._id}', 'available')"><i class="bi bi-arrow-return-right"></i> ${__html('Available')}</a></li>` : ''}
+                    ${entry?.status == 'available' || entry?.status == 'instock' ? `<li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="metallog.updateStatus(event, '${entry._id}', 'used')"><i class="bi bi-arrow-return-right"></i> ${__html('Used')}</a></li>` : ''}
+                    ${entry?.length == entry?._length && !entry?.parent_coil_id
+                ? `
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item po delete-row" href="#" data-type="delete" data-index="${i}" onclick="metallog.deleteEntry(event, '${entry._id}')"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                    `
+                : ''}
                 </ul>
             </div>`;
     }
@@ -618,7 +791,7 @@ class MetalLog {
         }
 
         if (type === 'length') {
-            return `<span class="dimension-entry">${this.formatCoilLength(entry.length)}</span>`;
+            return `<span class="dimension-entry ${entry.length == 0 ? 'text-danger' : ''}">${this.formatCoilLength(entry.length)}</span>`;
         }
     }
 
@@ -738,8 +911,11 @@ class MetalLog {
         return stageClasses[type] || 'bg-secondary';
     }
 
-    updateStatus(coilId, newValue) {
-        if (confirm('Update status?')) {
+    updateStatus(event, coilId, newValue) {
+
+        event.preventDefault();
+
+        if (confirm(__html('Update status?'))) {
 
             const field = "status";
 
@@ -772,15 +948,13 @@ class MetalLog {
 
         event.preventDefault();
 
-        if (confirm('Delete this record?')) {
-            // Save current scroll position
-            const scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        if (confirm(__html('Delete this record?'))) {
 
             deleteSupplyRecord({ id }, (response) => {
 
                 if (!response.success) {
 
-                    console.error('Error deleting work log record:', response.error);
+                    console.error(__html('Error deleting work log record:'), response.error);
                     return;
                 }
 
@@ -790,11 +964,6 @@ class MetalLog {
 
                 // Refresh data after deletion
                 this.data();
-
-                // Restore scroll position after DOM updates
-                setTimeout(() => {
-                    window.scrollTo(0, scrollPosition);
-                }, 100);
 
                 // this.renderEntries();
                 this.updateSummary();

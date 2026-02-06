@@ -100,7 +100,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
     }
 
     if (filters.type && filters.type == 'paid') {
-        chunk = ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric > 0`;
+        chunk = ` AND COALESCE(NULLIF(js->'data'->'payment'->>'amount', ''), '0')::numeric != 0`;
         query += chunk;
         query_summary += chunk
     }

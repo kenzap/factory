@@ -245,14 +245,13 @@ export const execCostFormula = async (settings, product) => {
     try {
 
         settings.price.forEach(priceEntry => {
+
+            // settings defined variable
             if (priceEntry.id) formula = formula.replace(new RegExp(`\\b${priceEntry.id}\\b`, 'g'), priceEntry.price);
 
-            if (priceEntry.parent && priceEntry.title) {
-                product.var_price.forEach(variation => {
-                    if (variation.parent === priceEntry.parent && variation.title === priceEntry.title) {
-                        formula = formula.replace(new RegExp(`\\bCOATING\\b`, 'g'), priceEntry.price);
-                    }
-                });
+            // coating variable
+            if (priceEntry.parent == product.parent && priceEntry.title == product.title && formula.includes('COATING')) {
+                formula = formula.replace(new RegExp(`\\bCOATING\\b`, 'g'), priceEntry.price);
             }
         });
 

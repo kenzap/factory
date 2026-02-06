@@ -27,15 +27,18 @@ async function getMetalLog(filters) {
             js->'data'->'color' AS color,
             js->'data'->'coating' AS coating,
             js->'data'->'width' AS width,
+            js->'data'->'_width' AS _width,
             js->'data'->'length' AS length,
+            js->'data'->'_length' AS _length,
             js->'data'->'thickness' AS thickness,
+            js->'data'->'parent_coil_id' AS parent_coil_id,
             js->'data'->'origin' AS origin,
             js->'data'->'document' AS document,
             js->'data'->'date' AS date,
             js->'data'->'notes' AS notes,
             js->'data'->'price' AS price
         FROM data
-        WHERE ref = $1 AND sid = $2 AND (js->'data'->>'length')::numeric > 0
+        WHERE ref = $1 AND sid = $2 AND (js->'data'->>'_length')::numeric > 0 AND (js->'data'->>'status' != 'used')
     `;
 
     let params = ['supplylog', sid];

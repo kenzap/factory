@@ -121,26 +121,30 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
     if (filters.type === 'ready') {
         whereConditions.push(`NOT EXISTS (
             SELECT 1 
-            FROM jsonb_array_elements(js->'data'->'items') AS item 
-            WHERE item->'inventory'->>'rdy_date' IS NULL 
-               OR item->'inventory'->>'rdy_date' = ''
-        ) AND NOT EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(js->'data'->'items') AS item 
-            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
-               AND item->'inventory'->>'isu_date' != ''
-        ) AND jsonb_array_length(js->'data'->'items') > 0`);
+                FROM jsonb_array_elements(js->'data'->'items') AS item 
+                WHERE item->'inventory'->>'rdy_date' IS NULL 
+                   OR item->'inventory'->>'rdy_date' = ''
+            )
+            AND NOT EXISTS (
+                SELECT 1 
+                FROM jsonb_array_elements(js->'data'->'items') AS item 
+                WHERE item->'inventory'->>'isu_date' IS NULL 
+                   OR item->'inventory'->>'isu_date' = ''
+            ) = FALSE
+            AND jsonb_array_length(js->'data'->'items') > 0`);
 
         dateField = "js->'data'->'items'->0->'inventory'->>'rdy_date'";
     }
 
     if (filters.type === 'issued') {
-        whereConditions.push(`EXISTS (
-            SELECT 1 
-            FROM jsonb_array_elements(js->'data'->'items') AS item 
-            WHERE item->'inventory'->>'isu_date' IS NOT NULL 
-               AND item->'inventory'->>'isu_date' != ''
-        ) AND jsonb_array_length(js->'data'->'items') > 0`);
+        whereConditions.push(`
+            NOT EXISTS (
+                SELECT 1 
+                FROM jsonb_array_elements(js->'data'->'items') AS item 
+                WHERE item->'inventory'->>'isu_date' IS NULL 
+                   OR item->'inventory'->>'isu_date' = ''
+            ) 
+            AND jsonb_array_length(js->'data'->'items') > 0`);
 
         dateField = "js->'data'->'items'->0->'inventory'->>'isu_date'";
     }

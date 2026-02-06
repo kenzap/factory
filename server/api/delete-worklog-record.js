@@ -5,7 +5,7 @@ import { updateProductStock } from '../_/helpers/product.js';
 /**
  * Reverts a cutting action by restoring the original coil length, removing stock sheets, 
  * and clearing order item statuses that were modified during the cutting operation.
- * 
+ *  
  * @async
  * @function revertCuttingAction
  * @param {Object} db - Database connection object with query method

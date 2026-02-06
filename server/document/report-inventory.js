@@ -29,12 +29,13 @@ async function execInventoryReport() {
                 js->'data'->'locales'->$3->>'title' AS title,
                 js->'data'->'locales'->$3->>'sdesc' AS sdesc,
                 js->'data'->'stock' AS stock,
+                js->'data'->'calc_price' AS calc_price,
                 js->'data'->'formula_cost' AS formula_cost,
                 js->'data'->'title' AS title_default,
                 js->'data'->'var_price' AS var_price,
                 js->'data'->>'group' AS group
             FROM data
-            WHERE ref = $1 AND sid = $2 AND js->'data'->'locales'->$3->>'title' != ''
+            WHERE ref = $1 AND sid = $2 AND js->'data'->'locales'->$3->>'title' != '' AND js->'data'->'status' != '0'
         `;
 
         const queryParams = ['product', sid, process.env.LOCALE || 'en'];
@@ -73,7 +74,7 @@ function execInventoryReportApi(app) {
 
             if (!groupedProducts[group]) {
                 groupedProducts[group] = [];
-                groupTotals[group] = { stock: 0, cost: 0, price: 0, count: 0 };
+                groupTotals[group] = { stock: 0, cost: 0, total_cost: 0, total_price: 0, count: 0 };
             }
 
             const varPrices = product.var_price ? product.var_price : [];
@@ -85,31 +86,42 @@ function execInventoryReportApi(app) {
                         continue; // skip zero stock variations
                     }
 
-                    const totalAmount = parseFloat(variation.price) * stock_amount;
-                    const cost = await execCostFormula(settings, product) * stock_amount;
+                    const productData = {
+                        formula_cost: product.formula_cost,
+                        variation: variation,
+                        parent: variation.parent,
+                        title: variation.title
+                    };
+
+                    const cost = await execCostFormula(settings, productData);
+                    const price = parseFloat(variation.price) || 0;
+                    const total_cost = cost * stock_amount;
+                    const total_price = price * stock_amount;
 
                     groupedProducts[group].push({
                         title: `${product.title} ${variation.parent} ${variation.title}`,
                         sdesc: product.sdesc,
                         stock: stock_amount,
                         cost: cost,
-                        price: totalAmount
+                        price: price,
+                        total_cost: total_cost,
+                        total_price: total_price
                     });
 
                     groupTotals[group].stock += stock_amount;
-                    groupTotals[group].cost += cost;
-                    groupTotals[group].price += totalAmount;
+                    groupTotals[group].total_cost += total_cost;
+                    groupTotals[group].total_price += total_price;
                     groupTotals[group].count += 1;
                 }
             }
         }
 
         // Calculate grand totals
-        let grandTotals = { stock: 0, cost: 0, price: 0, count: 0 };
+        let grandTotals = { stock: 0, total_cost: 0, total_price: 0, count: 0 };
         Object.values(groupTotals).forEach(total => {
             grandTotals.stock += total.stock;
-            grandTotals.cost += total.cost;
-            grandTotals.price += total.price;
+            grandTotals.total_cost += total.total_cost;
+            grandTotals.total_price += total.total_price;
             grandTotals.count += total.count;
         });
 
@@ -141,8 +153,6 @@ function execInventoryReportApi(app) {
             </div>
         `;
 
-
-
         // Generate tables for each group
         Object.keys(groupedProducts).sort().forEach(groupName => {
             const groupItems = groupedProducts[groupName];
@@ -165,9 +175,11 @@ function execInventoryReportApi(app) {
                     <tr>
                         <th>Nr</th>
                         <th>${__html(locale, 'Product')}</th>
-                        <th>${__html(locale, 'Stock')}</th>
-                        <th>${__html(locale, 'Cost')}</th>
+                        <th>${__html(locale, 'MC')}</th>
                         <th>${__html(locale, 'Price')}</th>
+                        <th>${__html(locale, 'Stock')}</th>
+                        <th>${__html(locale, 'Total MC')}</th>
+                        <th>${__html(locale, 'Total Price')}</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -181,9 +193,11 @@ function execInventoryReportApi(app) {
                             ${item.title}
                             ${item.sdesc ? `<div style="font-size: 0.8em; color: #555;">${item.sdesc}</div>` : ''}
                         </td>
-                        <td class="amount">${item.stock}</td>
                         <td class="amount">${priceFormat(settings, item.cost)}</td>
                         <td class="amount">${priceFormat(settings, item.price)}</td>
+                        <td class="amount">${item.stock}</td>
+                        <td class="amount">${priceFormat(settings, item.total_cost)}</td>
+                        <td class="amount">${priceFormat(settings, item.total_price)}</td>
                     </tr>
                 `;
             });
@@ -192,10 +206,10 @@ function execInventoryReportApi(app) {
                     </tbody>
                     <tfoot>
                         <tr class="group-total">
-                            <td colspan="2">${__html(locale, 'Total')} (${__html(locale, `%1$ items`, groupTotal.count)})</td>
+                            <td colspan="4">${__html(locale, 'Total')} (${__html(locale, `%1$ items`, groupTotal.count)})</td>
                             <td class="amount">${groupTotal.stock}</td>
-                            <td class="amount">${priceFormat(settings, groupTotal.cost)}</td>
-                            <td class="amount">${priceFormat(settings, groupTotal.price)}</td>
+                            <td class="amount">${priceFormat(settings, groupTotal.total_cost)}</td>
+                            <td class="amount">${priceFormat(settings, groupTotal.total_price)}</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -207,10 +221,10 @@ function execInventoryReportApi(app) {
             <table>
                 <tfoot>
                     <tr class="grand-total">
-                        <td colspan="2">${__html(locale, 'Grand Total')} (${__html(locale, `%1$ items`, grandTotals.count)})</td>
+                        <td colspan="4">${__html(locale, 'Grand Total')} (${__html(locale, `%1$ items`, grandTotals.count)})</td>
                         <td class="amount">${grandTotals.stock}</td>
-                        <td class="amount">${priceFormat(settings, grandTotals.cost)}</td>
-                        <td class="amount">${priceFormat(settings, grandTotals.price)}</td>
+                        <td class="amount">${priceFormat(settings, grandTotals.total_cost)}</td>
+                        <td class="amount">${priceFormat(settings, grandTotals.total_price)}</td>
                     </tr>
                 </tfoot>
             </table>

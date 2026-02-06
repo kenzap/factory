@@ -200,7 +200,17 @@ export async function getInvoiceNextNumber(db, order, settings, user) {
 export async function getWaybillNextNumber(db, order, settings, user) {
 
     // number already issued
-    if (order?.waybill && order?.waybill?.number) return order.waybill;
+    if (order?.waybill && order?.waybill?.number) {
+
+        // Update amount in case it has changed before printing
+        order.waybill.amount = order.price ? order.price.grand_total : null;
+
+        console.log('Waybill number already exists:', order.waybill.number, 'Updating amount to:', order.waybill.amount);
+
+        await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+
+        return order.waybill;
+    }
 
     // get number from annulled list if present
     if (settings.waybill_anulled_list && settings.waybill_anulled_list.trim()) {

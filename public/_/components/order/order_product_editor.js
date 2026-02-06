@@ -168,12 +168,23 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 optionText.appendChild(titleSpan);
                 optionText.appendChild(sdescSpan);
 
+                const stock = getStockAmount(cell, suggestion);
+                const stockSpan = document.createElement("span");
+                stockSpan.textContent = stock;
+                stockSpan.style.padding = "2px 6px";
+                stockSpan.style.borderRadius = "12px";
+                stockSpan.classList.add("status-secondary");
+                stockSpan.style.fontSize = "12px";
+                stockSpan.style.fontWeight = "600";
+                stockSpan.style.visibility = stock > 0 ? "visible" : "hidden"; // Hide stock badge for now, can be toggled on if needed
+                stockSpan.style.marginLeft = "auto";
+                stockSpan.style.alignSelf = "flex-start";
+
                 option.appendChild(optionImage);
                 option.appendChild(optionText);
+                option.appendChild(stockSpan);
 
                 option.addEventListener("mouseenter", (e) => {
-                    // selectedIndex = index;
-                    // updateSelectedOption();
 
                     // Show large preview image
                     largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
@@ -371,26 +382,37 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 // New method to search products from backend
 const searchProductSuggestionsFromBackend = (s, cell, callback) => {
 
-    // const columns = this.table.getColumns()
     const rowData = cell.getRow().getData();
     const color = rowData.color;
     const coating = rowData.coating;
 
-    // console.log('Searching backend for products with term:', color, coating, s);
-
     getProductSuggestions({ s, color, coating }, (response) => {
 
-        productSuggestions = response.suggestions; // .map(suggestion => suggestion.title + " " + suggestion.sdesc);
+        productSuggestions = response.suggestions;
 
         callback(productSuggestions);
-
-        // console.log('Product suggestions from backend:', response.suggestions);
     });
 }
 
-const productSelected = (suggestion, cell, settings, discounts) => {
+const getStockAmount = (cell, suggestion) => {
 
-    // this.syncItems(suggestion, cell);
+    let stock = 0;
+
+    const rowData = cell.getRow().getData();
+    const color = rowData.color;
+    const coating = rowData.coating;
+
+    suggestion.var_price?.forEach(variant => {
+
+        if (variant.parent === coating && variant.title === color) {
+            stock = parseFloat(variant.stock);
+        }
+    });
+
+    return stock !== undefined ? stock : 0;
+}
+
+const productSelected = (suggestion, cell, settings, discounts) => {
 
     // Map suggestion values to current row
     const rowData = cell.getRow().getData();
