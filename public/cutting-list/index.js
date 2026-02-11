@@ -1,8 +1,9 @@
-import { execWriteoffAction } from "../_/api/exec_writeoff_action.js";
+import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { __html, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { formatClientName } from "../_/helpers/order.js";
+// import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -171,7 +172,7 @@ class CuttingList {
                         <div class="order-items">
                             ${order.items ? order.items.map((item, index) => `
                             <div class="order-item ${this.getStatusClass(item)}">
-                                <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
+                                <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-type="cutting" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
                                 <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}" target="/manufacturing/">${order.id}</a></span>
                                 <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
                                 <span class="item-dimensions">
@@ -179,6 +180,7 @@ class CuttingList {
                                     <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
                                 </span>
                                 <span class="item-quantity">${item.qty || 1}</span>
+                                <input type="checkbox" class="checkbox item-manufactured ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" onchange="window.cutting_list.itemManufactured(event);" ${item?.inventory?.origin == 'm' ? 'checked' : ''} >
                             </div>
                             `).join('') : ''}
                         </div>
@@ -369,7 +371,7 @@ class CuttingList {
             const orderId = e.target.dataset.id;
 
             // Check if any items for this order are currently selected (excluding items with width=0)
-            const orderItems = document.querySelectorAll(`.order-item input[type="checkbox"][data-item^="${orderId}-"]`);
+            const orderItems = document.querySelectorAll(`.order-item input[type="checkbox"][data-item^="${orderId}-"][data-type="cutting"]`);
             const validItems = Array.from(orderItems).filter(checkbox => checkbox.dataset.width !== '0');
             const checkedItems = validItems.filter(checkbox => checkbox.checked);
 
@@ -394,7 +396,7 @@ class CuttingList {
             let items = [];
 
             // get selected items
-            document.querySelectorAll('.order-item input[type="checkbox"]:checked').forEach(checkbox => {
+            document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked').forEach(checkbox => {
                 let itemId = checkbox.dataset.item;
                 let [orderId, index] = itemId.split('-');
                 let order = this.orders.find(o => o.id === orderId);
@@ -449,7 +451,7 @@ class CuttingList {
             let items = [];
 
             // get selected items
-            document.querySelectorAll('.order-item input[type="checkbox"]:checked').forEach(checkbox => {
+            document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked').forEach(checkbox => {
                 let itemId = checkbox.dataset.item;
                 let [orderId, index] = itemId.split('-');
                 let order = this.orders.find(o => o.id === orderId);
@@ -462,69 +464,75 @@ class CuttingList {
                     const item = order.items.find((i, ii) => ii === index);
                     if (item) {
                         // Get updated values from HTML elements
-                        // const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
-                        // const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
+                        const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
+                        const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
 
-                        // const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
-                        // const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
+                        const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
+                        const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
 
                         items.push({
                             id: item.id,
-                            // index: index,
+                            index: index,
                             order_id: order.id,
-                            // item_id: item._id,
-
+                            product_id: item._id,
                             title: item.title,
-                            // formula_width_calc: 0,
-                            // formula_length_calc: 0,
+                            formula_width_calc: formula_width_calc,
+                            formula_length_calc: formula_length_calc,
                             qty: item.qty
                         });
                     }
                 }
             });
 
-            const orderIds = [...new Set(items.map(item => item.order_id).filter(id => id))];
+            new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
 
-            const record = {
-                qty: 0,
-                origin: "c",
-                type: "cutting",
-                title: __html(`Mark complete for %1$ item%2$ from order%3$ #%4$`, items.length, items.length !== 1 ? 's' : '', orderIds.length !== 1 ? 's' : '', orderIds.join(', #')),
-                product_name: "",
-                time: 0,
-                order_ids: orderIds,
-                items: items
-            }
-
-            if (items.length === 0) {
-                toast('No records selected');
-                return;
-            }
-
-            console.log('Write-off record:', record);
-
-            // block ui button
-            let htmlOriginal = e.currentTarget.innerHTML;
-            e.currentTarget.disabled = true;
-            e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
-
-            // Create product bundle from the selected product
-            execWriteoffAction(record, (response) => {
-
-                document.querySelector('.writeoff-btn').innerHTML = htmlOriginal;
-                document.querySelector('.writeoff-btn').disabled = false;
-
-                console.log('Write-off response:', response);
-
-                if (!response.success) {
-                    alert(__html('Error: %1$', response.error));
-                    return;
+                if (updated) {
+                    this.init();
                 }
-
-                this.init();
-
-                toast(__html('Changes applied'));
             });
+
+            // const orderIds = [...new Set(items.map(item => item.order_id).filter(id => id))];
+
+            // const record = {
+            //     qty: 0,
+            //     origin: "c",
+            //     type: "cutting",
+            //     title: __html(`Mark complete for %1$ item%2$ from order%3$ #%4$`, items.length, items.length !== 1 ? 's' : '', orderIds.length !== 1 ? 's' : '', orderIds.join(', #')),
+            //     product_name: "",
+            //     time: 0,
+            //     order_ids: orderIds,
+            //     items: items
+            // }
+
+            // if (items.length === 0) {
+            //     toast('No records selected');
+            //     return;
+            // }
+
+            // console.log('Write-off record:', record);
+
+            // // block ui button
+            // let htmlOriginal = e.currentTarget.innerHTML;
+            // e.currentTarget.disabled = true;
+            // e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+
+            // // Create product bundle from the selected product
+            // execWriteoffAction(record, (response) => {
+
+            //     document.querySelector('.writeoff-btn').innerHTML = htmlOriginal;
+            //     document.querySelector('.writeoff-btn').disabled = false;
+
+            //     console.log('Write-off response:', response);
+
+            //     if (!response.success) {
+            //         alert(__html('Error: %1$', response.error));
+            //         return;
+            //     }
+
+            //     this.init();
+
+            //     toast(__html('Changes applied'));
+            // });
         });
 
         // Editable notes functionality
@@ -586,6 +594,63 @@ class CuttingList {
             }
         });
     }
+
+    itemManufactured = (e) => {
+
+        e.preventDefault();
+
+        console.log('Manufactured checkbox changed:', e.target);
+
+        const checkbox = e.target;
+        const itemId = checkbox.dataset.item;
+        const [orderId, index] = itemId.split('-');
+        const order = this.orders.find(o => o.id === orderId);
+        let item = order ? order.items.find((i, ii) => ii === parseInt(index)) : null;
+
+        if (!item) {
+            console.error('Item not found for checkbox:', itemId);
+            return;
+        }
+
+        const isComplete = checkbox.checked;
+
+        console.log('isComplete:', isComplete);
+
+        if (!item.inventory) item.inventory = {};
+
+        if (checkbox.checked) {
+            item.inventory.rdy_date = new Date().toISOString();
+            item.inventory.origin = 'm';
+        } else {
+            item.inventory.origin = 'c';
+            item.inventory.rdy_date = null;
+        }
+
+        const actions = {
+            update_item: {
+                order_id: order._id,
+                item_id: item.id,
+                index,
+                item
+            }
+        };
+
+        console.log('Prepared update actions:', actions);
+
+        // Execute the action
+        execOrderItemAction(actions, (response) => {
+
+            if (!response.success) {
+
+                toast(__html('Error updating item status'));
+                return;
+            }
+
+            // cb(order);
+        });
+
+        // Here you would call the API to update the item's status in the backend
+    }
 }
 
-new CuttingList();
+window.cutting_list = new CuttingList();

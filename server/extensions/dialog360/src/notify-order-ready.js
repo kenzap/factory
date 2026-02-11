@@ -52,6 +52,12 @@ export const notifyOrderReady = async (query, config, db, logger) => {
         const orderId = query.orderId || query.pasutid;
         const phone = query.phone || query.to;
 
+        if (!orderId || !phone) {
+
+            logger.error('Missing required parameters: orderId and phone are required', query);
+            return { success: false, reason: 'Missing required parameters: orderId and phone are required' };
+        }
+
         // Normalize phone number
         let normalizedPhone = phone;
         if (normalizedPhone.startsWith("+")) {
@@ -108,11 +114,14 @@ export const notifyOrderReady = async (query, config, db, logger) => {
         const result = await response.json();
 
         logger.info(`WhatsApp order ready notification sent to ${normalizedPhone}:`, result);
+
         return { success: true, message: 'WhatsApp message sent successfully', data: result };
 
     } catch (error) {
 
         logger.error('Error sending WhatsApp order ready notification:', error);
+        logger.error('Error stack:', error.stack);
+
         return {
             success: false,
             reason: error.message

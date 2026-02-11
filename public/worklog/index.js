@@ -44,6 +44,8 @@ class WorkLog {
             coating: new URLSearchParams(window.location.search).get('coating') || "",
             qty: new URLSearchParams(window.location.search).get('qty') || 0,
             type: new URLSearchParams(window.location.search).get('type') || '',
+            tag: new URLSearchParams(window.location.search).get('tag') || '',
+            label: new URLSearchParams(window.location.search).get('label') || '',
         }
 
         this.filters.user_id = new URLSearchParams(window.location.search).get('user_id') || "";
@@ -178,6 +180,8 @@ class WorkLog {
                 origin: document.querySelector('#origin').value,
                 time: parseInt(document.querySelector('#time').value) || 0,
                 type: document.querySelector('#type').value,
+                label: this.record?.label || '', // For simplicity, using type as category. Adjust if you have separate category field.
+                tag: this.record?.tag || '', // For simplicity, using type as category. Adjust if you have separate category field.
                 user_id: user_id,
                 order_id: this.record.order_id ? this.record.order_id : '',
                 order_ids: this.record.id ? [this.record.id] : []
@@ -365,8 +369,8 @@ class WorkLog {
                     <td colspan="7" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >
                         ${dateLabel}
                     </td>
-                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >${totalQtyForDate}</td>
-                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text" >${totalTimeForDate}</td>
+                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text ${!this.filters.type ? "d-none" : ""}" >${totalQtyForDate}</td>
+                    <td colspan="1" class="bg-light fw-bold py-2 border-0 text-secondary form-text ${!this.filters.type ? "d-none" : ""}" >${totalTimeForDate}</td>
                     <td></td>
                 </tr>
             `;
@@ -395,6 +399,8 @@ class WorkLog {
                     <span class="badge ${this.getTypeClass(entry.type)} stage-badge">
                         ${__html(entry.type.charAt(0).toUpperCase() + entry.type.slice(1).replace('-', ' '))}
                     </span>
+
+                    ${entry?.label ? `<span class="badge bg-secondary stage-badge ms-1">${__html(entry.label.charAt(0).toUpperCase() + entry.label.slice(1).replace('-', ' '))}</span>` : ''}
                 </td>
                 <td><strong>${entry.qty}</strong></td>
                 <td><strong>${entry.time == "0" ? "" : entry.time}</strong></td>

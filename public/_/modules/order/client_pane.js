@@ -373,8 +373,15 @@ export class ClientPane {
 
                 // client identified by vat_number, reload to avoid duplicates
                 if (response.client._id && state.client._id !== response.client._id) {
+
                     state.client._id = response.client._id;
+
+                    // new client sync with order
+                    bus.emit('client:search:update_filter', { value: response.client.klients_new || '', _id: response.client._id || '' });
+                    bus.emit('client:address:updated', { address: response.client.adress_full || '', _id: response.client._id || '' });
+
                     this.data();
+
                     return;
                 }
 
@@ -401,9 +408,12 @@ export class ClientPane {
                     if (response.client.klients_new) document.getElementById('legal_name').value = response.client.klients_new || '';
                     if (response.client.vatStatus) state.client.vat_status = response.client.vatStatus || '';
                     if (response.client.adress_full) { state.client.reg_address = response.client.adress_full || ''; document.getElementById('reg_address').value = state.client.reg_address; }
+                    if (response.client.vatNumber) document.getElementById('vat_number').value = response.client.vatNumber;
 
                     const tax_region = extractCountryFromVAT(response.client.vatNumber || '');
                     if (tax_region) document.querySelector('#tax_region').value = tax_region;
+
+                    bus.emit('client:address:updated', { address: state.client.reg_address || '', _id: state.client._id || '' });
                 }
 
                 if (response.client.vatStatus === '1' && entity.dataset.entity === 'company') {
@@ -415,9 +425,7 @@ export class ClientPane {
                     this.save(true);
                 }
 
-                // update UI
-                document.getElementById('vat_number').value = response.client.pvncode || '';
-
+                // update client search filter in case reg_number or legal_name has changed
                 if (response.client._id || response.client.klients_new) bus.emit('client:search:update_filter', { value: response.client.klients_new || '', _id: response.client._id || '' });
 
                 toast('VAT status verified');
@@ -474,7 +482,7 @@ export class ClientPane {
         const tax_region = document.getElementById('tax_region').value || '';
 
         if (!entity) {
-            alert('Select a client type.');
+            alert(__html('Select a client type.'));
             return false;
         }
 

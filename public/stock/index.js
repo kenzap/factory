@@ -33,6 +33,7 @@ class Stock {
             dateTo: '',
             draft: false,
             items: true,
+            limit: 250,
             cat: 'rainwater-system-square',
             type: '2' // Default to 'All'
         };
@@ -109,7 +110,7 @@ class Stock {
             setTimeout(() => {
                 cell.style.backgroundColor = '';
                 cell.style.transition = '';
-                cell.className = `editable-cell ${this.getStockClass(data.amount)}`;
+                cell.className = `editable-cell ${this.getStockClass(data.amount, cell.dataset.low_threshold)}`;
             }, 2000);
 
             // Show toast notification
@@ -215,7 +216,7 @@ class Stock {
 
     editCell(cell) {
 
-        console.log('Editing cell:', cell);
+        // console.log('Editing cell:', cell);
 
         // Skip if already being edited
         if (cell.contentEditable === 'true') return;
@@ -237,7 +238,6 @@ class Stock {
 
         const saveEdit = () => {
             if (isEditing) return;
-            isEditing = true;
 
             cell.contentEditable = false;
 
@@ -245,8 +245,24 @@ class Stock {
             let newValue = cell.textContent.replace(/[^\d]/g, '');
             newValue = parseInt(newValue) || 0;
 
+            // Check if value actually changed
+            const oldValue = parseInt(currentValue) || 0;
+            if (newValue === oldValue) {
+                // No change, just update UI
+                cell.textContent = newValue;
+                cell.className = `editable-cell ${this.getStockClass(newValue, cell.dataset.low_threshold)}`;
+
+                // Remove event listeners
+                cell.removeEventListener('input', inputHandler);
+                cell.removeEventListener('blur', saveEdit);
+                cell.removeEventListener('keydown', keydownHandler);
+                return;
+            }
+
+            isEditing = true;
+
             cell.textContent = newValue;
-            cell.className = `editable-cell ${this.getStockClass(newValue)}`;
+            cell.className = `editable-cell ${this.getStockClass(newValue, cell.dataset.low_threshold)}`;
 
             let stock = {
                 color: cell.dataset.color,
@@ -255,7 +271,7 @@ class Stock {
                 _id: cell.dataset.product_id,
             }
 
-            console.log('Saving stock:', stock);
+            // console.log('Saving stock:', stock);
 
             // Save the new stock amount
             saveStockAmount(stock, (response) => {
@@ -285,7 +301,7 @@ class Stock {
         const cancelEdit = () => {
             cell.contentEditable = false;
             cell.textContent = currentValue;
-            cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue))}`;
+            cell.className = `editable-cell ${this.getStockClass(parseInt(currentValue), cell.dataset.low_threshold)}`;
 
             // Remove event listeners
             cell.removeEventListener('input', inputHandler);
@@ -345,6 +361,8 @@ class Stock {
             this.settings = response.settings;
             this.products = response.products;
             this.user = response.user;
+
+            console.log('Products:', this.products);
 
             // session
             new Session();
@@ -495,11 +513,12 @@ class Stock {
                     const cell = document.createElement('td');
                     const quantity = this.getStockAmount(product, coating, color); // this.stockData[product][color];
 
-                    cell.className = `editable-cell ${this.getStockClass(quantity)} `;
+                    cell.className = `editable-cell ${this.getStockClass(quantity, product.low_threshold)} `;
                     cell.textContent = quantity;
                     cell.dataset.product_id = product._id;
                     cell.dataset.coating = coating;
                     cell.dataset.color = color;
+                    cell.dataset.low_threshold = product.low_threshold || 0;
 
                     row.appendChild(cell);
 
@@ -538,14 +557,18 @@ class Stock {
         });
     }
 
-    getStockClass(quantity) {
+    getStockClass(quantity, low_threshold) {
         quantity = parseFloat(quantity);
+
+        if (low_threshold == "") low_threshold = 999999999999999; // default low threshold
+
+        low_threshold = parseFloat(low_threshold);
 
         if (quantity === '') return '';
         if (quantity <= 0) return 'out-of-stock';
         // if (quantity <= 5) return 'out-of-stock';
-        if (quantity <= 25) return 'very-low-stock';
-        if (quantity <= 100) return 'low-stock';
+        if (quantity < low_threshold) return 'very-low-stock';
+        if (quantity <= low_threshold * 2) return 'low-stock';
         return '';
     }
 }

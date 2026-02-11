@@ -1,5 +1,6 @@
 import { getAddresses } from "../../api/get_addresses.js";
 import { __html, attr } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
 
 /**
  * A contact search component that provides autocomplete functionality for searching addresses.
@@ -171,6 +172,12 @@ export class ClientAddressSearch {
                     }
                 }, 0);
             }
+        });
+
+        // update address when client is updated from other component, e.g. client pane
+        bus.on('client:address:updated', (client) => {
+
+            if (client.address) addressInput.value = client.address;
         });
     }
 

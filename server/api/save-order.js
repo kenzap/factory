@@ -75,19 +75,17 @@ async function saveOrder(data, user) {
             data_new = {
                 ...mergedData,
                 date: existingData.date || currentDate,
-                operator: existingData.operator || user.fname || '',
-                created: existingData.created || currentTime,
+                // operator: existingData.operator || user.fname || '',
+                // created: existingData.created || currentTime,
                 updated: currentTime
             };
 
             meta.updated = currentTime;
-
-            // console.log('saveOrder existing data', data.id);
         }
 
         data_new.operator = user.fname;
 
-        console.log('saveOrder data to save', data_new, user);
+        // console.log('saveOrder data to save', data_new, user);
         // return;
 
         // Get orders

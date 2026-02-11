@@ -13,7 +13,7 @@ export const getHtml = (response) => {
 
             <!-- Search Container -->
             <div class="search-container d-flex align-items-center">
-                <div class="me-3">
+                <div class="me-0">
                     <div class="dropdown">
                         <button class="btn btn-outline-light dropdown-toggle" type="button" data-bs-toggle="dropdown" style="border-radius: 6px; min-width: 200px;">
                             <span id="selectedCategory">${__html(response?.settings?.stock_categories[0].name)}</span>
@@ -26,7 +26,7 @@ export const getHtml = (response) => {
                         </ul>
                     </div>
                 </div>
-                <button class="btn btn-outline-light action-btn me-2 d-none" onclick="stock.init()">
+                <button class="btn btn-outline-light action-btn ms-3 me-2 d-none" onclick="stock.init()">
                     <i class="bi bi-arrow-clockwise"></i> ${__html('Refresh')}
                 </button>
             </div>

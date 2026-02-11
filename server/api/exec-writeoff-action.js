@@ -120,6 +120,8 @@ async function execWriteoffAction(data) {
         // Process each group
         for (let [group, totalLength] of Object.entries(groupLengths)) {
 
+            if (!record.coil_id) { console.log("empty coil record"); continue; }
+
             // TODO: Implement write-off logic for each group
             console.log(`Group ${group}: Total length to write-off: ${totalLength}`);
 
@@ -286,11 +288,11 @@ function execWriteoffActionApi(app) {
         // add record to worklog
         const worklog = await createWorkLog(data);
 
-        console.log('worklog', worklog);
+        // console.log('worklog', worklog);
 
         const writeoffAction = await execWriteoffAction(data);
 
-        console.log('writeoffAction', writeoffAction);
+        // console.log('writeoffAction', writeoffAction);
 
         res.json({ success: true });
     });

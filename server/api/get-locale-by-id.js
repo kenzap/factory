@@ -10,11 +10,11 @@ async function getLocaleById(id) {
     // locales query
     const query = `
         SELECT  
-                _id,
-                js->'data'->'locale' as locale, 
-                js->'data'->'content' as content, 
-                js->'data'->'ext' as ext, 
-                js->'data'->'updated' as updated
+            _id,
+            js->'data'->'locale' as locale, 
+            js->'data'->'content' as content, 
+            js->'data'->'ext' as ext, 
+            js->'data'->'updated' as updated
         FROM data 
         WHERE ref = $1 AND sid = $2 AND _id = $3
         LIMIT 1

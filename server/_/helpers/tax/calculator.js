@@ -102,12 +102,12 @@ export class InvoiceCalculator {
             totalTaxAmount += group.taxAmount;
         });
 
-        const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 1000) / 1000;
+        const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 100) / 100;
 
         return {
             taxBreakdown,
-            totalTaxableAmount: Math.round(totalTaxableAmount * 1000) / 1000,
-            totalTaxAmount: Math.round(totalTaxAmount * 1000) / 1000,
+            totalTaxableAmount: Math.round(totalTaxableAmount * 100) / 100,
+            totalTaxAmount: Math.round(totalTaxAmount * 100) / 100,
             totalInvoiceAmount,
             currency: this.settings.currency || 'EUR'
         };

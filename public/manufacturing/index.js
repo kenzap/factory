@@ -122,6 +122,19 @@ class Manufacturing {
                 document.getElementById('orderSearch').focus();
             }, 1500);
         });
+
+        // close button for narrow mode
+        const closeBtn = document.getElementById('closeBtn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                if (window.opener) {
+                    console.log('Focusing opener window');
+                    window.opener.focus();
+                } else {
+                    window.history.back();
+                }
+            });
+        }
     }
 
     signOut(e) {

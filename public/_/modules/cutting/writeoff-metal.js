@@ -6,7 +6,7 @@ export class WriteoffMetal {
 
     constructor(coil, items, settings, user, cb) {
 
-        this.coil = coil;
+        this.coil = coil || { _id: "", id: 0, supplier: "", thickness: 0, width: 1250, length: 1000000, color: "-", coating: "-" }; // default coil dimensions if not provided
 
         this.items = items || [];
 
@@ -38,7 +38,8 @@ export class WriteoffMetal {
             <div class="modal-header bg-light border-0"> 
                 <h5 class="modal-title">
                     <i class="bi bi-scissors me-2"></i>
-                    ${this.coil.supplier} / ${this.coil.width} × ${Number(this.coil.length).toLocaleString()} ${getDimUnit(this.settings)} / ${this.coil.color} ${this.coil.coating}
+                    <span class="${this.coil._id ? '' : 'd-none'}">${this.coil.supplier} / ${this.coil.width} × ${Number(this.coil.length).toLocaleString()} ${getDimUnit(this.settings)} / ${this.coil.color} ${this.coil.coating}</span>
+                    <span class="${this.coil._id ? 'd-none' : ''}">${__html('No material selected')}</span>
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>

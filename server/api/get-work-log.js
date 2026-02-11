@@ -64,7 +64,8 @@ async function getWorkLog(filters) {
             js->'data'->'type' AS type,
             js->'data'->'date' AS date,
             js->'data'->'time' AS time,
-            js->'data'->'type' AS type
+            js->'data'->'tag' AS tag,
+            js->'data'->'label' AS label
         FROM data
         WHERE ref = $1 AND sid = $2 
     `;

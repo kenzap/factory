@@ -29,7 +29,7 @@ async function saveTransaction(data) {
             // Check if this is an insertion (transaction: true)
             if (item.transaction === true) {
 
-                console.log('Inserting new transaction', item);
+                // console.log('Inserting new transaction', item);
 
                 // Insert new record
                 const query = `

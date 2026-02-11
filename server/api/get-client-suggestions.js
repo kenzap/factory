@@ -49,7 +49,7 @@ async function getClientSuggestions(filters) {
 
         if (filters.s && filters.s.trim() !== '') {
 
-            console.log('Search string:', filters.s);
+            // console.log('Search string:', filters.s);
 
             query += ` AND unaccent(js->'data'->>'legal_name') ILIKE unaccent($3)`;
             params.push(`%${filters.s}%`);

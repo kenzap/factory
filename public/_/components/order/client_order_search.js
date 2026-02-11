@@ -90,18 +90,18 @@ export class ClientOrderSearch {
             });
         });
 
-
         // Handle suggestion clicks
         suggestions.addEventListener('click', (e) => {
-            const addressInput = document.getElementById('address');
+            // const addressInput = document.getElementById('address');
             if (e.target.classList.contains('autocomplete-item')) {
                 clientInput.value = e.target.textContent;
-                addressInput.value = e.target.dataset.address || '';
+                // addressInput.value = e.target.dataset.address || '';
                 clientInput.dataset._id = e.target.dataset._id;
                 suggestions.classList.add('d-none');
                 // console.log('emit:client:search:refresh:4');
                 bus.emit('client:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
                 bus.emit('contact:search:refresh', { _id: e.target.dataset._id, name: clientInput.value });
+                bus.emit('client:address:updated', { address: e.target.dataset.address || '' });
             }
         });
 
@@ -144,14 +144,15 @@ export class ClientOrderSearch {
             } else if (e.key === 'Enter') {
                 e.preventDefault();
                 if (activeItem) {
-                    const addressInput = document.getElementById('address');
+                    // const addressInput = document.getElementById('address');
                     clientInput.value = activeItem.textContent;
-                    addressInput.value = activeItem.dataset.address || '';
+                    // addressInput.value = activeItem.dataset.address || '';
                     clientInput.dataset._id = activeItem.dataset._id;
                     suggestions.classList.add('d-none');
                     // console.log('emit:client:search:refresh:1');
                     bus.emit('client:search:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
                     bus.emit('contact:search:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
+                    bus.emit('client:address:updated', { address: activeItem.dataset.address || '' });
                 }
             } else if (e.key === 'Escape') {
                 suggestions.classList.add('d-none');
@@ -208,6 +209,8 @@ export class ClientOrderSearch {
 
         // Listen for external updates to the filter value
         bus.on('client:search:update_filter', (filter) => {
+
+            console.log('client:search:update_filter received:', filter);
 
             if (filter?.value && filter.value !== clientInput.value) clientInput.value = filter.value;
             if (filter?._id) clientInput.dataset._id = filter._id;

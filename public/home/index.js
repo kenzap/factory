@@ -178,7 +178,7 @@ class Home {
                     {
                         text: __html('Settings'),
                         link: link('/settings/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             },
@@ -206,7 +206,7 @@ class Home {
                     {
                         text: __html('Blog'),
                         link: link('/blog/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             },
@@ -220,7 +220,7 @@ class Home {
                     {
                         text: __html('Localization'),
                         link: link('/localization/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             },
@@ -293,7 +293,7 @@ class Home {
                                             <p class="card-description mt-1 mb-0">${__html(block.desc)}</p>
                                             <div class="link-group">
                                                 ${block.links.map((link) => {
-                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${slugify(link.link)}" data-ext="pages">${html(link.text)}</a>`
+                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${link.target == '_self' ? '_self' : slugify(link.link)}" rel="opener" data-ext="pages">${html(link.text)}</a>`
             }).join('')}
                                             </div>
                                         </div>

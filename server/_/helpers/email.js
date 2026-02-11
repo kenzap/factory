@@ -39,8 +39,8 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
     };
 
     // Add reply-to for specific email
-    if (mail_from === 'no-reply@skarda.design') {
-        mailOptions.replyTo = 'info@skarda.design';
+    if (mail_from === 'no-reply@skarda.design' || mail_from === 'invoice@skarda.design') {
+        mailOptions.replyTo = 'info@skardanams.com';
     }
 
     // Add attachments if provided

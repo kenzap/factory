@@ -9,7 +9,7 @@ import { getLocale } from '../_/helpers/locale.js';
  * @param {Object} filter - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0, s: '', cat: '' }) {
+async function getProducts(filters = { for: 'product-list', limit: 200, offset: 0, s: '', cat: '' }) {
 
     const client = getDbConnection();
     let products = [], meta = {};
@@ -25,7 +25,8 @@ async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0
             js->'data'->'formula_length' AS formula_length,
             js->'data'->'formula_price' AS formula_price,
             js->'data'->'formula' AS formula,
-            js->'data'->'cats' AS cats,
+            js->'data'->'stock'->'category' AS cats,
+            js->'data'->'stock'->>'low_threshold' AS low_threshold,
             js->'data'->'img' AS img,
             js->'data'->'status' AS status,
             js->'data'->'var_price' AS var_price,
@@ -48,14 +49,14 @@ async function getProducts(filters = { for: 'product-list', limit: 50, offset: 0
         params.push(`%${filters.s}%`);
     }
 
-    // Add cat search matching filter if present
+    //  Add cat search matching filter if present
     if (filters.cat && filters.cat.trim() !== '') {
         query += ` AND js->'data'->'stock'->'category' @> $${params.length + 1}::jsonb`;
-        params.push(JSON.stringify([filters.cat]));
+        params.push(JSON.stringify([filters.cat.trim()]));
     }
 
     // Pagination
-    const limit = Number.isInteger(filters.limit) && filters.limit > 0 ? filters.limit : 50;
+    const limit = Number.isInteger(filters.limit) && filters.limit > 0 ? filters.limit : 200;
     const offset = Number.isInteger(filters.offset) && filters.offset > 0 ? filters.offset : 0;
     params.push(limit, offset);
 

@@ -82,7 +82,7 @@ function validateOtpApi(app, logger) {
                 return;
             }
 
-            logger.info(`User validated`, user);
+            // logger.info(`User validated`, user);
 
             // cache user session
             await cacheUserSession(user);

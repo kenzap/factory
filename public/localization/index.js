@@ -171,7 +171,7 @@ class Localization {
                         <span class="badge bg-primary fw-normal">${el.ext === 'dashboard' ? __html('Dashboard') : __html('E-commerce')}</span>
                     </td>
                     <td class="py-3">
-                        ${formatTime(el.updated)}
+                        ${formatTime(el.updated * 1000)}
                     </td>
                     <td class="text-end">
                         <div class="dropdown applicationsActionsCont" data-boundary="viewport" data-bs-boundary="viewport">

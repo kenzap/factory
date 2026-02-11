@@ -437,7 +437,7 @@ export class Auth {
             // successfull request
             self.otpSuccess = true;
 
-            // close modal
+            // close modal 
             self.modalCont.hide();
 
             // forces to reload session data

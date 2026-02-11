@@ -120,19 +120,20 @@ export function register({ router, cron, config, events, db, logger }) {
 
             const orders = await getOrdersReady(db, logger);
 
-            logger.info('cron test: orders ready for notification:', orders);
-
             for (const order of orders) {
+
+                logger.info('cron: order ready for notification:', order?.id, order?.phone);
 
                 // keep sending while in debug mode
                 // if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
 
                 if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
                 if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
                 if (process.env.NODE_ENV === 'production') await markOrderReady(order.id, db, logger);
             }
 
-            logger.info('cron test:', orders);
+            // logger.info('cron:', orders);
         },
         { timezone: 'Europe/Riga' }
     )

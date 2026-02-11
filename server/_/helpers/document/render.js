@@ -213,6 +213,21 @@ export function getInvoiceTotals(settings, order, locale, totals) {
 
 export function getProductionItemsTable(settings, order, locale) {
 
+    // hardcoded sequence for production slip. TODO: implement settings control
+    const sequence = [
+        "f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd", "d6870b81ca4de48181bee1996c39a276f5047f9c", "54ecdf4a1457e02be2af26dc6dbc20273188c69f", "f75c47f6b2e1a4782d467e05f480b111b9b41ab7", "c7ec25d153f22018ec487a7f68c5ceebaa38146d", "099d54a1bf5467d920756974f0deb0f4d41f27aa", "4428c8fae08c55de73a9faffdda38eb0008994cf", "285453e62fccedb3ba97a307041d91c14a5b9d10", "ad833cc8a7847ea08042c999aa84d3ceb8e80d4f", "0e6a7dff18fcfe6b99772eb62f1e00ce223ca277", "479b7df267dfc83722b5576765863a2d906f7d65", "357c3f4748cc71aef4cc76c2153e21769a6f287b", "f8bb892b38af6944b6c3397ae27b982a75c3b903", "d7baf98c909d7491e68c6a7ff235a13d98d5aa8a", "6c366463a32fcc680ba5c0a9739d80de08436564", "i8ow7dxk0x182fcsc4pfnr54wailz3k3f2sg4bir", "oyoxq18llpw66h8fb2uhliksm6efvqacsu6gsizg", "3a77950325ddf7ab231379b0dab228f5475af2d2",
+        // "ca2002d2f94566aedcb6d7edbf40710b513fc513", "987de8c4fb72806ad4ce71b3149f207552637067", "546cae599dc1c3cbb1cc9519e16332c686badbb1", "2429e26b2a8c6a179d48479a942a01110297fc00", "3de2da20b6655683a610e32dea35f3b434fd5a4d", "4c0d6027fdd9670ff000c0fe1fb0b5ebfc3389e4", "0f9ddabec2474c42f9dabc22fb269e76f8908ed6", "5109d21d32ee0741d22a03013b231245bc57070f", "c55fefcce684daac907015adc489adcbfdf2223e", "fd3f880d3c5194d4a403f3df9fdc66d491ed3fd7", "8b794917433d54b9dee3bc8ee118b7ba101a2e8b", "ad369303e4276caf3f0333c2484390d30613fbf9", "aebffd6dd5677509a5d9ac865bf53bb8f8a183d2", "6cd72b9bf83fe5288e7d215408b0a0b17f21c0f6", "eceb2bd4ff43d4301fa98a888338cd22d5033688",
+        "ca2002d2f94566aedcb6d7edbf40710b513fc513", "987de8c4fb72806ad4ce71b3149f207552637067", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d", // round gutters
+        "546cae599dc1c3cbb1cc9519e16332c686badbb1", "2429e26b2a8c6a179d48479a942a01110297fc00", "096b4c2c63dd1c97ad81424696d2f15619b8bac1", "4b8ef82ebeafa5d6ecf6b8164f3df504241e3237", "37f3edba12662d2410edf92ed4e3914ca9cf6af0", "5ecb016a0600966c1aa60f928e9e684cd4c511bd", // elbow A
+        "3de2da20b6655683a610e32dea35f3b434fd5a4d", "4c0d6027fdd9670ff000c0fe1fb0b5ebfc3389e4", "53735c47953c64a0d46d6a58eb7649ce8a2b3692", "027969105c1dce2695ba8817d8236c19cd6fb0f4", "90ab60aa213e59085a73f1c5fb655ae13782bbb2", "a36f717ce72cdaf714e4300f2708355c07c617bc", // elbow B
+        "0f9ddabec2474c42f9dabc22fb269e76f8908ed6", "5109d21d32ee0741d22a03013b231245bc57070f", "29c7e4d8d43546d9d8e790a79bd2ecd0342942b2", "e871395f3790410f7eea66c53a4afec7e07a67eb", "77d1e989fbfbe953cd1652612f915d1a8709ca9b", "63afafe92148909a49dce1e4c187bfac8eb3d5d9", // elbow S
+        "c55fefcce684daac907015adc489adcbfdf2223e", "fd3f880d3c5194d4a403f3df9fdc66d491ed3fd7", "b1ec3f3b72fcc55ec2b93fb95bfd78f75f697917", "c50e9e09adf4643a6c2ec9f7fff1b33f57a4034c", "6784d7690f539601539ee17c1671280216403987", "cd90f0d8451e1a73494c84e637ec10a4341f9f98", // downspout
+        "8b794917433d54b9dee3bc8ee118b7ba101a2e8b", "5c958564a5c2244b17c8a8c18d78c3a149cfdcdc", "f265b387c6191a4dff9eda18aefa4f17b3c4b1dd", "1923721f31402860f618b12bba202b315bdda13b", "d020675c1df139bb74c6e41b6ee20f779181fee7", "0694777c90ecc1ae382b5b75cf408afaa0ad65c1", // end part A 
+        "ad369303e4276caf3f0333c2484390d30613fbf9", "7f9bcbe2ffa85b3e30c9ef6373f25e703d2d2cf0", "f990191350108303a4f90d69d061ad10496f7e48", "5b1883551a57420481d64381f448be598c69cc18", "d81e6e2ecde8b2a9b287358002c7abc2c502087c", "4e14a450aa8bb10651d1efd6394f83b65207c045", // end part B
+        "aebffd6dd5677509a5d9ac865bf53bb8f8a183d2", "bb8fc0ce083b091bc8339fa314c8328afe5500c2", "6090729d09ff517ee893b78d0b48ed522030fef0", // end part S
+        "6cd72b9bf83fe5288e7d215408b0a0b17f21c0f6", "eceb2bd4ff43d4301fa98a888338cd22d5033688" // konektor Y
+    ];
+
     // console.log("getProductionItemsTable locale", locale);
 
     let groups = settings.groups ? JSON.parse(settings.groups) : [];
@@ -223,27 +238,35 @@ export function getProductionItemsTable(settings, order, locale) {
 
     groups.forEach(group => {
 
-        // console.log("getProductionItemsTable group", order.items);
+        console.log("getProductionItemsTable group", order.items);
 
         // Filter order items that belong to this group
         const groupItems = order.items.filter(item =>
             group.id == item?.group
         );
 
-        // Sort group items by priority first (with default 1000), then alphabetically by product name
+        // Sort by sequence order first, then alphabetically by product name
         groupItems.sort((a, b) => {
-            // const priorityA = a.priority !== '' ? a.priority : 1000;
-            // const priorityB = b.priority !== '' ? b.priority : 1000;
+            const seqIndexA = sequence.indexOf(a._id);
+            const seqIndexB = sequence.indexOf(b._id);
 
-            // // First sort by priority
-            // if (priorityA !== priorityB) {
-            //     return priorityA - priorityB;
-            // }
+            // If both items are in sequence, sort by sequence order 
+            if (seqIndexA !== -1 && seqIndexB !== -1) {
+                return seqIndexA - seqIndexB;
+            }
 
-            // If priorities are equal, sort alphabetically by product name
+            // If only one item is in sequence, prioritize it
+            if (seqIndexA !== -1 && seqIndexB === -1) {
+                return -1;
+            }
+            if (seqIndexA === -1 && seqIndexB !== -1) {
+                return 1;
+            }
+
+            // If neither item is in sequence, sort alphabetically by product name
             const nameA = (a.title || '').toLowerCase();
             const nameB = (b.title || '').toLowerCase();
-            return nameB.localeCompare(nameA);
+            return nameA.localeCompare(nameB);
         });
 
         // Only create group section if there are items for this group

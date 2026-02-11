@@ -33,21 +33,26 @@ const revertCuttingAction = async (db, data, user) => {
 
     let response = [], res;
 
-    if (!data || data.length == "0") return;
+    if (!data) return;
 
     // revert length to original coil
-    let query = `
+    if (data.coil_id && data.qty && data.length != "0") {
+
+        let query = `
         UPDATE data
         SET js = jsonb_set(js, '{data,length}', to_jsonb((js->'data'->>'length')::int + $4::int))
         WHERE ref = $1 AND sid = $2 AND _id = $3 AND js->'data'->>'type' = 'metal'
         RETURNING _id`;
 
-    let params = ['supplylog', sid, data.coil_id, data.qty];
+        let params = ['supplylog', sid, data.coil_id, data.qty];
+
+        res = await db.query(query, params);
+    }
 
     // console.log('Updating coil:', data.coil_id, 'by length:', data.qty);
 
     // remove stock sheets added during cutting
-    if (data.sheets) data.sheets.forEach(async (sheet) => {
+    if (data.coil_id && data.sheets) data.sheets.forEach(async (sheet) => {
 
         if (sheet.type != "stock") return;
 
@@ -64,8 +69,6 @@ const revertCuttingAction = async (db, data, user) => {
         console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width, result.rows[0] || {});
     });
 
-    if (data.sheets) res = await db.query(query, params);
-
     // clear order item statuses
     if (data.items) {
 
@@ -78,6 +81,7 @@ const revertCuttingAction = async (db, data, user) => {
 
         // Process each order once
         for (const [orderId, orderItems] of Object.entries(itemsByOrderId)) {
+
             // Query 
             let query = `
                 SELECT _id, js->'data'->'id' as "id", js->'data'->'items' as "items"

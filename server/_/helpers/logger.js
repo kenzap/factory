@@ -28,13 +28,13 @@ export const createLogger = (scope = 'erp') => {
                 ).join(' ');
 
                 if (!process.env.ADMIN_EMAIL) return;
-
+                const stackTrace = new Error().stack;
                 send_email(
                     process.env.ADMIN_EMAIL,
                     "no-reply@skarda.design",
                     "Error Report",
                     `Error in ${scope}`,
-                    `<h3>Error Log</h3><p><strong>Scope:</strong> ${scope}</p><p><strong>Message:</strong></p><pre>${errorMessage}</pre><p><strong>Time:</strong> ${new Date().toISOString()}</p>`,
+                    `<h3>Error Log</h3><p><strong>Scope:</strong> ${scope}</p><p><strong>Message:</strong></p><pre>${errorMessage}</pre><p><strong>Stack Trace:</strong></p><pre>${stackTrace}</pre><p><strong>Time:</strong> ${new Date().toISOString()}</p>`,
                     []
                 );
             } catch (emailError) {

@@ -15,6 +15,10 @@ async function saveLocale(_id, data) {
 
     if (!data) return { success: false, error: 'no data provided' };
 
+    const timestamp = Math.floor(Date.now() / 1000);
+
+    data.updated = timestamp;
+
     let response = null;
 
     // Update only keys of js that are present in data object
@@ -68,7 +72,7 @@ function saveLocaleApi(app) {
 
     app.post('/api/save-locale/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/save-locale/ ', _req.body);
+        // console.log('/api/save-locale/ ', _req.body);
 
         const _id = _req.body._id || null;
         const data = _req.body.data || {};

@@ -67,6 +67,7 @@ export class EditUser {
                         <option value="home" ${this.user.portal == "home" ? "selected" : ""}>${__html('Home')}</option>
                         <option value="manufacturing" ${this.user.portal == "manufacturing" ? "selected" : ""}>${__html('Manufacturing')}</option>
                         <option value="cutting" ${this.user.portal == "cutting" ? "selected" : ""}>${__html('Cutting')}</option>
+                        <option value="worklog" ${this.user.portal == "worklog-launcher" ? "selected" : ""}>${__html('Worklog Launcher')}</option>
                         <option value="stock" ${this.user.portal == "stock" ? "selected" : ""}>${__html('Inventory')}</option>
                         <option value="product-list" ${this.user.portal == "product-list" ? "selected" : ""}>${__html('Products')}</option>
                     </select>

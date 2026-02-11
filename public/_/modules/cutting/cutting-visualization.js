@@ -3,11 +3,18 @@ import { __html, getDimUnit } from "../../helpers/global.js";
 export class Visualization {
 
     constructor(coil, items, settings) {
-        this.coil = coil;
+        this.coil = coil // default coil dimensions if not provided
         this.items = items || [];
         this.settings = settings || {};
         this.sheets = [];
-        this.maxSheetLength = 3000; // 3 meters in mm
+
+        // Set maxSheetLength to accommodate the longest item, minimum 3000mm
+        const longestItemLength = Math.max(...this.items.map(item => parseFloat(item.formula_length_calc) || 0), 0);
+        this.maxSheetLength = Math.max(3000, longestItemLength); // 3 meters in mm or longer if needed
+
+
+        console.log('Visualization initialized with coil:', this.items);
+
         this.init();
     }
 

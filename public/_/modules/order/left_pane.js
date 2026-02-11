@@ -7,6 +7,7 @@ import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { InvoiceCalculator } from "../../helpers/tax/calculator.js";
 import { extractCountryFromVAT } from "../../helpers/tax/index.js";
+import flatpickr from '../../libs/flatpickr.js';
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
@@ -144,7 +145,7 @@ export class LeftPane {
 
         state.clientContactSearch = new ClientContactSearch(state.order);
 
-        if (!state.order.draft) this.formatDueDate(state.order.due_date);
+        // if (!state.order.draft) this.formatDueDate(state.order.due_date);
 
         // Add event listeners or any additional initialization here
         this.listeners();
@@ -159,6 +160,27 @@ export class LeftPane {
         } else {
             clientFilter.focus();
         }
+
+        // due date picker
+        this.flatpickrInstance = flatpickr("#due_date", {
+            enableTime: true,
+            altInput: true,
+            altFormat: "d/m/Y H:i",
+            dateFormat: "Y-m-d H:i",
+            time_24hr: true,
+            minuteIncrement: 10,
+            defaultHour: 13,
+            defaultMinute: 0,
+            onReady: function () {
+                // Fix input-group styling when flatpickr creates alternative input
+                const altInput = this.altInput;
+                const originalInput = this.input;
+                if (altInput && originalInput.parentElement.classList.contains('input-group')) {
+                    altInput.style.borderTopLeftRadius = '0.375rem';
+                    altInput.style.borderBottomLeftRadius = '0.375rem';
+                }
+            }
+        });
     }
 
     listeners = () => {
@@ -286,7 +308,16 @@ export class LeftPane {
 
             // Clear due date if draft is checked
             if (event.target.checked) {
+
                 document.getElementById('due_date').value = '';
+
+                console.log('Draft mode enabled, clearing due date and resetting flatpickr');
+
+                // Clear flatpickr selected value
+                state.order.due_date = null;
+                if (this.flatpickrInstance) {
+                    this.flatpickrInstance.clear();
+                }
             }
 
             if (state.order?.id) document.querySelector('.document-btn[data-type="waybill"]').disabled = state.order.draft;
@@ -300,17 +331,8 @@ export class LeftPane {
                 this.formatDueDate();
             }
 
-            // Trigger the browser's native date picker
-            event.target.showPicker();
-
-            // // Handle Enter key to move to next input in tab order
-            // event.target.addEventListener('keydown', (e) => {
-            //     if (e.key === 'Enter') {
-            //         e.preventDefault();
-
-            //         simulateClick('.order-table-btn');
-            //     }
-            // });
+            // Don't call showPicker() on flatpickr-enabled inputs
+            // The flatpickr library handles the date picker interface
         });
 
         // Handle Enter key as Tab for all input and textarea fields
@@ -331,7 +353,7 @@ export class LeftPane {
                     // console.log('Enter key pressed, moving to next input', element.value, state.order.id);
 
                     // Find all focusable elements with tabindex consideration
-                    const focusableElements = Array.from(document.querySelectorAll('.left-pane input, .left-pane textarea'))
+                    const focusableElements = Array.from(document.querySelectorAll('.left-pane input:not([type="hidden"]), .left-pane textarea'))
                         .filter(el => el.tabIndex >= 0)
                         .sort((a, b) => {
                             const aIndex = a.tabIndex || 0;
