@@ -1,6 +1,6 @@
 import { API, H, hideLoader, parseApiError } from "../helpers/global.js";
 
-export const execOrderItemAction = (actions, cb) => {
+export const execOrderItemAction = async (actions, cb) => {
 
     // do API query
     fetch(API() + '/api/exec-order-item-action/', {

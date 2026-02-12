@@ -230,8 +230,6 @@ function getOrdersForCuttingApi(app) {
     app.post('/api/get-orders-for-cutting/', authenticateToken, async (req, res) => {
         try {
 
-            console.log('/api/get-orders/', req.body.filters);
-
             const locale = await getLocale(req.headers);
             const filters = req.body.filters || {};
             const orders = await getOrdersForCutting(filters);

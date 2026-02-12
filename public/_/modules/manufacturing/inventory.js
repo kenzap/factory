@@ -265,7 +265,7 @@ export class Inventory {
         const type = e.target.dataset.type;
         const index = parseInt(e.target.dataset.i);
 
-        console.log('updateWriteoffAmount source', source);
+        // console.log('updateWriteoffAmount source', source);
 
         if (source === "item") {
 

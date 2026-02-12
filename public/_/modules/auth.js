@@ -106,7 +106,7 @@ export class Auth {
 
         self.modalCont.show();
 
-        self.modal.querySelector('#otp-email').focus();
+        setTimeout(() => { self.modal.querySelector('#otp-email').focus(); }, 500);
 
         bus.on('auth:login', () => {
 

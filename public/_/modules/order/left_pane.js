@@ -46,7 +46,7 @@ export class LeftPane {
                         </div>
                     </div>
                     <div class="mb-2">
-                        <input type="text" class="form-control form-control-ss" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${state.order.id || ''}" data-_id="${state.order._id || ''}" tabindex="0">
+                        <input type="text" class="form-control form-control-ss" id="orderId" autocomplete="nope" placeholder="${__attr('Order ID')}" value="${state.order.id || ''}" data-id="${state.order.id || ''}" data-_id="${state.order._id || ''}" tabindex="0">
                     </div>
                     <div class="mb-2">
                         <client-order-search></client-order-search>
@@ -550,7 +550,7 @@ export class LeftPane {
 
         // Logic to save the order 42171
         const _id = document.getElementById('orderId').dataset._id || '';
-        const id = document.getElementById('orderId').value;
+        const id = document.getElementById('orderId').dataset.id || ''; // order ID visible to users, can be different from _id which is the database ID
         const name = document.getElementById('clientFilter').value; // client entity name
         const eid = document.getElementById('clientFilter').dataset._id || ''; // entity id
         const draft = document.getElementById('draft').checked; // draft
@@ -606,6 +606,9 @@ export class LeftPane {
 
             if (response.order.id) state.order.id = response.order.id;
             if (response.order._id) state.order._id = response.order._id;
+
+            document.getElementById('orderId').dataset.id = response.order.id || '';
+            document.getElementById('orderId').dataset._id = response.order._id || '';
 
             // Update URL to include the order ID
             const currentUrl = new URL(window.location);

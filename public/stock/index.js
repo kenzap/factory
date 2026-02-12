@@ -53,8 +53,8 @@ class Stock {
     }
 
     /**
- * Setup SSE connection for real-time stock updates
- */
+     * Setup SSE connection for real-time stock updates
+     */
     setupSSE() {
 
         console.log('Setting up SSE connection for stock updates');

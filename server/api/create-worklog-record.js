@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 import { updateProductStock } from '../_/helpers/product.js';
+import { sseManager } from '../_/helpers/sse.js';
 
 /**
  * Create worklog record
@@ -98,6 +99,17 @@ async function createWorkLog(logger, data, user) {
                 await db.query(updateQuery, updateParams);
 
                 logger.info('Updated order item with worklog_id:', data.item_id, data._id);
+
+                // Notify frontend about items update via SSE
+                sseManager.broadcast({
+                    type: 'items-update',
+                    message: 'Worklog updated for order item',
+                    items: items,
+                    item_id: data.item_id,
+                    order_id: data.order_id,
+                    updated_by: { user_id: user?.id, name: user?.fname },
+                    timestamp: new Date().toISOString()
+                });
             }
         }
 

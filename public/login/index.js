@@ -32,9 +32,6 @@ class Login {
 
             // show UI loader
             if (!response.success) return;
-
-            // load page
-            // this.html();
         });
     }
 

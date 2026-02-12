@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { sseManager } from '../_/helpers/sse.js';
 
 /**
  * execWriteoffAction
@@ -41,7 +42,7 @@ import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 //     "updated": 1761583721
 //   }
 // }
-async function execWriteoffAction(data) {
+async function execWriteoffAction(data, user) {
 
     const db = getDbConnection();
 
@@ -70,11 +71,12 @@ async function execWriteoffAction(data) {
         delete record.sheets;
         delete record.items;
 
+        let lastWriteoffLength = 0;
+
         // top up supply log for each sheet that was written off to stock
         for (let sheet of sheets) {
 
             record._id = makeId();
-            // record.sheet = sheet;
 
             if (sheet.type != "stock") continue;
 
@@ -114,11 +116,15 @@ async function execWriteoffAction(data) {
         for (let sheet of sheets) {
             if (!groupLengths[sheet.group]) {
                 groupLengths[sheet.group] = sheet.length;
+            } else {
+                groupLengths[sheet.group] += sheet.length;
             }
         }
 
         // Process each group
         for (let [group, totalLength] of Object.entries(groupLengths)) {
+
+            lastWriteoffLength = totalLength;
 
             if (!record.coil_id) { console.log("empty coil record"); continue; }
 
@@ -169,31 +175,41 @@ async function execWriteoffAction(data) {
             let updated = false;
 
             // update items
-            items_db.forEach((item, index) => {
+            await items_db.forEach((item, index) => {
 
                 // Find the corresponding item in the order by order_id and index
-                console.log('Checking item: ', item, 'index:', index);
+                // console.log('Checking item: ', item, 'index:', index);
 
                 let itemUpdated = items.find(itm =>
                     // itm.order_id === order_id && itm.index === index
                     item.id === itm.id
                 );
 
-                console.log('itemUpdated:', itemUpdated);
-
                 if (itemUpdated) {
 
                     if (!items_db[index].inventory) { items_db[index].inventory = {}; }
 
                     items_db[index].inventory.wrt_date = new Date().toISOString();
-                    items_db[index].inventory.wrt_user = data.user_id;
+                    items_db[index].inventory.wrt_user = user?.id;
                     items_db[index].inventory.coil_id = record.coil_id;
-
-                    // items_db[index].formula_width_calc = itemUpdated.formula_width_calc
-                    // items_db[index].formula_length_calc = itemUpdated.formula_length_calc;
+                    items_db[index].inventory.writeoff_length = lastWriteoffLength;
                     items_db[index].width_writeoff = itemUpdated.formula_width_calc
                     items_db[index].length_writeoff = itemUpdated.formula_length_calc;
+
                     updated = true;
+
+                    console.log('Item updated with write-off:', items_db[index], 'at index:', index);
+
+                    // Notify frontend about items update via SSE
+                    sseManager.broadcast({
+                        type: 'items-update',
+                        message: 'Writeoff state updated for order item',
+                        items: items_db,
+                        item_id: item.id,
+                        order_id: order._id,
+                        updated_by: { user_id: user?.id, name: user?.fname },
+                        timestamp: new Date().toISOString()
+                    });
                 }
             });
 
@@ -201,16 +217,18 @@ async function execWriteoffAction(data) {
 
             if (updated) {
 
-                // update order items
-                query = `UPDATE data SET js = jsonb_set(js, '{data,items}', $1) WHERE _id = $2 AND ref = $3 RETURNING _id`;
+                console.log('updating:', items_db);
 
-                params = [JSON.stringify(items_db), order._id, 'order'];
+                // update order items
+                query = `UPDATE data SET js = jsonb_set(js, '{data,items}', $1::jsonb, true) WHERE _id = $2 AND ref = $3 AND sid = $4 RETURNING _id`;
+
+                params = [JSON.stringify(items_db), order._id, 'order', sid];
 
                 const updateResult = await db.query(query, params);
 
                 response.push(updateResult.rows[0] || {});
 
-                console.log('UPDATE data:', updateResult.rows[0]);
+                // console.log('UPDATE data:', updateResult.rows[0]);
             }
         }
 
@@ -279,20 +297,13 @@ function execWriteoffActionApi(app) {
 
     app.post('/api/exec-writeoff-action/', authenticateToken, async (_req, res) => {
 
-        // console.log('/api/exec-order-item-action/', _req.body);
-        // console.log('/api/exec-order-item-action/', _req.user);
-
         const data = _req.body;
         data.user_id = _req.user.id;
 
         // add record to worklog
         const worklog = await createWorkLog(data);
 
-        // console.log('worklog', worklog);
-
-        const writeoffAction = await execWriteoffAction(data);
-
-        // console.log('writeoffAction', writeoffAction);
+        const writeoffAction = await execWriteoffAction(data, _req.user);
 
         res.json({ success: true });
     });

@@ -1,4 +1,5 @@
 
+import { sseManager } from '../../helpers/sse.js';
 import { sid } from './../index.js';
 
 export const updateItem = async (db, actions, user) => {
@@ -84,5 +85,16 @@ export const updateItem = async (db, actions, user) => {
 
         const updateResult = await db.query(updateQuery, updateParams);
         response = updateResult.rows[0] || {};
+
+        // Notify frontend about items update via SSE
+        sseManager.broadcast({
+            type: 'items-update',
+            message: 'Inventory updated for order item',
+            items: items,
+            item_id: actions.item.id,
+            order_id: actions.order_id,
+            updated_by: { user_id: user?.id, name: user?.fname },
+            timestamp: new Date().toISOString()
+        });
     }
 }

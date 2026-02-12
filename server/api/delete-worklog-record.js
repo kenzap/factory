@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 import { updateProductStock } from '../_/helpers/product.js';
+import { sseManager } from '../_/helpers/sse.js';
 
 /**
  * Reverts a cutting action by restoring the original coil length, removing stock sheets, 
@@ -102,7 +103,7 @@ const revertCuttingAction = async (db, data, user) => {
             if (!order) continue;
 
             let items_db = order.items || [];
-            let updated = false;
+            let updated = false, item_id = null;
 
             console.log('Comparing:', items_db, 'order to:', orderItems);
 
@@ -112,8 +113,11 @@ const revertCuttingAction = async (db, data, user) => {
                 if (matchingItem) {
                     delete itm.inventory.wrt_date;
                     delete itm.inventory.wrt_user;
+                    delete itm.inventory.writeoff_length;
+                    delete itm.inventory.coil_id;
                     itm.length_writeoff = 0;
                     itm.width_writeoff = 0;
+                    item_id = itm.id;
                     updated = true;
                 }
             });
@@ -130,6 +134,17 @@ const revertCuttingAction = async (db, data, user) => {
                 let updateParams = ['order', sid, order._id, JSON.stringify(items_db)];
 
                 const updateResult = await db.query(updateQuery, updateParams);
+
+                // Notify frontend about items update via SSE
+                sseManager.broadcast({
+                    type: 'items-update',
+                    message: 'Revert item status after cutting action 2',
+                    items: items_db,
+                    item_id: item_id,
+                    order_id: order._id,
+                    updated_by: { user_id: user?.id, name: user?.fname },
+                    timestamp: new Date().toISOString()
+                });
 
                 console.log('Reverted order item statuses for order_id:', orderId, 'items:', orderItems.map(i => i.id));
             }
@@ -181,7 +196,7 @@ const revertStockReplenishmentAction = async (db, data, user) => {
  * @returns {Promise<void>} Resolves when the worklog has been successfully reverted
  * @throws {Error} May throw database-related errors during query execution
  */
-const revertWorklogFromOrderItem = async (db, data) => {
+const revertWorklogFromOrderItem = async (db, data, user) => {
 
     // console.log('Reverting worklog from order item:', data);
 
@@ -226,6 +241,17 @@ const revertWorklogFromOrderItem = async (db, data) => {
 
         await db.query(updateQuery, updateParams);
 
+        // Notify frontend about items update via SSE
+        sseManager.broadcast({
+            type: 'items-update',
+            message: 'Revert item status after cutting action 1',
+            items: items,
+            item_id: data.item_id,
+            order_id: data.order_id,
+            updated_by: { user_id: user?.id, name: user?.fname },
+            timestamp: new Date().toISOString()
+        });
+
         console.log('Reverted worklog from order item:', data.item_id, data.type);
     }
 
@@ -268,9 +294,9 @@ async function deleteWorklogRecord(id, user) {
 
         worklogRecord.js.data.user_id = user.id;
 
-        if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data);
+        if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data, user);
         if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data, user);
-        if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data);
+        if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data, user);
 
         // Delete worklog record
         let query = `
@@ -298,8 +324,6 @@ function deleteWorklogRecordApi(app) {
     app.post('/api/delete-worklog-record/', authenticateToken, async (_req, res) => {
 
         const response = await deleteWorklogRecord(_req.body.id, _req.user);
-
-        // console.log('delete response', response);
 
         res.json({ success: true, response });
     });

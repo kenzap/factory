@@ -1,7 +1,9 @@
 import { authLogout } from "../api/auth_logout.js";
 import { hideLoader } from "./global.js";
 
-export const signOut = () => {
+export const signOut = (e) => {
+
+    if (e) e.preventDefault();
 
     authLogout(() => {
 

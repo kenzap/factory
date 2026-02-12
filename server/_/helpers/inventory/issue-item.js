@@ -1,7 +1,8 @@
 
+import { sseManager } from '../../helpers/sse.js';
 import { sid } from './../index.js';
 
-export const issueItem = async (db, actions) => {
+export const issueItem = async (db, actions, user) => {
 
     let response = [];
 
@@ -45,17 +46,7 @@ export const issueItem = async (db, actions) => {
         items[i].inventory.isu_date = inventory.isu_date;
         items[i].inventory.isu_user = inventory.isu_user;
 
-        const updateQuery = `
-                    UPDATE data
-                    SET js = jsonb_set(
-                    js,
-                    '{data,items}',
-                    $4::jsonb,
-                    true
-                    )
-                    WHERE _id = $1 AND ref = $2 AND sid = $3
-                    RETURNING _id
-                `;
+        const updateQuery = `UPDATE data SET js = jsonb_set(js, '{data,items}', $4::jsonb, true) WHERE _id = $1 AND ref = $2 AND sid = $3 RETURNING _id`;
 
         const updateParams = [
             issueAction.order_id,
@@ -66,6 +57,17 @@ export const issueItem = async (db, actions) => {
 
         const updateResult = await db.query(updateQuery, updateParams);
         if (updateResult.rows.length) response.push(updateResult.rows[0]);
+
+        // Notify frontend about items update via SSE
+        sseManager.broadcast({
+            type: 'items-update',
+            message: 'Dispatch state updated for order item',
+            items: items,
+            item_id: issueAction.item_id,
+            order_id: issueAction.order_id,
+            updated_by: { user_id: user?.id, name: user?.fname },
+            timestamp: new Date().toISOString()
+        });
     }
 
     return response;

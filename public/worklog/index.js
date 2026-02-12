@@ -315,7 +315,7 @@ class WorkLog {
                     <th>${__html('ID')}</th>
                     <th>${__html('Color')}</th>
                     <th>${__html('Coating')}</th>
-                    <th style="">
+                    <th>
                         <div class="position-relative" style=";">
                             <input type="text" class="form-control form-control-sm- border-0 bg-transparent ms-4 pe-4" id="productFilter" onchange="workLog.applyFilters()" onkeyup="workLog.applyFilters()" placeholder="${__html('Search product')}" value="${this.filters.product}" style="width: auto; height:21px; padding: 0; padding-right: 1rem;">
                             <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y me-2" style="font-size: 0.8rem;"></i>
@@ -394,7 +394,7 @@ class WorkLog {
                 <td tyle="width:80px;">
                     ${entry.coating || '-'}
                 </td>
-                <td style="" ><span style="">${entry.product_name || entry.title}</span></td>
+                <td><span class="po product-name" onclick="window.workLog.filterProduct('${entry.product_id}', '${entry.product_name}')">${entry.product_name || entry.title}</span></td>
                 <td>
                     <span class="badge ${this.getTypeClass(entry.type)} stage-badge">
                         ${__html(entry.type.charAt(0).toUpperCase() + entry.type.slice(1).replace('-', ' '))}
@@ -412,6 +412,13 @@ class WorkLog {
             </tr>
         `;
         }).join('');
+    }
+
+    filterProduct(product_id, product_name) {
+
+        // this.filters.product = entry.product_id;
+        document.getElementById('productFilter').value = product_name;
+        this.applyFilters();
     }
 
     applyFilters() {

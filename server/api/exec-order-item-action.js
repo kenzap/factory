@@ -29,7 +29,7 @@ async function execOrderItemAction(actions, user) {
 
         response.update_stock = await updateStock(db, actions.update_stock, user);
 
-        response.issue = await issueItem(db, actions.issue)
+        response.issue = await issueItem(db, actions.issue, user)
 
     } finally {
         await db.end();
@@ -46,8 +46,6 @@ function execOrderItemActionApi(app) {
         const data = _req.body;
         data.user_id = _req.user.id;
         const response = await execOrderItemAction(data, _req.user);
-
-        // console.log('response', response);
 
         res.json({ success: true, status: response });
     });

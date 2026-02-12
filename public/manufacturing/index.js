@@ -1,19 +1,22 @@
-import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
-import { getOrders } from "../_/api/get_orders.js";
-import { getProductBundles } from "../_/api/get_product_bundles.js";
-import { getProductStock } from "../_/api/get_product_stock.js";
+import { actionGetBundles } from "../_/components/manufacturing/action_get_bundles.js";
+import { actionGetOrderDetails } from "../_/components/manufacturing/action_get_order_details.js";
+import { actionGetOrders } from "../_/components/manufacturing/action_get_orders.js";
+import { actionIssueItem } from "../_/components/manufacturing/action_issue_item.js";
+import { actionIssueOrder } from "../_/components/manufacturing/action_issue_order.js";
+import { actionRefreshPage } from "../_/components/manufacturing/action_refresh_page.js";
+import { actionUpdateState } from "../_/components/manufacturing/action_update_state.js";
+import { renderInventoryButtons } from "../_/components/manufacturing/render_inventory_buttons.js";
+import { renderPage } from "../_/components/manufacturing/render_page.js";
+import { Search } from "../_/components/manufacturing/search.js";
+import { SSEService } from "../_/components/manufacturing/sse.js";
+import { filterByGroup, refreshOrders, toggleNarrowMode } from "../_/components/manufacturing/utils.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { signOut } from "../_/helpers/auth.js";
-import { __html, attr, hideLoader, slugify, toast, toLocalUserDate, toLocalUserTime } from "../_/helpers/global.js";
-import { formatClientName } from "../_/helpers/order.js";
-import { Header } from "../_/modules/header.js";
-import { Locale } from "../_/modules/locale.js";
+import { __html, hideLoader, slugify, toast } from "../_/helpers/global.js";
 import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
-import { getHtml } from "../_/modules/manufacturing/html.js";
 import { Inventory } from "../_/modules/manufacturing/inventory.js";
+import { state } from "../_/modules/manufacturing/state.js";
 import { Modal } from "../_/modules/modal.js";
-import { Session } from "../_/modules/session.js";
-import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /** 
  * Manufacturing log. 
@@ -23,34 +26,23 @@ import { isAuthorized } from "../_/modules/unauthorized.js";
 class Manufacturing {
 
     constructor() {
-        this.orders = { records: [], total: 0 };
-        this.subItems = new Map();
-        this.autoUpdateInterval = null;
-        this.mouseTime = Date.now() / 1000;
-        this.filters = {
-            for: "manufacturing",
-            client: {},
-            dateFrom: '',
-            dateTo: '',
-            items: true,
-            limit: 1000,
-            offset: 0,
-            sort_by: null,
-            sort_dir: null,
-            type: '' // Default to 'All'
-        };
+
+        // initialize default manufacturing states
+        state.autoUpdateInterval = null;
+        state.mouseTime = Date.now() / 1000;
 
         // Get order ID from URL parameters
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('id');
-        this.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
-        this.mode = urlParams.get('mode') ? urlParams.get('mode') : 'normal';
-        this.viewMode = localStorage.getItem('manufacturingViewMode') || 'compact';
 
-        this.stats = {
-            latest: [],
-            issued: []
-        }
+        state.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
+        state.mode = urlParams.get('mode') ? urlParams.get('mode') : 'normal';
+        state.viewMode = localStorage.getItem('manufacturingViewMode') || 'compact';
+
+        // bind functions to state for access in other modules
+        state.actionGetOrderDetails = actionGetOrderDetails.bind(this);
+        state.actionGetOrders = actionGetOrders.bind(this);
+        state.view = this.view.bind(this);
 
         this.init();
     }
@@ -59,9 +51,11 @@ class Manufacturing {
 
         new Modal();
 
-        this.Inventory = new Inventory();
+        state.Inventory = new Inventory();
 
-        this.loadOrders();
+        state.sse = new SSEService();
+
+        state.actionGetOrders();
 
         hideLoader();
     }
@@ -70,15 +64,13 @@ class Manufacturing {
 
         if (document.querySelector('.manufacturing-cont')) return;
 
-        document.querySelector('#app').innerHTML = getHtml(this.response);
+        renderPage();
 
-        this.setupEventListeners();
-        this.startAutoUpdate();
+        actionRefreshPage();
 
-        // Track mouse movement
-        document.addEventListener('mousemove', () => {
-            this.mouseTime = Date.now() / 1000;
-        });
+        toggleNarrowMode();
+
+        state.Search = new Search();
 
         this.listeners();
     }
@@ -88,32 +80,6 @@ class Manufacturing {
         // Handle page unload
         window.addEventListener('beforeunload', () => {
             this.destroy();
-        });
-
-        // Check if narrow mode should be enabled
-        if (document.cookie.includes('mode=narrow')) {
-            document.getElementById('closeBtn').classList.remove('d-none');
-            // Adjust layout for narrow mode
-            document.querySelectorAll('.narrow').forEach(el => {
-                el.style.display = 'none';
-            });
-        }
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-
-            // F5 or Ctrl+R to refresh
-            if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-                e.preventDefault();
-                this.refreshOrders();
-            }
-
-            // Escape to clear search
-            if (e.key === 'Escape') {
-                document.getElementById('orderSearch').value = '';
-                document.getElementById('companySearch').value = '';
-                this.loadOrders();
-            }
         });
 
         // Focus on search input when page loads
@@ -127,631 +93,21 @@ class Manufacturing {
         const closeBtn = document.getElementById('closeBtn');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
-                if (window.opener) {
-                    console.log('Focusing opener window');
-                    window.opener.focus();
-                } else {
-                    window.history.back();
-                }
+                window.close();
             });
         }
-    }
 
-    signOut(e) {
+        // backend state updates via SSE
+        state.sseUnsubscribe = state.sse.subscribe((data) => {
+            actionUpdateState(data);
+        });
 
-        e.preventDefault();
-
-        signOut();
-    }
-
-    setupEventListeners() {
-
-        const orderSearch = document.getElementById('orderSearch');
-        const companySearch = document.getElementById('companySearch');
-
-        orderSearch.addEventListener('input', (e) => {
-            if (e.target.value.length > 3) {
-                this.searchOrders(e.target.value, '');
-            } else if (e.target.value.length === 0) {
-                this.loadOrders();
+        // disconnect from sse
+        window.addEventListener('beforeunload', () => {
+            if (state.sseUnsubscribe) {
+                state.sseUnsubscribe();
             }
-        });
-
-        companySearch.addEventListener('input', (e) => {
-            if (e.target.value.length > 0) {
-                orderSearch.value = '';
-                this.searchOrders('', e.target.value);
-            } else {
-                this.loadOrders();
-            }
-        });
-    }
-
-    async loadOrders() {
-
-        // get orders
-        getOrders(this.filters, (response) => {
-
-            // console.log(response);
-
-            // show UI loader
-            if (!response.success) return;
-
-            // init locale
-            new Locale(response);
-
-            // hide UI loader
-            hideLoader();
-
-            // check if authorized
-            if (!isAuthorized(response, 'manufacturing_journal')) return
-
-            // cache variables
-            this.response = response;
-            this.settings = response.settings;
-            this.orders = response.orders.records;
-            this.user = response.user;
-
-            // session
-            new Session();
-            new Header({
-                hidden: true,
-                title: __html('Manufacturing'),
-                icon: 'card-text',
-                style: 'navbar-dark bg-dark',
-                user: response?.user,
-                menu: `<button class="btn btn-outline-secondary sign-out"><i class="bi bi-box-arrow-right"></i> ${__html('Sign out')}</button>`
-            });
-
-            // set page title
-            document.title = __html('Manufacturing');
-
-            this.view();
-
-            this.renderOrders();
-            this.renderStats();
-
-            document.getElementById('loadingIndicator').style.display = 'none';
-            document.getElementById('ordersContainer').style.display = 'block';
-
-            if (this.openOrderById) { document.querySelector('#orderSearch').value = this.openOrderById; this.searchOrders(this.openOrderById, ''); this.openOrderById = null; }
-        });
-    }
-
-    renderStats() {
-
-        // Find most recently issued orders by checking all order items' inventory.isu_date
-        const issuedOrders = [];
-        const manufacturedOrders = [];
-        this.orders.forEach(order => {
-            let mostRecentIsuDate = null;
-            let mostRecentMnfDate = null;
-            order.items.forEach(item => {
-                if (item.inventory && item.inventory.isu_date) {
-                    const isuDate = new Date(item.inventory.isu_date);
-                    if (!mostRecentIsuDate || isuDate > mostRecentIsuDate) {
-                        mostRecentIsuDate = isuDate;
-                    }
-                }
-                if (item.inventory && item.inventory.rdy_date) {
-                    const mnfDate = new Date(item.inventory.rdy_date);
-                    if (!mostRecentMnfDate || mnfDate > mostRecentMnfDate) {
-                        mostRecentMnfDate = mnfDate;
-                    }
-                }
-            });
-            if (mostRecentIsuDate) {
-                issuedOrders.push({ orderId: order.id, isuDate: mostRecentIsuDate });
-            }
-            if (mostRecentMnfDate) {
-                manufacturedOrders.push({ orderId: order.id, mnfDate: mostRecentMnfDate });
-            }
-        });
-
-        // Sort by most recent isu_date descending
-        manufacturedOrders.sort((a, b) => b.mnfDate - a.mnfDate);
-        issuedOrders.sort((a, b) => b.isuDate - a.isuDate);
-
-        // Take top 5 most recently issued orders
-        this.stats.latest = manufacturedOrders.slice(0, 5).map(o => o.orderId.substring(o.orderId.length - 4));
-        this.stats.issued = issuedOrders.slice(0, 5).map(o => o.orderId.substring(o.orderId.length - 4));
-
-        this.updateStats(this.stats);
-    }
-
-    renderOrders() {
-        const container = document.getElementById('ordersContainer');
-        container.innerHTML = '';
-
-        let ordersSorted = this.sortOrders(this.orders);
-
-        // Output orders in the chronological sequence from this.ordersSorted
-        // const orderSequence = ['urgent', 'manufacturing', 'ready', 'issued'];
-        Object.keys(ordersSorted).forEach(status => {
-            ordersSorted[status].forEach((order, index) => {
-                const orderElement = this.createOrderRow(order, index);
-                container.appendChild(orderElement);
-
-                this.refreshButtons(order._id);
-            });
-        });
-    }
-
-    sortOrders(orders) {
-
-        let ordersSorted = { urgent: [], today: [], manufacturing: [], ready: [], issued: [] };
-
-        // Sort orders by company name alphabetically first
-        orders.sort((a, b) => {
-            const aCompanyName = (a?.legal_name || a?.name || '').toLowerCase();
-            const bCompanyName = (b?.legal_name || b?.name || '').toLowerCase();
-            return aCompanyName.localeCompare(bCompanyName);
-        });
-
-        orders.forEach((order, index) => {
-
-            // Check if due_date is past the current time
-            const dueDate = new Date(order.due_date);
-            const now = new Date();
-            order.isOverdue = dueDate < now;
-            order.isReady = this.isOrderReady(order);
-            order.isIssued = this.isOrderIssued(order);
-            order.isToday = dueDate.getDate() === now.getDate()
-
-            if (order.isOverdue && !order.isReady && !order.isIssued) { order.status = "urgent"; ordersSorted.urgent.push(order); }
-            if (order.isReady && !order.isIssued) { order.status = "ready"; ordersSorted.ready.push(order); }
-            if (order.isReady && order.isIssued) { order.status = "issued"; ordersSorted.issued.push(order); }
-            if (!order.isOverdue && !order.isReady && !order.isIssued && !order.isToday) { order.status = "manufacturing"; ordersSorted.manufacturing.push(order); }
-            if (!order.isOverdue && !order.isReady && !order.isIssued && order.isToday) { order.status = "today"; ordersSorted.today.push(order); }
-        });
-
-        return ordersSorted;
-    }
-
-    isOrderReady(order) {
-        let c = 0;
-
-        // console.log(order)
-
-        order.items.forEach(item => {
-
-            if (!item.inventory || !item.inventory.rdy_date) return false;
-            if (item.inventory.rdy_date) c++;
-        });
-
-        return c === order.items.length;
-    }
-
-    isOrderIssued(order) {
-        let c = 0;
-
-        order.items.forEach(item => {
-            if (!item.inventory || !item.inventory.isu_date) return false;
-            if (item.inventory.isu_date) c++;
-        });
-
-        return c === order.items.length;
-    }
-
-    createOrderRow(order, index) {
-        const div = document.createElement('div');
-
-        div.className = `order-card status-${order.status} fade-in-`;
-        div.style.animationDelay = `${index * 0.05}s`;
-
-        const shortId = order.id.substring(0, order.id.length - 4);
-        const lastFour = order.id.substring(order.id.length - 4);
-
-        div.innerHTML = `
-            <div class="card-body d-flex flex-row justify-content-between align-items-center" data-order-id="${order.id}">
-                <div class="row flex-grow-1 align-items-center">
-                    <div class="col-md-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <div class="order-id ms-2 p-2 po">
-                            ${shortId} <strong>${lastFour}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-5 po px-0 py-2" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <div class="company-name">${formatClientName(order)}</div>
-                        <small class="text-muted elipsized">${order.notes}</small>
-                    </div>
-                    <div class="col-md-${this.mode == 'narrow' ? '2' : '1'} po" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <small class="text-muted- text-dark text-nowrap">${toLocalUserDate(order.due_date)}</small>
-                    </div>
-                    <div class="col-md-1 po" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <small class="text-muted- text-dark text-nowrap">${toLocalUserTime(order.due_date)}</small>
-                    </div>
-                    <div class="col-md-1 mode-${attr(this.mode)} po" onclick="manufacturing.loadOrderDetails('${order.id}')">
-                        <small class="text-muted">${order.operator}</small>
-                    </div>
-                </div>
-                <div class="col-md-2 text-end action-col ms-auto" data-order-id="${order._id}">
-                   
-                </div>
-            </div>
-        `;
-
-        return div;
-    }
-
-    async loadOrderDetails(orderId) {
-        try {
-
-            let order = this.orders.find(order => order.id === orderId);
-
-            // check if sub-items already loaded for this order
-            if (document.querySelector('.sub-items-row[data-order-id="' + orderId + '"]')) {
-
-                document.querySelector('.sub-items-row[data-order-id="' + orderId + '"]').remove();
-                return;
-            }
-
-            // Remove any existing sub-items rows
-            document.querySelectorAll('.sub-items-row').forEach(row => row.remove());
-
-            // Find the order card element
-            const orderCards = document.querySelectorAll('.order-card');
-            let targetCard = null;
-            orderCards.forEach(card => {
-                if (card.querySelector('.order-id') && card.querySelector('.order-id').textContent.replace(/\s/g, '').includes(orderId)) {
-                    targetCard = card;
-                }
-            });
-
-            if (!targetCard) return;
-
-            // Group items by their group property
-            const groupedItems = {};
-            order.items.forEach((item, i) => {
-                const groupId = item.group || 'ungrouped';
-                if (!groupedItems[groupId]) {
-                    groupedItems[groupId] = [];
-                }
-                groupedItems[groupId].push({ ...item, originalIndex: i });
-            });
-
-            console.log('Grouped items:', Object.keys(groupedItems));
-
-            // Generate rows following the order of this.settings?.groups
-            let itemRows = '', index = -1;
-
-            // First, add groups in the order they appear in settings
-            if (this.settings?.groups) {
-                this.settings.groups.forEach(group => {
-                    if (groupedItems[group.id]) {
-                        // Add group header row
-                        itemRows += `
-                            <tr class="group-header-row">
-                                <td colspan="1" class="d-none-"></td>
-                                <td colspan="7" class="bg-light border-top border-2 pt-2 pb-2">
-                                    <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
-                                    <small class="text-dark text-group pb-2" style="border-bottom: 1px solid #212529;">${__html(group.name)}</small>
-                                </td>
-                            </tr>
-                        `;
-
-                        // Add items for this group
-                        groupedItems[group.id].forEach((item) => {
-                            const i = item.originalIndex;
-                            index += 1;
-                            itemRows += `
-                                <tr class="order-item-row ${item?.inventory?.isu_date ? "row-issued" : ""}" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
-                                    <td class="d-none">${i + 1}</td>
-                                    <td>
-                                        ${this.renderWorkButtons(order, item)}
-                                    </td> 
-                                    <td>
-                                        <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
-                                            <div>
-                                                <strong>${index + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
-                                                ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
-                                            </div>
-                                            <div class="dropdown itemsActionsCont ms-2">
-                                                <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
-                                                    <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                                                </svg>
-                                                <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
-                                                    <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
-                                                    <li><hr class="dropdown-divider d-none"></li>
-                                                    <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
-                                                </ul>
-                                            </div>
-                                        </div>
-                                        <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
-                                    </td>
-                                    <td>${item.unit || "gab"}</td>
-                                    <td>${item.qty}</td>
-                                    <td>
-                                        <div class="d-flex align-items-center action-ns">
-                                            <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                            <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                        </div>
-                                    </td>
-                                    <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
-                                    <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
-                                        <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
-                                    </td>
-                                    <td class="action-items-col text-end pe-3" data-order-id="${order._id}" data-item-i="${i}">
-                                        
-                                    </td> 
-                                </tr>
-                            `;
-                        });
-                    }
-                });
-            }
-
-            // Then add ungrouped items at the end if they exist
-            if (groupedItems['ungrouped']) {
-                itemRows += `
-                    <tr class="group-header-row">
-                        <td colspan="1" class="d-none-"></td>
-                        <td colspan="7" class="bg-light border-top border-2 pt-3 pb-2">
-                            <small class="me-2 text-muted d-none"><i class="bi bi-box-seam"></i></small>
-                            <small class="text-dark text-group pb-2" style="border-bottom: 1px solid #212529;" >${__html('Other')}</small>
-                        </td>
-                    </tr>
-                `;
-
-                groupedItems['ungrouped'].forEach((item) => {
-                    const i = item.originalIndex;
-                    index += 1;
-                    itemRows += `
-                        <tr class="order-item-row ${item?.inventory?.isu_date ? "row-issued" : ""}" data-id="${item.id}" data-i="${i}" data-order_id="${order._id}" data-item_id="${item._id}" data-item-color="${item.color}" data-item-coating="${item.coating}" data-qty="${item.qty}" data-group="${item.group}" >
-                            <td class="d-none">${i + 1}</td>
-                            <td>
-                                ${this.renderWorkButtons(order, item)}
-                            </td> 
-                            <td>
-                                <div class="d-flex justify-content-start align-items-center product-name ${attr(this.mode)}">
-                                    <div>
-                                        <strong>${index + 1}. ${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}</strong>
-                                        ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
-                                    </div>
-                                    <div class="dropdown itemsActionsCont ms-2">
-                                        <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
-                                            <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
-                                        </svg>
-                                        <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
-                                            <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
-                                            <li><hr class="dropdown-divider d-none"></li>
-                                            <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
-                                        </ul>
-                                    </div>
-                                </div>
-                                <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
-                            </td>
-                            <td>${item.unit || "gab"}</td>
-                            <td>${item.qty}</td>
-                            <td>
-                                <div class="d-flex align-items-center action-ns">
-                                    <input type="checkbox" data-type="w" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0 me-3" ${item?.inventory?.origin == 'w' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                    <input type="checkbox" data-type="m" data-i="${i}" data-source="item" data-order-id="${order._id}" data-item_id="${item.id}" onchange="manufacturing.syncCheckboxStates(event, '${order._id}')" class="form-check-input m-0" ${item?.inventory?.origin == 'm' ? 'checked' : ''} ${item?.inventory?.isu_date ? 'disabled' : ''} >
-                                </div>
-                            </td>
-                            <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}"><div class="${slugify(`stock-${item.coating}-${item.color}-${item._id}`)}"><span>&nbsp;</span></div></td>
-                            <td class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">
-                                <input type="number" class="form-control form-control-sm writeoff-amount" data-type="w" data-source="item" data-order-id="${order._id}" data-i="${i}" data-item_id="${item?.id}" value="${item?.inventory?.writeoff_amount}" style="width: 80px;">
-                            </td>
-                            <td class="action-items-col text-end pe-3" data-order-id="${order._id}" data-item-i="${i}">
-                                
-                            </td> 
-                        </tr>
-                    `;
-                });
-            }
-
-            // Create a new row for sub-items
-            const subRow = document.createElement('div');
-            subRow.className = `sub-items-row status-${order.status}`;
-            subRow.dataset.orderId = orderId;
-
-            // Render sub-items as a table
-            subRow.innerHTML = `
-                <div class="p-3-">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-bordered- mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="ps-3">${__html('Works')}</th>
-                                    <th>
-                                        <div class="d-flex align-items-center text-bold product-name ${attr(this.mode)}">
-                                            <div class="d-none">${__html('Product')}</div>
-                                            <select class="form-select- form-select-sm- bg-transparent ps-0 p-0 border-0 fw-bold d-none-" id="groupFilter-${orderId}" style="width: auto; margin-left:-3px;" onchange="manufacturing.filterByGroup('${order._id}', this.value)">
-                                                <option value="">${__html('Products')}</option>
-                                                ${this.settings?.groups ? this.settings.groups.map(group => `
-                                                    <option value="${group.id}" class="fw-700">${__html(group.name)}</option>
-                                                `).join('') : ''}
-                                            </select>
-                                        </div>
-                                    </th>
-                                    <th>${__html('Unit')}</th>
-                                    <th>${__html('Quantity')}</th>
-                                    <th>&nbsp&nbsp;&nbsp;N&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;S</th>
-                                    <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Stock')}</th>
-                                    <th class="mode-${attr(this.mode)} view-${attr(this.viewMode)}">${__html('Taken')}</th>
-                                    <th class="text-end pe-3">${__html('Action')}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${itemRows}
-                                <tr class="order-item-row-empty d-none">
-                                    <td class="d-none">0</td>
-                                    <td class="align-middle">
-                                        <div class="work-buttons pt-1 me-5">
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >M</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >L</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 " >K</button>
-                                            <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0" >N</button>
-                                        </div>
-                                    </td>
-                                    <td colspan="6" class="text-center align-middle">
-                                        <div class="d-flex align-items-center justify-content-start h-100">
-                                            <span class="text-muted">${__html('No products found')}</span>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            `;
-
-            // Insert after the target card
-            targetCard.parentNode.insertBefore(subRow, targetCard.nextSibling);
-
-            this.refreshButtons(order._id);
-
-            this.getBundles(order._id);
-
-        } catch (error) {
-            console.error('Error loading order details:', error);
-            toast('Error ' + error);
-        }
-    }
-
-    renderWorkButtons(order, item) {
-
-        return `
-            <div class="work-buttons pt-1 me-5 ps-3">
-                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('marking', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
-                    M
-                    ${item.worklog?.marking ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
-                    ${item.worklog.marking.qty}
-                    <span class="visually-hidden">unread messages</span>
-                    </span>` : ''}
-                </button>
-                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('bending', '${order.id}','${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
-                    L
-                    ${item.worklog?.bending ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
-                    ${item.worklog.bending.qty}
-                    </span>` : ''}
-                </button>
-                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('pipe-forming', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
-                    K
-                    ${item.worklog?.['pipe-forming'] ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
-                    ${item.worklog['pipe-forming'].qty}
-                    </span>` : ''}
-                </button>
-                <button class="work-btn btn btn-outline-dark btn-sm fw-semibold border-0 position-relative" onclick="manufacturing.openWork('assembly', '${order.id}', '${order._id}', '${item.id}', '${item._id}', '${item.title + (item?.sdesc?.length ? ' - ' + item.sdesc : '')}', '${item.color}', '${item.coating}', ${item.qty})">
-                    N
-                    ${item.worklog?.assembly ? `<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-dark" style="">
-                    ${item.worklog.assembly.time}
-                    </span>` : ''}
-                </button>
-            </div>`;
-    }
-
-    getBundles(orderId) {
-
-        // Get stock for each item in the order
-        const order = this.orders.find(o => o._id === orderId);
-        if (!order) return;
-
-        let products = [];
-
-        order.items.forEach((item, i) => {
-
-            // todo: add bundled products
-            products.push({
-                item_id: item.id,
-                product_id: item._id,
-                coating: item.coating || '',
-                color: item.color || ''
-            });
-        });
-
-        // Reload bundles for all orders
-        getProductBundles(products, (response) => {
-
-            console.log('Bundles response', response);
-
-            if (response.success && response.products && response.products.length > 0) {
-
-                // Clear existing bundles for this order before adding new ones
-                document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"]`).forEach(element => {
-
-                    // Remove any existing bundle rows that follow this item
-                    let nextSibling = element.nextElementSibling;
-                    while (nextSibling && !nextSibling.classList.contains('order-item-row') && !nextSibling.classList.contains('group-header-row')) {
-                        let toRemove = nextSibling;
-                        nextSibling = nextSibling.nextElementSibling;
-                        toRemove.remove();
-                    }
-                });
-
-                // Map bundles with order items
-                response.products.forEach((bundleItem, bundleItemIndex) => {
-
-                    console.log('Adding bundle item:', bundleItem);
-
-                    // Map bundle data from order.items.bundles if it exists
-                    let bundleInventory = null;
-                    let bundleId = "";
-                    let bundleAmount = 1;
-                    let bundleChecked = 0;
-                    let orderItem = order.items.find(item => item.id === bundleItem.item_id);
-                    let qty = orderItem ? orderItem.qty : 1;
-
-                    if (orderItem.bundle_items && Array.isArray(orderItem.bundle_items)) {
-
-                        const matchingBundle = orderItem.bundle_items.find(b =>
-                            b.inventory._id === bundleItem.bundle_id
-                        );
-
-                        if (matchingBundle) {
-                            bundleId = matchingBundle.inventory._id
-                            bundleInventory = matchingBundle.inventory || bundleItem.inventory;
-                            bundleAmount = matchingBundle.inventory?.writeoff_amount || bundleItem.inventory?.writeoff_amount || 0;
-                            bundleChecked = matchingBundle.inventory?.checked || bundleItem.inventory?.checked || false;
-                        }
-                    } else {
-                        bundleId = bundleItem.bundle_id;
-                        bundleInventory = bundleItem.inventory;
-                        bundleAmount = bundleItem.inventory?.writeoff_amount || 0;
-                        bundleChecked = bundleItem.inventory?.checked || false;
-                    }
-
-                    let row = ` 
-                        <tr data-bundle-id="${bundleItem.bundle_id}" class="view-${attr(this.viewMode)} ${orderItem?.inventory?.isu_date ? "row-issued" : ""}">
-                            <td class="d-none py-0"></td>
-                            <td class="py-0">
-
-                            </td>
-                            <td class="py-0" >
-                                <div class="product-name ${attr(this.mode)}">
-                                    <small class="text-dark me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
-                                    <small class="text-dark me-2">${bundleItem?.coating}</small>
-                                    <small class="text-dark me-2">${bundleItem?.color}</small>
-                                </div>
-                            </td>
-                            <td class="py-0"><small class="text-dark">${bundleItem?.unit || "gab"}</small></td>
-                            <td class="py-0">
-                                <small class="text-dark">${parseFloat(bundleItem?.qty) * parseFloat(qty)}</small>
-                            </td>
-                            <td class="py-0">
-                                <div class="d-flex align-items-center action-ns">
-                                    <input type="checkbox" data-type="w" data-i="${bundleItemIndex}" data-amount="${(bundleItem?.qty || 1) * qty}" data-id="${bundleItem.bundle_id}" data-source="bundle" data-color="${bundleItem?.color}" data-coating="${bundleItem?.coating}" data-item_id="${bundleItem?.product_id}" onchange="manufacturing.syncCheckboxStates(event, '${orderId}')" class="form-check-input m-0 me-3" ${bundleChecked ? 'checked' : ''} ${orderItem?.inventory?.isu_date ? 'disabled' : ''} >
-                                </div>
-                            </td>
-                            <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
-                                <small class="text-dark">
-                                    <div class="${slugify(`stock-${bundleItem?.coating}-${bundleItem?.color}-${bundleItem?.bundle_id}`)}"><span></span></div>
-                                </small>
-                            </td>
-                            <td class="py-0 mode-${attr(this.mode)} view-${attr(this.viewMode)}">
-                                <input type="number" class="form-control form-control-xs writeoff-amount ${bundleAmount == 0 ? 'd-none' : ''}" data-type="w" data-id="${bundleItem.bundle_id}" data-source="bundle" data-order-id="${orderId}" data-i="${bundleItemIndex}" data-item_id="${bundleItem?.product_id}" value="${bundleAmount}" style="width: 80px;">
-                            </td>
-                            <td class="py-0 action-items-col- text-end pe-3" data-order-id="${orderId}" data-item-i="${bundleItemIndex}">
-                            </td> 
-                        </tr>`;
-
-                    if (document.querySelector(`.order-item-row[data-id="${bundleItem.item_id}"]`)) document.querySelector(`.order-item-row[data-id="${bundleItem.item_id}"]`).insertAdjacentHTML('afterend', row);
-                });
-            }
-
-            this.getStock(order._id, response.products);
-
-            this.refreshButtons(order._id);
+            state.sse.disconnect();
         });
     }
 
@@ -759,362 +115,47 @@ class Manufacturing {
 
         event.preventDefault();
 
-        const orders = this.orders;
+        const orders = state.orders;
         const self = this;
 
-        window.addbundle = new AddBundle({ _id, title, color, coating, orderId }, this.settings, (response) => {
+        window.addbundle = new AddBundle({ _id, title, color, coating, orderId }, state.settings, (response) => {
             if (!response.success) {
                 toast(__html('Error: ') + response.error);
                 return;
             }
 
-            console.log('Getting bundles', response.orderId, orders, this.orders);
+            // console.log('Getting bundles', response.orderId, orders, state.orders);
 
             self.orders = orders; // restore orders reference
 
-            this.getBundles(response.orderId);
+            actionGetBundles(response.orderId);
         });
-    }
-
-    getStock(order_id, extensionList = []) {
-
-        // Get stock for each item in the order
-        const order = this.orders.find(o => o._id === order_id);
-        if (!order) return;
-
-        let products = [];
-
-        order.items.forEach((item, i) => {
-
-            // product items
-            products.push({
-                _id: item._id,
-                hash: item.coating + item.color + item._id,
-                coating: item.coating || '',
-                color: item.color || ''
-            });
-
-            // bundled products that are not yet in items inventory (e.g. when bundles are added after initial load)
-            extensionList.forEach(prod => {
-                if (prod.product_id === item._id) {
-                    products.push({
-                        _id: prod.bundle_id,
-                        hash: (prod.coating || '') + (prod.color || '') + prod.bundle_id,
-                        coating: prod.coating || '',
-                        color: prod.color || ''
-                    });
-                }
-            });
-
-            // bundled products
-            if (item.bundle_items && Array.isArray(item.bundle_items)) {
-                item.bundle_items.forEach(bundleItem => {
-                    if (bundleItem.inventory) {
-                        products.push({
-                            _id: bundleItem.inventory._id,
-                            hash: (bundleItem.inventory.coating || '') + (bundleItem.inventory.color || '') + bundleItem.inventory._id,
-                            coating: bundleItem.inventory.coating || '',
-                            color: bundleItem.inventory.color || ''
-                        });
-                    }
-                });
-            }
-        });
-
-        getProductStock(products, (response) => {
-
-            // console.log('getProductStock response', response); 
-
-            if (response.success && response.products && response.products.length > 0) {
-
-                response.products.forEach((product, i) => {
-
-                    if (!product.stock) return;
-
-                    let sel = slugify(`stock-${product.coating}-${product.color}-${product._id}`);
-
-                    console.log('Updating stock for', "." + sel, product.stock);
-
-                    document.querySelectorAll("." + sel).forEach(element => {
-                        element.innerHTML = `<span class="text-muted">${product.stock || 0}</span>`;
-                    });
-                });
-            }
-        });
-    }
-
-    filterByGroup(orderId, groupId) {
-
-        // console.log('Filtering by group', groupId, orderId);
-
-        const rows = document.querySelectorAll(`.order-item-row[data-order_id="${orderId}"]`);
-        rows.forEach(row => {
-            const itemGroup = row.dataset.group;
-
-            if (groupId === '' || itemGroup === groupId) {
-
-                // Show the row
-                row.classList.remove("d-none");
-
-                // Also show any bundle rows that follow this item
-                let nextSibling = row.nextElementSibling;
-                while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
-                    // nextSibling.style.display = '';
-                    nextSibling.classList.remove("d-none");
-                    nextSibling = nextSibling.nextElementSibling;
-                }
-            } else {
-
-                // Hide the row
-                row.classList.add("d-none");
-
-                // Also hide any bundle rows that follow this item
-                let nextSibling = row.nextElementSibling;
-                while (nextSibling && !nextSibling.classList.contains('order-item-row')) {
-                    // nextSibling.style.display = 'none';
-                    nextSibling.classList.add("d-none");
-                    nextSibling = nextSibling.nextElementSibling;
-                }
-            }
-        });
-
-        // Check if any rows are visible
-        const anyVisible = Array.from(rows).some(row => !row.classList.contains("d-none"));
-        const emptyRow = document.querySelector(`.order-item-row-empty`);
-
-        console.log('Any visible rows:', anyVisible, emptyRow);
-
-        if (emptyRow) {
-            if (anyVisible) {
-                emptyRow.classList.add('d-none');
-            } else {
-                emptyRow.classList.remove('d-none');
-            }
-        }
-    }
-
-    refreshButtons(order_id) {
-
-        // Refresh action buttons for the order
-        let order = this.orders.find(o => o._id === order_id);
-
-        if (!order) return;
-
-        // reset action buttons
-        document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = ``;
-
-        // console.log('Refreshing buttons for order', order);
-
-        // refresh row button state
-        let counter = { mnf: 0, isu: 0 };
-        this.orders = this.orders.map((o, i) => {
-            if (o._id === order._id) {
-                o.items.forEach((item, j) => {
-                    if (item.inventory?.rdy_date) counter.mnf++;
-                    if (item.inventory?.isu_date) counter.isu++;
-
-                    let sel = `.action-items-col[data-order-id="${o._id}"][data-item-i="${j}"]`;
-                    if (document.querySelector(sel)) document.querySelector(sel).innerHTML = this.getActionItemsButton(order._id, j);
-                });
-            }
-            return o;
-        });
-
-        // issue order button
-        if (counter.mnf == order.items.length && counter.isu != order.items.length) {
-            document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
-                    <button class="btn action-btn btn-outline-dark text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', true)">
-                        <i class="bi bi-check-circle me-1"></i> ${__html('Issue')}
-                    </button>
-                `;
-        }
-
-        // cancel issue order button
-        if (counter.mnf == order.items.length && counter.isu == order.items.length) {
-
-            // Find the most recent issue date among all items
-            let mostRecentIssueDate = null;
-            order.items.forEach((item, i) => {
-                if (item.inventory?.isu_date) {
-                    item.issued = true;
-                    item.issuedDate = item.inventory.isu_date;
-                    const isuDate = new Date(item.inventory.isu_date);
-                    if (!mostRecentIssueDate || isuDate > mostRecentIssueDate) {
-                        mostRecentIssueDate = isuDate;
-                    }
-                }
-            });
-
-            document.querySelector('.action-col[data-order-id="' + order._id + '"]').innerHTML = `
-                <button class="btn action-btn btn-outline-dark border-0 text-nowrap me-3" onclick="manufacturing.issueOrder('${order.id}', false)">
-                    </i> ${toLocalUserDate(mostRecentIssueDate)} ${toLocalUserTime(mostRecentIssueDate)}
-                </button>
-            `;
-        }
-
-        // checkboxes enable/disable
-        order.items.forEach((item, i) => {
-            let checkboxW = document.querySelector(`.action-ns input[data-source="item"][data-type="w"][data-i="${i}"]`);
-            let checkboxM = document.querySelector(`.action-ns input[data-source="item"][data-type="m"][data-i="${i}"]`);
-            let writeoffAmount = document.querySelector(`.writeoff-amount[data-source="item"][data-order-id="${order._id}"][data-i="${i}"]`);
-
-            if (!checkboxW || !checkboxM) return;
-
-            checkboxW.disabled = item.inventory?.isu_date ? true : false;
-            if (checkboxM.checked) checkboxW.disabled = true; // Disable warehouse checkbox if manufactured is checked
-
-            checkboxM.disabled = item.inventory?.isu_date ? true : false;
-            if (checkboxW.checked) checkboxM.disabled = true; // Disable manufactured checkbox if warehouse is checked
-
-            if (checkboxM.checked || (!checkboxW.checked && !checkboxM.checked)) {
-
-                writeoffAmount.classList.add('d-none'); // Disable input if manufactured is checked
-            } else {
-                writeoffAmount.classList.remove('d-none'); // Enable input if warehouse is checked
-            }
-
-            // Handle bundle items writeoff-amount visibility
-            if (item.bundle_items && Array.isArray(item.bundle_items)) {
-                item.bundle_items.forEach((bundleItem, bundleIndex) => {
-                    let bundleCheckboxW = document.querySelector(`.action-ns input[data-source="bundle"][data-type="w"][data-i="${bundleIndex}"]`);
-                    let bundleWriteoffAmount = document.querySelector(`.writeoff-amount[data-source="bundle"][data-order-id="${order._id}"][data-i="${bundleIndex}"]`);
-
-                    if (!bundleCheckboxW || !bundleWriteoffAmount) return;
-
-                    if (!bundleCheckboxW.checked) {
-                        bundleWriteoffAmount.classList.add('d-none'); // Hide input if bundle checkbox is not checked
-                    } else {
-                        bundleWriteoffAmount.classList.remove('d-none'); // Show input if bundle checkbox is checked
-                    }
-                });
-            }
-        });
-
-        // inventory amount
-        document.querySelectorAll(`.writeoff-amount`).forEach(input => {
-
-            // Only add the event listener if it hasn't been attached yet
-            if (!input.dataset.listenerAttached) {
-                input.addEventListener('change', (e) => {
-
-                    this.Inventory.syncInventoryState(e, order, (order) => {
-
-                        // Refresh UI
-                        this.refreshButtons(order._id);
-                        this.getStock(order._id);
-                    });
-                });
-                input.dataset.listenerAttached = "true";
-            }
-        });
-    }
-
-    getActionItemsButton(order_id, index) {
-
-        const item = this.orders.find(order => order._id === order_id)?.items[index];
-        if (!item) return '';
-
-        return `
-        ${item?.inventory?.rdy_date ?
-                `
-                    <button class="btn btn-sm btn-outline-dark btn-cancel ${!item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${item?.id}',false)" > ${toLocalUserDate(item?.inventory?.isu_date)} ${toLocalUserTime(item?.inventory?.isu_date)}</button>
-                    <button class="btn btn-sm btn-outline-dark btn-issue ${item?.inventory?.isu_date ? 'd-none' : ''}" onclick="manufacturing.issueItem('${order_id}','${item?.id}',true)" > ${__html('Issue')}</button>
-                `: ``
-            }
-        `;
     }
 
     syncCheckboxStates(e, order_id) {
 
-        const order = this.orders.find(o => o._id === order_id);
+        const order = state.orders.find(o => o._id === order_id);
+
         if (!order) return;
 
-        // console.log(this.Inventory);
-        this.Inventory.syncCheckboxState(e, order);
+        // console.log(state.Inventory);
+        state.Inventory.syncCheckboxState(e, order);
     }
 
     async issueOrder(orderId, isIssue) {
 
-        if (this.inQuery) return;
+        await actionIssueOrder(orderId, isIssue, state.orders, (result) => {
 
-        // Only show confirmation for cancellation
-        if (!isIssue) {
-            let msg = __html('Cancel issuing the order #%1$?', orderId);
-            if (!confirm(msg)) {
-                return;
+            if (result.success) {
+
+                console.log('Order', result.order);
+
+                renderInventoryButtons(result.order._id);
+                // updateWriteoffInputUI(result.order, result.order.items.find(i => i.id === result.item_id));
+            } else {
+                toast(__html('Error updating order status'));
             }
-        }
-
-        this.inQuery = true;
-
-        try {
-
-            let actions = {
-                issue: []
-            };
-
-            // TODO: go through all order items
-            const order = this.orders.find(o => o.id === orderId);
-
-            order.items.forEach((item, i) => {
-
-                // cancel issue
-                if (!isIssue) {
-
-                    // update current state
-                    item.inventory.isu_date = null
-
-                    // action for db
-                    actions.issue.push({
-                        order_id: order._id,
-                        index: i,
-                        isu_date: item.inventory.isu_date,
-                        item_id: item.id,
-                        product_id: item._id
-                    });
-                }
-
-                // mark as issued if not already
-                if (isIssue && item.inventory && item.inventory.rdy_date && !item.inventory.isu_date) {
-
-                    // update current state
-                    item.inventory.isu_date = new Date().toISOString();
-
-                    // action for db
-                    actions.issue.push({
-                        order_id: order._id,
-                        index: i,
-                        isu_date: item.inventory.isu_date,
-                        item_id: item.id,
-                        product_id: item._id
-                    });
-                }
-            });
-
-            console.log('Issuing order with actions:', actions);
-
-            execOrderItemAction(actions, (response) => {
-
-                this.inQuery = false;
-
-                if (!response.success) {
-                    toast(__html('Error updating item status'));
-                    return;
-                }
-
-                // this.renderOrders();
-
-                this.refreshButtons(order._id);
-
-                // Update UI or perform any other actions based on response
-                // toast(__html('Record updated'));
-            });
-
-            // toast(__html('Order updated'));
-        } catch (error) {
-            console.error('Error issuing order:', error);
-            toast('Kļūda izsniegšanas procesā');
-        }
+        });
     }
 
     openWork(type, id, order_id, item_id, product_id, product_name, color, coating, qty) {
@@ -1123,13 +164,18 @@ class Manufacturing {
         coating = coating || '';
         qty = qty || 0;
 
-        new PreviewWorkLog({ type, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: this.user.id }, (response) => {
+        if (type === 'cutting') {
+
+            this.openWindow('_blank', `/cutting-list/?color=${color}&coating=${coating}&slug=${slugify(coating + " " + color)}`); return;
+        }
+
+        new PreviewWorkLog({ type, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: state.user.id }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;
             }
             if (response.success) {
-                this.loadOrders();
+                state.actionGetOrders();
             }
         });
     }
@@ -1139,207 +185,45 @@ class Manufacturing {
         win.focus();
     }
 
-    searchOrders(orderId, name) {
-        // Filter orders based on search criteria
-        let filtered = this.orders;
-
-        if (orderId) {
-            filtered = filtered.filter(order =>
-                order.id.toLowerCase().includes(orderId.toLowerCase())
-            );
-        }
-
-        if (name) {
-            filtered = filtered.filter(order => {
-                const normalizedOrderName = order.name.toLowerCase()
-                    .replace(/[āàáâãäå]/g, 'a')
-                    .replace(/[ēèéêë]/g, 'e')
-                    .replace(/[īìíîï]/g, 'i')
-                    .replace(/[ōòóôõö]/g, 'o')
-                    .replace(/[ūùúûü]/g, 'u')
-                    .replace(/[ķ]/g, 'k')
-                    .replace(/[ļ]/g, 'l')
-                    .replace(/[ņ]/g, 'n')
-                    .replace(/[ģ]/g, 'g')
-                    .replace(/[š]/g, 's')
-                    .replace(/[ž]/g, 'z')
-                    .replace(/[č]/g, 'c');
-
-                const normalizedSearchName = name.toLowerCase()
-                    .replace(/[āàáâãäå]/g, 'a')
-                    .replace(/[ēèéêë]/g, 'e')
-                    .replace(/[īìíîï]/g, 'i')
-                    .replace(/[ōòóôõö]/g, 'o')
-                    .replace(/[ūùúûü]/g, 'u')
-                    .replace(/[ķ]/g, 'k')
-                    .replace(/[ļ]/g, 'l')
-                    .replace(/[ņ]/g, 'n')
-                    .replace(/[ģ]/g, 'g')
-                    .replace(/[š]/g, 's')
-                    .replace(/[ž]/g, 'z')
-                    .replace(/[č]/g, 'c');
-
-                return normalizedOrderName.includes(normalizedSearchName);
-            });
-        }
-
-        this.renderFilteredOrders(filtered);
-    }
-
-    renderFilteredOrders(orders) {
-        const container = document.getElementById('ordersContainer');
-        container.innerHTML = '';
-
-        let ordersSorted = this.sortOrders(orders);
-
-        Object.keys(ordersSorted).forEach(status => {
-            ordersSorted[status].forEach((order, index) => {
-                const orderElement = this.createOrderRow(order, index);
-                container.appendChild(orderElement);
-
-                this.refreshButtons(order._id);
-            });
-        });
-
-        // Auto-expand details if only one order is shown
-        if (orders.length === 1) {
-            setTimeout(() => {
-                this.loadOrderDetails(orders[0].id);
-            }, 100);
-        }
-
-        // Scroll to top after rendering filtered orders
-        window.scrollTo({ top: 0, behavior: 'instant' });
-    }
-
-    refreshOrders() {
-        document.getElementById('loadingIndicator').style.display = 'block';
-        document.getElementById('ordersContainer').style.display = 'none';
-
-        document.querySelector('#companySearch').value = '';
-        document.querySelector('#orderSearch').value = '';
-
-        this.loadOrders();
-    }
-
-    startAutoUpdate() {
-        this.autoUpdateInterval = setInterval(() => {
-            this.autoUpdate();
-        }, 45000); // 45 seconds
-    }
-
-    async autoUpdate() {
-        try {
-            // Simulate checking for updates
-            const now = Date.now() / 1000;
-
-            // Only update if user hasn't been active for 30 seconds
-            if ((now - this.mouseTime) > 60) {
-                await this.loadOrders();
-            } else {
-                // Show update indicator
-                this.showUpdateIndicator();
-            }
-        } catch (error) {
-            console.error('Auto update failed:', error);
-        }
-    }
-
-    showUpdateIndicator() {
-        const refreshBtn = document.querySelector('.btn-outline-light');
-        refreshBtn.style.color = '#e74c3c';
-        setTimeout(() => {
-            refreshBtn.style.color = '';
-        }, 3000);
-    }
-
-    updateStats(stats) {
-        document.getElementById('latestOrders').textContent = stats.latest.join(', ');
-        document.getElementById('issuedOrders').textContent = stats.issued.join(', ');
-    }
-
-    delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
-
     // Additional methods for item management
     async issueItem(order_id, item_id, isIssue = true) {
 
-        // console.log('Issuing item A', order_id, item_i, isIssue);
+        await actionIssueItem(order_id, item_id, isIssue, state.orders, (response) => {
 
-        if (this.inQuery) return;
+            if (!response.success) { toast(__html('Error updating item status')); return; }
 
-        this.inQuery = true;
+            state.orders = response.orders; // Update orders with the response from the server
 
-        try {
-
-            // console.log('Issuing item B', order_id, item_i, isIssue);
-
-            const order = this.orders.find(o => o._id === order_id);
-
-            const targetItem = order.items.find(item => item.id === item_id);
-            if (!targetItem) {
-                this.inQuery = false;
-                toast(__html('Item not found'));
-                return;
-            }
-
-            let actions = {
-                issue: [
-                    {
-                        order_id: order._id,
-                        item_id: item_id,
-                        product_id: targetItem._id,
-                        isu_date: isIssue ? new Date().toISOString() : null
-                    }
-                ]
-            };
-
-            execOrderItemAction(actions, (response) => {
-
-                this.inQuery = false;
-
-                if (!response.success) {
-                    toast(__html('Error updating item status'));
-                    return;
-                }
-
-                // refresh button state
-                this.orders = this.orders.map(o => {
-                    if (o._id === order._id) {
-                        const targetItem = o.items.find(item => item.id === item_id);
-                        if (targetItem && targetItem.inventory) {
-                            targetItem.inventory.isu_date = actions.issue[0].isu_date;
-                        }
-                    }
-                    return o;
-                });
-
-                this.refreshButtons(order._id);
-            });
-
-        } catch (error) {
-            toast('Error ' + error);
-        }
+            renderInventoryButtons(order_id);
+        });
     }
 
     toggleView() {
 
-        this.viewMode = this.viewMode === 'warehouse' ? 'compact' : 'warehouse';
-        document.body.dataset.viewMode = this.viewMode;
+        state.viewMode = state.viewMode === 'warehouse' ? 'compact' : 'warehouse'
+        document.body.dataset.viewMode = state.viewMode
 
-        localStorage.setItem('manufacturingViewMode', this.viewMode);
+        localStorage.setItem('manufacturingViewMode', state.viewMode)
 
         // Rerender orders to apply the new view mode
-        window.manufacturing.init();
+        window.manufacturing.init()
     }
 
     destroy() {
-        if (this.autoUpdateInterval) {
-            clearInterval(this.autoUpdateInterval);
+
+        if (state.autoUpdateInterval) {
+            clearInterval(state.autoUpdateInterval)
         }
-        this.hideAutocomplete();
     }
+
+    filterByGroup(orderId, groupId) { filterByGroup(orderId, groupId) }
+
+    refreshOrders() { refreshOrders() }
+
+    signOut(e) { signOut(e) }
+
+    async getOrderDetails(orderId) { state.actionGetOrderDetails(orderId) }
+
 }
 
 window.manufacturing = new Manufacturing();
