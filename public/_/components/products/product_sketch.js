@@ -1,12 +1,12 @@
-import { FileUpload } from "../../components/file/upload.js";
+import { FileUpload } from "../../components/products/upload.js";
 import { Arc } from "../../components/sketch/2d_arc.js";
 import { Polyline } from "../../components/sketch/2d_polyline.js";
 import { SketchControls } from "../../components/sketch/controls.js";
 import { degToRad, hasRenderFiles } from "../../components/sketch/helpers.js";
 import { renderPreview } from "../../components/sketch/rendering.js";
-import { SketchUpload } from "../../components/sketch/sketch_upload.js";
-import { __html, getProductId, getStorage, log, onChange, onClick, onlyNumbers, spaceID, unescape } from "../../helpers/global.js";
-// import { bus } from "../../modules/bus.js";
+import { SketchStaticImage } from "../../components/sketch/sketch_static_image.js";
+import { __html, getProductId, log, onChange, onClick, onlyNumbers, spaceID, unescape } from "../../helpers/global.js";
+import { bus } from "../../modules/bus.js";
 
 export class ProductSketch {
 
@@ -27,7 +27,7 @@ export class ProductSketch {
         this.view();
 
         // sketch controls
-        this.SketchUpload = new SketchUpload(this.product, this.settings, this.sketchMode);
+        this.SketchStaticImage = new SketchStaticImage(this.product, this.settings, this.sketchMode);
 
         this.SketchControls = new SketchControls(this.product, this.settings);
 
@@ -53,7 +53,7 @@ export class ProductSketch {
                                 <sketch-loader class="sketch_loader d-none spinner-border text-light" role="status"><span class="visually-hidden">Loading...</span></sketch-loader>
                                 <sketch-controls class="d-none"></sketch-controls>
                                 <sketch-viewer-controls class="d-none"></sketch-viewer-controls>
-                                <sketch-upload class=""></sketch-upload>
+                                <sketch-static-image class=""></sketch-static-image>
                                 <sketch-viewer class="d-none-viewer"></sketch-viewer>
                                 <sketch-render class="d-none">
                                     <img class="p-img images-sketch${i}" data-index="sketch${i}" src="${img}" style="width:500px;height:500px;"/>
@@ -246,6 +246,18 @@ export class ProductSketch {
 
         document.removeEventListener('keydown', keypress, true);
         document.addEventListener('keydown', keypress, true);
+
+        // update sketch data
+        bus.on('file:uploaded', (data) => {
+
+            console.log("file:uploaded received", data);
+
+            // add new file to the product
+            self.product.sketch.img = [];
+            if (data.source == 'sketch') self.product.sketch.img.push({ id: data._id, sizes: data.sizes, ext: data.ext, name: data.name });
+
+            self.loadSketch();
+        });
     }
 
     // load sketch image asynchronously
@@ -259,7 +271,13 @@ export class ProductSketch {
         let sid = spaceID();
 
         // check for legacy jpeg and webp images
-        let image_url = [getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.webp?' + this.product.updated, getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.jpeg?' + this.product.updated];
+        // let image_url = [getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.webp?' + this.product.updated, getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.jpeg?' + this.product.updated];
+
+        let image_url = [];
+
+        if (self.product.sketch.img && self.product.sketch.img.length && self.product.sketch.img[0]?.id) image_url = ['https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S' + sid + '/sketch-' + self.product.sketch.img[0].id + '-1-500x500.webp?' + this.product.updated];
+
+        console.log("checking sketch images", image_url);
 
         // if 3d files provided try to load auto generated render instead 'https://render.factory.app.kenzap.cloud/'+id+'-polyester-rr20-1500.webp', 
         if (hasRenderFiles(this.product)) image_url = ['https://render.factory.app.kenzap.cloud/' + id + '-polyester-2h3-1500.webp'];
@@ -492,12 +510,12 @@ export class ProductSketch {
         [...document.querySelectorAll(".svg-input")].forEach(el => el.style.zIndex = '-2')
         document.querySelector("#svg").style.zIndex = '-2';
         document.querySelector(".sketch_loader").style.zIndex = '-2';
-        document.querySelector("sketch-upload").classList.add('d-none');
+        document.querySelector("sketch-static-image").classList.add('d-none');
         document.querySelector("sketch-viewer").classList.add('d-none-viewer');
         document.querySelector("sketch-controls").classList.add('d-none');
         document.querySelector("sketch-viewer-controls").classList.add('d-none');
         document.querySelector("sketch-render").classList.add('d-none');
-        document.querySelector("sketch-upload .remove").classList.add('d-none');
+        document.querySelector("sketch-static-image .remove").classList.add('d-none');
 
         let html = ``;
 
@@ -505,8 +523,8 @@ export class ProductSketch {
         if (mode == 'upload') {
 
             document.querySelector("sketch-viewer").classList.add('d-none-viewer');
-            document.querySelector("sketch-upload").classList.remove('d-none');
-            document.querySelector("sketch-upload .remove").classList.remove('d-none');
+            document.querySelector("sketch-static-image").classList.remove('d-none');
+            document.querySelector("sketch-static-image .remove").classList.remove('d-none');
 
             html = `
                 <input id="sketch-mode-upload" type="radio" class="btn-check" name="sketchmode" data-mode="upload" autocomplete="off" ${this.mode == "upload" ? "checked" : ""} >

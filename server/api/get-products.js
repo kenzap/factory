@@ -27,6 +27,7 @@ async function getProducts(filters = { for: 'product-list', limit: 200, offset: 
             js->'data'->'formula' AS formula,
             js->'data'->'stock'->'category' AS cats,
             js->'data'->'stock'->>'low_threshold' AS low_threshold,
+            js->'data'->'sketch'->'img' AS sketch_img,
             js->'data'->'img' AS img,
             js->'data'->'status' AS status,
             js->'data'->'var_price' AS var_price,

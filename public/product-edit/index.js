@@ -1,13 +1,13 @@
 import { deleteFile } from "../_/api/delete_file.js";
 import { getProduct } from "../_/api/get_product.js";
 import { saveProduct } from "../_/api/save_product.js";
-import { FileUpload } from "../_/components/file/upload.js";
 import { ProductFiles } from "../_/components/products/product_files.js";
 import { ProductInventory } from "../_/components/products/product_inventory.js";
 import { ProductMeta } from "../_/components/products/product_meta.js";
 import { ProductPrice } from "../_/components/products/product_price.js";
 import { ProductSidebar } from "../_/components/products/product_sidebar.js";
 import { ProductSketch } from "../_/components/products/product_sketch.js";
+import { FileUpload } from "../_/components/products/upload.js";
 import { setTextureDefaults } from "../_/components/sketch/helpers.js";
 import { ProductViewer } from "../_/components/sketch/viewer.js";
 import { __html, hideLoader, initBreadcrumbs, link, log, onClick, parseApiError, showLoader, toast } from "../_/helpers/global.js";
@@ -273,7 +273,7 @@ class ProductEdit {
         data['sketch'] = self.ProductSketch.getSketchData();
         data['input_fields'] = self.ProductSketch.getFields();
         data['sketch']['viewer'] = self.ProductViewer.getViewerData();
-        data['sketch']['img'] = [self.ProductSketch.isStaticImage()];
+        // data['sketch']['img'] = [self.ProductSketch.isStaticImage()];
 
         this.settings.textures = setTextureDefaults(this.product, this.settings);
 

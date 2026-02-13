@@ -1,5 +1,5 @@
 import { execOrderItemAction } from "../../api/exec_order_item_action.js";
-import { __html } from "../../helpers/global.js";
+import { __html, toast } from "../../helpers/global.js";
 import { state } from "../../modules/manufacturing/state.js";
 
 export const actionIssueItem = async (order_id, item_id, isIssue, orders, cb) => {
@@ -10,7 +10,7 @@ export const actionIssueItem = async (order_id, item_id, isIssue, orders, cb) =>
 
     try {
 
-        // console.log('Issuing item B', order_id, item_i, isIssue);
+        console.log('Issuing item B', order_id, item_id, isIssue);
 
         const order = orders.find(o => o._id === order_id);
 

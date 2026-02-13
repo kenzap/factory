@@ -16,6 +16,10 @@ export class Product {
             return `${FILES}/${this._id}-250.webp`;
         }
 
+        if (this.sketch_img && this.sketch_img.length > 0 && this.sketch_img[0]?.id) {
+            return `https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S${spaceID()}/sketch-${this.sketch_img[0].id}-1-100x100.webp?${this.updated}`;
+        }
+
         if (this.img?.[0]) {
             return `${FILES}/S${spaceID()}/product-${this._id}-1-100x100.jpeg?${this.updated}`;
         }

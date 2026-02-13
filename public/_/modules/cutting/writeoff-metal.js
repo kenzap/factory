@@ -119,7 +119,7 @@ export class WriteoffMetal {
                                                 <!-- Items list will be populated here -->
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
+                                        <div class="col-md-6 d-none">
                                             <h6 class="small text-muted mb-2">${__html('Statistics')}</h6>
                                             <div id="layoutStats" class="small">
                                                 <div>${__html('Items')}: <span id="totalItems">0</span></div>

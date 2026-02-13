@@ -107,6 +107,7 @@ export class FileUpload {
         fd.append('name', name);
         fd.append('sizes', sizes);
         fd.append('file', file);
+        fd.append('source', source);
 
         // Init progress bar 
         // if (document.querySelector("#p_" + iid)) {
@@ -145,7 +146,7 @@ export class FileUpload {
 
             toast(__html("File uploaded successfully"));
 
-            bus.emit('file:uploaded', { source: source, name: name, _id: response.upload._id, ext: ext, sizes: sizes });
+            bus.emit('file:uploaded', { source: source, _id: response.upload._id, ext: ext, sizes: sizes });
 
         }, (error) => {
 

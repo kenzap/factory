@@ -1,7 +1,7 @@
 // import OSS from 'ali-oss';
 // import formidable from 'formidable';
 // import mime from 'mime-types';
-// import sharp from 'sharp';
+import sharp from 'sharp';
 // import { v4 as uuidv4 } from 'uuid';
 import OSS from 'ali-oss';
 import multer from 'multer';
@@ -11,7 +11,6 @@ import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 
 // Configure multer for memory storage (or disk storage if preferred)
 const storage = multer.memoryStorage(); // Use memoryStorage for cloud uploads
-
 
 const upload = multer({
     storage: storage,
@@ -35,7 +34,7 @@ const upload = multer({
 });
 
 // storeFileInDb
-async function storeFileInDb(f) {
+const storeFileInDb = async (f) => {
 
     // Prepare image meta
     const js = {
@@ -74,7 +73,7 @@ async function storeFileInDb(f) {
 }
 
 // Alibaba Cloud OSS upload function
-async function uploadToBucket(file, metadata) {
+const uploadToBucket = async (file, metadata) => {
 
     const client = new OSS({
         region: process.env.BUCKET_REGION,
@@ -129,8 +128,70 @@ async function uploadToBucket(file, metadata) {
     }
 }
 
+const createSizeVariations = async (logger, file, metadata, fileId) => {
+
+    // Only process images for size variations
+    if (!file.mimetype.startsWith('image/')) {
+        return Promise.resolve();
+    }
+
+    // const sizes = JSON.parse(metadata.sizes || '[]');
+    const parseSizes = (sizeString) => {
+        if (!sizeString) return [];
+        return sizeString.split('|').map(size => {
+            const [width, height] = size.split('x').map(Number);
+            return { width, height: height || null };
+        });
+    };
+
+    const sizes = parseSizes(metadata.sizes || '');
+
+    // If no sizes specified, skip
+    if (sizes.length === 0) {
+        return Promise.resolve();
+    }
+
+    const client = new OSS({
+        region: process.env.BUCKET_REGION,
+        accessKeyId: process.env.BUCKET_KEY,
+        accessKeySecret: process.env.BUCKET_SECRET,
+        bucket: process.env.BUCKET_NAME,
+        secure: true
+    });
+
+    const promises = sizes.map(async (size) => {
+        try {
+            // Build resize options - maintain aspect ratio if height is missing
+            const resizeOptions = { fit: 'inside' };
+            const resizeHeight = size.height || null;
+
+            const resizedBuffer = await sharp(file.buffer)
+                .resize(size.width, resizeHeight, resizeOptions)
+                .webp({ quality: 80 })
+                .toBuffer();
+
+            const sizeKey = `${metadata.folder}/${metadata.source ? metadata.source + '-' : ''}${fileId}-1-${size.width}${size.height ? 'x' + size.height : ''}.webp`;
+            logger.info(`Uploading size variation ${size.width}x${size.height || 'auto'} to OSS as ${sizeKey}`);
+            return client.put(sizeKey, resizedBuffer, {
+                headers: {
+                    'Content-Type': 'image/webp',
+                    'x-oss-meta-original-name': metadata.originalName || file.originalname,
+                    'x-oss-meta-uploaded-by': metadata.userId || 'anonymous',
+                    'x-oss-meta-upload-time': new Date().toISOString()
+                },
+                'x-oss-object-acl': 'private'
+            });
+        } catch (error) {
+            logger.error(`Failed to create size variation ${size.width}x${size.height || 'auto'}: ${error.message}`);
+            throw error;
+        }
+    });
+
+    return Promise.all(promises);
+}
+
 // API route
-function uploadFileApi(app) {
+function uploadFileApi(app, logger) {
     app.post('/api/upload-file/', authenticateToken, upload.single('file'), async (req, res) => {
         try {
 
@@ -141,6 +202,7 @@ function uploadFileApi(app) {
 
             // Extract form data
             const {
+                source,
                 name,
                 sizes
             } = req.body;
@@ -163,8 +225,6 @@ function uploadFileApi(app) {
                 file_name: "",
                 file_size: req.file.size,
                 mime_type: req.file.mimetype,
-                // bucket_url: bucketResult.url,
-                // bucket_key: bucketResult.key,
                 sizes: sizes,
                 user_id: req.user?.id
             };
@@ -175,17 +235,25 @@ function uploadFileApi(app) {
             // Generate unique filename
             const filename = ext ? `${_id}.${ext}` : `${_id}`;
 
+            logger.info(`File uploaded: ${filename} (${req.file.size} bytes) by user ${req.user?.id}`);
+
             // Prepare metadata for bucket upload
             const metadata = {
                 folder: `S${sid}`, // Organize by space ID
                 filename: filename,
                 userId: req.user?.id, // From authenticateToken middleware
                 originalName: name || req.file.originalname,
-                sizes: sizes
+                sizes: sizes,
+                source: source || ''
             };
 
             // Upload to bucket (S3, Google Cloud, etc.)
             const bucketResult = await uploadToBucket(req.file, metadata);
+
+            // Create size variations (applicable for images only)
+            const variations = await createSizeVariations(logger, req.file, metadata, _id);
+
+            logger.info(`File ${filename} uploaded to bucket successfully with variations: ${variations.length}`);
 
             // Return success response
             res.json({
@@ -197,6 +265,7 @@ function uploadFileApi(app) {
                     url: bucketResult.url,
                     size: req.file.size,
                     type: req.file.mimetype,
+                    sizes: sizes
                     // bucket_key: bucketResult.key
                 }
             });
