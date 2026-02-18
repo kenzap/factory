@@ -21,6 +21,7 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
                 COALESCE(js->'data'->>'id', '') as id, 
                 COALESCE(js->'data'->>'from', '') as from, 
                 COALESCE(js->'data'->>'name', '') as name, 
+                COALESCE(js->'data'->>'eid', '') as eid, 
                 COALESCE((js->'data'->'draft')::boolean, false) as draft,
                 COALESCE(js->'data'->>'notes', '') as notes,
                 COALESCE(js->'data'->>'operator', '') as operator,

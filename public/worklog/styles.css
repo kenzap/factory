@@ -116,7 +116,7 @@ body {
 
 /* Adjust main content to account for fixed summary */
 body {
-    padding-bottom: 80px;
+    padding-bottom: 8px;
 }
 
 .employee-tag {

@@ -27,6 +27,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 
         data.lang = lang;
         data.user = user;
+        data.detailed = false; // for detailed item descriptions
 
         // Get waybill template
         let waybill = data.settings?.document_template || "";
@@ -63,6 +64,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 
         // Generate items table
         data.waybill_items_table = getInvoiceItemsTable(
+            data.detailed,
             data.settings,
             data.order,
             locale,

@@ -59,6 +59,18 @@ async function createWorkLog(logger, data, user) {
             }, user);
         }
 
+        if (data.type && data.type === 'stock-write-off') {
+
+            logger.info('Creating stock write-off action for worklog record:', data);
+
+            await updateProductStock(db, {
+                _id: data.product_id,
+                coating: data.coating,
+                color: data.color,
+                amount: data.qty * -1
+            }, user);
+        }
+
         // if data.item_id is set, update worklog_id in order item
         if (data.item_id && data.item_id !== '') {
 

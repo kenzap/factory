@@ -182,6 +182,32 @@ const revertStockReplenishmentAction = async (db, data, user) => {
 }
 
 /**
+ * Reverts a stock write-off action by increasing the product stock by the write-off amount
+ * @async
+ * @param {Object} db - The database instance
+ * @param {Object} data - The write-off data
+ * @param {string} data.product_id - The ID of the product
+ * @param {string} data.coating - The coating type of the product
+ * @param {string} data.color - The color of the product
+ * @param {number} data.qty - The quantity that was written off
+ * @param {Object} user - The user performing the revert action
+ * @param {string} user.id - The ID of the user
+ * @returns {Promise<*>} The result of updating the product stock
+ */
+const revertStockWriteOffAction = async (db, data, user) => {
+
+    console.log('Reverting stock write-off action:', data, 'by user:', user?.id);
+
+    // simply increase stock by the write-off amount   
+    return updateProductStock(db, {
+        _id: data.product_id,
+        coating: data.coating,
+        color: data.color,
+        amount: 1 * data.qty
+    }, user);
+}
+
+/**
  * Reverts a worklog entry from a specific item in an order record.
  * Removes the worklog entry of the specified type from the order item and updates the database.
  * If the worklog becomes empty after removal, the entire worklog property is deleted.
@@ -296,6 +322,7 @@ async function deleteWorklogRecord(id, user) {
 
         if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data, user);
         if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data, user);
+        if (worklogRecord.js.data.type === 'stock-write-off') await revertStockWriteOffAction(db, worklogRecord.js.data, user);
         if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data, user);
 
         // Delete worklog record

@@ -11,7 +11,7 @@ import { getNextOrderId } from '../_/helpers/order.js';
  * @param {JSON} data - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function saveOrder(data, user) {
+async function saveOrder(logger, data, user) {
 
     const db = getDbConnection();
 
@@ -75,18 +75,17 @@ async function saveOrder(data, user) {
             data_new = {
                 ...mergedData,
                 date: existingData.date || currentDate,
-                // operator: existingData.operator || user.fname || '',
-                // created: existingData.created || currentTime,
                 updated: currentTime
             };
 
+            if (!data_new.operator) {
+                data_new.operator = existingData.operator || user.fname || '';
+            }
+
+            // logger.info(`Updating order:`, data_new);
+
             meta.updated = currentTime;
         }
-
-        data_new.operator = user.fname;
-
-        // console.log('saveOrder data to save', data_new, user);
-        // return;
 
         // Get orders
         let query_update = `
@@ -109,16 +108,12 @@ async function saveOrder(data, user) {
 }
 
 // Simple API route
-function saveOrderApi(app) {
+function saveOrderApi(app, logger) {
 
     app.post('/api/save-order/', authenticateToken, async (_req, res) => {
 
-        // console.log('saveClientApi _req.body', _req.body);
-
         const data = _req.body;
-        const response = await saveOrder(data, _req.user);
-
-        // console.log('saveClient response', response);
+        const response = await saveOrder(logger, data, _req.user);
 
         res.json({ success: true, order: response, message: 'client saved' });
     });

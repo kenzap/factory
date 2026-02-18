@@ -4,7 +4,7 @@ import { amountToWords } from './totals.js';
 /**
  * Generate invoice items table
  */
-export function getInvoiceItemsTable(settings, order, locale, calculator) {
+export function getInvoiceItemsTable(detailed, settings, order, locale, calculator) {
     const hasDiscount = settings.discount_visibility === '1' &&
         order.items.some(item => item.discount && item.discount > 0);
     const showTax = order.vat_status !== "0";
@@ -44,7 +44,7 @@ export function getInvoiceItemsTable(settings, order, locale, calculator) {
         table += `
             <tr class="${i === order.items.length - 1 ? 'border-secondary' : ''}">
                 <th scope="row">${i + 1}</th>
-                <td>${formatItemDescription(item, locale)}</td>
+                <td>${formatItemDescription(detailed, item, settings, locale)}</td>
                 ${hasDiscount ? `<td>${priceFormat(settings, originalPrice)}</td>` : ''}
                 ${hasDiscount ? `<td>${item.discount > 0 ? `-${item.discount}%` : ''}</td>` : ''}
                 <td>${priceFormat(settings, item.price)}</td>
@@ -69,16 +69,21 @@ export function getInvoiceItemsTable(settings, order, locale, calculator) {
 /**
  * Format item description
  */
-function formatItemDescription(item, locale) {
+function formatItemDescription(detailed, item, settings, locale) {
     let description = item.title || '';
 
     if (item.coating) description += ` ${item.coating}`;
     if (item.color) description += ` ${item.color}`;
-
     if (item.formula_width_calc || item.formula_length_calc) {
         const width = item.formula_width_calc || '';
         const length = item.formula_length_calc || '';
         description += ` ${width}${width && length ? ' x ' : ''}${length}${width || length ? ' mm' : ''}`;
+    }
+
+    // Add price per t/m if formula_length_calc exists
+    if (detailed && item.formula_length_calc && item.price) {
+        const pricePerTM = (item.price * 1000) / item.formula_length_calc;
+        description += ` ${priceFormat(settings, pricePerTM)} t/m`;
     }
 
     return description;
@@ -124,7 +129,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     // `; 
 
     // Only show payment terms if there's AE peppol code in tax breakdown
-    if (breakdown.some(tax => tax.peppolCode === 'AE')) {
+    if (breakdown.some(tax => tax.peppolCode === 'AE' && tax.localId === '7216')) {
         html += `
             <tr>
                 <td colspan="2" class="text-start">
@@ -141,7 +146,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
             <tr>
                 <td colspan="2" class="text-start">
                     <strong>${__html(locale, "Transaction type")}:</strong>
-                    R7
+                    R2
                 </td>
             </tr>
         `;

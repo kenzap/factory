@@ -68,6 +68,7 @@ export class InvoiceCalculator {
                 this.taxGroups.set(groupKey, {
                     display: regime.display,
                     rate: regime.rate,
+                    localId: regime.localId,
                     legalRef: regime.legalRef,
                     legalText: regime.legalText ? regime.legalText(locale) : null,
                     peppolCode: regime.peppolCode,

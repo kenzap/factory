@@ -38,7 +38,7 @@ export class LeftPane {
                     <div class="mb-2">
                         <div class="draft-check-cnt">
                             <div class="form-check p-0 mb-0 d-flex align-items-center">
-                                <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${state.order.draft ? 'checked' : ''} style="accent-color: #333;">
+                                <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${state.order.draft ? 'checked' : ''} style="accent-color: #333;" ${state.order.waybill?.number ? 'disabled' : ''}>
                                 <label class="form-check-label" for="draft">
                                     ${__html('Estimate')}
                                 </label>
@@ -551,15 +551,15 @@ export class LeftPane {
         // Logic to save the order 42171
         const _id = document.getElementById('orderId').dataset._id || '';
         const id = document.getElementById('orderId').dataset.id || ''; // order ID visible to users, can be different from _id which is the database ID
-        const name = document.getElementById('clientFilter').value; // client entity name
+        const name = document.getElementById('clientFilter').value.trim(); // client entity name
         const eid = document.getElementById('clientFilter').dataset._id || ''; // entity id
         const draft = document.getElementById('draft').checked; // draft
-        const contactPerson = document.getElementById('contactPerson').value;
-        const contactPhone = document.getElementById('contactPhone').value;
-        const contactEmail = document.getElementById('contactEmail').value;
-        const address = document.getElementById('address').value;
+        const contactPerson = document.getElementById('contactPerson').value.trim();
+        const contactPhone = document.getElementById('contactPhone').value.trim();
+        const contactEmail = document.getElementById('contactEmail').value.trim();
+        const address = document.getElementById('address').value.trim();
         const due_date = document.getElementById('due_date').value;
-        const notes = document.getElementById('notes').value;
+        const notes = document.getElementById('notes').value.trim();
 
         // Validate required fields
         let due_date_utc = null;

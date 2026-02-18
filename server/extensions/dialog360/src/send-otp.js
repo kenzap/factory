@@ -84,7 +84,7 @@ export const sendOtp = async (phone, otp, config, logger) => {
 
         const result = await response.json();
 
-        logger.info(`WhatsApp OTP sent to ${phone}:`, result);
+        // logger.info(`WhatsApp OTP sent to ${phone}:`, result);
 
         return { success: true, message: 'WhatsApp message sent successfully', data: result };
 

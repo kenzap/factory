@@ -76,6 +76,7 @@ class Launcher {
 
         // add or remove navigation blocks to the dashboard
         this.blocks = [
+            // K-style
             {
                 id: "ccb33b325da0bf4bb549cf5fe628ee35f1dd801a",
                 name: 'Teknes āķis, īsais',
@@ -99,21 +100,19 @@ class Launcher {
                 ]
             },
             {
-                id: "8sgr31mh7x74qz29xtoma26xzr6h11s8xh88ryfc",
-                name: 'Notekcaurules stiprinājums, ▢ A',
+                id: "63be862d143d50c38de2ab88dc38752dffcc54de",
+                name: 'Teknes iekšējais stiprinājums',
                 tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-e440dce02c04e62e10bed94443c1721795326d9e-1-500x500.jpeg?1770112847',
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-63be862d143d50c38de2ab88dc38752dffcc54de-1-500x500.jpeg?1770282682',
                 actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "rolling", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "stamping", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Pamatformas formēšana', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "forming", tag: 'tail-forming', label: 'Astes formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
                 ]
             },
             {
-                id: "6vllgat1um2s33lbm261rqa3u83zxlyhhlsb08w3",
-                name: 'Notekcaurules stiprinājums, ▢ B',
+                id: "e440dce02c04e62e10bed94443c1721795326d9e",
+                name: 'Notekcaurules stiprinājums',
                 tags: [{ label: 'K-style', cls: '' }],
                 image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-e440dce02c04e62e10bed94443c1721795326d9e-1-500x500.jpeg?1770112847',
                 actions: [
@@ -191,6 +190,7 @@ class Launcher {
                     { type: "forming", tag: '135-deg-bending', label: '135° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
                 ]
             },
+            // Ø 125/100
             {
                 id: "0733c025924e3126b88b8166c01967c045158d5f",
                 name: 'Teknes āķis, īsais Ø125',
@@ -217,21 +217,19 @@ class Launcher {
                 ]
             },
             {
-                id: "9du63ilsov3250y8w8l4tze4u4orlngzrw309l5x",
-                name: 'Notekcaurules stiprinājums, ▢ A',
+                id: "6d9925712cedf204aad09a5852bcdb13470d849b",
+                name: 'Tekņu savienotājs Ø125',
                 tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-6a74ea45d278d7f45b94c934e6eb040f3e872f9f-1-500x500.jpeg?1770363313',
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-6d9925712cedf204aad09a5852bcdb13470d849b-1-500x500.jpeg?1770301775',
                 actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "assembly", tag: 'clamp-assembly', label: 'Salikšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
                 ]
             },
             {
-                id: "gw9s1zftiyagk45fbx7xpsx51z6up06hqselgaey",
-                name: 'Notekcaurules stiprinājums, ▢ B',
+                id: "6a74ea45d278d7f45b94c934e6eb040f3e872f9f",
+                name: 'Notekcaurules stiprinājums',
                 tags: [{ label: 'Ø 125/100', cls: '' }],
                 image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-6a74ea45d278d7f45b94c934e6eb040f3e872f9f-1-500x500.jpeg?1770363313',
                 actions: [
@@ -239,7 +237,7 @@ class Launcher {
                     { type: "forming", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
                     { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
                     { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
+                    { type: "assembly", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
                 ]
             },
             {
@@ -281,6 +279,105 @@ class Launcher {
                     { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
                 ]
             },
+            // Ø 150/120
+            {
+                id: "3c8997dfdb0063d345ae7f46de2949c4e356d3d7",
+                name: 'Teknes āķis, īsais Ø150',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://cdn.skarda.design/3c8997dfdb0063d345ae7f46de2949c4e356d3d7-polyester-2h3-1500.webp?1771313168',
+                actions: [
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
+                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8544;&#8548;', style: 'warning' },
+                ]
+            },
+            {
+                id: "064c779d06d32b73c0828b45aa5f89621f82fe05",
+                name: 'Teknes āķis, garais Ø150',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://cdn.skarda.design/064c779d06d32b73c0828b45aa5f89621f82fe05-polyester-2h3-1500.webp?1771313195',
+                actions: [
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
+                    { type: "forming", tag: 'hole-cutout', label: 'Caurule', icon: '&#8544;&#8548;', style: 'warning' },
+                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8548;', style: 'danger' },
+                ]
+            },
+            {
+                id: "ac2e73fd910f9a937845304e3e76889652a4d906",
+                name: 'Tekņu savienotājs Ø150',
+                tags: [{ label: 'Ø 150/120', cls: '' }, { label: 'Ø 150/140', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-ac2e73fd910f9a937845304e3e76889652a4d906-1-500x500.jpeg?1770301765',
+                actions: [
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "assembly", tag: 'clamp-assembly', label: 'Salikšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
+                ]
+            },
+            {
+                id: "225d12324d8702b7dae6ec25e43b7baf3568d6fe",
+                name: 'Notekcaurules stiprinājums',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-225d12324d8702b7dae6ec25e43b7baf3568d6fe-1-500x500.jpeg?1770112798',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                    { type: "forming", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
+                    { type: "forming", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
+                ]
+            },
+            {
+                id: "fe6e81501cb55202e72f39f7a3c74ed99b693ba2",
+                name: 'Teknes gals Ø150 (pāris)',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-fe6e81501cb55202e72f39f7a3c74ed99b693ba2-1-500x500.jpeg?1771252441',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
+                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
+                    { type: "forming", tag: 'baseshape-taper', label: 'Sašaurinājums', icon: '&#8544;&#8548;', style: 'warning' },
+                ]
+            },
+            {
+                id: "f05f69b5a16917c9b55e273fb193f0fa870e6174",
+                name: 'Konektors Ø150/120',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://cdn.skarda.design/f05f69b5a16917c9b55e273fb193f0fa870e6174-polyester-2h3-1500.webp?1770362000',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                ]
+            },
+            {
+                id: "14b157ef20efa1dffb61c1d9e57edf9956c5899c",
+                name: 'Konektors Ø150/140',
+                tags: [{ label: 'Ø 150/120', cls: '' }, { label: 'Ø 150/140', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-14b157ef20efa1dffb61c1d9e57edf9956c5899c-1-500x500.jpeg?1770361993',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                ]
+            },
+            {
+                id: "8a3564b5e9e8ec00723b7824865a887b5d43e87a",
+                name: 'Teknes stūris, iekšējais Ø150',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-8a3564b5e9e8ec00723b7824865a887b5d43e87a-1-500x500.jpeg?1770819605',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                ]
+            },
+            {
+                id: "2dee24be1f25d2104afd1f6bcb2441ad998436d9",
+                name: 'Teknes stūris, ārējais Ø150',
+                tags: [{ label: 'Ø 150/120', cls: '' }],
+                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-2dee24be1f25d2104afd1f6bcb2441ad998436d9-1-500x500.jpeg?1770819666',
+                actions: [
+                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
+                ]
+            },
+            // sniega barjera stiprinājumi
             {
                 id: "e2de74f32b4edcb2fbc39e7ee32132dcf9bde48c",
                 name: 'Sniega barjera stiprinājums, apaļai caurulei',

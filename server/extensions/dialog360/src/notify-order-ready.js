@@ -44,7 +44,7 @@ export const notifyOrderReady = async (query, config, db, logger) => {
         const url = config.get('DIALOG_URL') || "https://waba-v2.360dialog.io/messages";
         const apiKey = config.get('DIALOG_KEY');
 
-        // sandbox
+        // sandbox 
         // const url = "https://waba-sandbox.360dialog.io/v1/messages";
         // const apiKey = "UXENI6_sandbox";
 
@@ -54,7 +54,7 @@ export const notifyOrderReady = async (query, config, db, logger) => {
 
         if (!orderId || !phone) {
 
-            logger.error('Missing required parameters: orderId and phone are required', query);
+            logger.warn('Missing required parameters: orderId and phone are required', query);
             return { success: false, reason: 'Missing required parameters: orderId and phone are required' };
         }
 

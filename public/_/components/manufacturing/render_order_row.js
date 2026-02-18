@@ -8,7 +8,7 @@ export const renderOrderRow = (order, index) => {
 
     div.dataset._id = order._id;
     div.className = `order-card status-${order.status} fade-in-`;
-    div.style.animationDelay = `${index * 0.05}s`;
+    // div.style.animationDelay = `${index * 0.05}s`;
 
     const shortId = order.id.substring(0, order.id.length - 4);
     const lastFour = order.id.substring(order.id.length - 4);
@@ -54,7 +54,7 @@ export const updateOrderRowUI = (order) => {
 
     // Update status class
     row.className = `order-card status-${order.status} fade-in-`;
-    row.style.animationDelay = `${0.24}s`;
+    // row.style.animationDelay = `${0.24}s`;
 
     // Update due date
     row.querySelector('.company-name').textContent = formatClientName(order);

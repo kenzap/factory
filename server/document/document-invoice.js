@@ -28,6 +28,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
 
         data.lang = lang;
         data.user = user;
+        data.detailed = false; // for detailed item descriptions
 
         // Get invoice template
         let invoice = data.settings?.document_template || "";
@@ -61,6 +62,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
 
         // Generate items table
         data.invoice_items_table = getInvoiceItemsTable(
+            data.detailed,
             data.settings,
             data.order,
             locale,

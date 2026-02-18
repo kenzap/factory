@@ -76,6 +76,9 @@ const calculateVariablePrice = (item, obj) => {
             : item.adj;
     }
 
+    // if item coating and color set to empty price to 0
+    if (item.coating === '' && item.color === '') obj.price = 0;
+
     // Apply discount
     if (item.discount > 0) {
 
@@ -146,8 +149,11 @@ const calculateFormulaPrice = (settings, item, obj) => {
 
     obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
 
-    // if client material, price is 0
-    if (item.cm) obj.price = 0;
+    // if client material, price excludes coating price
+    if (item.cm) obj.price = additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
+
+    // if item coating and color set to empty price to 0
+    if (item.coating === '' && item.color === '') obj.price = 0;
 
     // Apply adjustments
     if (item.adj && !isNaN(item.adj)) {
