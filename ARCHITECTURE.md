@@ -68,3 +68,11 @@ Located at [server](../server)
 ## Observability
 
 Live system logs and crytical errors can be observed from `docker compose up` terminal output
+
+## Validation Notes
+
+- `./build.sh` is required before production deployment.
+- During feature validation, prefer end-to-end checks:
+  - API behavior verification for changed endpoints
+  - `docker compose` log inspection after exercising changed flows
+  - browser console checks for UI/runtime issues

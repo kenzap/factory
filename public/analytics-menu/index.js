@@ -86,6 +86,11 @@ class AnalyticsMenu {
                         target: '_blank',
                     },
                     {
+                        text: __html('Product Manufacturing Report'),
+                        link: link('/report-product-manufacturing/'),
+                        target: '_blank',
+                    },
+                    {
                         text: __html('Sales Reports'),
                         link: link('/sales-reports/'),
                         target: '_blank',

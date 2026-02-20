@@ -43,7 +43,10 @@ This repo powers Factory. Agents should make safe, incremental changes with clea
 
 ## Validation Checklist
 Run these before completion (as applicable):
-- `./build.sh` completes successfully.
+- `./build.sh` completes successfully (required before production deployment).
+- For new/changed API features: verify endpoint behavior with a real request and expected response shape.
+- Check `docker compose` logs for runtime errors after exercising the changed flow.
+- For UI-facing changes: check browser console for warnings/errors while testing the feature.
 - Relevant tests pass for touched behavior.
 - Lint/type checks pass if configured.
 - No secrets, tokens, or credentials were added.

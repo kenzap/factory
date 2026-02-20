@@ -1,0 +1,8 @@
+@import url("../report-employee-performance/styles.css");
+
+.table-container #productManufacturingTable {
+    border-radius: 15px;
+    overflow: hidden;
+    padding: 30px;
+    background: white;
+}

@@ -16,6 +16,10 @@ Minimal packing list document for transport (qty/weight only, no pricing)
 : Includes item quantity and weight totals only (no payment, tax, or price sections).
 : Weight source priority: `item.total_weight` -> `item.weight` -> product `stock.weight` fallback.
 : Localization follows global rules in `docs/design-docs/localization-guidelines.md`.
+Product manufacturing report
+: Filters by employee, work type, start date, and end date.
+: Shows product name, total manufactured quantity, and total allocated time.
+: Rows are sorted alphabetically by product name.
 Production Workflow Support:
 
 Job-based manufacturing processes
