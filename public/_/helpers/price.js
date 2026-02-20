@@ -119,7 +119,7 @@ const calculateVariablePrice = (item, obj) => {
 const calculateFormulaPrice = (settings, item, obj) => {
 
     // Get coating price per m2
-    const coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
+    let coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
 
     // console.log('getCoating settings:', settings);
     console.log('calculateFormulaPrice for item:', item);
@@ -137,7 +137,7 @@ const calculateFormulaPrice = (settings, item, obj) => {
     [obj.formula_width_calc, obj.formula_length_calc] = replaceInDimensions([obj.formula_width_calc, obj.formula_length_calc], item);
 
     // Coating price per m2 (no discount applied to coating)
-    const basePrice = makeNumber(calculate(obj.formula) / 1000000 * coatingPrice);
+    let basePrice = makeNumber(calculate(obj.formula) / 1000000 * coatingPrice);
 
     // Additional cost calculation (per meter price)
     let additionalPrice = makeNumber(calculate(obj.formula_price));
@@ -146,6 +146,9 @@ const calculateFormulaPrice = (settings, item, obj) => {
     if (item.discount > 0) {
         additionalPrice *= (1 - item.discount / 100);
     }
+
+    // if coating price is 0, set total to 0 to avoid charging for additional costs when coating is not selected
+    if (!item.cm && coatingPrice === 0) { basePrice = 0; additionalPrice = 0; }
 
     obj.price = basePrice + additionalPrice + (item.adj && !item.formula_length_calc ? item.adj : 0);
 
@@ -162,6 +165,7 @@ const calculateFormulaPrice = (settings, item, obj) => {
             : item.adj;
     }
 
+    obj.coating_price = coatingPrice;
     obj.total = obj.price * item.qty;
     obj.formula_width_calc = calculate(obj.formula_width_calc);
     obj.formula_length_calc = calculate(obj.formula_length_calc);

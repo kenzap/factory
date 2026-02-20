@@ -9,6 +9,7 @@ export class PreviewDocument {
     constructor(type, order) {
 
         this.type = type;
+        this.typeKey = type.replace(/-/g, '_');
         this.order = order;
 
         this.init();
@@ -53,7 +54,7 @@ export class PreviewDocument {
         this.modal.querySelector(".modal-footer").innerHTML = `
             <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
                 <i class="bi bi-envelope me-1"></i> ${__html('Email')}
-                ${this.order[this.type]?.email_sent_date ? ` ${toLocalUserDateTime(this.order[this.type].email_sent_date)}` : ''}
+                ${this.order[this.typeKey]?.email_sent_date ? ` ${toLocalUserDateTime(this.order[this.typeKey].email_sent_date)}` : ''}
             </button>
             <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
                 <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}

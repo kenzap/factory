@@ -101,9 +101,7 @@ export class LeftPane {
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
                                 <ul class="dropdown-menu">
-                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="packing-slip">${__html('Packing Slip')}</button></li>
-                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="invoice-eu">${__html('Invoice EU')}</button></li>
-                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="production-slip-detailed">${__html('Production Slip')}</button></li>
+                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="packing-list">${__html('Packing List')}</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -297,6 +295,11 @@ export class LeftPane {
                     break;
                 case 'production-slip':
                     new PreviewDocument(type, state.order);
+                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
+                    break;
+                case 'packing-list':
+                case 'packing-slip':
+                    new PreviewDocument('packing-list', state.order);
                     event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
             }

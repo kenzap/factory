@@ -425,6 +425,10 @@ export const parseDocument = (document, data) => {
         ? document.replace(/\{\{production_items_table\}\}/g, data.production_items_table)
         : removeField(document, 'production_items_table');
 
+    document = data?.packing_list_items_table
+        ? document.replace(/\{\{packing_list_items_table\}\}/g, data.packing_list_items_table)
+        : removeField(document, 'packing_list_items_table');
+
     document = data?.waybill_totals
         ? document.replace(/\{\{waybill_totals\}\}/g, data.waybill_totals)
         : removeField(document, 'waybill_totals');

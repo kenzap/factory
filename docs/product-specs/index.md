@@ -11,6 +11,11 @@ Metal cutting and nesting integration
 Warehouse and product inventory
 Financial reports
 Analytics module
+Minimal packing list document for transport (qty/weight only, no pricing)
+: Generated as PDF/HTML from order view as `Packing List` (`packing-list` / `packing-slip` routes).
+: Includes item quantity and weight totals only (no payment, tax, or price sections).
+: Weight source priority: `item.total_weight` -> `item.weight` -> product `stock.weight` fallback.
+: Localization follows global rules in `docs/design-docs/localization-guidelines.md`.
 Production Workflow Support:
 
 Job-based manufacturing processes

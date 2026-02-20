@@ -1,3 +1,5 @@
 # Design Docs Index
 
-> Placeholder scaffold. Fill this document with project-specific content.
+- `document-production-slip.md`
+- `document-packing-list.md`
+- `localization-guidelines.md` (global rules for frontend/backend user-facing strings)

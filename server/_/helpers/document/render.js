@@ -67,6 +67,77 @@ export function getInvoiceItemsTable(detailed, settings, order, locale, calculat
 }
 
 /**
+ * Generate packing list items table (no pricing).
+ */
+export function getPackingListItemsTable(order, locale, productWeightById = {}) {
+    const items = Array.isArray(order?.items) ? order.items : [];
+
+    let totalQty = 0;
+    let totalWeight = 0;
+
+    let table = `
+        <table class="items-table">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">${__html(locale, "Product")}</th>
+                    <th scope="col">${__html(locale, "Size")}</th>
+                    <th scope="col">${__html(locale, "Qty")}</th>
+                    <th scope="col">${__html(locale, "Unit")}</th>
+                    <th scope="col">${__html(locale, "Weight")}, kg</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    items.forEach((item, i) => {
+        const qty = Number(item?.qty) || 0;
+        const fallbackProductWeight = Number(productWeightById?.[item?._id]) || 0;
+        const perUnitWeight = Number(item?.weight) || fallbackProductWeight || 0;
+        const itemTotalWeight = Number(item?.total_weight) || (perUnitWeight * qty);
+
+        totalQty += qty;
+        totalWeight += itemTotalWeight;
+
+        const size = [
+            item?.formula_width_calc > 0 ? item.formula_width_calc : '',
+            item?.formula_length_calc > 0 ? item.formula_length_calc : ''
+        ].filter(Boolean).join(' x ');
+
+        const productName = [
+            item?.title || '',
+            item?.sdesc ? `- ${item.sdesc}` : '',
+            item?.coating || '',
+            item?.color || ''
+        ].join(' ').trim();
+
+        table += `
+            <tr class="${i === items.length - 1 ? 'border-secondary' : ''}">
+                <th scope="row">${i + 1}</th>
+                <td>${productName}</td>
+                <td>${size ? `${size} mm` : ''}</td>
+                <td>${qty}</td>
+                <td>${item?.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
+                <td>${itemTotalWeight ? (Math.round(itemTotalWeight * 1000) / 1000) : ''}</td>
+            </tr>
+        `;
+    });
+
+    table += `
+            <tr class="table-info">
+                <td colspan="3"><strong>${__html(locale, "Total")}</strong></td>
+                <td><strong>${totalQty}</strong></td>
+                <td></td>
+                <td><strong>${Math.round(totalWeight * 1000) / 1000}</strong></td>
+            </tr>
+            </tbody>
+        </table>
+    `;
+
+    return table;
+}
+
+/**
  * Format item description
  */
 function formatItemDescription(detailed, item, settings, locale) {
