@@ -1,0 +1,20 @@
+# Product References
+
+Here is a brief summary of products that this ERP can use to sell.
+  - Rainwater system elements
+  - Window sills
+  - Chimney flashings
+  - Sheet metal panels
+  - Roofing panels
+  - Corner flashing
+  - Eaves drop elements
+  - Parapet elements
+  - Rake edge elements
+  - Ridge elements
+  - Roof hatch elements
+  - Snow guard elements
+  - Roof valley
+  - Post caps
+  - Drip edge
+
+More articles can be found here [skarda design documentation](https://skarda.design/en/documentation/) 

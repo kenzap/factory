@@ -56,12 +56,12 @@ async function getMetalStock(filters = { client: { name: "" }, dateFrom: '', dat
     // query filters
     if (filters) {
 
-        if (filters.cm == false && filters.color) {
+        if (filters.cm == false) {
             query += ` AND js->'data'->>'color' = $${params.length + 1}`;
             params.push(filters.color);
         }
 
-        if (filters.cm == false && filters.coating) {
+        if (filters.cm == false) {
             query += ` AND js->'data'->>'coating' = $${params.length + 1}`;
             params.push(filters.coating);
         }
@@ -133,7 +133,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
         params.push(`%${filters.client.name.trim()}%`);
     }
 
-    if (filters.cm == false && filters.color) {
+    if (filters.cm == false) {
         query += ` AND EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 
@@ -142,7 +142,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
         params.push(filters.color);
     }
 
-    if (filters.cm == false && filters.coating) {
+    if (filters.cm == false) {
         query += ` AND EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 

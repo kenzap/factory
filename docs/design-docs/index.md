@@ -1,0 +1,3 @@
+# Design Docs Index
+
+> Placeholder scaffold. Fill this document with project-specific content.

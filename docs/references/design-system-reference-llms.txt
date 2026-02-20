@@ -1,0 +1,127 @@
+# DESIGN SYSTEM REFERENCE
+
+## STACK
+- UI framework: Bootstrap 5.3
+- Custom global stylesheet layered on top (global.css)
+- Font: Poppins (self-hosted, weights 400/500/700)
+- Icons: [your icon library, e.g. Bootstrap Icons / Lucide]
+- Frontend framework: [Vanilla JS, ES6]
+
+---
+
+## COLOR SYSTEM (CSS custom properties)
+
+Brand red (primary action color):
+  --base-color: #dc3545
+  --base-color-darker: #bb2d3b
+  --base-color-light: #fcf0ef
+  --base-color-label: rgba(188, 70, 62, 0.5)
+  --base-color-shadow: rgba(225, 83, 97, .5)
+
+Interactive / links:
+  --primary-color: #0d6ef8
+  --link-color: #007bff
+
+Neutrals:
+  --gray-color: #6c757d
+  --gray-color-light: #f8f9fa
+  --gray-color-highlight: #f1f3f4
+  --gray-color-highlight-hover: #e9ecef
+
+Semantic accents:
+  --base-color-3: #B21A4F   (deep pink)
+  --base-color-4: #31B245   (green)
+  --base-color-5: #a979f1   (purple)
+  --base-color-6: #ff9800   (orange/warning)
+
+Text / surface:
+  --cd-color-1: #212529     (dark text)
+  --cd-color-2: hsl(204, 73%, 52%)   (info blue)
+  --cd-color-3: hsl(0, 0%, 100%)     (white)
+  --cd-color-4: hsl(192, 15%, 94%)   (light surface)
+
+---
+
+## TYPOGRAPHY
+
+Body: Poppins 400, 16px, line-height 1.5
+Medium weight: 500 (labels, badges, status text)
+Bold: 700 (headings)
+No custom heading scale defined — use Bootstrap defaults (h1–h6)
+
+---
+
+## BUTTONS
+
+Always prefer Bootstrap button classes as base.
+Brand variants override Bootstrap's default blue:
+
+  .btn-branded          → solid red button (primary action)
+  .btn-outline-branded  → outlined red button (secondary action)
+  .btn-primary          → Bootstrap blue (used for non-brand actions)
+
+Do NOT use .btn-danger — use .btn-branded instead.
+Disabled state preserves brand color with reduced interactivity.
+
+---
+
+## STATUS BADGES
+
+Use class .item-status as the base wrapper.
+Apply one of these modifier classes:
+
+  .status-success    → green bg  / dark green text   (completed, paid)
+  .status-warning    → yellow bg / dark yellow text  (pending, draft)
+  .status-primary    → light blue bg / dark blue text (active, in progress)
+  .status-danger     → pink bg / dark red text        (failed, overdue)
+  .status-secondary  → gray bg / dark gray text       (inactive, unknown)
+  .status-dark       → black bg / white text          (archived, special)
+
+Font size: 0.7rem, font-weight: 500, border-radius: 12px, padding: 0.25rem 0.5rem
+
+---
+
+## ORDER STATUS MAPPING (domain-specific)
+
+Draft       → .status-warning
+Manufactured → .status-primary
+Dispatched  → .status-success
+Cancelled   → .status-danger
+Archived    → .status-dark
+
+---
+
+## LAYOUT
+
+Navbar height: 82px (fixed) → #app has margin-top: 82px
+Max content width: 680px centered (.entry-content)
+Spacing: follow Bootstrap spacing scale (0.25rem increments)
+Border radius convention: 4px for dropdowns, 12px for pills/badges, 40px for language selector
+
+---
+
+## LOADER
+
+Full-screen fixed overlay with three animated dots.
+Color of dots: --primary-color (#0d6ef8)
+Do not replicate inline — use the global .loader component.
+
+---
+
+## CONVENTIONS & RULES
+
+- Use Bootstrap utility classes first; only write custom CSS when Bootstrap cannot cover it
+- Use CSS custom properties (var(--...)) for all brand colors — never hardcode hex values in components
+- .po class = cursor: pointer (use on non-button clickable elements)
+- .text-branded = brand red text color
+- Toasts use .toast-cont with z-index: 100
+- Language selector is a full-screen overlay modal, not a dropdown
+
+---
+
+## WHAT NOT TO DO
+
+- Do not use .btn-danger for primary destructive actions — use .btn-branded
+- Do not use inline font-size or color styles — use utility classes or CSS vars
+- Do not add new color variables without updating this file
+- Do not use Bootstrap's default blue primary for brand actions

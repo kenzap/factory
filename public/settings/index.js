@@ -9,6 +9,7 @@ import { Session } from "../_/modules/session.js";
 import { TabExtensions } from "../_/modules/settings/tab_extensions.js";
 import { TabGeneral } from "../_/modules/settings/tab_general.js";
 import { TabParameters } from "../_/modules/settings/tab_parameters.js";
+import { TabRegion } from "../_/modules/settings/tab_region.js";
 import { TabTemplates } from "../_/modules/settings/tab_templates.js";
 import { getHtml } from "../_/modules/settings/tabs.js";
 import { isAuthorized } from "../_/modules/unauthorized.js";
@@ -68,6 +69,7 @@ class Settings {
 
             // init tabs
             new TabGeneral();
+            new TabRegion();
             new TabTemplates(this.settings, this.editors);
             new TabParameters(this.settings);
             new TabExtensions(this.settings, this.extensions);

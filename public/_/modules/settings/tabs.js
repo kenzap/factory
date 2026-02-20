@@ -14,6 +14,7 @@ export const getHtml = () => {
                 <nav class="nav tab-content mb-4" role="tablist">
                     <div class="nav nav-tabs" id="nav-tab" role="tablist">
                         <a class="nav-link active" id="nav-general-link" data-bs-toggle="tab" data-bs-target="#nav-general" type="button" role="tab" aria-controls="nav-general" aria-selected="true" href="#">${__html('General')}</a>
+                        <a class="nav-link" id="nav-region-link" data-bs-toggle="tab" data-bs-target="#nav-region" type="button" role="tab" aria-controls="nav-region" aria-selected="true" href="#">${__html('Region')}</a>
                         <a class="nav-link" id="nav-templates-link" data-bs-toggle="tab" data-bs-target="#nav-templates" type="button" role="tab" aria-controls="nav-templates" aria-selected="true" href="#">${__html('Templates')}</a>
                         <a class="nav-link" id="nav-parameters-link" data-bs-toggle="tab" data-bs-target="#nav-parameters" type="button" role="tab" aria-controls="nav-parameters" aria-selected="true" href="#">${__html('Parameters')}</a>
                         <a class="nav-link" id="nav-extensions-link" data-bs-toggle="tab" data-bs-target="#nav-extensions" type="button" role="tab" aria-controls="nav-extensions" aria-selected="true" href="#">${__html('Extensions')}</a>
@@ -21,6 +22,7 @@ export const getHtml = () => {
                 </nav>
                 <div class="card-body tab-content" id="nav-tabContent">
                   <tab-general class="tab-pane fade show active" id="nav-general" role="tabpanel" aria-labelledby="nav-general-link"></tab-general>
+                  <tab-region class="tab-pane fade" id="nav-region" role="tabpanel" aria-labelledby="nav-region-link"></tab-region>
                   <tab-templates class="tab-pane fade" id="nav-templates" role="tabpanel" aria-labelledby="nav-templates-link"></tab-templates>
                   <tab-parameters class="tab-pane fade" id="nav-parameters" role="tabpanel" aria-labelledby="nav-parameters-link"></tab-parameters>
                   <tab-extensions class="tab-pane fade" id="nav-extensions" role="tabpanel" aria-labelledby="nav-extensions-link"></tab-extensions>

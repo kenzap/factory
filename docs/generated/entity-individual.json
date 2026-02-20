@@ -1,0 +1,33 @@
+{
+  "data": {
+    "_id": "26963c8cfa826ae2ffff06a9fbb0d2833391bbc8",
+    "name": "Kalniņš Jānis",
+    "notes": "",
+    "entity": "individual",
+    "drivers": [],
+    "bank_acc": "",
+    "contacts": [
+      {
+        "id": "23d20e",
+        "name": "",
+        "email": "",
+        "notes": "",
+        "phone": "29000000",
+        "primary": true
+      }
+    ],
+    "addresses": [],
+    "bank_code": "",
+    "bank_name": "",
+    "import_id": "",
+    "legal_name": "Kalniņš Jānis",
+    "reg_number": "000000-11000",
+    "vat_number": "",
+    "vat_status": "0",
+    "reg_address": ""
+  },
+  "meta": {
+    "created": 1757412564,
+    "updated": 1757412564
+  }
+}
