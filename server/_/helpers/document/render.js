@@ -217,6 +217,16 @@ export function getInvoiceTotals(settings, order, locale, totals) {
 }
 
 export function getProductionItemsTable(settings, order, locale) {
+    const shouldSkipRecordCalculations = (item) => {
+        const width = Number(item?.formula_width_calc) || 0;
+        const length = Number(item?.formula_length_calc) || 0;
+        return width === 0 && length === 0;
+    };
+    const hasVisibleSummaryWidth = (widthValue) => (Number(widthValue) || 0) > 0;
+    const hasSummaryValues = (summary) =>
+        (Number(summary?.totalQty) || 0) > 0 ||
+        (Number(summary?.totalTM) || 0) > 0 ||
+        (Number(summary?.totalMeters) || 0) > 0;
 
     // hardcoded sequence for production slip. TODO: implement settings control
     const sequence = [
@@ -298,11 +308,13 @@ export function getProductionItemsTable(settings, order, locale) {
 
             // Add items for this group
             groupItems.forEach((item, i) => {
+                const qty = Number(item.qty) || 0;
+                const skipRecordCalculations = shouldSkipRecordCalculations(item);
                 // Calculate total t/m for the item
-                let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : "";
+                let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * qty : "";
                 if (tm) {
                     tm = Math.round(tm * 1000) / 1000;
-                    totalTM += tm;
+                    if (!skipRecordCalculations) totalTM += tm;
                 }
 
                 item.updated = 1;
@@ -322,9 +334,11 @@ export function getProductionItemsTable(settings, order, locale) {
 
                     const summary = itemSummary.get(groupKey);
                     summary.items.push(item);
-                    summary.totalQty += item.qty || 0;
-                    summary.totalTM += tm || 0;
-                    summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : 0;
+                    if (!skipRecordCalculations) {
+                        summary.totalQty += qty;
+                        summary.totalTM += tm || 0;
+                        summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * qty : 0;
+                    }
 
                     tableContent += `
                         <tr class="${i == groupItems.length - 1 ? "border-secondary" : ""}">
@@ -345,22 +359,12 @@ export function getProductionItemsTable(settings, order, locale) {
 
             tableContent += '</tbody>';
 
-            // Add summary for this group to separate table
-            summaryContent += `
-                <thead class="table-secondary">
-                    <tr>
-                        <th scope="col" colspan="2">${__html(locale, group.name)}</th>
-                        <th scope="col">${__html(locale, "Qty")}</th>
-                        <th scope="col">${__html(locale, "t/m")}</th>   
-                    </tr>
-                </thead>
-                <tbody>
-            `;
+            let groupSummaryRows = '';
 
             // Add summary rows for each width (show all widths, not just multiple items)
             itemSummary.forEach((summary) => {
-                if (summary.width) {
-                    summaryContent += `
+                if (hasVisibleSummaryWidth(summary.width) && hasSummaryValues(summary)) {
+                    groupSummaryRows += `
                         <tr>
                             <td colspan="2"><strong>${summary.width}mm</strong></td>
                             <td>${summary.totalQty}</td>
@@ -371,15 +375,35 @@ export function getProductionItemsTable(settings, order, locale) {
             });
 
             // Add group total row
-            summaryContent += `
-                <tr class="table-info">
-                    <td colspan="2"><strong>${__html(locale, "Total")}</strong></td>
-                    <td><strong>${groupItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
-                    <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
-                </tr>
-            `;
+            const groupTotalQty = groupItems.reduce((sum, item) => {
+                if (shouldSkipRecordCalculations(item)) return sum;
+                return sum + (Number(item.qty) || 0);
+            }, 0);
+            const roundedGroupTotalTM = totalTM ? Math.round(totalTM * 1000) / 1000 : 0;
+            if (groupTotalQty > 0 || roundedGroupTotalTM > 0) {
+                groupSummaryRows += `
+                    <tr class="table-info">
+                        <td colspan="2"><strong>${__html(locale, "Total")}</strong></td>
+                        <td><strong>${groupTotalQty}</strong></td>
+                        <td><strong>${roundedGroupTotalTM || ""}</strong></td>
+                    </tr>
+                `;
+            }
 
-            summaryContent += '</tbody>';
+            if (groupSummaryRows) {
+                summaryContent += `
+                    <thead class="table-secondary">
+                        <tr>
+                            <th scope="col" colspan="2">${__html(locale, group.name)}</th>
+                            <th scope="col">${__html(locale, "Qty")}</th>
+                            <th scope="col">${__html(locale, "t/m")}</th>   
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${groupSummaryRows}
+                    </tbody>
+                `;
+            }
         }
     });
 
@@ -416,12 +440,14 @@ export function getProductionItemsTable(settings, order, locale) {
 
         // Add ungrouped items
         ungroupedItems.forEach((item, i) => {
+            const qty = Number(item.qty) || 0;
+            const skipRecordCalculations = shouldSkipRecordCalculations(item);
 
             // Calculate total t/m for the item
-            let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : "";
+            let tm = item.formula_length_calc ? (item.formula_length_calc / 1000) * qty : "";
             if (tm) {
                 tm = Math.round(tm * 1000) / 1000;
-                totalTM += tm;
+                if (!skipRecordCalculations) totalTM += tm;
             }
 
             item.updated = 1;
@@ -441,9 +467,11 @@ export function getProductionItemsTable(settings, order, locale) {
 
                 const summary = ungroupedSummary.get(groupKey);
                 summary.items.push(item);
-                summary.totalQty += item.qty || 0;
-                summary.totalTM += tm || 0;
-                summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * item.qty : 0;
+                if (!skipRecordCalculations) {
+                    summary.totalQty += qty;
+                    summary.totalTM += tm || 0;
+                    summary.totalMeters += item.formula_length_calc ? (item.formula_length_calc / 1000) * qty : 0;
+                }
 
                 tableContent += `
                     <tr class="${i == ungroupedItems.length - 1 ? "border-secondary" : ""}">
@@ -464,50 +492,57 @@ export function getProductionItemsTable(settings, order, locale) {
 
         tableContent += '</tbody>';
 
-        // Add ungrouped items summary to separate table
-        summaryContent += `
-            <thead class="table-secondary">
-                <tr>
-                    <th scope="col" colspan="5">${__html(locale, "Ungrouped items")} - ${__html(locale, "Summary")}</th>
-                </tr>
-                <tr>
-                    <th scope="col">${__html(locale, "Width")}</th>
-                    <th scope="col">${__html(locale, "Total meters")}</th>
-                    <th scope="col">${__html(locale, "Qty")}</th>
-                    <th scope="col">${__html(locale, "t/m")}</th>
-                    <th scope="col"></th>
-                </tr>
-            </thead>
-            <tbody>
-        `;
+        let ungroupedSummaryRows = '';
 
         // Add summary rows for each width in ungrouped items (show all widths)
         ungroupedSummary.forEach((summary) => {
-            if (summary.width) {
-                summaryContent += `
+            if (hasVisibleSummaryWidth(summary.width) && hasSummaryValues(summary)) {
+                ungroupedSummaryRows += `
                     <tr>
                         <td><strong>${summary.width}mm</strong></td>
                         <td><strong>${Math.round(summary.totalMeters * 1000) / 1000}m</strong></td>
                         <td><strong>${summary.totalQty}</strong></td>
                         <td><strong>${summary.totalTM ? Math.round(summary.totalTM * 1000) / 1000 : ""}</strong></td>
-                        <td></td>
                     </tr>
                 `;
             }
         });
 
         // Add group total row
-        summaryContent += `
-            <tr class="table-info">
-                <td><strong>${__html(locale, "Total")}</strong></td>
-                <td></td>
-                <td><strong>${ungroupedItems.reduce((sum, item) => sum + (item.qty || 0), 0)}</strong></td>
-                <td><strong>${totalTM ? Math.round(totalTM * 1000) / 1000 : ""}</strong></td>
-                <td></td>
-            </tr>
-        `;
+        const ungroupedTotalQty = ungroupedItems.reduce((sum, item) => {
+            if (shouldSkipRecordCalculations(item)) return sum;
+            return sum + (Number(item.qty) || 0);
+        }, 0);
+        const roundedUngroupedTotalTM = totalTM ? Math.round(totalTM * 1000) / 1000 : 0;
+        if (ungroupedTotalQty > 0 || roundedUngroupedTotalTM > 0) {
+            ungroupedSummaryRows += `
+                <tr class="table-info">
+                    <td><strong>${__html(locale, "Total")}</strong></td>
+                    <td></td>
+                    <td><strong>${ungroupedTotalQty}</strong></td>
+                    <td><strong>${roundedUngroupedTotalTM || ""}</strong></td>
+                </tr>
+            `;
+        }
 
-        summaryContent += '</tbody>';
+        if (ungroupedSummaryRows) {
+            summaryContent += `
+                <thead class="table-secondary">
+                    <tr>
+                        <th scope="col" colspan="4">${__html(locale, "Ungrouped items")} - ${__html(locale, "Summary")}</th>
+                    </tr>
+                    <tr>
+                        <th scope="col">${__html(locale, "Width")}</th>
+                        <th scope="col">${__html(locale, "Total meters")}</th>
+                        <th scope="col">${__html(locale, "Qty")}</th>
+                        <th scope="col">${__html(locale, "t/m")}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${ungroupedSummaryRows}
+                </tbody>
+            `;
+        }
     }
 
     let tables = `
