@@ -97,6 +97,12 @@ class WorkLog {
 
     listeners() {
 
+        // Keep Enter-submit behavior consistent with button click validation flow.
+        document.querySelector('#workEntryForm')?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.querySelector('.btn-add-worklog-record')?.click();
+        });
+
         // Product search
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
 
@@ -134,8 +140,6 @@ class WorkLog {
             const requiredFields = [
                 { selector: '#productName', name: 'Product name' },
                 { selector: '#qty', name: 'Quantity' },
-                { selector: '#productColor', name: 'Color' },
-                { selector: '#productCoating', name: 'Coating' },
                 { selector: '#type', name: 'Type' }
             ];
 
@@ -164,6 +168,16 @@ class WorkLog {
                 return;
             }
 
+            const colorValue = document.querySelector('#productColor').value.trim();
+            const coatingValue = document.querySelector('#productCoating').value.trim();
+            if (!colorValue || !coatingValue) {
+                const shouldContinue = window.confirm('Color or coating is empty. Save this record anyway?');
+                if (!shouldContinue) {
+                    (!colorValue ? document.querySelector('#productColor') : document.querySelector('#productCoating'))?.focus();
+                    return;
+                }
+            }
+
             let user_id = document.getElementById('filterEmployee').value || this.user.id;
 
             // console.log('Selected user ID for work log record:', document.getElementById('filterEmployee').value, this.user.id);
@@ -175,8 +189,8 @@ class WorkLog {
                 item_id: this.record.item_id ? this.record.item_id : '',
                 product_id: this.product ? this.product._id : this.record.product_id,
                 product_name: document.querySelector('#productName').value,
-                color: document.querySelector('#productColor').value.trim(),
-                coating: document.querySelector('#productCoating').value.trim(),
+                color: colorValue,
+                coating: coatingValue,
                 origin: document.querySelector('#origin').value,
                 time: parseInt(document.querySelector('#time').value) || 0,
                 type: document.querySelector('#type').value,

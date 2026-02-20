@@ -17,3 +17,4 @@ Job-based manufacturing processes
 Real-time production tracking
 Cost calculation and planning
 Compliance management
+- Worklog entries may be saved without color/coating after a warning confirmation.
