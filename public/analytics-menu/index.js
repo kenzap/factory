@@ -85,7 +85,7 @@ class AnalyticsMenu {
                         title: __html('Operations'),
                         links: [
                             {
-                                text: __html('Employee Performance'),
+                                text: __html('Employee Performance Report'),
                                 link: link('/report-employee-performance/'),
                                 target: '_blank',
                                 rights: ['employee_performance_report'],

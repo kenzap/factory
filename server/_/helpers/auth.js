@@ -397,6 +397,17 @@ export const getUserSessionById = async (id) => {
     }
 }
 
+// Refresh cached user session with latest database data
+export const refreshUserSessionById = async (id) => {
+    if (!id) return null;
+
+    const user = await getUserById(id);
+    if (!user?.id) return null;
+
+    await cacheUserSession(user);
+    return user;
+}
+
 // Rate limiting
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes

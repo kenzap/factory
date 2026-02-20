@@ -24,6 +24,8 @@ Analytics menu
 : Report links are grouped by category (Operations, Sales, Finance & Overview) for quicker access.
 : Home page Analytics tile opens Analytics Menu (report hub) instead of opening a single report directly.
 : Individual report links are shown only when the user has the corresponding report permission.
+User rights updates
+: Changing user rights updates active server session data so access changes apply without requiring re-login.
 Production Workflow Support:
 
 Job-based manufacturing processes

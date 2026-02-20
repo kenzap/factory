@@ -1,4 +1,4 @@
-import { authenticateToken } from '../_/helpers/auth.js';
+import { authenticateToken, refreshUserSessionById } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 
 /**
@@ -68,6 +68,7 @@ function saveUserApi(app) {
 
         const data = _req.body;
         const response = await saveUser(data);
+        await refreshUserSessionById(data?._id);
 
         res.json({ success: true, response });
     });
