@@ -18,11 +18,11 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__attr('Color')}" value="${record.color}" required>
+                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__attr('Color')}" value="${record.color}">
                         </div>
                         <div class="col-md-2">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__attr('Coating')}" value="${record.coating}" required>
+                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__attr('Coating')}" value="${record.coating}">
                         </div>
                         <div class="col-md-1">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
