@@ -1,0 +1,607 @@
+
+{
+  "data": {
+    "_id": "79621ca3e8d43bf0c1e582d1954b5b27891bc512",
+    "img": [
+      true,
+      true
+    ],
+    "cats": [
+      "Ridge",
+      "Flashing"
+    ],
+    "test": "",
+    "group": "bending",
+    "ldesc": "",
+    "parts": [
+      {
+        "id": ""
+      }
+    ],
+    "price": "",
+    "sdesc": "",
+    "slugs": {
+      "et": "harjaplekk-tuup-4",
+      "fi": "",
+      "lt": "kraigo-elementas-4-tipas",
+      "lv": "kores-elements-tips-4",
+      "sv": "nockplaat-typ-4",
+      "default": "ridge-element-type-4"
+    },
+    "stock": {
+      "mpn": "",
+      "qty": "0",
+      "sku": "",
+      "gtin": "",
+      "weight": "0",
+      "category": [],
+      "management": false,
+      "low_threshold": "0"
+    },
+    "title": "Ridge element type 4",
+    "sketch": {
+      "arc": {
+        "id": "NMD1Ds",
+        "data": {
+          "id": "NMD1Ds",
+          "mode": "drawing",
+          "params": {
+            "x": 290,
+            "y": 240,
+            "radius": 25,
+            "endAngle": 258.23171106797935,
+            "startAngle": 85.23635830927383
+          },
+          "points": "M 265.5254895065599 245.09885635280003 A 25 25 0 0 0 314.913643956122 237.9238630036565"
+        },
+        "mode": "drawing",
+        "rect": "",
+        "style": {
+          "fill": "rgba(255, 255, 255, 0)",
+          "stroke": "#ff007d",
+          "stroke_width": "3px"
+        },
+        "params": {
+          "x": 290,
+          "y": 240,
+          "radius": 25,
+          "endAngle": 258.23171106797935,
+          "startAngle": 85.23635830927383
+        },
+        "selected": null
+      },
+      "fov": 29,
+      "img": [
+        null
+      ],
+      "last": {
+        "id": "wBgJOQ"
+      },
+      "mode": "editing",
+      "rect": null,
+      "swap": 0,
+      "type": "",
+      "angle": false,
+      "hover": false,
+      "camera": {
+        "p1": 15,
+        "p2": 19,
+        "p3": 89
+      },
+      "offset": {
+        "x": 0.2,
+        "y": 0.55,
+        "z": 0
+      },
+      "viewer": {
+        "fov": 29,
+        "position": {
+          "x": 15.2213647391784,
+          "y": 19.880908247974546,
+          "z": 89.38914137701836
+        },
+        "rotation": {
+          "x": 0,
+          "y": 0,
+          "z": 0
+        }
+      },
+      "texture": {
+        "ratio": 7,
+        "energy": 0.88,
+        "texture": "matt-polyester-2h3",
+        "metallic": 0.32,
+        "roughness": 0.6,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      "polyline": {
+        "id": "wBgJOQ",
+        "data": {
+          "id": "wBgJOQ",
+          "mode": "drawing",
+          "arrow": false,
+          "points": [
+            {
+              "x": "292",
+              "y": "214"
+            }
+          ]
+        },
+        "mode": "drawing",
+        "rect": "",
+        "arrow": false,
+        "style": {
+          "fill": "rgba(255, 255, 255, 0)",
+          "stroke": "#00F",
+          "stroke_width": "3px"
+        },
+        "selected": null,
+        "arrowCoords": [
+          {
+            "x": 2,
+            "y": 7
+          },
+          {
+            "x": 0,
+            "y": 0
+          },
+          {
+            "x": 11,
+            "y": 7
+          },
+          {
+            "x": 0,
+            "y": 14
+          }
+        ]
+      },
+      "position": {
+        "x": 15.2213647391784,
+        "y": 19.880908247974546,
+        "z": 89.38914137701836
+      },
+      "rotation": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "textures": [
+        {
+          "ratio": 367,
+          "energy": 0.38,
+          "texture": "pural-rr32",
+          "metallic": 0.6,
+          "roughness": 0.31,
+          "background": "1,1,1",
+          "swap_colors": 1,
+          "coating_side": 1
+        },
+        {
+          "ratio": 293,
+          "energy": 0.53,
+          "texture": "pural-rr23",
+          "metallic": 0.59,
+          "roughness": 0.37,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.88,
+          "texture": "matt-polyester-2h3",
+          "metallic": 0.32,
+          "roughness": 0.6,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.67,
+          "texture": "matt-polyester-rr23",
+          "metallic": 0.07,
+          "roughness": 0.5,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.67,
+          "texture": "matt-polyester-rr32",
+          "metallic": 0.07,
+          "roughness": 0.5,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.91,
+          "texture": "matt-pural-2h3",
+          "metallic": 0.24,
+          "roughness": 0.75,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.87,
+          "texture": "matt-pural-rr23",
+          "metallic": 0.16,
+          "roughness": 0.66,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.93,
+          "texture": "matt-pural-rr33",
+          "metallic": 0.14,
+          "roughness": 0.77,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 1.25,
+          "texture": "matt-pural-rr750",
+          "metallic": 0.25,
+          "roughness": 0.63,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.96,
+          "texture": "matt-pural-rr887",
+          "metallic": 0.35,
+          "roughness": 0.8,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 6,
+          "energy": 0.59,
+          "texture": "polyester-2h3",
+          "metallic": 0.25,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 8,
+          "energy": 0.64,
+          "texture": "polyester-rr11",
+          "metallic": 0.23,
+          "roughness": 0.43,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 10,
+          "energy": 0.46,
+          "texture": "polyester-rr20",
+          "metallic": 0.24,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 5,
+          "energy": 0.46,
+          "texture": "polyester-rr21",
+          "metallic": 0.19,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.93,
+          "texture": "polyester-rr22",
+          "metallic": 0.42,
+          "roughness": 0.43,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 5,
+          "energy": 0.59,
+          "texture": "polyester-rr29",
+          "metallic": 0.25,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 6,
+          "energy": 0.59,
+          "texture": "polyester-rr23",
+          "metallic": 0.25,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 1.2,
+          "texture": "polyester-rr30",
+          "metallic": 0.75,
+          "roughness": 0.38,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 4,
+          "energy": 0.76,
+          "texture": "polyester-rr32",
+          "metallic": 0.32,
+          "roughness": 0.24,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 5,
+          "energy": 1.05,
+          "texture": "polyester-rr33",
+          "metallic": 0.52,
+          "roughness": 0.49,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.55,
+          "texture": "polyester-rr750",
+          "metallic": 0.2,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 5,
+          "energy": 0.59,
+          "texture": "polyester-rr887",
+          "metallic": 0.25,
+          "roughness": 0.29,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 6,
+          "energy": 0.64,
+          "texture": "polyester-rr946",
+          "metallic": 0.19,
+          "roughness": 0.43,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 1.04,
+          "texture": "zinc",
+          "metallic": 0.66,
+          "roughness": 0.18,
+          "background": "1,1,1",
+          "swap_colors": 1,
+          "coating_side": 2
+        },
+        {
+          "ratio": 7,
+          "energy": 0.87,
+          "texture": "matt-pural-rr22",
+          "metallic": 0.16,
+          "roughness": 0.66,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.87,
+          "texture": "matt-pural-rr21",
+          "metallic": 0.16,
+          "roughness": 0.66,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 1.01,
+          "texture": "matt-pural-rr11",
+          "metallic": 0.29,
+          "roughness": 0.5,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 0.87,
+          "texture": "matt-pural-rr29",
+          "metallic": 0.16,
+          "roughness": 0.66,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        },
+        {
+          "ratio": 7,
+          "energy": 1.11,
+          "texture": "matt-pural-rr32",
+          "metallic": 0.2,
+          "roughness": 0.78,
+          "background": "1,1,1",
+          "swap_colors": 0,
+          "coating_side": 1
+        }
+      ],
+      "mousedown": false
+    },
+    "status": "1",
+    "tax_id": "7216",
+    "created": 1654622614,
+    "formula": "(A+B+100)*L",
+    "locales": {
+      "et": {
+        "ldesc": "<p><br></p>",
+        "sdesc": "",
+        "title": "",
+        "keyword": ""
+      },
+      "fi": {
+        "ldesc": "<p><br></p>",
+        "sdesc": "",
+        "title": "",
+        "keyword": ""
+      },
+      "lt": {
+        "ldesc": "<p><br></p>",
+        "sdesc": "",
+        "title": "",
+        "keyword": ""
+      },
+      "lv": {
+        "ldesc": "<table style=\"width: 100%; height: 50px;\" class=\"ql-table-better table table-striped\"><temporary class=\"ql-table-temporary\" style=\"width: 100%; height: 50px;\" data-class=\"ql-table-better table table-striped\"><br></temporary><tbody><tr><td width=\"672\" height=\"30\" style=\"width: 672px; height: 30px;\" data-row=\"1\" class=\"\"><p class=\"ql-table-block icon-doc\" data-cell=\"1\">Materiāla biezums: 0.5 mm</p></td></tr><tr><td width=\"672\" height=\"26\" style=\"height: 26px; width: 672px;\" data-row=\"2\" class=\"\"><p class=\"ql-table-block icon-doc\" data-cell=\"1\">Maksimālais garums: 3000 mm</p></td></tr><tr><td width=\"672\" height=\"30\" style=\"width: 672px; height: 30px;\" data-row=\"3\" class=\"\"><p class=\"ql-table-block icon-doc\" data-cell=\"1\">Populārākās krāsas: RR23, RR32, 2H3</p></td></tr><tr><td data-row=\"4\" width=\"672\" height=\"30\" style=\"width: 672px; height: 30px;\"><p class=\"ql-table-block icon-pdf\" data-cell=\"1\"><a href=\"https://skarda.design/lv/dokumentacija/\" rel=\"noopener noreferrer\" target=\"_self\">Materiāla vides produktu deklarācija (EPD)</a></p></td></tr></tbody></table>",
+        "sdesc": "",
+        "title": "Kores elements, tips 4",
+        "keyword": ""
+      },
+      "sv": {
+        "ldesc": "<p><br></p>",
+        "sdesc": "",
+        "title": "",
+        "keyword": ""
+      },
+      "default": {
+        "ldesc": "<p><br></p>",
+        "sdesc": "",
+        "title": "Ridge element type 4",
+        "keyword": "kores nosegplāksne\nkore\nkonjek\nkonek\nКОНЬКОВЫЙ ЭЛЕМЕНТ\nКонёк\nКоньковый элемент тип 1\nKores elements - tips 1"
+      }
+    },
+    "updated": 1770662530,
+    "keywords": [
+      "kores nosegplāksne",
+      "kore",
+      "konjek",
+      "konek",
+      "КОНЬКОВЫЙ ЭЛЕМЕНТ",
+      "Конёк",
+      "Коньковый элемент тип 1",
+      "Kores elements - tips 1"
+    ],
+    "priority": "",
+    "cad_files": [
+      {
+        "id": "aJxngdKTCyxU",
+        "_id": "e93e4953da73522c8d5940949dc5cc021aa8d527",
+        "ext": "mtl",
+        "name": "2-B.mtl"
+      },
+      {
+        "id": "dMhdOtFIIrnm",
+        "_id": "faae071a4bee3cc79de923018f77aaa4697b2570",
+        "ext": "obj",
+        "name": "2-B.obj"
+      }
+    ],
+    "discounts": [],
+    "modelling": 0,
+    "var_price": [],
+    "calc_price": "formula",
+    "tax_regime": "LV_RC_SPECIFIC",
+    "updated_at": "2026-02-09T18:42:10.029Z",
+    "updated_by": null,
+    "variations": [],
+    "formula_cost": "",
+    "input_fields": [
+      {
+        "id": "Uctmtt",
+        "max": 1200,
+        "min": 10,
+        "type": "polyline",
+        "label": "A",
+        "params": [],
+        "points": "208 335 18 376",
+        "default": 300,
+        "label_pos": "right"
+      },
+      {
+        "id": "xMGdd0",
+        "max": 1200,
+        "min": 10,
+        "type": "polyline",
+        "label": "B",
+        "params": [],
+        "points": "469 403 257 337",
+        "default": 300,
+        "label_pos": "left"
+      },
+      {
+        "id": "wBgJOQ",
+        "max": 3000,
+        "min": 50,
+        "type": "polyline",
+        "label": "L",
+        "params": [],
+        "points": "236 296 337 156",
+        "default": 500,
+        "label_pos": "left"
+      },
+      {
+        "id": "ho0KTt",
+        "img": "",
+        "max": "180",
+        "min": "90",
+        "note": "",
+        "type": "arc",
+        "label": "α",
+        "params": {
+          "x": 236,
+          "y": 380,
+          "radius": 25,
+          "endAngle": 250.82099197418927,
+          "startAngle": 117.55281157671782
+        },
+        "points": "M 212.38758008234603 388.2130156235318 A 25 25 0 0 0 258.16462115413634 391.5641501673755",
+        "default": "150",
+        "label_pos": "bottom_right",
+        "annotation": "arc-angle"
+      }
+    ],
+    "formula_price": "7*M2+3",
+    "formula_width": "A+B+100",
+    "material_cost": "2.43",
+    "formula_length": "L",
+    "linked_products": ""
+  },
+  "extra": {
+    "api_key": null,
+    "created": 1654622614,
+    "updated": 1654622614
+  }
+}

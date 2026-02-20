@@ -27,6 +27,7 @@ async function viewProductionSlip(_id, user, locale, lang, options = {}, logger)
 
         data.user = user;
         data.lang = lang;
+        data.document_type = "production_slip";
 
         let production_slip = data.settings?.document_template || "";
 

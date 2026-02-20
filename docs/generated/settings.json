@@ -1,0 +1,850 @@
+{
+  "data": {
+    "": "length",
+    "y1": "",
+    "y2": "",
+    "y3": "",
+    "y4": "",
+    "y5": "",
+    "y6": "",
+    "_id": "fab241ec96ad987b7e1d79d186764ab6b9766ceb",
+    "vat": "",
+    "city": "",
+    "post": "",
+    "addr1": "",
+    "addr2": "",
+    "email": "",
+    "price": [
+      {
+        "id": "ZN",
+        "unit": "m2",
+        "price": "4.95",
+        "title": "*",
+        "parent": "Zinc",
+        "public": false
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR20",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR21",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR23",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR887",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR32",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR29",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR750",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR30",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR946",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR11",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "2H3",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR23",
+        "parent": "Matt Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR32",
+        "parent": "Matt Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR11",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR21",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR22",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR23",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR33",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR887",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR29",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR750",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "2H3",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "BP",
+        "unit": "unit",
+        "price": "0.30",
+        "title": "Bending Price",
+        "parent": ""
+      },
+      {
+        "id": "AP",
+        "unit": "hour",
+        "price": "12.00",
+        "title": "Assembly Price",
+        "parent": ""
+      },
+      {
+        "id": "MS",
+        "unit": "unit",
+        "price": "0.25",
+        "title": "Margin ㎡ ",
+        "parent": ""
+      },
+      {
+        "id": "MARGIN",
+        "unit": "unit",
+        "price": "1",
+        "title": "Margin ㎡",
+        "parent": ""
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR22",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.32",
+        "title": "RR33",
+        "parent": "Polyester",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "9.45",
+        "title": "RR32",
+        "parent": "Matt Pural",
+        "public": true
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "2H3",
+        "parent": "Matt Polyester",
+        "public": true
+      },
+      {
+        "id": "ZN",
+        "unit": "m2",
+        "price": "4.95",
+        "title": "Zinc",
+        "parent": "Zinc",
+        "public": true
+      },
+      {
+        "id": "MP2",
+        "unit": "m2",
+        "price": "0",
+        "title": "Metal Plate 2mm",
+        "parent": ""
+      },
+      {
+        "id": "MP1",
+        "unit": "m2",
+        "price": "0",
+        "title": "Metal Plate 1mm",
+        "parent": ""
+      },
+      {
+        "id": "MS4",
+        "unit": "meter",
+        "price": "0.66",
+        "title": "Metal Strip 25x4mm",
+        "parent": ""
+      },
+      {
+        "id": "PHR",
+        "unit": "hour",
+        "price": "25",
+        "title": "Person Hour Rate",
+        "parent": ""
+      },
+      {
+        "id": "PC",
+        "unit": "unit",
+        "price": "0.16",
+        "title": "Powder Coating",
+        "parent": ""
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR33",
+        "parent": "Matt Polyester",
+        "public": false
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR29",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR11",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR21",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR22",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR20",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR887",
+        "parent": "Matt Polyester"
+      },
+      {
+        "id": "",
+        "unit": "m2",
+        "price": "6.93",
+        "title": "RR750",
+        "parent": "Matt Polyester"
+      }
+    ],
+    "state": "",
+    "colors": "",
+    "groups": [
+      {
+        "id": "rainwater-system-square",
+        "name": "▢ rainwater system - square"
+      },
+      {
+        "id": "rainwater-system-round",
+        "name": "◯ rainwater system - round"
+      },
+      {
+        "id": "bending",
+        "name": "bending"
+      },
+      {
+        "id": "snow-retention",
+        "name": "snow retention"
+      },
+      {
+        "id": "roofing-panel",
+        "name": "roofing panel"
+      },
+      {
+        "id": "complex-product",
+        "name": "complex product"
+      },
+      {
+        "id": "stock-product",
+        "name": "stock product"
+      },
+      {
+        "id": "roofing-fasteners",
+        "name": "roofing fasteners"
+      }
+    ],
+    "company": "",
+    "country": "",
+    "coupons": "",
+    "created": 1724681540,
+    "updated": 1751365220,
+    "currency": "EUR",
+    "fee_calc": "",
+    "tax_calc": "",
+    "textures": [
+      {
+        "ratio": 367,
+        "energy": 0.38,
+        "texture": "pural-rr32",
+        "metallic": 0.6,
+        "roughness": 0.31,
+        "background": "1,1,1",
+        "swap_colors": 1,
+        "coating_side": 1
+      },
+      {
+        "ratio": 293,
+        "energy": 0.53,
+        "texture": "pural-rr23",
+        "metallic": 0.59,
+        "roughness": 0.37,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.88,
+        "texture": "matt-polyester-2h3",
+        "metallic": 0.32,
+        "roughness": 0.6,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.67,
+        "texture": "matt-polyester-rr23",
+        "metallic": 0.07,
+        "roughness": 0.5,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.67,
+        "texture": "matt-polyester-rr32",
+        "metallic": 0.07,
+        "roughness": 0.5,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.91,
+        "texture": "matt-pural-2h3",
+        "metallic": 0.24,
+        "roughness": 0.75,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.87,
+        "texture": "matt-pural-rr23",
+        "metallic": 0.16,
+        "roughness": 0.66,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.93,
+        "texture": "matt-pural-rr33",
+        "metallic": 0.14,
+        "roughness": 0.77,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 1.25,
+        "texture": "matt-pural-rr750",
+        "metallic": 0.25,
+        "roughness": 0.63,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.96,
+        "texture": "matt-pural-rr887",
+        "metallic": 0.35,
+        "roughness": 0.8,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 6,
+        "energy": 0.59,
+        "texture": "polyester-2h3",
+        "metallic": 0.25,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 8,
+        "energy": 0.64,
+        "texture": "polyester-rr11",
+        "metallic": 0.23,
+        "roughness": 0.43,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 5,
+        "energy": 0.46,
+        "texture": "polyester-rr21",
+        "metallic": 0.19,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.93,
+        "texture": "polyester-rr22",
+        "metallic": 0.42,
+        "roughness": 0.43,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 5,
+        "energy": 0.59,
+        "texture": "polyester-rr29",
+        "metallic": 0.25,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 6,
+        "energy": 0.59,
+        "texture": "polyester-rr23",
+        "metallic": 0.25,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 4,
+        "energy": 0.76,
+        "texture": "polyester-rr32",
+        "metallic": 0.32,
+        "roughness": 0.24,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 5,
+        "energy": 1.05,
+        "texture": "polyester-rr33",
+        "metallic": 0.52,
+        "roughness": 0.49,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.55,
+        "texture": "polyester-rr750",
+        "metallic": 0.2,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 5,
+        "energy": 0.59,
+        "texture": "polyester-rr887",
+        "metallic": 0.25,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 6,
+        "energy": 0.64,
+        "texture": "polyester-rr946",
+        "metallic": 0.19,
+        "roughness": 0.43,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 1.04,
+        "texture": "zinc",
+        "metallic": 0.66,
+        "roughness": 0.18,
+        "background": "1,1,1",
+        "swap_colors": 1,
+        "coating_side": 2
+      },
+      {
+        "ratio": 7,
+        "energy": 0.87,
+        "texture": "matt-pural-rr22",
+        "metallic": 0.16,
+        "roughness": 0.66,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.87,
+        "texture": "matt-pural-rr21",
+        "metallic": 0.16,
+        "roughness": 0.66,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 1.01,
+        "texture": "matt-pural-rr11",
+        "metallic": 0.29,
+        "roughness": 0.5,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 0.87,
+        "texture": "matt-pural-rr29",
+        "metallic": 0.16,
+        "roughness": 0.66,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 1.11,
+        "texture": "matt-pural-rr32",
+        "metallic": 0.2,
+        "roughness": 0.78,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 7,
+        "energy": 1.1,
+        "texture": "polyester-rr30",
+        "metallic": 0.26,
+        "roughness": 0.38,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      },
+      {
+        "ratio": 10,
+        "energy": 1.01,
+        "texture": "polyester-rr20",
+        "metallic": 0.24,
+        "roughness": 0.29,
+        "background": "1,1,1",
+        "swap_colors": 0,
+        "coating_side": 1
+      }
+    ],
+    "brand_name": "Skarda Design",
+    "tax_region": "LV",
+    "var_parent": "Zinc\nPolyester\nMatt Pural\nMatt Polyester",
+    "vat_number": "LV40003874225",
+    "coupon_list": "",
+    "domain_name": "skarda.design",
+    "entity_type": "individual",
+    "fee_display": "",
+    "fee_percent": "",
+    "tax_country": "LV",
+    "tax_display": "PVN",
+    "tax_percent": "21",
+    "auto_complete": "",
+    "currency_symb": "€",
+    "last_order_id": 43181,
+    "moneo:FIRM_ID": "1",
+    "tax_auto_rate": "",
+    "system_of_units": "metric",
+    "work_categories": [
+      {
+        "id": "cutting",
+        "name": "Cutting"
+      },
+      {
+        "id": "bending",
+        "name": "Bending"
+      },
+      {
+        "id": "marking",
+        "name": "Marking"
+      },
+      {
+        "id": "assembly",
+        "name": "Assembly"
+      },
+      {
+        "id": "pipe-forming",
+        "name": "Pipe forming"
+      },
+      {
+        "id": "stamping",
+        "name": "Stamping"
+      },
+      {
+        "id": "powder-coating",
+        "name": "Powder coating"
+      },
+      {
+        "id": "stock-replenishment",
+        "name": "Stock replenishment"
+      },
+      {
+        "id": "stock-write-off",
+        "name": "Stock write-off"
+      },
+      {
+        "id": "forming",
+        "name": "Forming"
+      }
+    ],
+    "happy_hours_list": "",
+    "notify_low_stock": "",
+    "notify_new_order": "",
+    "stock_categories": [
+      {
+        "id": "rainwater-system-square",
+        "name": "▢ Rainwater system - square"
+      },
+      {
+        "id": "rainwater-system-125-100",
+        "name": "◯ Rainwater system - 125/100"
+      },
+      {
+        "id": "rainwater-system-150-120",
+        "name": "◯ Rainwater system - 150/120"
+      },
+      {
+        "id": "rainwater-system-150-140",
+        "name": "◯ Rainwater system - 150/140"
+      },
+      {
+        "id": "snow-barriers-round",
+        "name": "Snow barriers - round"
+      },
+      {
+        "id": "snow-barriers-oval",
+        "name": "Snow barriers - oval"
+      },
+      {
+        "id": "stock-items",
+        "name": "Stock items -"
+      },
+      {
+        "id": "stock-items-rr",
+        "name": "Stock items RR"
+      }
+    ],
+    "tax_percent_auto": "1",
+    "currency_symb_loc": "left",
+    "moneo:COMPANY_UID": "4223f769-b29aec7e-f81783de-1ff154f2-36fd7b56",
+    "notify_proc_order": "",
+    "product_discounts": "",
+    "document_discounts": "1",
+    "discount_visibility": "",
+    "notify_cancel_order": "",
+    "waybill_last_number": "SKA-228684",
+    "dialog360:DIALOG_KEY": "zrovTBWQ8xqSgRevZUBrp5RWAK",
+    "moneo:MONEO_API_BASE": "https://51.91.152.198:8006/api/v2",
+    "waybill_anulled_list": "",
+    "notify_refunded_order": "",
+    "moneo:MONEO_AUTH_TOKEN": "e8jVQYJ1fiY4ngCrAxf1zA",
+    "notify_completed_order": "",
+    "notify_low_stock_emails": "",
+    "notify_new_order_emails": "",
+    "dialog360:DIALOG_API_URL": "https://waba-v2.360dialog.io/messages",
+    "notify_proc_order_emails": "",
+    "invoice_document_template": "<!DOCTYPE html>\n    <html lang=\"lv\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n        <title>Avansa rēķins Nr. {{invoice_number}}</title>\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n            \n            @import url('https://fonts.googleapis.com/css2?family=Roboto');\n\n            body {\n                font-family: 'Roboto', sans-serif;\n                font-size: 12px;\n                line-height: 1.4;\n                color: #000;\n                background: white;\n                padding: 20px;\n            }\n            \n            .d-none{\n                display:none!important;\n            }\n            \n            .text-end{\n                text-align: right;\n            }\n            \n            .fs-5{\n                font-size: 16px;\n            }\n            \n            .fs-3{\n                font-size: 20px;\n            }\n            \n            .me-2{\n                padding-right: 8px;\n            }\n            \n           .text-nowrap{\n                white-space: nowrap;\n            }\n            \n            .waybill-container {\n                max-width: 800px;\n                margin: 0 auto;\n            }\n            \n            .header {\n                text-align: center;\n                padding-bottom: 0px;\n                margin-bottom: 16px;\n            }\n            \n            .header h1 {\n                font-size: 18px;\n                font-weight: bold;\n            }\n            \n            .company-section {\n                padding: 0px;\n                break-inside: avoid;\n            }\n            \n            .company-row {\n                display: flex;\n                gap: 20px;\n            }\n            \n            .company-col {\n                flex: 1;\n            }\n            \n            .company-section h3 {\n                font-size: 14px;\n                font-weight: bold;\n                margin-bottom: 2px;\n                text-decoration: none;\n            }\n            \n            .company-section p {\n                margin-bottom: 0px;\n                font-size: 11px;\n            }\n            \n            .date_signature{\n                margin: 8px 0 21px\n            }\n            \n            .details-section {\n                padding: 0px;\n                margin-bottom: 4px;\n            }\n            \n            .details-row {\n                display: flex;\n                gap: 20px;\n                margin-bottom: 10px;\n            }\n            \n            .details-col {\n                flex: 1;\n            }\n            \n            .material-info {\n                padding: 0px;\n                margin-bottom: 4px;\n                font-size: 10px;\n            }\n            \n            .items-table {\n                width: 100%;\n                border-collapse: collapse;\n                margin-bottom: 4px;\n                break-inside: avoid;\n            }\n            \n            .items-table th,\n            .items-table td {\n                border: 1px solid #000;\n                padding: 0px 4px;\n                font-size: 11px;\n            }\n            \n            .items-table th {\n                background-color: #f0f0f0;\n                font-weight: bold;\n                text-align: center;\n            }\n            \n            .items-table td:nth-child(6),\n            .items-table td:nth-child(7),\n            .items-table td:nth-child(8),\n            .items-table td:nth-child(9)\n            {\n                text-align: right;\n                white-space: nowrap;\n            }\n            \n            .totals {\n                display: flex;\n                justify-content: space-between;\n                align-items: flex-start;\n                margin-bottom: 4px;\n            }\n            \n            .totals-left {\n                flex: 6;\n            }\n            \n            .totals-right {\n                flex: 6;\n                text-align: right;\n                display: flex;\n                align-items: center;\n                justify-content: end;\n            }\n            \n            .totals p {\n                margin-bottom: 5px;\n                font-size: 12px;\n            }\n            \n            .total-amount {\n                font-weight: bold;\n                font-size: 14px;\n            }\n            \n            .signatures {\n                border-top: 1px solid #000;\n                padding-top: 24px;\n                display: flex;\n                gap: 40px;\n            }\n            \n            .signature-col {\n                flex: 1;\n            }\n            \n            .signature-line {\n                border-bottom: 1px solid #000;\n                height: 25px;\n                margin: 4px 0 0px\n            }\n            \n            .signature-line-name{\n                width: 100%;\n                text-align: center;\n                color: #909090;\n            }\n            \n            .privacy-notice {\n                margin-top: 4px;\n                font-size: 10px;\n                line-height: 1.3;\n            }\n            \n            .privacy-notice a {\n                color: #000;\n            }\n            \n            @media print {\n                body {\n                    padding: 0;\n                }\n                \n                .waybill-container {\n                    max-width: none;\n                }\n            }\n        </style>\n    </head>\n    <body style=\"min-height: 100vh; margin: 0;\">\n        <div id=\"waybill-container\" class=\"waybill-container\">\n            <!-- Header -->\n            <div class=\"header\">\n                <h1>Avansa rēķins Nr. {{invoice_number}}</h1>\n                <p id=\"invoice_date\">{{invoice_date}}</p>\n            </div>\n            \n            <!-- Company Information -->\n            <div class=\"company-row\">\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>NOSŪTĪTĀJS: <strong>Skārda Nams SIA</strong></h3>\n                        <p>Jur. adrese: Mellužu iela 13-6, Rīga, LV-1067</p>\n                        <p>Tālr.: 26443313, 26443316</p>\n                        <p>PVN maksātāja numurs: LV40003874225</p>\n                        <p>Norēķ. konts: LV 78 UNLA 0050 0091 9989 7</p>\n                        <p>Banka: AS \"SEB banka\"</p>\n                        <p>Bankas kods: UNLALV2X</p>\n                        <p>Email: info@skardanams.com</p>\n                    </div>\n                </div>\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>SAŅĒMĒJS: <strong>{{client_name}}</strong></h3>\n                        <p id=\"client_reg_address\">Jur. adrese: {{client_reg_address}}</p>\n                        <p id=\"client_contact_phone\">Tālr.: {{client_contact_phone}}</p>\n                        <p id=\"client_reg_number\">Registrācijas numurs: {{client_reg_number}}</p>\n                        <p id=\"client_vat_number\">PVN maksātāja numurs: {{client_vat_number}}</p>\n                        <p id=\"client_bank\">Banka: {{client_bank}}</p>\n                        <p id=\"client_bank_code\">Bankas kods: {{client_bank_code}}</p>\n                        <p id=\"client_contact_email\">Email: {{client_contact_email}}</p>\n                    </div>\n                </div>\n            </div>\n            \n            <!-- Additional Details -->\n            <div class=\"details-section\">\n                <div class=\"details-row\">\n                    <div class=\"details-col\">\n                        <p id=\"order_number\"><strong>Pasūtījuma Nr.:</strong> {{order_number}}</p>\n                    </div>\n                    <div class=\"details-col\">\n                        <p id=\"payment_method\"><strong>Samaksas veids:</strong> Bankas pārskaitījums</p>\n                        <p id=\"order_notes\"><strong>Papild. info:</strong> {{order_notes}}</p>\n                    </div>\n                </div>\n            </div>\n            \n            <!-- Material Information (if needed) -->\n            <div class=\"material-info\">\n                <p>Skārda Nams SIA neuzņemas atbildību par izstrādājumu ekspluatāciju nepārvaramas varas apstākļos (piemēram, dabas stihijas u.c.), ražošanā tiek izmantots skārds ar biezumu: ZN – 0.45–0.50 mm, Polyester (POL) – 0.45–0.50 mm, Pural (PUR) – 0.50 mm, Pural Matt (PURMAT) – 0.50 mm, Hiarc – 0.50 mm (Ruukki, Arcelor, SSAB vai citi ražotāji), un <strong>klients pilnībā uzņemas atbildību</strong> par izstrādājumu projektēšanu un uzstādīšanu.</p>\n            </div>\n            \n            <!-- Items Table -->\n            {{invoice_items_table}}\n            \n            <!-- Totals -->\n            {{invoice_totals}}\n            \n            <!-- Signatures -->\n            <div class=\"signatures\">\n                <div class=\"signature-col\">\n                    <p><strong>SIA Skārda Nams menedžeris:</strong> {{operator_name}}</p>\n                    <p class=\"date_signature\">{{invoice_date}}</p>\n                    <p>Paraksts:</p>\n                    <div class=\"signature-line\"></div>\n                </div>\n                <div class=\"signature-col\">\n                    <p><strong>Klients:</strong></p>\n                    <div class=\"signature-line\"></div>\n                    <p class=\"signature-line-name\">Vārds Uzvārds</p>\n                    <p></p>\n                    <p>Paraksts:</p>\n                    <div class=\"signature-line\"></div>\n                </div>\n            </div>\n            \n            <div class=\"privacy-notice\">\n                <p>• Piekrītu savu personas datu apstrādei un glabāšanai saskaņā ar uzņēmuma privātuma politiku: \n                <a href=\"https://skarda.design/lv/privatuma-politika/\">https://skarda.design/lv/privatuma-politika/</a></p>\n            </div>\n        </div>\n    </body>\n    </html>",
+    "waybill_document_template": "<!DOCTYPE html>\n    <html lang=\"lv\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n        <title>Pavadzīme {{waybill_number}}</title>\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n            \n            @import url('https://fonts.googleapis.com/css2?family=Poppins');\n\n            body {\n                font-family: 'Poppins', sans-serif;\n                font-size: 12px;\n                line-height: 1.4;\n                color: #000;\n                background: white;\n                padding: 20px;\n            }\n            \n            .d-none{\n                display:none!important;\n            }\n            \n            .text-end{\n                text-align: right;\n            }\n            \n            .fs-5{\n                font-size: 16px;\n            }\n            \n            .fs-3{\n                font-size: 20px;\n            }\n            \n            .me-2{\n                padding-right: 8px;\n            }\n            \n            .text-nowrap{\n                white-space: nowrap;\n            }\n            \n            .waybill-container {\n                max-width: 800px;\n                margin: 0 auto;\n            }\n            \n            .header {\n                text-align: center;\n                padding-bottom: 0px;\n                margin-bottom: 16px;\n            }\n            \n            .header h1 {\n                font-size: 18px;\n                font-weight: bold;\n            }\n            \n            .company-section {\n                padding: 0px;\n                break-inside: avoid;\n            }\n            \n            .company-row {\n                display: flex;\n                gap: 20px;\n            }\n            \n            .company-col {\n                flex: 1;\n            }\n            \n            .company-section h3 {\n                font-size: 14px;\n                font-weight: bold;\n                margin-bottom: 2px;\n                text-decoration: none;\n            }\n            \n            .company-section p {\n                margin-bottom: 0px;\n                font-size: 11px;\n            }\n            \n            .date_signature_1{\n                margin: 12px 0 16px\n            }\n            \n            .date_signature{\n                margin: 8px 0 16px\n            }\n            \n            .details-section {\n                padding: 0px;\n                margin-bottom: 4px;\n            }\n            \n            .details-row {\n                display: flex;\n                gap: 20px;\n                margin-bottom: 10px;\n            }\n            \n            .details-col {\n                flex: 1;\n            }\n            \n            .material-info {\n                padding: 0px;\n                margin-bottom: 4px;\n                font-size: 10px;\n            }\n            \n            .items-table {\n                width: 100%;\n                border-collapse: collapse;\n                margin-bottom: 4px;\n                break-inside: avoid;\n            }\n            \n            .items-table th,\n            .items-table td {\n                border: 1px solid #000;\n                padding: 0px 4px;\n                font-size: 11px;\n            }\n            \n            .items-table th {\n                background-color: #f0f0f0;\n                font-weight: bold;\n                text-align: center;\n            }\n            \n            .items-table td:nth-child(6),\n            .items-table td:nth-child(7),\n            .items-table td:nth-child(8),\n            .items-table td:nth-child(9){\n                text-align: right;\n                 white-space: nowrap;\n            }\n            \n            .totals {\n                display: flex;\n                justify-content: space-between;\n                align-items: flex-start;\n                margin-bottom: 4px;\n            }\n            \n            .totals-left {\n                flex: 6;\n            }\n            \n            .totals-right {\n                flex: 6;\n                text-align: right;\n                display: flex;\n                align-items: center;\n                justify-content: end;\n            }\n            \n            .totals p {\n                margin-bottom: 5px;\n                font-size: 12px;\n            }\n            \n            .total-amount {\n                font-weight: bold;\n                font-size: 14px;\n            }\n            \n            .signatures {\n                border-top: 1px solid #000;\n                padding-top: 8px;\n                display: flex;\n                gap: 40px;\n            }\n            \n            .signature-col {\n                flex: 1;\n            }\n            \n            .signature-line {\n                border-bottom: 1px solid #000;\n                height: 25px;\n                margin: 4px 0 0px\n            }\n            \n            .signature-line-name{\n                width: 100%;\n                text-align: center;\n                color: #909090;\n            }\n            \n            .privacy-notice {\n                margin-top: 4px;\n                font-size: 10px;\n                line-height: 1.3;\n            }\n            \n            .privacy-notice a {\n                color: #000;\n            }\n            \n            @media print {\n                body {\n                    padding: 0;\n                }\n                \n                .waybill-container {\n                    max-width: none;\n                }\n            }\n        </style>\n    </head>\n    <body style=\"min-height: 100vh; margin: 0;\">\n        <div id=\"waybill-container\" class=\"waybill-container\">\n            <!-- Header -->\n            <div class=\"header\">\n                <h1>Pavadzīme Nr. {{waybill_number}}</h1>\n                <p id=\"waybill_date\">{{waybill_date}}</p>\n            </div>\n            \n            <!-- Company Information -->\n            <div class=\"company-row\">\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>NOSŪTĪTĀJS: <strong>Skārda Nams SIA</strong></h3>\n                        <p>Jur. adrese: Mellužu iela 13-6, Rīga, LV-1067</p>\n                        <p>Tālr.: 26443313, 26443316</p>\n                        <p>PVN maksātāja numurs: LV40003874225</p>\n                        <p>Norēķ. konts: LV 78 UNLA 0050 0091 9989 7</p>\n                        <p>Banka: AS \"SEB banka\"</p>\n                        <p>Bankas kods: UNLALV2X</p>\n                        <p>Email: info@skardanams.com</p>\n                    </div>\n                </div>\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>SAŅĒMĒJS: {{client_name}}</h3>\n                        <p id=\"client_reg_address\">Jur. adrese: {{client_reg_address}}</p>\n                        <p id=\"client_contact_phone\">Tālr.: {{client_contact_phone}}</p>\n                        <p id=\"client_reg_number\">Registrācijas numurs: {{client_reg_number}}</p>\n                        <p id=\"client_vat_number\">PVN maksātāja numurs: {{client_vat_number}}</p>\n                        <p id=\"client_bank\">Banka: {{client_bank}}</p>\n                        <p id=\"client_bank_code\">Bankas kods: {{client_bank_code}}</p>\n                        <p id=\"client_contact_email\">Email: {{client_contact_email}}</p>\n                    </div>\n                </div>\n            </div>\n            \n            <!-- Additional Details -->\n            <div class=\"details-section\">\n                <div class=\"details-row\">\n                    <div class=\"details-col\">\n                        <p><strong>Izsniegšanas vieta:</strong> Mellužu iela 13-6, Rīga, LV-1067</p>\n                        <p id=\"delivery_address\"><strong>Piegādes adrese:</strong> {{delivery_address}}</p>\n                        <p id=\"manufacturing_date\"><strong>Izgatavošanas datums:</strong> {{manufacturing_date}}</p>\n                        <p id=\"receiving_date\"><strong>Saņemšanas datums:</strong> {{receiving_date}}</p>\n                    </div>\n                    <div class=\"details-col\">\n                        <p id=\"invoice_number\"><strong>Faktūrēķins Nr.:</strong> {{invoice_number}}</p>\n                        <p id=\"order_number\"><strong>Pasūtījuma Nr.:</strong> {{order_number}}</p>\n                        <p id=\"payment_method\"><strong>Samaksas veids:</strong> Bankas pārskaitījums</p>\n                        <p id=\"order_notes\"><strong>Papild. info:</strong> {{order_notes}}</p>\n                    </div>\n                </div>\n            </div>\n            \n            <!-- Material Information (if needed) -->\n            <div class=\"material-info\">\n                <p><strong>Ražošanā tiek izmantots skārds ar biezumu:</strong> ZN - 0.45-0.5mm, Polyester (POL) - 0.45-0.50mm, \n                Pural (PUR) - 0.50mm, Pural Matt (PURMAT) - 0.5mm, Hiarc - 0.50mm (Ruukki, Arcelor, SSAB vai citi ražotāji).</p>\n                <p><strong>Saimnieciskā darījuma apraksts:</strong> izsniegšana citam nodokļu maksātājam.</p>\n            </div>\n            \n            <!-- Items Table -->\n            {{waybill_items_table}}\n            \n            <!-- Totals -->\n            {{waybill_totals}}\n            \n            <!-- Signatures -->\n            <div class=\"signatures\">\n                <div class=\"signature-col\">\n                    <p class=\"signature-line\"><strong>Izsniedza:</strong> {{operator_name}}</p>\n                    <p class=\"signature-line-name\">Vārds Uzvārds</p>\n                    <p class=\"date_signature\">{{issue_date}}</p>\n                    <div class=\"signature-line\">Paraksts:</div>\n                </div>\n                <div class=\"signature-col\">\n                    <div class=\"signature-line\"><strong>Pieņēma:</strong></div>\n                    <p class=\"signature-line-name\">Vārds Uzvārds</p>\n                    <p class=\"date_signature\">{{issue_date}}</p>\n                    <div class=\"signature-line\">Paraksts:</div>\n                </div>\n            </div>\n            \n            <div class=\"privacy-notice\">\n                <p>• Piekrītu savu personas datu apstrādei un glabāšanai saskaņā ar uzņēmuma privātuma politiku: \n                <a href=\"https://skarda.design/lv/privatuma-politika/\">https://skarda.design/lv/privatuma-politika/</a></p>\n            </div>\n        </div>\n    </body>\n    </html>",
+    "notify_cancel_order_emails": "",
+    "proforma_document_template": "",
+    "quotation_document_template": "<!DOCTYPE html>\n    <html lang=\"lv\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n        <title>Aprēķins Nr. {{order_number}}</title>\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n            \n            @import url('https://fonts.googleapis.com/css2?family=Poppins');\n\n            body {\n                font-family: 'Poppins', sans-serif;\n                font-size: 14px;\n                line-height: 1.4;\n                color: #000;\n                background: white;\n                padding: 20px;\n            }\n            \n            .d-none{\n                display:none!important;\n            }\n            \n            .text-end{\n                text-align: right;\n            }\n            \n            .fs-5{\n                font-size: 16px;\n            }\n            \n            .fs-3{\n                font-size: 20px;\n            }\n            \n            .me-2{\n                padding-right: 8px;\n            }\n                        \n            .text-nowrap{\n                white-space: nowrap;\n            }\n            \n            .waybill-container {\n                max-width: 800px;\n                margin: 0 auto;\n            }\n            \n            .header {\n                text-align: center;\n                padding-bottom: 0px;\n                margin-bottom: 16px;\n            }\n            \n            .header h1 {\n                font-size: 18px;\n                font-weight: bold;\n            }\n            \n            .company-section {\n                padding: 0px;\n                break-inside: avoid;\n            }\n            \n            .company-row {\n                display: flex;\n                gap: 20px;\n            }\n            \n            .company-col {\n                flex: 1;\n            }\n            \n            .company-section h3 {\n                font-size: 14px;\n                font-weight: bold;\n                margin-bottom: 2px;\n                text-decoration: none;\n            }\n            \n            .company-section p {\n                margin-bottom: 0px;\n                font-size: 11px;\n            }\n            \n            .date_signature{\n                margin: 8px 0 21px\n            }\n            \n            .details-section {\n                padding: 0px;\n                margin-bottom: 4px;\n            }\n            \n            .details-row {\n                display: flex;\n                gap: 20px;\n                margin-bottom: 10px;\n            }\n            \n            .details-col {\n                flex: 1;\n            }\n            \n            .material-info {\n                padding: 0px;\n                margin-bottom: 4px;\n                font-size: 10px;\n            }\n            \n            .items-table {\n                width: 100%;\n                border-collapse: collapse;\n                margin-bottom: 4px;\n                break-inside: avoid;\n            }\n            \n            .items-table th,\n            .items-table td {\n                border: 1px solid #000;\n                padding: 0px 4px;\n                font-size: 11px;\n            }\n            \n            .items-table th {\n                background-color: #f0f0f0;\n                font-weight: bold;\n                text-align: center;\n            }\n            \n            .items-table td:nth-child(6),\n            .items-table td:nth-child(7),\n            .items-table td:nth-child(8),\n            .items-table td:nth-child(9) {\n                text-align: right;\n                white-space: nowrap;\n            }\n            \n            .totals {\n                display: flex;\n                justify-content: space-between;\n                align-items: flex-start;\n                margin-bottom: 4px;\n            }\n            \n            .totals-left {\n                flex: 6;\n            }\n            \n            .totals-right {\n                flex: 6;\n                text-align: right;\n                display: flex;\n                align-items: center;\n                justify-content: end;\n            }\n            \n            .totals p {\n                margin-bottom: 5px;\n                font-size: 12px;\n            }\n            \n            .total-amount {\n                font-weight: bold;\n                font-size: 14px;\n            }\n            \n            .signatures {\n                border-top: 1px solid #000;\n                padding-top: 24px;\n                display: flex;\n                display: none;\n                gap: 40px;\n            }\n            \n            .signature-col {\n                flex: 1;\n            }\n            \n            .signature-line {\n                border-bottom: 1px solid #000;\n                height: 25px;\n                margin: 4px 0 0px\n            }\n            \n            .signature-line-name{\n                width: 100%;\n                text-align: center;\n                color: #909090;\n            }\n            \n            .privacy-notice {\n                display: none;\n                margin-top: 4px;\n                font-size: 10px;\n                line-height: 1.3;\n            }\n            \n            .privacy-notice a {\n                color: #000;\n            }\n            \n            @media print {\n                body {\n                    padding: 0;\n                }\n                \n                .waybill-container {\n                    max-width: none;\n                }\n            }\n        </style>\n    </head>\n    <body style=\"min-height: 100vh; margin: 0;\">\n        <div id=\"waybill-container\" class=\"waybill-container\">\n            <!-- Header -->\n            <div class=\"header\">\n                <h1>Aprēķins Nr. {{order_number}}</h1>\n                <p id=\"waybill_date\">{{today_date}}</p>\n            </div>\n            \n            <!-- Company Information -->\n            <div class=\"company-row\">\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>NOSŪTĪTĀJS: <strong>Skārda Nams SIA</strong></h3>\n                        <p>Tālr.: 26443313, 26443316</p>\n                        <p>Email: info@skardanams.com</p>\n                    </div>\n                </div>\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3>SAŅĒMĒJS: <strong>{{client_name}}</strong></h3>\n                        <p id=\"client_reg_address\">Jur. adrese: {{client_reg_address}}</p>\n                        <p id=\"client_contact_phone\">Tālr.: {{client_contact_phone}}</p>\n                        <p id=\"client_reg_number\">Registrācijas numurs: {{client_reg_number}}</p>\n                        <p id=\"client_vat_number\">PVN maksātāja numurs: {{client_vat_number}}</p>\n                        <p id=\"client_bank\">Banka: {{client_bank}}</p>\n                        <p id=\"client_bank_code\">Bankas kods: {{client_bank_code}}</p>\n                        <p id=\"client_contact_email\">Email: {{client_contact_email}}</p>\n                    </div>\n                </div>\n            </div>\n            \n            <!-- Material Information (if needed) -->\n            <div class=\"material-info\">\n                <p>Cenu piedāvājums ir spēkā trīs dienas vai līdz materiāla pieejamībai noliktavā</p>\n                <p>Skārda Nams SIA neuzņemas atbildību par izstrādājumu ekspluatāciju nepārvaramas varas apstākļos (piemēram, dabas stihiju u.c. gadījumos). Ražošanā tiek izmantots skārds ar šādu biezumu: ZN – 0,45–0,50 mm, Polyester (POL) – 0,45–0,50 mm, Pural (PUR) – 0,50 mm, Pural Matt (PURMAT) – 0,50 mm, Hiarc – 0,50 mm (Ruukki, Arcelor, SSAB vai citu ražotāju materiāli). <strong>Klients pilnībā uzņemas atbildību</strong> par izstrādājumu projektēšanu un uzstādīšanu.</p>\n            </div>\n            \n            <!-- Items Table -->\n            {{invoice_items_table}}\n            \n            <!-- Totals -->\n            {{invoice_totals}}\n            \n            <!-- Signatures -->\n            <div class=\"signatures\">\n                <div class=\"signature-col\">\n                    <p><strong>Klients:</strong></p>\n                    <div class=\"signature-line\"></div>\n                    <p class=\"signature-line-name\">Vārds Uzvārds</p>\n                    <p></p>\n                    <p>Paraksts:</p>\n                    <div class=\"signature-line\"></div>\n                </div>\n                <div class=\"signature-col\">\n                    \n                </div>\n            </div>\n            \n            <div class=\"privacy-notice\">\n                <p>• Piekrītu savu personas datu apstrādei un glabāšanai saskaņā ar uzņēmuma privātuma politiku: \n                <a href=\"https://skarda.design/lv/privatuma-politika/\">https://skarda.design/lv/privatuma-politika/</a></p>\n            </div>\n        </div>\n    </body>\n    </html>",
+    "dialog360:WHATSAPP_NAMESPACE": "a533e27c_430a_44a6_95cd_9fa398b67445",
+    "new_order_manager_email_list": "pavel@kenzap.com, info@skardanams.com",
+    "notify_refunded_order_emails": "",
+    "notify_completed_order_emails": "",
+    "dialog360:WHATSAPP_OTP_PACKAGE": "design.skarda",
+    "new_order_client_email_subject": "📢 Jūsu pasūtījums #{{order_id}}",
+    "package_slip_document_template": "",
+    "new_order_client_email_template": "Paldies, ka veicāt pasūtījumu pie {{brand_name}}. Jūs varat piekļūt sava pasūtījuma detaļām, noklikšķinot uz saites zemāk:\n<br>{{order_link}}.\n<br><br>Ja jums ir kādi jautājumi, lūdzu, sazinieties ar mums.\n<br><br>Ar cieņu,\n<br>Skarda Design",
+    "new_order_manager_email_subject": "📢 Saņemts jauns pasūtījums #{{order_id}}",
+    "paid_order_client_email_subject": "",
+    "dialog360:WHATSAPP_OTP_SIGNATURE": "kjscdiscd3u",
+    "new_order_manager_email_template": "Sveiki,\n\nIr saņemts jauns pasūtījums no {{client_name}}. Jūs varat piekļūt pasūtījuma detaļām, noklikšķinot uz saites zemāk:\n<br>{{order_link}}.\n<br><br>Ar cieņu,\n<br>Skarda Design",
+    "production_slip_document_template": "<!DOCTYPE html>\n    <html lang=\"lv\">\n    <head>\n        <meta charset=\"UTF-8\">\n        <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n        <title>Ražošanas saraksts #{{order_number}}</title>\n        <style>\n            * {\n                margin: 0;\n                padding: 0;\n                box-sizing: border-box;\n            }\n            \n            @import url('https://fonts.googleapis.com/css2?family=Poppins');\n\n            body {\n                font-family: 'Poppins', sans-serif;\n                font-size: 16px;\n                line-height: 1.4;\n                color: #000;\n                background: white;\n                padding: 20px;\n            }\n            \n            .d-none{\n                display:none!important;\n            }\n            \n            .text-end{\n                text-align: right;\n            }\n            \n            .fs-5{\n                font-size: 16px;\n            }\n            \n            .fs-3{\n                font-size: 20px;\n            }\n            \n            .me-2{\n                padding-right: 8px;\n            }\n            \n            .mt-3{\n                margin-top:16px;\n            }\n            \n            .mb-1{\n                margin-bottom: .25rem !important;\n            }\n                        \n            .text-nowrap{\n                white-space: nowrap;\n            }\n            \n            .waybill-container {\n                max-width: 800px;\n                margin: 0 auto;\n            }\n            \n            .header {\n                text-align: center;\n                padding-bottom: 0px;\n                margin-bottom: 16px;\n            }\n            \n            .header h1 {\n                font-size: 24px;\n                font-weight: bold;\n            }\n            \n            .company-section {\n                padding: 0px;\n                break-inside: avoid;\n            }\n            \n            .company-row {\n                display: flex;\n                gap: 20px;\n                margin-bottom:32px;\n            }\n            \n            .company-col {\n                flex: 1;\n            }\n            \n            .company-section h3 {\n                font-size: 16px;\n                font-weight: bold;\n                margin-bottom: 4px;\n                text-decoration: underline;\n            }\n            \n            .company-section p {\n                margin-bottom: 0px;\n                font-size: 11px;\n            }\n            \n            #order_notes,\n            #due_date{\n                font-size: 19px;\n            }\n            \n            .date_signature{\n                margin: 8px 0 21px\n            }\n            \n            .details-section {\n                padding: 0px;\n                margin-top: 8px;\n                margin-bottom: 4px;\n            }\n            \n            .details-row {\n                display: flex;\n                gap: 20px;\n                margin-bottom: 10px;\n            }\n            \n            .details-col {\n                flex: 1;\n            }\n            \n            .items-table {\n                width: 100%;\n                border-collapse: collapse;\n                margin-bottom: 4px;\n                break-inside: avoid;\n            }\n            \n            .table-secondary{\n                padding-bottom:8px;\n            }\n            \n            .items-table th,\n            .items-table td {\n                border: 1px solid #000;\n                padding: 0px 4px;\n                font-size: 14px;\n            }\n            \n            .items-table th {\n                background-color: #f0f0f0;\n                font-weight: bold;\n                text-align: center;\n            }\n            \n            .items-table td:nth-child(6),\n            .items-table td:nth-child(7),\n            .items-table td:nth-child(8),\n            .items-table td:nth-child(9){\n                text-align: right;\n                white-space: nowrap;\n            }\n            \n            .production-items-table tr td{\n                padding: 4px 4px;\n            }\n            \n            .summary-table td:nth-child(2),\n            .summary-table td:nth-child(3){\n                text-align: right;\n                white-space: nowrap;\n            }\n            \n            .totals {\n                display: flex;\n                justify-content: space-between;\n                align-items: flex-start;\n                margin-bottom: 4px;\n            }\n            \n            .totals-left {\n                flex: 6;\n            }\n            \n            .totals-right {\n                flex: 6;\n                text-align: right;\n                display: flex;\n                align-items: center;\n                justify-content: end;\n            }\n            \n            .totals p {\n                margin-bottom: 5px;\n                font-size: 12px;\n            }\n            \n            .total-amount {\n                font-weight: bold;\n                font-size: 14px;\n            }\n            \n            .privacy-notice {\n                margin-top: 4px;\n                font-size: 10px;\n                line-height: 1.3;\n            }\n            \n            .privacy-notice a {\n                color: #000;\n            }\n            \n            @media print {\n                body {\n                    padding: 0;\n                }\n                \n                .waybill-container {\n                    max-width: none;\n                }\n            }\n        </style>\n    </head>\n    <body style=\"min-height: 100vh; margin: 0;\">\n        <div id=\"waybill-container\" class=\"waybill-container\">\n            <!-- Header -->\n            <div class=\"header\">\n                <h1>Ražošanas saraksts #{{order_number}}</h1>\n                <p id=\"waybill_date\">{{today_date}}</p>\n            </div>\n            \n            <!-- Company Information -->\n            <div class=\"company-row\">\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <h3 id=\"client_name\"><strong>{{client_name_formatted}}</strong></h3>\n                        <p id=\"client_contact_phone\">Tālr.: {{client_contact_phone}}</p>\n                    </div>\n                </div>\n                <div class=\"company-col\">\n                    <div class=\"company-section\">\n                        <p id=\"due_date\"><strong>{{due_date}}</strong></p>\n                        <p id=\"order_notes\">Piezīmes: <strong>{{order_notes}}</strong></p>\n                    </div>\n                </div>\n            </div>\n\n            <!-- Items Table -->\n            {{production_items_table}}\n        \n        </div>\n    </body>\n    </html>",
+    "canceled_order_client_email_subject": "",
+    "refunded_order_client_email_subject": "",
+    "refunded_order_client_email_template": "",
+    "production_order_client_email_subject": "",
+    "production_order_client_email_template": "",
+    "ask_feedback_order_client_email_subject": "Vai viss kartībā? #{{order_id}}",
+    "pickup_ready_order_client_email_subject": "Your Order #{{order_id}} is Ready for Pickup",
+    "ask_feedback_order_client_email_template": "Sveiki<br><br>\nLūdzu, novērtējiet mūsu pakalpojumus un produktus\n<a href=\"{{review_link}}\">Atstājiet atsauksmi par pasūtījumu #{{order_id}}</a>.<br><br>\nAr cieņu,<br>\nSkarda Design",
+    "paid_order_client_email_subject_template": "",
+    "pickup_ready_order_client_email_template": "Hey {{client_name}},\n\nYour order is ready for pickup:\n<br>{{order_link}}.\n<br><br>If you have any questions, please don’t hesitate to contact us.\n<br><br>Best regards,\n<br>Skarda Design",
+    "canceled_order_client_email_subject_template": ""
+  },
+  "extra": {
+    "api_key": null,
+    "created": 1724681540,
+    "updated": 1751365220
+  }
+}

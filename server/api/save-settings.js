@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 import { clearSettingsCache } from '../_/helpers/settings.js';
+import { normalizeTimezoneOrUtc } from '../_/helpers/timezone.js';
 
 /**
  * Save settings
@@ -20,6 +21,10 @@ async function saveSettings(data) {
         await client.connect();
 
         if (!data) return { success: false, error: 'no data provided' };
+
+        if (Object.prototype.hasOwnProperty.call(data, 'default_timezone')) {
+            data.default_timezone = normalizeTimezoneOrUtc(data.default_timezone);
+        }
 
         // Prepare update for only provided keys in data
         const updateKeys = Object.keys(data);

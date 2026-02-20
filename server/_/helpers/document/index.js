@@ -2,6 +2,7 @@
 import { sid } from '../index.js';
 import { formatClientName } from '../order.js';
 import { clearSettingsCache } from '../settings.js';
+import { normalizeTimezoneOrUtc } from '../timezone.js';
 
 export async function getDocumentData(client, type, _id, user, locale) {
 
@@ -17,6 +18,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                        js->'data'->>'tax_percent' as tax_percent, 
                        js->'data'->>'tax_display' as tax_display,
                        js->'data'->>'tax_region' as tax_region,
+                       js->'data'->>'default_timezone' as default_timezone,
                        js->'data'->>'vat_number' as vat_number,
                        js->'data'->>'discount_visibility' as discount_visibility,
                        js->'data'->>'waybill_last_number' as waybill_last_number,
@@ -290,6 +292,13 @@ export async function getWaybillNextNumber(db, order, settings, user) {
     return order.waybill;
 }
 
+function getDueDateTimezone(data) {
+    if (data.document_type === 'production_slip') {
+        return normalizeTimezoneOrUtc(data.settings?.default_timezone);
+    }
+    return 'Europe/Riga';
+}
+
 export const parseDocument = (document, data) => {
 
     // Replace placeholders in the document template
@@ -395,7 +404,8 @@ export const parseDocument = (document, data) => {
             month: 'numeric',
             day: 'numeric',
             hour: '2-digit',
-            minute: '2-digit'
+            minute: '2-digit',
+            timeZone: getDueDateTimezone(data)
         }))
         : removeField(document, 'due_date');
 

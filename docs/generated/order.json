@@ -1,0 +1,192 @@
+{
+  "data": {
+    "id": 42829,
+    "_id": "w7l1614hp8fl4suw2kkynxgyh7f6gmc1puo65lt1",
+    "eid": "b4515bd205a3c15703f362e8b9fcb0975aacea45",
+    "date": "2025-12-07T09:54:24.306Z",
+    "name": "COMPANY LTD",
+    "draft": true,
+    "email": "",
+    "items": [
+      {
+        "cm": false,
+        "id": "EyMuvb",
+        "_id": "a6959988164ddd62e94a5a12398e7b7b343a434f",
+        "adj": 0,
+        "qty": 1,
+        "area": 0,
+        "note": "",
+        "color": "RR20",
+        "group": "bending",
+        "price": 12.7,
+        "sdesc": "Variācija A",
+        "title": "Palodze, tips 1",
+        "total": 12.7,
+        "tax_id": "7216",
+        "coating": "Polyester",
+        "formula": "(A+B+C+10)*L",
+        "discount": 0,
+        "priority": "101",
+        "cad_files": [
+          {
+            "id": "MYWJLfeKmJGR",
+            "_id": "ed0261a09a664a959facc832d6518965d5b6f5b8",
+            "ext": "obj",
+            "name": "element.obj"
+          },
+          {
+            "id": "NsvVsNTLSPuY",
+            "_id": "1364eefed474081306d0ded00b036dfcc9205f61",
+            "ext": "mtl",
+            "name": "element.mtl"
+          }
+        ],
+        "var_price": [],
+        "calc_price": "formula",
+        "input_fields": [
+          {
+            "id": "vBCPEg",
+            "max": 1000,
+            "min": 10,
+            "type": "polyline",
+            "label": "A",
+            "params": [],
+            "points": "83 439 104 394",
+            "default": 50,
+            "label_pos": "left"
+          },
+          {
+            "id": "rhMvVs",
+            "max": 1000,
+            "min": 10,
+            "type": "polyline",
+            "label": "B",
+            "params": [],
+            "points": "438 336 104 394",
+            "default": 200,
+            "label_pos": "right"
+          },
+          {
+            "id": "CNitA7",
+            "max": 1000,
+            "min": 10,
+            "type": "polyline",
+            "label": "C",
+            "params": [],
+            "points": "438 336 451 297",
+            "default": 50,
+            "label_pos": "left"
+          },
+          {
+            "id": "ersXp3",
+            "max": 3000,
+            "min": 50,
+            "type": "polyline",
+            "label": "L",
+            "params": [],
+            "points": "104 394 64 220",
+            "default": "L",
+            "label_pos": "bottom_left"
+          },
+          {
+            "id": "syvGgy",
+            "img": "",
+            "max": "180",
+            "min": "80",
+            "note": "",
+            "type": "arc",
+            "label": "α",
+            "params": {
+              "x": 122,
+              "y": 414,
+              "radius": 25,
+              "endAngle": 170,
+              "startAngle": 90
+            },
+            "points": "M 126.34120444167326 438.6201938253052 A 25 25 0 0 0 147 414",
+            "default": "120",
+            "label_pos": "right",
+            "annotation": "arc-angle"
+          },
+          {
+            "id": "fqBhBM",
+            "img": "",
+            "max": "180",
+            "min": "80",
+            "note": "",
+            "type": "arc",
+            "label": "β",
+            "params": {
+              "x": 256,
+              "y": 259,
+              "radius": 25,
+              "endAngle": 317.7263109939063,
+              "startAngle": 272.12109639666147
+            },
+            "points": "M 239.1831801500922 240.5014981651014 A 25 25 0 0 0 231.01712915583082 258.07470848725296",
+            "default": "120",
+            "label_pos": "left",
+            "annotation": "arc-angle"
+          },
+          {
+            "id": "vEWSqp",
+            "img": "",
+            "max": "90",
+            "min": 0,
+            "note": "",
+            "type": "polyline",
+            "arrow": true,
+            "label": "γ",
+            "params": [],
+            "points": "103 475 102 460",
+            "default": "30",
+            "label_pos": "left",
+            "annotation": "arrow-angle"
+          },
+          {
+            "label": "W",
+            "default": 0
+          }
+        ],
+        "price_length": 0,
+        "formula_price": "M2*COATING*MARGIN",
+        "formula_width": "A+B+C+10",
+        "formula_length": "L",
+        "sketch_attached": true,
+        "formula_width_calc": "",
+        "formula_length_calc": 3000,
+        "input_fields_values": {
+          "inputA": "50",
+          "inputB": "200",
+          "inputC": "50",
+          "inputL": "3000",
+          "inputα": "120",
+          "inputβ": "120",
+          "inputγ": "30"
+        }
+      }
+    ],
+    "notes": "",
+    "phone": "",
+    "price": {
+      "total": 12.7,
+      "tax_calc": "",
+      "tax_total": 0,
+      "grand_total": 12.7,
+      "tax_percent": 21
+    },
+    "entity": "company",
+    "person": "",
+    "address": "\"Gailenes\", Krustkalni, Ķekavas pag., Ķekavas nov., LV-2111",
+    "created": 1765101264,
+    "updated": 1765101264,
+    "due_date": null,
+    "operator": "Pāvels",
+    "vat_status": "1",
+    "email_ask_feedback": 1
+  },
+  "meta": {
+    "created": 1765101264,
+    "updated": 1765101264
+  }
+}

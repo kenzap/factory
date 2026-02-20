@@ -32,7 +32,7 @@ class CuttingList {
             type: '',
             cm: this.slug == 'cm' ? true : false,
             color: this.color || '',
-            coating: this.coating || '',
+            coating: this.coating == 'Other' ? '' : this.coating || '',
             items: true
         };
 

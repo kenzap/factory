@@ -103,8 +103,15 @@ class Cutting {
 
         this.blocks = [
             {
-                coating: __html("Client Material"), colors: [
+                coating: "Client Material",
+                colors: [
                     { slug: "cm", color: "CM" }
+                ]
+            },
+            {
+                coating: "Other",
+                colors: [
+                    { slug: "", color: "" }
                 ]
             },
         ];
@@ -150,7 +157,7 @@ class Cutting {
             return `
 
         <div id="matpe-section" class="coating-section">
-            <div class="section-title d-none">${o.coating}</div>
+            <div class="section-title d-none">${__html(o.coating)}</div>
             <div class="color-grid" data-type="${o.coating}">
                 ${o.colors.sort((a, b) => a.color.localeCompare(b.color)).map((c) => {
                 return `
@@ -158,9 +165,9 @@ class Cutting {
                         <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;">
                             <div class="counter-bubble">0</div>
                         </div>
-                        <div class="color-info">
+                        <div class="color-info">  
                             <div class="color-code">${__html(c.color)}</div>
-                            <div class="color-type">${o.coating}</div>
+                            <div class="color-type">${__html(o.coating)}</div>
                         </div>
                     </div>`;
             }).join('')}
