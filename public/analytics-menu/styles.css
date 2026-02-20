@@ -32,3 +32,56 @@
 .pr-parent {
   font-size: 1rem;
 }
+
+.report-sections {
+  margin-top: 1.25rem;
+}
+
+.analytics-hub {
+  border-radius: 12px;
+}
+
+.analytics-head {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding-bottom: 0.9rem;
+}
+
+.analytics-subtitle {
+  color: #5f6a7d;
+  font-size: 0.92rem;
+}
+
+.report-section-card {
+  background: #f8fafc;
+  border: 1px solid #e7edf5;
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+}
+
+.report-section-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #4f5d75;
+  margin-bottom: 0.2rem;
+}
+
+.report-link {
+  display: inline-block;
+  text-decoration: none;
+}
+
+.report-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 768px) {
+  .analytics-head {
+    padding-bottom: 0.6rem;
+  }
+
+  .report-sections {
+    margin-top: 0.9rem;
+  }
+}

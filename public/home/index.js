@@ -190,9 +190,9 @@ class Home {
                 icon: '<i class="bi bi-graph-up me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
-                        text: __html('Works'),
-                        link: link('/report-employee-performance/'),
-                        target: '_blank',
+                        text: __html('Analytics'),
+                        link: link('/analytics-menu/'),
+                        target: '_self',
                     }
                 ],
             },
@@ -232,7 +232,7 @@ class Home {
                 icon: '<i class="bi bi-database me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
                 links: [
                     {
-                        text: __html('View'),
+                        text: __html('Files'),
                         link: link('/media/'),
                         target: '_blank',
                     }

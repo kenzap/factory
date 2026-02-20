@@ -37,7 +37,7 @@ class AnalyticsMenu {
             this.settings = response.settings;
             this.user = response.user;
 
-            // console.log(this.user.rights);
+            console.log(this.user.rights);
 
             // locale
             new Locale(response);
@@ -77,52 +77,100 @@ class AnalyticsMenu {
                 id: 'analytics',
                 title: __html('Analytics'),
                 desc: __html('Generate sales reports, view top selling products, and analyze business performance.'),
+                subtitle: __html('Browse reports by business area.'),
                 visible: this.user?.rights.includes('analytics_access'),
                 icon: '<i class="bi bi-graph-up me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
-                links: [
+                sections: [
                     {
-                        text: __html('Employee Performance'),
-                        link: link('/employee-performance/'),
-                        target: '_blank',
+                        title: __html('Operations'),
+                        links: [
+                            {
+                                text: __html('Employee Performance'),
+                                link: link('/report-employee-performance/'),
+                                target: '_blank',
+                                rights: ['employee_performance_report'],
+                            },
+                            {
+                                text: __html('Product Manufacturing Report'),
+                                link: link('/report-product-manufacturing/'),
+                                target: '_blank',
+                                rights: ['product_manufacturing_report'],
+                            },
+                            {
+                                text: __html('Inventory Reports'),
+                                link: link('/inventory-reports/'),
+                                target: '_blank',
+                                rights: ['inventory_report'],
+                            }
+                        ]
                     },
                     {
-                        text: __html('Product Manufacturing Report'),
-                        link: link('/report-product-manufacturing/'),
-                        target: '_blank',
+                        title: __html('Sales'),
+                        links: [
+                            {
+                                text: __html('Sales Reports'),
+                                link: link('/sales-reports/'),
+                                target: '_blank',
+                                rights: ['product_sales_report'],
+                            },
+                            {
+                                text: __html('Customer Analytics'),
+                                link: link('/customer-analytics/'),
+                                target: '_blank',
+                                rights: ['product_sales_report'],
+                            },
+                            {
+                                text: __html('Product Analytics'),
+                                link: link('/product-analytics/'),
+                                target: '_blank',
+                                rights: ['product_sales_report'],
+                            }
+                        ]
                     },
                     {
-                        text: __html('Sales Reports'),
-                        link: link('/sales-reports/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Product Analytics'),
-                        link: link('/product-analytics/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Financial Reports'),
-                        link: link('/financial-reports/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Customer Analytics'),
-                        link: link('/customer-analytics/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Inventory Reports'),
-                        link: link('/inventory-reports/'),
-                        target: '_blank',
-                    },
-                    {
-                        text: __html('Dashboard Overview'),
-                        link: link('/dashboard-overview/'),
-                        target: '_blank',
+                        title: __html('Finance & Overview'),
+                        links: [
+                            {
+                                text: __html('Financial Reports'),
+                                link: link('/financial-reports/'),
+                                target: '_blank',
+                                rights: ['financial_reports'],
+                            },
+                            {
+                                text: __html('Dashboard Overview'),
+                                link: link('/dashboard-overview/'),
+                                target: '_blank',
+                                rights: ['analytics_access'],
+                            }
+                        ]
                     }
                 ],
             },
         ]
+    }
+
+    hasAnyRight = (rights = []) => {
+        if (!Array.isArray(rights) || rights.length === 0) return true;
+        return rights.some((right) => this.user?.rights?.includes(right));
+    }
+
+    getVisibleBlocks = () => {
+        return this.blocks
+            .filter((block) => block.visible)
+            .map((block) => {
+                const sections = (block.sections || [])
+                    .map((section) => ({
+                        ...section,
+                        links: (section.links || []).filter((sectionLink) => this.hasAnyRight(sectionLink.rights))
+                    }))
+                    .filter((section) => section.links.length > 0);
+
+                return {
+                    ...block,
+                    sections
+                };
+            })
+            .filter((block) => (block.sections || []).length > 0);
     }
 
     // load page
@@ -134,26 +182,36 @@ class AnalyticsMenu {
                     <nav class="bc" aria-label="breadcrumb"></nav>
                 </div>
                 <div class="row">
-                ${this.blocks.map((block) => {
-
-            if (!block.visible) return '';
+                ${this.getVisibleBlocks().map((block) => {
 
             return `
-                        <div class="col-lg-4 grid-margin stretch-card mb-4">
-                            <div class="card border-white shadow-sm p-sm-2 anm br" >
-                                <div class="card-body">
-                                    <div class="d-flex flex-row">
+                        <div class="col-12 grid-margin stretch-card mb-4">
+                            <div class="card border-white shadow-sm analytics-hub anm br">
+                                <div class="card-body p-4 p-lg-5">
+                                    <div class="d-flex flex-row align-items-start analytics-head">
                                         ${block.icon}
-                                        <div class="mr-4 mr-md-0 mr-lg-4 text-left text-lg-left ">
-                                            <h5 class="card-title mb-0">${__html(block.title)} <button type="button" class="d-none btn-close float-end fs-6 rm-ext"></button></h5>
-                                            <p class="card-description mt-1 mb-0">${__html(block.desc)}</p>
-                                            <div class="link-group">
-                                                ${block.links.map((link) => {
-                return `<a class="mt-2 me-2 text-md-tight text-primary" href="${attr(link.link)}" target="${slugify(link.link)}" data-ext="pages">${html(link.text)}</a>`
-            }).join('')}
-                                            </div>
+                                        <div class="mr-4 mr-md-0 mr-lg-4 text-left text-lg-left">
+                                            <h5 class="card-title mb-1">${__html(block.title)} <button type="button" class="d-none btn-close float-end fs-6 rm-ext"></button></h5>
+                                            <p class="card-description mb-1">${__html(block.desc)}</p>
+                                            <p class="analytics-subtitle mb-0">${__html(block.subtitle)}</p>
                                         </div>
-                                    </div>                  
+                                    </div>
+                                    <div class="row report-sections">
+                                        ${block.sections.map((section) => {
+                return `
+                                                <div class="col-md-6 col-xl-4 mb-3 mb-xl-0">
+                                                    <div class="report-section-card h-100">
+                                                        <h6 class="report-section-title">${html(section.title)}</h6>
+                                                        <div class="link-group d-flex flex-column align-items-start">
+                                                            ${section.links.map((sectionLink) => {
+                    return `<a class="mt-2 text-md-tight text-primary report-link" href="${attr(sectionLink.link)}" target="${attr(sectionLink.target || slugify(sectionLink.link))}" data-ext="pages">${html(sectionLink.text)}</a>`
+                }).join('')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            `
+            }).join('')}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -170,11 +228,12 @@ class AnalyticsMenu {
         // initiate breadcrumbs
         initBreadcrumbs(
             [
-                { text: __html('Home') },
+                { text: __html('Home'), link: link('/home/') },
+                { text: __html('Analytics') },
             ]
         );
 
-        document.title = __html('Home');
+        document.title = __html('Analytics');
     }
 
     // init page listeners

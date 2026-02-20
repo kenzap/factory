@@ -20,6 +20,10 @@ Product manufacturing report
 : Filters by employee, work type, start date, and end date.
 : Shows product name, total manufactured quantity, and total allocated time.
 : Rows are sorted alphabetically by product name.
+Analytics menu
+: Report links are grouped by category (Operations, Sales, Finance & Overview) for quicker access.
+: Home page Analytics tile opens Analytics Menu (report hub) instead of opening a single report directly.
+: Individual report links are shown only when the user has the corresponding report permission.
 Production Workflow Support:
 
 Job-based manufacturing processes

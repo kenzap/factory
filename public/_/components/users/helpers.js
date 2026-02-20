@@ -32,6 +32,7 @@ export const getRights = () => {
         // Analytics
         analytics_access: { text: __html('Analytics Access'), category: 'analytics', class: 'text-dark bg-light', note: __html('Allows accessing system analytics and reports.') },
         employee_performance_report: { text: __html('Employee Performance Report'), category: 'analytics', class: 'text-dark bg-light', note: __html('Allows accessing system analytics and reports.') },
+        product_manufacturing_report: { text: __html('Product Manufacturing Report'), category: 'analytics', class: 'text-dark bg-light', note: __html('Allows accessing product manufacturing report.') },
         product_sales_report: { text: __html('Product Sales Report'), category: 'analytics', class: 'text-dark bg-light', note: __html('Allows accessing sales and client reports.') },
 
         // Portal

@@ -5,6 +5,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { getHtml } from "../_/modules/performance/product.js";
 import { Session } from "../_/modules/session.js";
+import { isAuthorized } from "../_/modules/unauthorized.js";
 
 class ProductManufacturingReport {
 
@@ -35,6 +36,7 @@ class ProductManufacturingReport {
     data() {
         getProductManufacturingReport(this.filters, (response) => {
             if (!response.success) return;
+            if (!isAuthorized(response, 'product_manufacturing_report')) return;
 
             new Locale(response);
             hideLoader();
