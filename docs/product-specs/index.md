@@ -23,3 +23,4 @@ Real-time production tracking
 Cost calculation and planning
 Compliance management
 - Worklog entries may be saved without color/coating after a warning confirmation.
+- Order documents are blocked when the items table has unsaved edits; saving re-enables document generation.

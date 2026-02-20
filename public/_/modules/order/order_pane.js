@@ -61,6 +61,11 @@ export class OrderPane {
         this.listeners();
     }
 
+    markOrderAsDirty = () => {
+        state.orderTableDirty = true;
+        bus.emit('order:table:changed', true);
+    }
+
     view = () => {
 
         // Add fade effect to indicate loading/disabled state
@@ -232,6 +237,7 @@ export class OrderPane {
                                 refreshRowCalculations(cell, state.settings);
 
                                 bus.emit('order:table:refreshed', state.order);
+                                self.markOrderAsDirty();
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -480,6 +486,7 @@ export class OrderPane {
                                 // state.table.redraw(true);
 
                                 bus.emit('order:table:refreshed', state.order);
+                                self.markOrderAsDirty();
                             }
                         }
 
@@ -505,6 +512,7 @@ export class OrderPane {
                                 // state.table.redraw(true);
 
                                 bus.emit('order:table:refreshed', state.order);
+                                self.markOrderAsDirty();
                             }
                         }
 
@@ -519,6 +527,7 @@ export class OrderPane {
                                 self.refreshTable();
 
                                 bus.emit('order:table:refreshed', state.order);
+                                self.markOrderAsDirty();
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
                                 console.log('Updated sketch from editor:', data);
                             });
@@ -532,6 +541,7 @@ export class OrderPane {
         state.table.on("rowDeleted", (row) => {
             this.syncItems();
             bus.emit('order:table:refreshed', state.order);
+            this.markOrderAsDirty();
         });
 
         // Add event listener to track any cell value changes
@@ -549,6 +559,7 @@ export class OrderPane {
 
             this.syncItems();
             this.refreshTable();
+            this.markOrderAsDirty();
         });
 
         if (state.order?.items?.length === 0) setTimeout(() => { addRow() }, 100);
@@ -635,6 +646,7 @@ export class OrderPane {
         // Add new row button functionality
         onClick('#add-order-row', () => {
             addRow();
+            this.markOrderAsDirty();
         });
 
         bus.on('order:table:sync:items', (id) => {

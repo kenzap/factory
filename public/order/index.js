@@ -52,6 +52,7 @@ class OrderEdit {
 
             state.settings = response.settings;
             state.order = response.order;
+            state.orderTableDirty = false;
 
             if (!state.order.id) state.order.id = "";
 

@@ -1,5 +1,6 @@
 export const state = {
     settings: {},
     client: {},
-    order: {}
+    order: {},
+    orderTableDirty: false
 };

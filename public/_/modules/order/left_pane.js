@@ -179,6 +179,23 @@ export class LeftPane {
                 }
             }
         });
+
+        this.updateDocumentButtonsState();
+    }
+
+    updateDocumentButtonsState = () => {
+
+        const buttons = document.querySelectorAll('.document-btn');
+        buttons.forEach((button) => {
+            const type = button.dataset.type || '';
+            const requiresWaybillRules = type === 'waybill';
+            const missingOrderId = !state.order?.id;
+            const blockedByDraft = requiresWaybillRules && state.order?.draft;
+            const blockedByUnsavedTable = Boolean(state.orderTableDirty);
+
+            button.disabled = missingOrderId || blockedByDraft || blockedByUnsavedTable;
+            button.title = blockedByUnsavedTable ? __html('Save order before printing documents') : '';
+        });
     }
 
     listeners = () => {
@@ -274,33 +291,39 @@ export class LeftPane {
         // Document type buttons
         onClick('.document-btn', (event) => {
 
-            const type = event.target.dataset.type;
-
-            event.target.disabled = true;
+            const button = event.target.closest('.document-btn');
+            const type = button?.dataset?.type;
 
             if (!type) return;
+            if (state.orderTableDirty) {
+                toast(__html('Save order before printing documents'));
+                this.updateDocumentButtonsState();
+                return;
+            }
+
+            button.disabled = true;
 
             switch (type) {
                 case 'waybill':
                     new PreviewDocument(type, state.order);
-                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
                     break;
                 case 'invoice':
                     new PreviewDocument(type, state.order);
-                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss me-1" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>Loading...';
                     break;
                 case 'quotation':
                     new PreviewDocument(type, state.order);
-                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
                 case 'production-slip':
                     new PreviewDocument(type, state.order);
-                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
                 case 'packing-list':
                 case 'packing-slip':
                     new PreviewDocument('packing-list', state.order);
-                    event.target.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
             }
         });
@@ -323,7 +346,7 @@ export class LeftPane {
                 }
             }
 
-            if (state.order?.id) document.querySelector('.document-btn[data-type="waybill"]').disabled = state.order.draft;
+            this.updateDocumentButtonsState();
         });
 
         // Due date input focus handler
@@ -381,6 +404,11 @@ export class LeftPane {
         bus.on('order:table:refreshed', (data) => {
 
             this.summary();
+        });
+
+        bus.on('order:table:changed', () => {
+            state.orderTableDirty = true;
+            this.updateDocumentButtonsState();
         });
 
         // Update order summary when client is updated
@@ -626,6 +654,9 @@ export class LeftPane {
             }
 
             toast("Order saved", "success");
+
+            state.orderTableDirty = false;
+            this.updateDocumentButtonsState();
 
             bus.emit('order:updated', response.order.id);
 
