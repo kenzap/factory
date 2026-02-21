@@ -151,7 +151,7 @@ class Cutting {
                         ${this.settings.var_parent.split('\n').map((filter) => {
             return `<div class="filter-tab" data-filter="${filter}">${filter}</div>`;
         }).join('')}
-                        <div class="filter-tab" data-filter="${__html('Client Material')}">${__html('Client Material')}</div>
+                        <div class="filter-tab" data-filter="others">${__html('Others')}</div>
                     </div>
                 ${this.blocks.map((o) => {
             return `
@@ -218,6 +218,15 @@ class Cutting {
                 if (filterType === 'all') {
                     coatingSections.forEach(section => section.style.display = 'block');
                     colorCards.forEach(card => card.style.display = 'block');
+                } else if (filterType === 'others') {
+                    coatingSections.forEach(section => {
+                        const sectionType = section.querySelector('.color-grid').dataset.type;
+                        if (sectionType === 'Client Material' || sectionType === 'Other') {
+                            section.style.display = 'block';
+                        } else {
+                            section.style.display = 'none';
+                        }
+                    });
                 } else {
                     coatingSections.forEach(section => {
                         const sectionType = section.querySelector('.color-grid').dataset.type;

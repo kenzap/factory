@@ -44,6 +44,8 @@ const storeFileInDb = async (f) => {
             m: "",
             s: f.sizes ? f.sizes : [],
             n: f.file_name,
+            o: f.original_name || f.file_name || '',
+            z: f.file_size || 0,
             p: f.slug,
             a: ''
         }
@@ -212,8 +214,10 @@ function uploadFileApi(app, logger) {
             //     return res.status(400).json({ error: 'Missing required fields' });
             // }
 
+            const uploadName = name || req.file.originalname || '';
+
             // extension
-            let ext = name.split('.');
+            let ext = uploadName.split('.');
             ext = ext[ext.length - 1];
             if (ext.length > 10) ext = ext.substring(0, 10);
 
@@ -222,7 +226,7 @@ function uploadFileApi(app, logger) {
                 slug: "",
                 ext,
                 original_name: req.file.originalname,
-                file_name: "",
+                file_name: uploadName,
                 file_size: req.file.size,
                 mime_type: req.file.mimetype,
                 sizes: sizes,
@@ -242,7 +246,7 @@ function uploadFileApi(app, logger) {
                 folder: `S${sid}`, // Organize by space ID
                 filename: filename,
                 userId: req.user?.id, // From authenticateToken middleware
-                originalName: name || req.file.originalname,
+                originalName: uploadName,
                 sizes: sizes,
                 source: source || ''
             };
@@ -262,6 +266,7 @@ function uploadFileApi(app, logger) {
                     _id: _id,
                     ext: ext,
                     filename: filename,
+                    name: metadata.originalName,
                     url: bucketResult.url,
                     size: req.file.size,
                     type: req.file.mimetype,

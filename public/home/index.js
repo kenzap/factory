@@ -234,7 +234,7 @@ class Home {
                     {
                         text: __html('Files'),
                         link: link('/media/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             },
@@ -248,7 +248,7 @@ class Home {
                     {
                         text: __html('Setup'),
                         link: link('/access/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             },
@@ -262,7 +262,7 @@ class Home {
                     {
                         text: __html('Users'),
                         link: link('/users/'),
-                        target: '_blank',
+                        target: '_self',
                     }
                 ],
             }

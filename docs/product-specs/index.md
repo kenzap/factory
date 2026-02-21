@@ -26,6 +26,9 @@ Analytics menu
 : Individual report links are shown only when the user has the corresponding report permission.
 User rights updates
 : Changing user rights updates active server session data so access changes apply without requiring re-login.
+Files journal
+: Home -> Files opens a journal of uploaded files (images, OBJ/MTL and other supported uploads).
+: Supports file listing, search, size tracking, open/view, and delete actions.
 Production Workflow Support:
 
 Job-based manufacturing processes
@@ -34,3 +37,4 @@ Cost calculation and planning
 Compliance management
 - Worklog entries may be saved without color/coating after a warning confirmation.
 - Order documents are blocked when the items table has unsaved edits; saving re-enables document generation.
+- Cutting journal coating filter includes an `Others` tab that shows both `Client Material` and `Other` blocks.

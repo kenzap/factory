@@ -151,7 +151,7 @@ class CuttingList {
                             <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
                         </div>
                     </div>
-                    `).join('') : `<div class="no-stock text-center py-4">${__html('No stock available')}</div>`}
+                    `).join('') : `<div class="no-stock text-center text-muted py-4">${__html('No stock available')}</div>`}
 
                 </div>
                 <div class="writeoff-button-container">
@@ -185,7 +185,7 @@ class CuttingList {
                             `).join('') : ''}
                         </div>
                     </div>
-                    `).join('') : `<div class="no-orders">${__html('No records added')}</div>`}
+                    `).join('') : `<div class="no-orders text-center text-muted py-4"> <i class="bi bi-inbox fs-3 mb-3 d-block"></i> ${__html('No records added')}</div>`}
                 </div>
             </div>
         </div>
