@@ -1,15 +1,17 @@
 @import url("../assets/css/global.css");
   
-/* :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #3498db;
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --danger-color: #e74c3c;
-    --info-color: #17a2b8;
-    --light-bg: #f8f9fa;
-    --dark-bg: #343a40;
-} */
+:root {
+    --status-urgent-border: #c0392b;
+    --status-urgent-bg: rgba(231, 76, 60, 0.16);
+    --status-manufacturing-border: #1f78b4;
+    --status-manufacturing-bg: rgba(52, 152, 219, 0.16);
+    --status-today-border: #d68910;
+    --status-today-bg: rgba(243, 156, 18, 0.16);
+    --status-ready-border: #1e9b52;
+    --status-ready-bg: rgba(39, 174, 96, 0.16);
+    --status-issued-border: #5a6268;
+    --status-issued-bg: rgba(108, 117, 125, 0.16);
+}
 
 body {
     min-height: 100vh;
@@ -87,28 +89,28 @@ body {
 }
 
 .status-urgent {
-    border-left: 8px solid #e74c3c;
-    background: rgba(231, 76, 60, 0.45);
+    border-left: 8px solid var(--status-urgent-border);
+    background: var(--status-urgent-bg);
 }
 
 .status-manufacturing {
-    border-left: 8px solid #3498db;
-    background: rgba(52, 152, 219, 0.45);
+    border-left: 8px solid var(--status-manufacturing-border);
+    background: var(--status-manufacturing-bg);
 }
 
 .status-today {
-    border-left: 8px solid #f39c12;
-    background: rgba(243, 156, 18, 0.45);
+    border-left: 8px solid var(--status-today-border);
+    background: var(--status-today-bg);
 }
  
 .status-ready {
-    border-left: 8px solid #27ae60;
-    background: rgba(39, 174, 96, 0.45);
+    border-left: 8px solid var(--status-ready-border);
+    background: var(--status-ready-bg);
 }
 
 .status-issued {
-    border-left: 8px solid #5a6268;
-    background: rgba(108, 117, 125, 0.45);
+    border-left: 8px solid var(--status-issued-border);
+    background: var(--status-issued-bg);
 }
 
 .row-issued {
