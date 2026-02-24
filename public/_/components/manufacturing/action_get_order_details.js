@@ -89,7 +89,7 @@ export const actionGetOrderDetails = async (orderId) => {
                                                 </ul>
                                             </div>
                                         </div>
-                                        <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                                        <small class="text-dark">${item.color} ${item.coating} - ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
                                     </td>
                                     <td>${item.unit || "gab"}</td>
                                     <td>${item.qty}</td>
@@ -148,7 +148,7 @@ export const actionGetOrderDetails = async (orderId) => {
                                         </ul>
                                     </div>
                                 </div>
-                                <small class="text-dark">${item.coating} ${item.color} ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
+                                <small class="text-dark">${item.color} ${item.coating} - ${item.formula_width_calc > 0 ? item.formula_width_calc : ''} ${item.formula_width_calc > 0 && item.formula_length_calc > 0 ? 'x' : ''} ${item.formula_length_calc > 0 ? item.formula_length_calc : ''}</small>
                             </td>
                             <td>${item.unit || "gab"}</td>
                             <td>${item.qty}</td>

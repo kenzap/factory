@@ -1,16 +1,35 @@
 @import url("../assets/css/global.css");
   
 :root {
-    --status-urgent-border: #c0392b;
-    --status-urgent-bg: rgba(231, 76, 60, 0.16);
-    --status-manufacturing-border: #1f78b4;
-    --status-manufacturing-bg: rgba(52, 152, 219, 0.16);
-    --status-today-border: #d68910;
-    --status-today-bg: rgba(243, 156, 18, 0.16);
-    --status-ready-border: #1e9b52;
-    --status-ready-bg: rgba(39, 174, 96, 0.16);
-    --status-issued-border: #5a6268;
-    --status-issued-bg: rgba(108, 117, 125, 0.16);
+    /* 
+     * Perceptual luminance of hues (approx, per human eye sensitivity):
+     * Yellow ~0.93 | Green ~0.72 | Red ~0.21 | Blue ~0.07 | Gray ~0.18
+     * 
+     * Strategy:
+     *  - Bright hues (yellow, green) get lower alpha so they don't blast forward
+     *  - Dark hues (blue, gray) get higher alpha so they hold visual weight
+     *  - Border colors are desaturated/darkened to a consistent perceived darkness
+     */
+
+    /* URGENT — Red (low natural luminance, needs less correction) */
+    --status-urgent-border: #a93226;         /* slightly darker/cooler */
+    --status-urgent-bg: rgba(231, 76, 60, 0.35);
+
+    /* MANUFACTURING — Blue (very low luminance, needs more opacity to feel present) */
+    --status-manufacturing-border: #1a6fa3;
+    --status-manufacturing-bg: rgba(52, 152, 219, 0.22); /* up from 0.20 */
+
+    /* TODAY — Yellow/Amber (extremely high luminance, must dial back hard) */
+    --status-today-border: #b7770d;          /* more muted, less glaring */
+    --status-today-bg: rgba(243, 156, 18, 0.22); /* down from 0.40 */
+
+    /* READY — Green (high luminance, pull back moderately) */
+    --status-ready-border: #1a8a47;
+    --status-ready-bg: rgba(39, 174, 96, 0.28); /* down from 0.40 */
+
+    /* ISSUED — Gray (neutral, near-balanced already) */
+    --status-issued-border: #4e555b;
+    --status-issued-bg: rgba(108, 117, 125, 0.38);
 }
 
 body {

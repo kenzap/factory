@@ -1,5 +1,5 @@
 import { __html, attr, html, onChange, onClick, onKeyUp, onlyNumbers, priceFormat, toast } from "../../helpers/global.js";
-import { TAX_REGIMES } from "../../helpers/tax/regimes.js";
+import { TAX_REGIMES } from "../../../../packages/tax-core/src/regimes.js";
 import { ProductPriceVariations } from "./product_price_variations.js";
 
 export class ProductPrice {

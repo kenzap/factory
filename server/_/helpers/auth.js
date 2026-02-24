@@ -4,9 +4,11 @@ import jwt from 'jsonwebtoken';
 import { createClient } from 'redis';
 import { send_email } from './email.js';
 import { getDbConnection, sid } from './index.js';
+import createLogger from './logger.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-provided-in-env';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-provided-in-env';
+const logger = createLogger('auth');
 
 // JWT middleware
 export const authenticateToken = async (req, res, next) => {
@@ -26,7 +28,7 @@ export const authenticateToken = async (req, res, next) => {
 
         // Verify the user session
         let session = await getUserSessionById(req.user.id);
-        if (!session.id) {
+        if (!session?.id) {
             return res.status(403).json({ code: 403, error: 'unauthorised' });
         }
 
@@ -371,10 +373,15 @@ export const clearUserSession = async (id) => {
 export const getUserSessionById = async (id) => {
 
     let user = null;
+    let redisClient = null;
 
     try {
 
-        const redisClient = createClient({ url: process.env.REDIS_URL });
+        redisClient = createClient({ url: process.env.REDIS_URL });
+        redisClient.on('error', (err) => {
+            logger.error(`Redis client error in getUserSessionById(${id}):`, err);
+        });
+
         await redisClient.connect();
 
         const key = `user:${id}`;
@@ -385,15 +392,22 @@ export const getUserSessionById = async (id) => {
 
         // console.log(`Retrieved user session for user ID: ${id}`, user);
 
-        await redisClient.quit();
-
         return user;
 
     } catch (error) {
 
-        // console.error('Error getting user session by ID:', error);
+        logger.error(`Error getting user session by ID ${id}:`, error);
 
-        throw error;
+        return null;
+
+    } finally {
+        if (redisClient?.isOpen) {
+            try {
+                await redisClient.quit();
+            } catch (quitError) {
+                logger.error(`Error closing Redis client in getUserSessionById(${id}):`, quitError);
+            }
+        }
     }
 }
 

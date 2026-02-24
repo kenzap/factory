@@ -30,8 +30,7 @@ export class ClientNotifications {
                 payment_received: { email: false, whatsapp: false },
                 promotions: { email: false, whatsapp: false },
                 ask_feedback: { email: true, whatsapp: false }
-            })
-            ;
+            });
 
         this.notificationTypes = [
             { key: 'order_received', label: __html('Order Received'), icon: 'bi-inbox' },

@@ -61,6 +61,8 @@ export class SketchControls {
 
     view(texture) {
 
+        console.log("textures", this.product.sketch.textures);
+
         if (texture == "") texture = document.querySelector('#sketch_texture') ? document.querySelector('#sketch_texture').value : "";
 
         if (!texture.length) texture = this.settings.textures[0].texture;
@@ -130,8 +132,10 @@ export class SketchControls {
                 .sort((a, b) => a.parent.localeCompare(b.parent) || a.title.localeCompare(b.title))
                 .map((rec, i) => {
 
+                    let slug = rec.parent == rec.title ? this.slugify(rec.parent) : this.slugify(rec.parent + "-" + rec.title);
+
                     return rec.public ?
-                        `<option data-i="${attr(i)}" value="${this.slugify(rec.parent + "-" + rec.title)}" ${this.product.sketch.texture.texture == this.slugify(rec.parent + "-" + rec.title) ? "selected" : ""}>${html(rec.parent) + " " + html(rec.title)}</option>`
+                        `<option data-i="${attr(i)}" value="${slug}" ${this.product.sketch.texture?.texture == slug ? "selected" : ""}>${html(rec.parent) + " " + html(rec.title)}</option>`
                         :
                         ``
 
@@ -256,7 +260,7 @@ export class SketchControls {
         self.product.sketch.textures.forEach((el, i) => { if (el.texture == texture.texture) { self.product.sketch.textures[i] = texture; updated = true; } });
         if (!updated) self.product.sketch.textures.push(texture);
 
-        // console.log("sync", self.state.sketch.textures);
+        console.log("sync", self.product.sketch.textures);
     }
 
     listeneres() {

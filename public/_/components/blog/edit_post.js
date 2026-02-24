@@ -10,6 +10,8 @@ export class EditPost {
         this.post = post;
         this.settings = settings || {};
         this.cb = cb;
+        this.rawHtml = this.post?.text || '';
+        this.preserveRawHtml = this.hasAdvancedHtml(this.rawHtml);
 
         // console.log('EditPost', this.post);
 
@@ -86,10 +88,22 @@ export class EditPost {
         // paste listener
         elem.addEventListener("paste", function (e) {
 
-            console.log('paste');
+            const htmlData = (e.clipboardData || window.clipboardData).getData('text/html');
+            if (!htmlData) return;
+
+            e.preventDefault();
+
+            self.insertHtmlAtCursor(htmlData);
+            self.rawHtml = self.cleanMsg(self.quill.root.innerHTML);
+            if (self.hasAdvancedHtml(htmlData)) self.preserveRawHtml = true;
+            self.post.text = self.rawHtml;
+            localStorage.setItem('article_' + (self.post._id ? self.post._id : "new"), self.rawHtml);
         });
 
         Quill.register('modules/imageDrop', ImageDrop);
+        const Block = Quill.import('blots/block');
+        Block.tagName = 'DIV';
+        Quill.register(Block, true);
 
         this.quill = new Quill(elem, {
 
@@ -118,8 +132,11 @@ export class EditPost {
         this.quill.on('text-change', (delta, oldDelta, source) => {
 
             // clean garbage
-            let text = self.quill.container.firstChild.innerHTML;
+            let text = self.quill.root.innerHTML;
 
+            if (self.preserveRawHtml) return;
+
+            self.rawHtml = self.cleanMsg(text);
             self.post.text = self.cleanMsg(text);
 
             // cache in browser in case window refreshes
@@ -127,7 +144,7 @@ export class EditPost {
         });
 
         // restore previous text
-        this.quill.container.firstChild.innerHTML = this.post.text;
+        this.quill.root.innerHTML = this.rawHtml || '';
 
         // html editor listener
         onClick('.ql-html-edit', this.editHtml.bind(this));
@@ -168,15 +185,18 @@ export class EditPost {
 
         try {
             // Get the HTML content from the Quill editor
-            const htmlContent = this.quill.container.firstChild.innerHTML;
+            const htmlContent = this.quill.root.innerHTML;
 
             // Clean the HTML content
             const cleanedContent = this.cleanMsg(htmlContent);
+            const finalContent = this.mode == 'editor'
+                ? this.getHtmlEditorValue()
+                : (this.preserveRawHtml ? this.rawHtml : cleanedContent);
 
             // Prepare the post data
             const postData = {
                 _id: null,
-                text: this.mode == 'editor' ? this.getHtmlEditorValue() : cleanedContent,
+                text: finalContent,
                 img: '',
                 tags: [],
                 slug: '',
@@ -209,15 +229,18 @@ export class EditPost {
         e.preventDefault();
         try {
             // Get the HTML content from the Quill editor
-            const htmlContent = this.quill.container.firstChild.innerHTML;
+            const htmlContent = this.quill.root.innerHTML;
 
             // Clean the HTML content
             const cleanedContent = this.cleanMsg(htmlContent);
+            const finalContent = this.mode == 'editor'
+                ? this.getHtmlEditorValue()
+                : (this.preserveRawHtml ? this.rawHtml : cleanedContent);
 
             // Prepare the post data
             const postData = {
                 _id: this.post._id,
-                text: this.mode == 'editor' ? this.getHtmlEditorValue() : cleanedContent,
+                text: finalContent,
             };
 
             // console.log('Updating post with data:', postData);
@@ -257,7 +280,10 @@ export class EditPost {
             // let val = this.getHtmlEditorValue();
             // this.quill.container.firstChild.innerHTML = val.replace( /(^|>)[\n\t]+/g, ">" );
 
-            this.quill.container.firstChild.innerHTML = this.getHtmlEditorValue();
+            this.rawHtml = this.getHtmlEditorValue();
+            this.preserveRawHtml = this.hasAdvancedHtml(this.rawHtml);
+            this.post.text = this.rawHtml;
+            this.quill.root.innerHTML = this.rawHtml;
 
             e.currentTarget.classList.remove('enabled');
 
@@ -282,7 +308,8 @@ export class EditPost {
             }
 
             // add html code to editor
-            this.htmlEditor.setValue(html_beautify(this.post.text, { indent_size: 2, space_in_empty_paren: false }), -1);
+            const sourceHtml = this.preserveRawHtml ? this.rawHtml : this.post.text;
+            this.htmlEditor.setValue(html_beautify(sourceHtml, { indent_size: 2, space_in_empty_paren: false }), -1);
 
             e.currentTarget.classList.add('enabled');
         }
@@ -291,5 +318,39 @@ export class EditPost {
     cleanMsg(text) {
 
         return text;
+    }
+
+    hasAdvancedHtml(text = '') {
+        return /<(div|table|thead|tbody|tr|td|th)\b/i.test(text);
+    }
+
+    insertHtmlAtCursor(htmlText) {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            this.quill.root.innerHTML += htmlText;
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+
+        const temp = document.createElement('div');
+        temp.innerHTML = htmlText;
+
+        const fragment = document.createDocumentFragment();
+        let node;
+        let lastNode = null;
+        while ((node = temp.firstChild)) {
+            lastNode = fragment.appendChild(node);
+        }
+
+        range.insertNode(fragment);
+
+        if (lastNode) {
+            range.setStartAfter(lastNode);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
     }
 }

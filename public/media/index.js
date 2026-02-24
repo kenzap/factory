@@ -183,8 +183,21 @@ class MediaJournal {
     }
 
     formatDate = (ts) => {
-        if (!ts) return '-';
-        const d = new Date(Number(ts));
+        if (ts === null || ts === undefined || ts === '') return '-';
+
+        // unix timestamp (seconds or milliseconds) OR ISO date string
+        let d;
+        if (typeof ts === 'number' || (typeof ts === 'string' && /^[0-9]+$/.test(ts))) {
+            let n = Number(ts);
+            if (!Number.isFinite(n)) return '-';
+            if (n > 0 && n < 1e12) n = n * 1000; // seconds -> ms
+            d = new Date(n);
+        } else if (typeof ts === 'string') {
+            d = new Date(ts);
+        } else {
+            return '-';
+        }
+
         if (Number.isNaN(d.getTime())) return '-';
         return d.toLocaleString();
     }

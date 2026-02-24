@@ -17,6 +17,7 @@
         "@rollup/plugin-commonjs": "^29.0.0",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-terser": "^0.4.4",
+        "@factory/tax-core": "file:packages/tax-core",
         "ali-oss": "^6.1.0",
         "babel": "^6.23.0",
         "connect-livereload": "^0.6.1",

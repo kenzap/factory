@@ -18,6 +18,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 const PUBLIC_DIR = path.join(__dirname, process.env.NODE_ENV === 'production' ? '../dist' : '../public');
+const PACKAGES_DIR = path.join(__dirname, '../packages');
 const API_DIR = path.join(__dirname, 'api');
 const DOCUMENT_DIR = path.join(__dirname, 'document');
 const EXTENSIONS_DIR = path.join(__dirname, 'extensions');
@@ -103,6 +104,13 @@ app.use(express.static(PUBLIC_DIR, {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         }
     }
+}));
+
+// Expose shared runtime packages for browser ES module imports
+app.use('/packages', express.static(PACKAGES_DIR, {
+    maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
+    etag: true,
+    lastModified: true,
 }));
 
 // Dynamic API route loading

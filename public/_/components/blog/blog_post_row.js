@@ -48,7 +48,7 @@ export class BlogPostRow extends Component {
                     <span class="edit-settings" data-i="${this.post.i}" data-id="${this.post._id}" data-title="${this.post.title}">${formatTags(this.post.tags)}</span>
                 </td>
                 <td>
-                    <span>${formatTime(this.post.updated)}</span>
+                    <span>${formatTime(String(this.post.updated).length == 10 ? this.post.updated * 1000 : this.post.updated)}</span>
                 </td>
                 <td class="d-none"> 
                     <a href="#" data-id="${this.post._id}" class="remove-post text-danger ">

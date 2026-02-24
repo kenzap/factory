@@ -22,6 +22,19 @@ const parseIntSafe = (value) => {
     return Number.isFinite(n) ? n : 0;
 };
 
+const uploadedMsExpr = `
+    CASE
+        WHEN COALESCE(js->'data'->>'u', '') ~ '^[0-9]+$' THEN
+            CASE
+                WHEN LENGTH(js->'data'->>'u') <= 10 THEN (js->'data'->>'u')::bigint * 1000
+                ELSE (js->'data'->>'u')::bigint
+            END
+        WHEN COALESCE(js->'data'->>'u', '') ~ '^\\d{4}-\\d{2}-\\d{2}T' THEN
+            (EXTRACT(EPOCH FROM (js->'data'->>'u')::timestamptz) * 1000)::bigint
+        ELSE 0
+    END
+`;
+
 const getFiles = async (filters = {}) => {
     const client = getDbConnection();
     const files = [];
@@ -54,11 +67,11 @@ const getFiles = async (filters = {}) => {
                 COALESCE(js->'data'->>'o', js->'data'->>'n', '') AS name,
                 COALESCE(js->'data'->>'e', '') AS ext,
                 COALESCE(js->'data'->>'m', '') AS mime,
-                COALESCE(js->'data'->>'u', '0') AS uploaded,
+                ${uploadedMsExpr} AS uploaded_ms,
                 COALESCE(js->'data'->>'z', '0') AS size
             FROM data
             ${where}
-            ORDER BY COALESCE(NULLIF(js->'data'->>'u', '')::bigint, 0) DESC, _id DESC
+            ORDER BY uploaded_ms DESC, _id DESC
             LIMIT $${listParams.length - 1} OFFSET $${listParams.length}
         `;
 
@@ -70,7 +83,7 @@ const getFiles = async (filters = {}) => {
                 name: row.name || `${row._id}${row.ext ? '.' + row.ext : ''}`,
                 ext: row.ext || '',
                 mime: row.mime || '',
-                uploaded: parseIntSafe(row.uploaded),
+                uploaded: parseIntSafe(row.uploaded_ms),
                 size: parseIntSafe(row.size),
                 view_url: '',
             });

@@ -9,7 +9,7 @@ import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
 import { ClientNotifications } from "../../components/order/client_notifications.js";
 import { __html, attr, countries, html, onChange, onClick, toast } from "../../helpers/global.js";
-import { extractCountryFromVAT } from '../../helpers/tax/index.js';
+import { extractCountryFromVAT } from '../../../../packages/tax-core/src/index.js';
 import { isEmail, isPhone } from "../../helpers/validation.js";
 import { bus } from "../../modules/bus.js";
 import { state } from "../../modules/order/state.js";

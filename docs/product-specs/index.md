@@ -29,6 +29,8 @@ User rights updates
 Files journal
 : Home -> Files opens a journal of uploaded files (images, OBJ/MTL and other supported uploads).
 : Supports file listing, search, size tracking, open/view, and delete actions.
+Blog editor
+: HTML mode -> live preview preserves DIV-based block markup more reliably by using Quill clipboard conversion with less restrictive block handling.
 Production Workflow Support:
 
 Job-based manufacturing processes

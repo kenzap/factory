@@ -1,11 +1,14 @@
 
+import { saveSettings } from "../../api/save_settings.js";
 import { showLoader, toast } from "../../helpers/global.js";
 
 // has render files
 export const hasRenderFiles = (product) => {
 
-    const hasObjFile = product.cad_files.some(file => file.name.endsWith('.obj'));
-    const hasMtlFile = product.cad_files.some(file => file.name.endsWith('.mtl'));
+    console.log('hasRenderFiles', product.cad_files);
+
+    const hasObjFile = product.cad_files.some(file => file?.name?.endsWith('.obj') || file?.name?.endsWith('.obj'));
+    const hasMtlFile = product.cad_files.some(file => file?.name?.endsWith('.mtl'));
 
     if (hasObjFile && hasMtlFile) {
         return true;
@@ -51,16 +54,14 @@ export const saveSketchDefaults = (product, settings) => {
 
     settings.textures.push(obj);
 
-    console.log('texture', texture);
-    // console.log(state.factory_settings);
+    console.log('settings.textures', settings.textures);
 
     toast('New defaults applied');
 
-    // setTimeout(() => { toast('Please save product'); }, 2000);
-
-    // return false;
-
     showLoader();
+
+    // save settings
+    saveSettings({ "textures": settings.textures }, response => { toast('Changes applied'); });
 
     // // send data
     // fetch(getAPI(), {
@@ -110,7 +111,4 @@ export const setTextureDefaults = (product, settings) => {
     });
 
     return settings.textures;
-
-    // console.log("setTextureDefaults");
-    // console.log(this.state.factory_settings.textures);
 }

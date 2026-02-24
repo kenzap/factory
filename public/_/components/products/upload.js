@@ -146,7 +146,7 @@ export class FileUpload {
 
             toast(__html("File uploaded successfully"));
 
-            bus.emit('file:uploaded', { source: source, _id: response.upload._id, ext: ext, sizes: sizes });
+            bus.emit('file:uploaded', { source: source, _id: response.upload._id, ext: ext, sizes: sizes, name: response.upload.name });
 
         }, (error) => {
 

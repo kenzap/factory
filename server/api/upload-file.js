@@ -257,7 +257,7 @@ function uploadFileApi(app, logger) {
             // Create size variations (applicable for images only)
             const variations = await createSizeVariations(logger, req.file, metadata, _id);
 
-            logger.info(`File ${filename} uploaded to bucket successfully with variations: ${variations.length}`);
+            logger.info(`File ${filename} uploaded to bucket successfully`);
 
             // Return success response
             res.json({

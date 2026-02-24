@@ -1,3 +1,5 @@
+import { InvoiceCalculator } from '@factory/tax-core/calculator';
+import { extractCountryFromVAT } from '@factory/tax-core/index';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getInvoiceNextNumber, parseDocument } from '../_/helpers/document/index.js';
@@ -5,8 +7,6 @@ import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
-import { InvoiceCalculator } from '../_/helpers/tax/calculator.js';
-import { extractCountryFromVAT } from '../_/helpers/tax/index.js';
 
 /**
  * Generate invoice with universal EU tax support

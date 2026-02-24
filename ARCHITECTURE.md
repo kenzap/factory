@@ -20,14 +20,12 @@ The core loop is:
 ## Code Map
 
 This section talks briefly about various important directories and data structures.
-Pay attention to the **Architecture Invariant** sections.
-They often talk about things which are deliberately absent in the source code.
 
 ### `rollup.config.mjs`
 
 This is ERP's "build system".
 We use rollup to compile ERP's code, but there are also other tasks, like compile for production, deploy to production.
-Located at [rollup.config.mjs](../rollup.config.mjs)
+Located at [rollup.config.mjs](./rollup.config.mjs)
 
 ### `public`
 
@@ -46,7 +44,7 @@ All frontend files are located in this folder. They support rollup compilation b
     - public/localization - ERP text localization module
     - public/manufacturing - live journal of all manufacturing processes
 
-Located at [public](../public)
+Located at [public](./public)
 
 ### `/server`
 
@@ -57,13 +55,16 @@ A node.js written backend running on express application. It's main contents are
     - server/document - folder used by server generated PDF reports or documents, ex. invoice, quotation. More [here](./design-docs/document-production-slip.md).
     - server/extensions - folder where plugins can be dropped to extend core ERP features 
 
-Located at [server](../server)
+Located at [server](./server)
 
 ## Helper Placement Guideline
 
 - Reusable backend utility logic must be implemented once under `server/_/helpers/`.
 - API routes and document modules should import shared helpers instead of duplicating local utility functions.
 - Example: timezone validation and normalization lives in `server/_/helpers/timezone.js` and is reused by settings save flow and document rendering.
+- Shared cross-runtime business logic (used by both browser and Node) should live in `packages/`.
+- Tax regime definitions and tax calculation logic are centralized in `packages/tax-core/src/` and consumed by both `public/` and `server/`.
+- Backend modules should import shared tax logic via package specifiers such as `@factory/tax-core/calculator` and `@factory/tax-core/index`.
 
 ## Observability
 

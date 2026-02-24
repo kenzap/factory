@@ -26,7 +26,7 @@ export class ProductFiles {
     view() {
 
         document.querySelector('product-files').innerHTML = `
-            <h4 id="elan" class="card-title pt-4 mb-3">${__html('Files')}</h4>
+            <h4 id="elan" class="card-title pt-0 mb-3">${__html('Files')}</h4>
             <div class="sketch_upload_cont mb-3 mw">
                 <div class="d-flex align-items-center justify-content-between">
                     <label class="form-label" for="cad_files">${__html('Supporting Files')}</label>

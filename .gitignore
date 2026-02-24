@@ -28,7 +28,7 @@ readme.txt
 
 # mac os stuff
 .DS_Store
-
+ 
 .vscode/
 server.code-workspace
 

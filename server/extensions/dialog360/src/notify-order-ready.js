@@ -71,8 +71,8 @@ export const notifyOrderReady = async (query, config, db, logger) => {
 
         const payload = {
             to: normalizedPhone,
-            messaging_product: "whatsapp",
             type: "template",
+            messaging_product: "whatsapp",
             template: {
                 namespace: process.env.WHATSAPP_NAMESPACE,
                 language: {
