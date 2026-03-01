@@ -257,7 +257,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    logger.info(`Server running on http://localhost:${PORT}`);
+    logger.info(`Server running on http://localhost:${PORT}/home/`);
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
     if (HAS_OVERRIDE_PUBLIC_DIR) {
         logger.info(`Override public layer enabled: ${OVERRIDE_PUBLIC_DIR}`);

@@ -114,7 +114,33 @@ To launch the ERP system locally:
 docker compose up
 ```
 
-This will create 4 containers: Redis, Node.js, PostgreSQL, and Adminer (for managing PostgreSQL data). Demo data will be installed automatically from the `postgres.sql` file located in the root of this repository.
+This will create 5 containers: Redis, Node.js, PostgreSQL, SeaweedFS and Adminer (for managing PostgreSQL data). Demo data is installed automatically from:
+
+- `docs/generated/dumps/postgres/data.sql`
+- `docs/generated/dumps/s3/kenzap-private/*`
+- `docs/generated/dumps/s3/kenzap/*`
+
+PostgreSQL restore notes:
+
+- The dump should be generated with `pg_dump` (not Adminer export) to keep pgvector definitions valid.
+- Export the current running Postgres container into the dump file:
+
+```bash
+npm run export:db
+```
+
+Optional flags:
+
+```bash
+# custom output file
+npm run export:db -- --out=docs/generated/dumps/postgres/data.sql
+
+# custom container / db / user
+npm run export:db -- --container=postgres --db=cloud --user=postgres
+
+# export as INSERT statements
+npm run export:db -- --inserts
+```
 
 You can access PostgreSQL with the default password `password123`:
 
@@ -133,14 +159,14 @@ http://localhost:3000/home/
 File APIs support two storage providers selected by environment variable:
 
 ```bash
-STORAGE_PROVIDER=s3   # default, works with AWS S3 and MinIO
+STORAGE_PROVIDER=s3   # default, works with AWS S3-compatible backends
 # STORAGE_PROVIDER=oss
 ```
 
-For MinIO (`docker-compose` service name `minio`):
+For local S3-compatible storage via SeaweedFS (`docker-compose` service name `seaweedfs`):
 
 ```bash
-S3_ENDPOINT=http://minio:9000
+S3_ENDPOINT=http://seaweedfs:8333
 S3_REGION=us-east-1
 S3_ACCESS_KEY=your_access_key
 S3_SECRET_KEY=your_secret_key
@@ -150,31 +176,31 @@ S3_FORCE_PATH_STYLE=true
 # PUBLIC_FILES_BASE_URL=https://my_domain_name
 ```
 
-MinIO object restore on first launch:
+SeaweedFS object restore on first launch:
 
-- Put object dump files under `docs/generated/dumps/minio/` using one of these layouts:
-  - `docs/generated/dumps/minio/<S3_BUCKET>/...` (recommended)
-  - `docs/generated/dumps/minio/...` (files mirrored directly into `<S3_BUCKET>`)
-  - optional private bucket: `docs/generated/dumps/minio/<S3_BUCKET_PRIVATE>/...`
-- `docker-compose.yaml` runs `minio-init` which creates buckets and mirrors files into MinIO.
+- Put object dump files under `docs/generated/dumps/s3/` using one of these layouts:
+  - `docs/generated/dumps/s3/<S3_BUCKET>/...` (recommended)
+  - `docs/generated/dumps/s3/...` (files mirrored directly into `<S3_BUCKET>`)
+  - optional private bucket: `docs/generated/dumps/s3/<S3_BUCKET_PRIVATE>/...`
+- `docker-compose.yaml` runs `s3-seed` which creates buckets and mirrors files into SeaweedFS.
 - macOS/system metadata files are ignored during import (for example `.DS_Store`, `._*`).
-- Object restore runs only once per MinIO volume. A marker file `/data/.seeded-from-dump` is created in the volume.
-- Changing files in `docs/generated/dumps/minio/` will not re-import unless you reset MinIO seed state.
-- To re-initialize both PostgreSQL and MinIO from dumps, remove volumes and restart:
+- Object restore runs only once per storage volume. A marker file `/data/.seeded-from-dump` is created in the volume.
+- Changing files in `docs/generated/dumps/s3/` will not re-import unless you reset seed state.
+- To re-initialize both PostgreSQL and CloudServer from dumps, remove volumes and restart:
 
 ```bash
 docker compose down -v
 docker compose up
 ```
 
-Re-run MinIO seed without deleting all volumes:
+Re-run S3 seed without deleting all volumes:
 
 ```bash
-docker compose run --rm --entrypoint /bin/sh minio-init -c "rm -f /data/.seeded-from-dump"
+docker compose run --rm --entrypoint /bin/sh s3-seed -c "rm -f /data/.seeded-from-dump"
 docker compose up
 ```
 
-Export current MinIO buckets into dump folder:
+Export current S3 buckets into dump folder:
 
 ```bash
 npm run export:buckets
@@ -184,9 +210,9 @@ Optional flags:
 
 ```bash
 # custom output directory
-npm run export:buckets -- --out=docs/generated/dumps/minio
+npm run export:buckets -- --out=docs/generated/dumps/s3
 
-# custom endpoint (default uses host.docker.internal + MINIO_PORT)
+# custom endpoint (default uses host.docker.internal + S3_PORT)
 npm run export:buckets -- --endpoint=http://localhost:9000
 
 # export only public bucket
