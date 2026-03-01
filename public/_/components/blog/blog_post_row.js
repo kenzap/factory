@@ -1,6 +1,6 @@
 import { deletePost } from "../../api/delete_post.js";
 import { getPost } from "../../api/get_post.js";
-import { __html, formatTime, toast } from "../../helpers/global.js";
+import { __html, fileUrl, formatTime, toast } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 import { Component } from "../component.js";
 import { EditPost } from "./edit_post.js";
@@ -15,12 +15,12 @@ export class BlogPostRow extends Component {
         this.post = new Post(post);
         this.settings = settings || {};
 
-        let img = 'https://cdn.kenzap.com/loading.png';
+        let img = '/assets/img/placeholder.png';
 
         if (!this.post.img) this.post.img = [];
-        if (this.post.img[0]) img = this.post.img[0].replace('-720.jpeg', '-100.jpeg') + '?' + this.post.updated;
+        if (this.post.img[0]) img = fileUrl(`post-${this.post._id}-1-100x100.jpeg`, this.post.updated);
 
-        this.post.img = img || 'https://cdn.kenzap.com/loading.png';
+        this.post.img = img || '/assets/img/placeholder.png';
     }
 
     render() {

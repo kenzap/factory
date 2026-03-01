@@ -68,7 +68,7 @@ class Settings {
             document.querySelector('#app').innerHTML = getHtml();
 
             // init tabs
-            new TabGeneral();
+            new TabGeneral(this.settings);
             new TabRegion();
             new TabTemplates(this.settings, this.editors);
             new TabParameters(this.settings);
@@ -141,15 +141,25 @@ class Settings {
 
             if (typeof (self.settings[field]) === "undefined") continue;
             if (self.settings[field] == "") continue;
-            if (document.querySelector("[name='" + field + "']")) switch (document.querySelector("[name='" + field + "']").dataset.type) {
+            const fieldEl = document.querySelector("[name='" + field + "']");
+            if (!fieldEl) continue;
 
+            switch (fieldEl.dataset.type) {
                 case 'text':
                 case 'email':
                 case 'emails':
                 case 'select':
-                case 'textarea': document.querySelector("#" + field).value = self.settings[field]; break;
-                case 'checkbox': document.querySelector("#" + field).checked = self.settings[field] == "1" ? true : false; break;
-                case 'radio': document.querySelector("[name='" + field + "'][value='" + self.settings[field] + "']").checked = true; break;
+                case 'textarea':
+                    fieldEl.value = self.settings[field];
+                    break;
+                case 'checkbox':
+                    fieldEl.checked = ['1', 1, true, 'true'].includes(self.settings[field]);
+                    break;
+                case 'radio': {
+                    const selectedRadio = document.querySelector("[name='" + field + "'][value='" + self.settings[field] + "']");
+                    if (selectedRadio) selectedRadio.checked = true;
+                    break;
+                }
             }
         }
 

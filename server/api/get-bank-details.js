@@ -22,8 +22,6 @@ async function getBankDetails(code) {
         const bankCodesPath = path.join(__dirname, '../_/assets/bank-codes-lv.json');
         const bankCodesData = JSON.parse(fs.readFileSync(bankCodesPath, 'utf8'));
 
-        console.log('Searching for bank code:', bankCodesData);
-
         // Find bank by code, ex., LV78UNLA0050000100888
         const bank = bankCodesData.find(bank => bank?.code?.startsWith(code));
 

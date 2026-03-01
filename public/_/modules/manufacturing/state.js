@@ -15,5 +15,6 @@ export const state = {
     settings: {},
     orders: { records: [], total: 0 },
     inQuery: false,
-    mode: ''
+    mode: '',
+    resetScrollOnNextLoad: false
 };

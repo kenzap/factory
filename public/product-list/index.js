@@ -125,6 +125,10 @@ class ProductList extends Component {
 
             // console.log(response);
 
+            if (response.cdn) {
+                localStorage.setItem('cdn', response.cdn);
+            }
+
             hideLoader();
 
             // init locale
@@ -179,7 +183,7 @@ class ProductList extends Component {
                 <tr>
                     <td style="width:40px;">
                         <div class="timgc">
-                           
+                            <img src="/assets/img/placeholder.png" class="img-fluid rounded" alt="${__html("Product placeholder")}">
                         </div>
                     </td>
                     <td class="destt" style="max-width:250px;min-width:250px;">${__html("No products to display.")}</td>

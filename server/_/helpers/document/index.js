@@ -23,6 +23,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
                        js->'data'->>'discount_visibility' as discount_visibility,
                        js->'data'->>'waybill_last_number' as waybill_last_number,
                        js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
+                       js->'data'->>'system_language' as system_language,
                        js->'data'->>'groups' as groups,
                        js->'data'->>$3 as document_template
                 FROM data 

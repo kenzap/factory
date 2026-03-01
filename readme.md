@@ -128,6 +128,164 @@ To open ERP dashboard
 http://localhost:3000/home/
 ```
 
+### Storage Provider
+
+File APIs support two storage providers selected by environment variable:
+
+```bash
+STORAGE_PROVIDER=s3   # default, works with AWS S3 and MinIO
+# STORAGE_PROVIDER=oss
+```
+
+For MinIO (`docker-compose` service name `minio`):
+
+```bash
+S3_ENDPOINT=http://minio:9000
+S3_REGION=us-east-1
+S3_ACCESS_KEY=your_access_key
+S3_SECRET_KEY=your_secret_key
+S3_BUCKET=kenzap
+S3_FORCE_PATH_STYLE=true
+# Optional absolute base for returned file URLs:
+# PUBLIC_FILES_BASE_URL=https://my_domain_name
+```
+
+MinIO object restore on first launch:
+
+- Put object dump files under `docs/generated/dumps/minio/` using one of these layouts:
+  - `docs/generated/dumps/minio/<S3_BUCKET>/...` (recommended)
+  - `docs/generated/dumps/minio/...` (files mirrored directly into `<S3_BUCKET>`)
+  - optional private bucket: `docs/generated/dumps/minio/<S3_BUCKET_PRIVATE>/...`
+- `docker-compose.yaml` runs `minio-init` which creates buckets and mirrors files into MinIO.
+- macOS/system metadata files are ignored during import (for example `.DS_Store`, `._*`).
+- Object restore runs only once per MinIO volume. A marker file `/data/.seeded-from-dump` is created in the volume.
+- Changing files in `docs/generated/dumps/minio/` will not re-import unless you reset MinIO seed state.
+- To re-initialize both PostgreSQL and MinIO from dumps, remove volumes and restart:
+
+```bash
+docker compose down -v
+docker compose up
+```
+
+Re-run MinIO seed without deleting all volumes:
+
+```bash
+docker compose run --rm --entrypoint /bin/sh minio-init -c "rm -f /data/.seeded-from-dump"
+docker compose up
+```
+
+Export current MinIO buckets into dump folder:
+
+```bash
+npm run export:buckets
+```
+
+Optional flags:
+
+```bash
+# custom output directory
+npm run export:buckets -- --out=docs/generated/dumps/minio
+
+# custom endpoint (default uses host.docker.internal + MINIO_PORT)
+npm run export:buckets -- --endpoint=http://localhost:9000
+
+# export only public bucket
+npm run export:buckets -- --no-private
+```
+
+For Alibaba OSS:
+
+```bash
+OSS_REGION=oss-<region>
+OSS_ACCESS_KEY_ID=<key>
+OSS_ACCESS_KEY_SECRET=<secret>
+OSS_BUCKET=<bucket>
+OSS_ENDPOINT=https://oss-<region>.aliyuncs.com
+```
+
+### Demo Data Refresh
+
+To anonymize existing client/order records and generate synthetic demo records:
+
+```bash
+npm run demo:data
+```
+
+Useful options:
+
+```bash
+# Preview only (no DB changes)
+npm run demo:data -- --dry-run
+
+# Only anonymize existing records
+npm run demo:data -- --mode=anonymize
+
+# Only generate new synthetic records
+npm run demo:data -- --mode=seed --entities=30 --orders=120
+```
+
+The script targets the current tenant `SID` (from `.env`) and uses `DATABASE_URL`.
+
+### Client Provisioning Defaults
+
+Use a per-client JSON file to apply regional defaults into the `settings` row after provisioning.
+
+Example config:
+
+```json
+{
+  "sid": 1002170,
+  "settings": {
+    "default_timezone": "Asia/Dubai",
+    "system_language": "en",
+    "system_of_units": "metric",
+    "currency": "AED",
+    "currency_symb": "AED",
+    "currency_symb_loc": "left_space",
+    "tax_region": "AE",
+    "vat_number": "AE123456789000003",
+    "tax_percent_auto": true,
+    "tax_percent": 5,
+    "tax_display": "VAT"
+  }
+}
+```
+
+Run:
+
+```bash
+# dry run
+npm run setup:client -- --config=etc/clients/acme.example.json --dry-run
+
+# apply changes
+npm run setup:client -- --config=etc/clients/acme.example.json
+```
+
+Optional SID override:
+
+```bash
+npm run setup:client -- --config=etc/clients/acme.example.json --sid=1000001
+```
+
+Only known regional keys are updated; unknown keys in JSON are ignored.
+
+### OTP Relay Extension
+
+The `kenzap-otp-relay` extension listens to `otp.requested` events and forwards OTP to:
+
+`https://api.kenzap.cloud/v1/tenants/:tenantId/otp/:otp`
+
+Optional environment variables:
+
+```bash
+KENZAP_OTP_RELAY_ENABLED=true
+KENZAP_TENANT_ID=1000000
+KENZAP_API_BASE_URL=https://api.kenzap.cloud
+KENZAP_API_KEY=
+```
+
+By default, `TENANT_ID` falls back to `SID` if not set.
+
 ### PostgreSQL (Alternative setups)
 For testing with remote PostgreSQL instances, you can use port forwarding when the database is deployed in Kubernetes:
 

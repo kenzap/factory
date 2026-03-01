@@ -55,7 +55,7 @@ export const renderPreview = (product, e, type) => {
     d.querySelector(".sketch_loader").classList.remove("d-none");
 
     let sel = ".images-sketch", _fi = 0;
-    let img = 'https://render.factory.app.kenzap.cloud:3999/?cmd=preview&swap_colors=' + product.sketch.texture.swap_colors + '&texture=' + encodeURIComponent(JSON.stringify(product.sketch.texture)) + '&files=' + encodeURIComponent(JSON.stringify(product.cad_files)) + '&camera=' + encodeURIComponent(JSON.stringify(product.sketch.camera)) + '&offset=' + encodeURIComponent(JSON.stringify(product.sketch.offset)) + '&fov=' + product.sketch.fov + '&id=' + getProductId() + '&space=' + spaceID() + '&storage=' + encodeURIComponent(getStorage()) + '&hash=' + randomString(6); //https://render.factory.app.kenzap.cloud:3999/?cmd=preview&files=[{%22id%22:%22mmAEkUhgiowK%22,%22ext%22:%22obj%22,%22name%22:%22DetOsn-v10.obj%22},{%22id%22:%22fRYodDpVgowz%22,%22ext%22:%22mtl%22,%22name%22:%22DetOsn-v10.mtl%22}]&camera={%22p1%22:7,%22p2%22:145,%22p3%22:90}&id=7101f85c3a1ce918291d3f54354f27b2d42f5111&space=1002170
+    let img = 'https://render.factory.app.kenzap.cloud:3999/?cmd=preview&swap_colors=' + product.sketch.texture.swap_colors + '&texture=' + encodeURIComponent(JSON.stringify(product.sketch.texture)) + '&files=' + encodeURIComponent(JSON.stringify(product.cad_files)) + '&camera=' + encodeURIComponent(JSON.stringify(product.sketch.camera)) + '&offset=' + encodeURIComponent(JSON.stringify(product.sketch.offset)) + '&fov=' + product.sketch.fov + '&id=' + getProductId() + '&space=' + spaceID() + '&storage=' + encodeURIComponent(getStorage()) + '&hash=' + randomString(6);
 
     document.querySelector("sketch-render .progress-bar").setAttribute('style', 'width: 0%');
 

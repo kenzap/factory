@@ -1,5 +1,5 @@
-import { __html, attr, html, onChange, onClick, onKeyUp, onlyNumbers, priceFormat, toast } from "../../helpers/global.js";
 import { TAX_REGIMES } from "../../../../packages/tax-core/src/regimes.js";
+import { __html, attr, html, onChange, onClick, onKeyUp, onlyNumbers, priceFormat, toast } from "../../helpers/global.js";
 import { ProductPriceVariations } from "./product_price_variations.js";
 
 export class ProductPrice {
@@ -11,7 +11,7 @@ export class ProductPrice {
 
         this.state = {};
 
-        this.state.proceCoatings = [];
+        this.state.materials = [];
 
         this.productPriceVariations = new ProductPriceVariations(this.product, this.settings);
 
@@ -81,13 +81,13 @@ export class ProductPrice {
             <div class="mb-3 mw formula_price_cont d-none">
                 <div class="d-flex justify-content-start flex-row">
                     <div class="me-3">
-                        <label class="form-label" for="color_coating">${__html('Coating')}</label>
+                        <label class="form-label" for="color_coating">${__html('Material')}</label>
                         <select class="form-select color-coating-price" name="price_parent- " data-type="select">
                         ${this.settings.price.map((price, i) => {
 
-            let option = this.state.proceCoatings.includes(price.parent) || price.parent.length == 0 ? '' : `<option value="${attr(price.price)}" >${html(price.parent) + " " + priceFormat(self, price.price)}</option>`
+            let option = this.state.materials.includes(price.parent) || price.parent.length == 0 ? '' : `<option value="${attr(price.price)}" >${html(price.parent) + " " + html(price.title) + " " + priceFormat(self, price.price)}</option>`
 
-            this.state.proceCoatings.push(price.parent);
+            this.state.materials.push(price.parent);
 
             return option;
 
@@ -96,7 +96,7 @@ export class ProductPrice {
                         </select>
                     </div>
                     <div class="me-3">
-                        <label class="form-label" for="material_cost">${__html('Material cost')}</label>
+                        <label class="form-label" for="material_cost">${__html('Cost')}</label>
                         <input id="material_cost" type="text" disabled class="form-control inp" style="max-width: 90px;" placeholder="${__html('')}">
                     </div>
                     <div>
@@ -442,7 +442,7 @@ export class ProductPrice {
     getLabels() {
 
         let d = document;
-        let labels = "COATING MARGIN M2 ";
+        let labels = "MATERIAL MARGIN M2 ";
 
         for (let div of d.querySelectorAll('.input-fields > div')) {
 

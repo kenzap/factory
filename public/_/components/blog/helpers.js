@@ -2,7 +2,7 @@ import { createPost } from "../../api/create_post.js";
 import { deletePost } from "../../api/delete_post.js";
 import { getPosts } from "../../api/get_posts.js";
 import { savePost } from "../../api/save_post.js";
-import { __html, FILES, spaceID } from "../../helpers/global.js";
+import { __html, fileUrl } from "../../helpers/global.js";
 import { Component } from "../component.js";
 
 export const formatTags = (tags) => {
@@ -137,14 +137,14 @@ export class Post {
 
     get imageUrl() {
         if (this.cad_files?.length) {
-            return `${FILES}/${this._id}-250.webp`;
+            return fileUrl(`${this._id}-250.webp`);
         }
 
         if (this.img?.[0]) {
-            return `${FILES}/S${spaceID()}/post-${this._id}-1-100x100.jpeg?${this.updated}`;
+            return fileUrl(`post-${this._id}-1-100x100.jpeg`, this.updated);
         }
 
-        return 'https://cdn.kenzap.com/loading.png';
+        return '/assets/img/placeholder.png';
     }
 
     get displayTitle() {

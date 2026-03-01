@@ -39,6 +39,7 @@ export function register({ router, cron, config, events, db, logger }) {
     // Route to get orders ready for notification
     router.get('/orders-ready', async (req, res) => {
 
+        // TODO: implement object oriented approach with repositories and services instead of direct DB access in the route handler
         // const order = await repositories.order.findById(req.params.id)
         // if (!order) {
         //     return res.status(404).json({ error: 'Not found' })
@@ -58,41 +59,10 @@ export function register({ router, cron, config, events, db, logger }) {
     // Test route for order ready notification, ex: http://localhost:3000/extension/dialog360/order-ready-test/43006
     router.get('/order-ready-test/:id', async (req, res) => {
 
-        // const notify = await notifyOrderReady({ orderId: req.params.id, phone: "6581500872" }, config, db, logger);
-
         events.emit("email.send", { email: "pavel@kenzap.com", subject: `Order #${req.params.id} is ready`, body: `Order ${req.params.id} ready notification sent.` });
-
-        // const otp = await sendOtp("6581500872", "1234", config, logger);
-
-        // const mark = await markOrderReady(req.params.id, db, logger);
-
-        // logger.error('cron test: orders ready for notification');
-
-        // const response = await notifyOrderNewAdmin({ orderId: req.params.id, phone: "6581500872" }, { sid: db.sid, permission: 'admin' }, db, logger);
 
         res.json({ status: 'ok' });
     });
-
-    // cron every minute for testing
-    // cron.register(
-    //     'test',
-    //     '*/20 * * * * *', // every 10 seconds
-    //     async () => {
-
-    //         const orders = await getOrdersReady(db, logger);
-
-    //         logger.info('cron test: orders ready for notification:', orders);
-
-    //         for (const order of orders) {
-
-    //             // await notifyOrderReady({ orderId: order.id, phone: order.phone }, { sid: auth.sid, permission: auth.permission }, db, logger);
-    //             await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
-
-    //             await markOrderReady(order.id, db, logger);
-    //         }
-    //     },
-    //     { timezone: 'Europe/Riga' }
-    // )
 
     // Register cron
     cron.register(
@@ -109,14 +79,14 @@ export function register({ router, cron, config, events, db, logger }) {
                 // keep sending while in debug mode
                 // if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
 
+                // TODO: remove in future, only for testing with real phone number
                 if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
                 if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+
                 if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
                 if (process.env.NODE_ENV === 'production') await markOrderReady(order.id, db, logger);
             }
-
-            // logger.info('cron:', orders);
         },
-        { timezone: 'Europe/Riga' }
+        { timezone: config.get('default_timezone') || 'UTC' }
     )
 }

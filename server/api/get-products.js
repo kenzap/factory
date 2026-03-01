@@ -18,8 +18,14 @@ async function getProducts(filters = { for: 'product-list', limit: 200, offset: 
     let query = `
         SELECT
             _id,
-            js->'data'->'locales'->$3->>'title' AS title,
-            js->'data'->'locales'->$3->>'sdesc' AS sdesc,
+            COALESCE(
+                js->'data'->'locales'->$3->>'title',
+                js->'data'->'locales'->'default'->>'title'
+            ) AS title,
+            COALESCE(
+                js->'data'->'locales'->$3->>'sdesc',
+                js->'data'->'locales'->'default'->>'sdesc'
+            ) AS sdesc,
             js->'data'->'title' AS title_default,
             js->'data'->'sdesc' AS sdesc_default,
             js->'data'->'formula_length' AS formula_length,
@@ -46,7 +52,10 @@ async function getProducts(filters = { for: 'product-list', limit: 200, offset: 
 
     // Add search filter if present
     if (filters.s && filters.s.trim() !== '') {
-        query += ` AND (unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4) OR unaccent(js->'data'->>'title') ILIKE unaccent($4))`;
+        query += ` AND (
+            unaccent(COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title')) ILIKE unaccent($4)
+            OR unaccent(js->'data'->>'title') ILIKE unaccent($4)
+        )`;
         params.push(`%${filters.s}%`);
     }
 
@@ -70,7 +79,7 @@ async function getProducts(filters = { for: 'product-list', limit: 200, offset: 
 
     if (filters.for == 'stock') {
         query += `
-            ORDER BY js->'data'->>'priority' DESC, js->'data'->'locales'->$3->>'title' ASC
+            ORDER BY js->'data'->>'priority' DESC, COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title') ASC
             LIMIT $${params.length - 1} OFFSET $${params.length}
         `;
     }
@@ -80,7 +89,7 @@ async function getProducts(filters = { for: 'product-list', limit: 200, offset: 
     const countQuery = `
         SELECT COUNT(_id) FROM data
         WHERE ref = $1 AND sid = $2
-        ${filters.s && filters.s.trim() !== '' ? `AND unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($4)` : ''}
+        ${filters.s && filters.s.trim() !== '' ? `AND unaccent(COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title')) ILIKE unaccent($4)` : ''}
     `;
     const countParams = params.slice(0, filters.s && filters.s.trim() !== '' ? 4 : 2);
 
@@ -115,8 +124,9 @@ function getProductsApi(app) {
             const locale = await getLocale(req.headers);
             const records = await getProducts(filters);
             const settings = await getSettings(["currency", "textures", "currency_symb", "currency_symb_loc", "system_of_units", "stock_categories"]);
+            const cdn = process.env.CDN || '';
 
-            res.send({ success: true, user: req.user, settings, locale, products: records.products, meta: records.meta, message: '' });
+            res.send({ success: true, user: req.user, settings, locale, cdn, products: records.products, meta: records.meta, message: '' });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

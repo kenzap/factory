@@ -4,9 +4,8 @@ import { amountToWords } from './totals.js';
 /**
  * Generate invoice items table
  */
-export function getInvoiceItemsTable(detailed, settings, order, locale, calculator) {
-    const hasDiscount = settings.discount_visibility === '1' &&
-        order.items.some(item => item.discount && item.discount > 0);
+export function getInvoiceItemsTable(detailed, settings, order, locales, calculator) {
+    const hasDiscount = settings.discount_visibility === '1' && order.items.some(item => item.discount && item.discount > 0);
     const showTax = order.vat_status !== "0";
 
     let table = `
@@ -14,16 +13,16 @@ export function getInvoiceItemsTable(detailed, settings, order, locale, calculat
             <thead>
                 <tr>
                     <th scope="col">#</th>
-                    <th scope="col">${__html(locale, "Product")}</th>
-                    ${hasDiscount ? `<th scope="col">${__html(locale, "Price")}</th>` : ''}
-                    ${hasDiscount ? `<th scope="col">${__html(locale, "Discount")}</th>` : ''}
-                    <th scope="col">${hasDiscount ? __html(locale, "Net") : __html(locale, "Price")}</th>
-                    <th scope="col">${__html(locale, "Qty")}</th>
-                    <th scope="col">${__html(locale, "Unit")}</th>
-                    <th scope="col">${__html(locale, "Total")}</th>
-                    ${showTax ? `<th scope="col">${__html(locale, "Tax Rate")}</th>` : ''}
-                    ${showTax ? `<th scope="col">${__html(locale, "Tax")}</th>` : ''}
-                    ${showTax ? `<th scope="col">${__html(locale, "Incl. tax")}</th>` : ''}
+                    <th scope="col">${__html(locales, "Product")}</th>
+                    ${hasDiscount ? `<th scope="col">${__html(locales, "Price")}</th>` : ''}
+                    ${hasDiscount ? `<th scope="col">${__html(locales, "Discount")}</th>` : ''}
+                    <th scope="col">${hasDiscount ? __html(locales, "Net") : __html(locales, "Price")}</th>
+                    <th scope="col">${__html(locales, "Qty")}</th>
+                    <th scope="col">${__html(locales, "Unit")}</th>
+                    <th scope="col">${__html(locales, "Total")}</th>
+                    ${showTax ? `<th scope="col">${__html(locales, "Tax Rate")}</th>` : ''}
+                    ${showTax ? `<th scope="col">${__html(locales, "Tax")}</th>` : ''}
+                    ${showTax ? `<th scope="col">${__html(locales, "Incl. tax")}</th>` : ''}
                 </tr>
             </thead>
             <tbody>
@@ -44,14 +43,14 @@ export function getInvoiceItemsTable(detailed, settings, order, locale, calculat
         table += `
             <tr class="${i === order.items.length - 1 ? 'border-secondary' : ''}">
                 <th scope="row">${i + 1}</th>
-                <td>${formatItemDescription(detailed, item, settings, locale)}</td>
+                <td>${formatItemDescription(detailed, item, settings, locales)}</td>
                 ${hasDiscount ? `<td>${priceFormat(settings, originalPrice)}</td>` : ''}
                 ${hasDiscount ? `<td>${item.discount > 0 ? `-${item.discount}%` : ''}</td>` : ''}
                 <td>${priceFormat(settings, item.price)}</td>
                 <td>${item.qty}</td>
-                <td>${item.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
+                <td>${item.unit ? __html(locales, item.unit) : __html(locales, "pc")}</td>
                 <td>${priceFormat(settings, lineTotal)}</td>
-                ${showTax ? `<td>${__html(locale, regime.display || '')}</td>` : ''}
+                ${showTax ? `<td>${__html(locales, regime.display || '')}</td>` : ''}
                 ${showTax ? `<td>${priceFormat(settings, lineTax)}</td>` : ''}
                 ${showTax ? `<td>${priceFormat(settings, lineTotalWithTax)}</td>` : ''}
             </tr>
@@ -69,7 +68,7 @@ export function getInvoiceItemsTable(detailed, settings, order, locale, calculat
 /**
  * Generate packing list items table (no pricing).
  */
-export function getPackingListItemsTable(order, locale, productWeightById = {}) {
+export function getPackingListItemsTable(order, locales, productWeightById = {}) {
     const items = Array.isArray(order?.items) ? order.items : [];
 
     let totalQty = 0;
@@ -80,11 +79,11 @@ export function getPackingListItemsTable(order, locale, productWeightById = {}) 
             <thead>
                 <tr>
                     <th scope="col">#</th>
-                    <th scope="col">${__html(locale, "Product")}</th>
-                    <th scope="col">${__html(locale, "Size")}</th>
-                    <th scope="col">${__html(locale, "Qty")}</th>
-                    <th scope="col">${__html(locale, "Unit")}</th>
-                    <th scope="col">${__html(locale, "Weight")}, kg</th>
+                    <th scope="col">${__html(locales, "Product")}</th>
+                    <th scope="col">${__html(locales, "Size")}</th>
+                    <th scope="col">${__html(locales, "Qty")}</th>
+                    <th scope="col">${__html(locales, "Unit")}</th>
+                    <th scope="col">${__html(locales, "Weight")}, kg</th>
                 </tr>
             </thead>
             <tbody>
@@ -117,7 +116,7 @@ export function getPackingListItemsTable(order, locale, productWeightById = {}) 
                 <td>${productName}</td>
                 <td>${size ? `${size} mm` : ''}</td>
                 <td>${qty}</td>
-                <td>${item?.unit ? __html(locale, item.unit) : __html(locale, "pc")}</td>
+                <td>${item?.unit ? __html(locales, item.unit) : __html(locales, "pc")}</td>
                 <td>${itemTotalWeight ? (Math.round(itemTotalWeight * 1000) / 1000) : ''}</td>
             </tr>
         `;
@@ -125,7 +124,7 @@ export function getPackingListItemsTable(order, locale, productWeightById = {}) 
 
     table += `
             <tr class="table-info">
-                <td colspan="3"><strong>${__html(locale, "Total")}</strong></td>
+                <td colspan="3"><strong>${__html(locales, "Total")}</strong></td>
                 <td><strong>${totalQty}</strong></td>
                 <td></td>
                 <td><strong>${Math.round(totalWeight * 1000) / 1000}</strong></td>
@@ -140,7 +139,7 @@ export function getPackingListItemsTable(order, locale, productWeightById = {}) 
 /**
  * Format item description
  */
-function formatItemDescription(detailed, item, settings, locale) {
+function formatItemDescription(detailed, item, settings, locales) {
     let description = item.title || '';
 
     if (item.coating) description += ` ${item.coating}`;
@@ -177,7 +176,7 @@ function formatItemDescription(detailed, item, settings, locale) {
  * Metālapstrāde R7
  * Metāllūžni R2
  */
-export function getInvoiceTotals(settings, order, locale, totals) {
+export function getInvoiceTotals(settings, order, locales, totals) {
     if (!totals) return '';
 
     // const showTax = order.vat_status !== "0";
@@ -191,10 +190,10 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     // html += `
     //     <tr>
     //         <td colspan="2" class="text-start">
-    //             <strong>${__html(locale, "Payment terms")}:</strong>
+    //             <strong>${__html(locales, "Payment terms")}:</strong>
     //             ${order.due_date
-    //         ? __html(locale, "Due date") + ' ' + new Date(order.due_date).toLocaleDateString(locale.code)
-    //         : '3 ' + __html(locale, "days")}
+    //         ? __html(locales, "Due date") + ' ' + new Date(order.due_date).toLocaleDateString(locales.code)
+    //         : '3 ' + __html(locales, "days")}
     //         </td>
     //     </tr>
     // `; 
@@ -204,7 +203,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
         html += `
             <tr>
                 <td colspan="2" class="text-start">
-                    <strong>${__html(locale, "Transaction type")}:</strong>
+                    <strong>${__html(locales, "Transaction type")}:</strong>
                     R7
                 </td>
             </tr>
@@ -216,7 +215,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
         html += `
             <tr>
                 <td colspan="2" class="text-start">
-                    <strong>${__html(locale, "Transaction type")}:</strong>
+                    <strong>${__html(locales, "Transaction type")}:</strong>
                     R2
                 </td>
             </tr>
@@ -230,7 +229,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
             html += `
                 <tr>
                     <td colspan="2" class="text-start">
-                        <strong>${__html(locale, tax.display)}:</strong> ${__html(locale, tax.legalText)}
+                        <strong>${__html(locales, tax.display)}:</strong> ${__html(locales, tax.legalText)}
                     </td>
                 </tr>
             `;
@@ -240,7 +239,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     html += `
         <tr>
             <td class="text-start" colspan="2">
-                <strong>${__html(locale, "Total in words")}:</strong> ${amountToWords(totals.totalInvoiceAmount, settings)}
+                <strong>${__html(locales, "Total in words")}:</strong> ${amountToWords(totals.totalInvoiceAmount, settings)}
             </td>
         </tr>
     `;
@@ -253,7 +252,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     // Subtotal
     html += `
         <tr>
-            <td class="text-end"><strong>${__html(locale, "Subtotal without TAX")}:</strong></td>
+            <td class="text-end"><strong>${__html(locales, "Subtotal without TAX")}:</strong></td>
             <td class="text-end">${priceFormat(settings, totals.totalTaxableAmount)}</td>
         </tr>
     `;
@@ -262,8 +261,8 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     if (breakdown.length > 0) {
         breakdown.forEach(tax => {
             const label = tax.rate > 0
-                ? `${__html(locale, tax.display)} (${__html(locale, "from ")} ${priceFormat(settings, tax.taxableAmount)}):`
-                : `${__html(locale, tax.legalText)}:`;
+                ? `${__html(locales, tax.display)} (${__html(locales, "from ")} ${priceFormat(settings, tax.taxableAmount)}):`
+                : `${__html(locales, tax.legalText)}:`;
 
             html += `
                 <tr>
@@ -277,7 +276,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     // Grand total
     html += `
         <tr class="total-row">
-            <td class="text-end"><strong>${__html(locale, "Total to pay")}:</strong></td>
+            <td class="text-end"><strong>${__html(locales, "Total to pay")}:</strong></td>
             <td class="text-end"><strong>${priceFormat(settings, totals.totalInvoiceAmount)}</strong></td>
         </tr>
     `;
@@ -287,7 +286,7 @@ export function getInvoiceTotals(settings, order, locale, totals) {
     return html;
 }
 
-export function getProductionItemsTable(settings, order, locale) {
+export function getProductionItemsTable(settings, order, locales) {
     const shouldSkipRecordCalculations = (item) => {
         const width = Number(item?.formula_width_calc) || 0;
         const length = Number(item?.formula_length_calc) || 0;
@@ -314,7 +313,7 @@ export function getProductionItemsTable(settings, order, locale) {
         "6cd72b9bf83fe5288e7d215408b0a0b17f21c0f6", "eceb2bd4ff43d4301fa98a888338cd22d5033688" // konektor Y
     ];
 
-    // console.log("getProductionItemsTable locale", locale);
+    // console.log("getProductionItemsTable locales", locales);
 
     let groups = settings.groups ? JSON.parse(settings.groups) : [];
 
@@ -362,11 +361,11 @@ export function getProductionItemsTable(settings, order, locale) {
                 <thead class="table-secondary">
                     <tr>
                         <th scope="col"></th>
-                        <th scope="col">${__html(locale, group.name)}</th>
-                        <th scope="col">${__html(locale, "Width")}</th>
-                        <th scope="col">${__html(locale, "Length")}</th>
-                        <th scope="col">${__html(locale, "Qty")}</th>
-                        <th scope="col">${__html(locale, "t/m")}</th>
+                        <th scope="col">${__html(locales, group.name)}</th>
+                        <th scope="col">${__html(locales, "Width")}</th>
+                        <th scope="col">${__html(locales, "Length")}</th>
+                        <th scope="col">${__html(locales, "Qty")}</th>
+                        <th scope="col">${__html(locales, "t/m")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -454,7 +453,7 @@ export function getProductionItemsTable(settings, order, locale) {
             if (groupTotalQty > 0 || roundedGroupTotalTM > 0) {
                 groupSummaryRows += `
                     <tr class="table-info">
-                        <td colspan="2"><strong>${__html(locale, "Total")}</strong></td>
+                        <td colspan="2"><strong>${__html(locales, "Total")}</strong></td>
                         <td><strong>${groupTotalQty}</strong></td>
                         <td><strong>${roundedGroupTotalTM || ""}</strong></td>
                     </tr>
@@ -465,9 +464,9 @@ export function getProductionItemsTable(settings, order, locale) {
                 summaryContent += `
                     <thead class="table-secondary">
                         <tr>
-                            <th scope="col" colspan="2">${__html(locale, group.name)}</th>
-                            <th scope="col">${__html(locale, "Qty")}</th>
-                            <th scope="col">${__html(locale, "t/m")}</th>   
+                            <th scope="col" colspan="2">${__html(locales, group.name)}</th>
+                            <th scope="col">${__html(locales, "Qty")}</th>
+                            <th scope="col">${__html(locales, "t/m")}</th>   
                         </tr>
                     </thead>
                     <tbody>
@@ -496,11 +495,11 @@ export function getProductionItemsTable(settings, order, locale) {
             <thead class="table-secondary">
                 <tr>
                     <th scope="col"></th>
-                    <th scope="col">${__html(locale, "Product")}</th>
-                    <th scope="col">${__html(locale, "Width")}</th>
-                    <th scope="col">${__html(locale, "Length")}</th>
-                    <th scope="col">${__html(locale, "Qty")}</th>
-                    <th scope="col">${__html(locale, "t/m")}</th>
+                    <th scope="col">${__html(locales, "Product")}</th>
+                    <th scope="col">${__html(locales, "Width")}</th>
+                    <th scope="col">${__html(locales, "Length")}</th>
+                    <th scope="col">${__html(locales, "Qty")}</th>
+                    <th scope="col">${__html(locales, "t/m")}</th>
                 </tr>
             </thead>
             <tbody>
@@ -588,7 +587,7 @@ export function getProductionItemsTable(settings, order, locale) {
         if (ungroupedTotalQty > 0 || roundedUngroupedTotalTM > 0) {
             ungroupedSummaryRows += `
                 <tr class="table-info">
-                    <td><strong>${__html(locale, "Total")}</strong></td>
+                    <td><strong>${__html(locales, "Total")}</strong></td>
                     <td></td>
                     <td><strong>${ungroupedTotalQty}</strong></td>
                     <td><strong>${roundedUngroupedTotalTM || ""}</strong></td>
@@ -600,13 +599,13 @@ export function getProductionItemsTable(settings, order, locale) {
             summaryContent += `
                 <thead class="table-secondary">
                     <tr>
-                        <th scope="col" colspan="4">${__html(locale, "Ungrouped items")} - ${__html(locale, "Summary")}</th>
+                        <th scope="col" colspan="4">${__html(locales, "Ungrouped items")} - ${__html(locales, "Summary")}</th>
                     </tr>
                     <tr>
-                        <th scope="col">${__html(locale, "Width")}</th>
-                        <th scope="col">${__html(locale, "Total meters")}</th>
-                        <th scope="col">${__html(locale, "Qty")}</th>
-                        <th scope="col">${__html(locale, "t/m")}</th>
+                        <th scope="col">${__html(locales, "Width")}</th>
+                        <th scope="col">${__html(locales, "Total meters")}</th>
+                        <th scope="col">${__html(locales, "Qty")}</th>
+                        <th scope="col">${__html(locales, "t/m")}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -623,7 +622,7 @@ export function getProductionItemsTable(settings, order, locale) {
         </table>
         
         <!-- Summary Table -->
-        <h4 class="mt-3 mb-1">${__html(locale, "Summary")}</h4>
+        <h4 class="mt-3 mb-1">${__html(locales, "Summary")}</h4>
         <table class="items-table summary-table">
             ${summaryContent}
         </table>

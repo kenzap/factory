@@ -40,3 +40,7 @@ Compliance management
 - Worklog entries may be saved without color/coating after a warning confirmation.
 - Order documents are blocked when the items table has unsaved edits; saving re-enables document generation.
 - Cutting journal coating filter includes an `Others` tab that shows both `Client Material` and `Other` blocks.
+- Manufacturing quick-work buttons (`M/L/K/N/G`) can open Work Log with grouped items by product title from the same order; Work Log presents a popup to select all or specific grouped products and create multiple records in one action.
+- Feedback request automation
+: Every 15 minutes, backend cron claims one order created at least 7 days ago with no `email_ask_feedback` flag and sends a client feedback request email.
+: Subject/body uses Settings -> Templates keys `ask_feedback_order_client_email_subject` and `ask_feedback_order_client_email_template` with placeholders like `{{order_id}}`, `{{review_link}}`, and `{{client_first_name}}`.

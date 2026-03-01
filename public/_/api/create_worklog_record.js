@@ -14,9 +14,11 @@ export const createWorklogRecord = (data, cb) => {
             // hide UI loader
             hideLoader();
 
-            if (response.success) cb(response);
-
+            if (typeof cb === 'function') cb(response);
             if (!response.success) parseApiError(response);
         })
-        .catch(error => { parseApiError(error); });
+        .catch(error => {
+            if (typeof cb === 'function') cb({ success: false, error: error?.message || 'Network error' });
+            parseApiError(error);
+        });
 }

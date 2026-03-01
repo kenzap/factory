@@ -1,7 +1,52 @@
-export const CDN = "https://cdn.kenzap.cloud";
-export const FILES = "https://render.factory.app.kenzap.cloud";
+
+export const EU_COUNTRY_CODES = new Set([
+    'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR',
+    'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK',
+    'SI', 'ES', 'SE'
+]);
+
+const getConfiguredCdnBase = () => {
+    if (typeof window === 'undefined') return '';
+    const fromStorage = window.localStorage?.getItem('cdn') || '';
+    return fromStorage.trim().replace(/\/+$/, '');
+};
+
+export const CDN = getConfiguredCdnBase();
+export const FILES = CDN ? (CDN.endsWith('/files') ? CDN : `${CDN}/files`) : '/files';
 export const API_KEY = "";
 export const version = "2.0.0";
+
+export const fileUrl = (filename, updated = '') => {
+    const cacheBust = updated ? `?${updated}` : '';
+    return `${FILES}/${encodeURIComponent(filename)}${cacheBust}`;
+};
+
+export const normalizeStorageImageUrl = (input) => {
+    if (!input || typeof input !== 'string') return input;
+
+    try {
+        const parsed = new URL(input);
+        const path = parsed.pathname || '';
+        const withSpaceFolder = path.match(/\/S\d+\/([^/]+)$/);
+        const fileName = path.split('/').pop();
+
+        if (withSpaceFolder && withSpaceFolder[1]) {
+            return fileUrl(withSpaceFolder[1], parsed.search ? parsed.search.replace('?', '') : '');
+        }
+
+        const knownStorageHost = ['cdn.skarda.design', 'kenzap-sites', 'render.factory.app.kenzap.cloud']
+            .some((token) => parsed.hostname.includes(token));
+        const imageExt = /\.(webp|png|jpe?g|gif|svg)$/i.test(fileName || '');
+
+        if (knownStorageHost && fileName && imageExt) {
+            return fileUrl(fileName, parsed.search ? parsed.search.replace('?', '') : '');
+        }
+    } catch (_err) {
+        // Input is likely a relative path; leave untouched.
+    }
+
+    return input;
+};
 
 export const spaceID = () => {
 
@@ -749,7 +794,7 @@ export const getAPI = () => {
  */
 export const getStorage = () => {
 
-    return "https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com";
+    return FILES;
 }
 
 /**

@@ -33,13 +33,11 @@ export const loadIntegrationManifests = () => {
             fs.readFileSync(manifestPath, 'utf8')
         )
 
-        if (manifest.config) {
-            manifests.push({
-                name: manifest.name,
-                slug: name,
-                config: manifest.config
-            })
-        }
+        manifests.push({
+            name: manifest.name || name,
+            slug: name,
+            config: manifest.config || {}
+        })
     }
 
     return manifests

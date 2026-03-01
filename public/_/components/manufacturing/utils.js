@@ -97,5 +97,17 @@ export const refreshOrders = () => {
     document.querySelector('#companySearch').value = '';
     document.querySelector('#orderSearch').value = '';
 
+    state.resetScrollOnNextLoad = true;
+
     state.actionGetOrders();
+}
+
+export const scrollOrdersToTop = () => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+
+    const app = document.getElementById('app');
+    if (app) app.scrollTop = 0;
+
+    const container = document.getElementById('ordersContainer');
+    if (container) container.scrollTop = 0;
 }

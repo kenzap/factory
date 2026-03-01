@@ -6,11 +6,6 @@ async function verifyProducts() {
     const client = getDbConnection();
     let products = [], meta = {}, locale = 'default';
 
-    // js->'data'->'locales'->$3->>'sdesc' AS sdesc,
-    // js->'data'->'title' AS title_default,
-    // js->'data'->'status' AS status,
-    // js->'data'->'var_price' AS var_price,
-
     // Build base query
     let query = `
         SELECT
@@ -33,10 +28,6 @@ async function verifyProducts() {
         // get products
         const result = await client.query(query, params);
         products = result.rows;
-
-        // get total records
-        // const countResult = await client.query(countQuery, countParams);
-        // total_records = parseInt(countResult.rows[0].count, 10);
 
         meta = {};
 

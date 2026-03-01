@@ -41,7 +41,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     imagePreview.style.objectFit = "cover";
     imagePreview.style.border = "1px solid #ddd";
     imagePreview.style.borderRadius = "4px";
-    imagePreview.src = "https://cdn.skarda.design/8e0729adbf79275c11a83d69df75f0c09061780a-polyester-2h3-polyester-2h3-1500.webp"; // Set default image source if needed
+    imagePreview.src = "/assets/img/placeholder.jpg";
     imagePreview.style.display = "none"; // Initially hidden
 
     // Create large preview image overlay

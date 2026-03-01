@@ -238,6 +238,9 @@ export const getUserByPhone = async (phone) => {
             LIMIT 1
         `;
 
+        console.log(`Executing getUserByPhone with phone: ${phone}, sid: ${sid}`);
+
+
         const userResult = await client.query(userQuery, ['user', sid, phone]);
         if (userResult.rows.length > 0) {
             const row = userResult.rows[0];

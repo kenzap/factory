@@ -1,6 +1,6 @@
-import OSS from 'ali-oss';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, log, log_error, sid } from '../_/helpers/index.js';
+import { createStorageProvider } from '../_/helpers/storage/index.js';
 
 /**
  * Delete file from the database and cloud storage
@@ -21,7 +21,7 @@ async function deleteFile(id) {
     let query = `
         DELETE FROM data 
         WHERE ref = $1 AND sid = $2 AND _id = $3
-        RETURNING _id, js->'data'->'e' as ext
+        RETURNING _id, js->'data'->>'e' as ext, js->'data'->>'s' as sizes
     `;
 
     const params = ['file', sid, id];
@@ -41,26 +41,58 @@ async function deleteFile(id) {
     return response;
 }
 
-// Alibaba Cloud OSS delete function
+const storageClient = createStorageProvider();
+
 async function deleteFromBucket(id) {
+    if (!storageClient.isConfigured) {
+        return { success: false, error: `Storage provider "${storageClient.provider}" is not configured` };
+    }
 
     try {
+        const folderPrefix = `S${sid}/`;
+        const objectKey = `${folderPrefix}${id}`;
+        const fileId = String(id).split('.')[0];
+        const escapedFileId = fileId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-        const client = new OSS({
-            region: process.env.BUCKET_REGION,
-            accessKeyId: process.env.BUCKET_KEY,
-            accessKeySecret: process.env.BUCKET_SECRET,
-            bucket: process.env.BUCKET_NAME,
-            secure: true,
+        const keysInFolder = typeof storageClient.listObjects === 'function'
+            ? await storageClient.listObjects(folderPrefix)
+            : [];
+
+        const relatedRegex = new RegExp(
+            `${folderPrefix}(?:` +
+            `${escapedFileId}\\.` + // original file: <id>.<ext>
+            `|${escapedFileId}-1-` + // generated from upload without source prefix
+            `|[a-z0-9_-]+-${escapedFileId}-1-` + // generated with arbitrary source prefix
+            `|sketch-${escapedFileId}-1-` + // sketch variants
+            `|post-${escapedFileId}-` + // post variants
+            `)`
+        );
+
+        const candidateKeys = new Set([objectKey]);
+        keysInFolder.forEach((key) => {
+            if (relatedRegex.test(key)) candidateKeys.add(key);
         });
 
-        // Assuming the object key is based on the id
-        const objectKey = `S${sid}/${id}`;
+        const deleted = [];
+        const failed = [];
 
-        const result = await client.delete(objectKey);
-        return { success: true, result };
+        for (const key of candidateKeys) {
+            try {
+                await storageClient.deleteObject(key);
+                deleted.push(key);
+            } catch (error) {
+                failed.push({ key, error: error.message });
+            }
+        }
+
+        return {
+            success: failed.length === 0,
+            deleted,
+            failed,
+        };
     } catch (error) {
-        log_error(`OSS delete failed: ${error.message}`);
+        log_error(`${storageClient.provider} delete failed: ${error.message}`);
+        return { success: false, error: error.message };
     }
 }
 

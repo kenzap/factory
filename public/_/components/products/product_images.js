@@ -1,4 +1,4 @@
-import { __html, getAPI, getCookie, getProductId, getStorage, hideLoader, onChange, onClick, simulateClick, spaceID, toast } from "../../helpers/global.js";
+import { __html, FILES, getAPI, getCookie, getProductId, hideLoader, onChange, onClick, simulateClick, spaceID, toast } from "../../helpers/global.js";
 
 export class ProductImages {
 
@@ -39,7 +39,9 @@ export class ProductImages {
         let t = '';
         for (let i = 0; i < 5; i++) {
 
-            let img = (product.img !== undefined && product.img[i] == 'true') ? 'https://preview.kenzap.cloud/S' + spaceID() + '/_site/images/product-' + product.id + '-' + (i + 1) + '-100x100.webp?' + product.updated : 'https://account.kenzap.com/images/placeholder.jpg';
+            let img = (product.img !== undefined && product.img[i] == 'true')
+                ? `${FILES}/S${spaceID()}/product-${product.id}-${(i + 1)}-100x100.webp?${product.updated}`
+                : '/assets/img/placeholder.jpg';
 
             t += `\
             <div class="p-img-cont float-start">\
@@ -66,7 +68,7 @@ export class ProductImages {
         for (let fi = 0; fi < 5; fi++) {
 
             // async load image to verify if it exists on CDN 
-            let image_url = getStorage() + '/S' + sid + '/product-' + id + '-' + (parseInt(fi) + 1) + '-250.webp?' + product.updated;
+            let image_url = `${FILES}/S${sid}/product-${id}-${(parseInt(fi) + 1)}-250.webp?${product.updated}`;
             setTimeout(function (img, sel, _fi) {
 
                 let allow = true;
@@ -83,7 +85,7 @@ export class ProductImages {
             }, 300, image_url, ".images-", fi);
 
             // async load image to verify if it exists on CDN 
-            let image_url_jpeg = getStorage() + '/S' + sid + '/product-' + id + '-' + (parseInt(fi) + 1) + '-250.jpeg?' + product.updated;
+            let image_url_jpeg = `${FILES}/S${sid}/product-${id}-${(parseInt(fi) + 1)}-250.jpeg?${product.updated}`;
             setTimeout(function (img, sel, _fi) {
 
                 let allow = true;
@@ -213,7 +215,7 @@ export class ProductImages {
 
         let index = e.currentTarget.parentElement.dataset.index;
         document.querySelector('.aif-' + index).value = '';
-        document.querySelector('.images-' + index).setAttribute('src', 'https://account.kenzap.com/images/placeholder.jpg');
+        document.querySelector('.images-' + index).setAttribute('src', '/assets/img/placeholder.jpg');
         e.currentTarget.classList.add("hd");
 
         // $(this).addClass("hd");

@@ -30,7 +30,7 @@ async function getProductBundles(products) {
                     pb.js->'data'->>'bundle_color' AS color,
                     pb.js->'data'->>'bundle_coating' AS coating,
                     pb.js->'data'->>'bundle_qty' AS qty,
-                    ep.js->'data'->'locales'->$3->>'title' AS title,
+                    COALESCE(ep.js->'data'->'locales'->$3->>'title', ep.js->'data'->'locales'->'default'->>'title') AS title,
                     ep.js->'data'->'var_price' AS var_price
                 FROM data pb
                 LEFT JOIN data ep ON pb.js->'data'->>'bundle_id' IS NOT NULL 

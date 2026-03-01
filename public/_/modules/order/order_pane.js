@@ -61,6 +61,14 @@ export class OrderPane {
         this.listeners();
     }
 
+    getVariationDimensionLabel = (index, fallback) => {
+        const rawLabel = state.settings?.[`variation_dim_${index}_name`];
+        if (typeof rawLabel !== "string") return fallback;
+
+        const label = rawLabel.trim();
+        return label ? label : fallback;
+    }
+
     markOrderAsDirty = () => {
         state.orderTableDirty = true;
         bus.emit('order:table:changed', true);
@@ -88,6 +96,10 @@ export class OrderPane {
     table = () => {
 
         let self = this;
+        const variationDimsCount = Number(state.settings?.variation_dims_count || 2);
+        const hasSecondDimension = variationDimsCount >= 2;
+        const dimension1Label = this.getVariationDimensionLabel(1, "Coating");
+        const dimension2Label = this.getVariationDimensionLabel(2, "Color");
 
         // Initialize Tabulator
         state.table = new TabulatorFull("#order-table", {
@@ -111,10 +123,11 @@ export class OrderPane {
 
                 },
                 {
-                    title: __html("Color"),
+                    title: __html(dimension2Label),
                     field: "color",
                     width: 80,
                     headerSort: false,
+                    visible: hasSecondDimension,
                     editor: suggestionEditor,
                     editorParams: {
                         suggestions: this.colorSuggestions,
@@ -144,7 +157,7 @@ export class OrderPane {
                     }
                 },
                 {
-                    title: __html("Coating"),
+                    title: __html(dimension1Label),
                     field: "coating",
                     width: 100,
                     headerSort: false,
@@ -384,8 +397,8 @@ export class OrderPane {
                                 </svg>
                                 <ul class="dropdown-menu ${isAllowedToEdit(cell.getRow().getData()).allow ? '' : 'd-none'}" aria-labelledby="tableActions${i}">
                                     <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-check2-square"></i> ${__html('CM')}</a></li>
-                                    <li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-palette"></i> ${__html('Color')}</a></li>
-                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-droplet"></i> ${__html('Coating')}</a></li>
+                                    ${hasSecondDimension ? `<li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-palette"></i> ${__html(dimension2Label)}</a></li>` : ''}
+                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-droplet"></i> ${__html(dimension1Label)}</a></li>
                                     <li><a class="dropdown-item po update-discount" href="#" data-index="${i}"><i class="bi bi-percent"></i> ${__html('Discount')}</a></li>
                                     <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-pencil-square"></i> ${__html('Sketch')}</a></li>
                                     <li><hr class="dropdown-divider"></li>

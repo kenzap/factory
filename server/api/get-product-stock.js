@@ -30,8 +30,8 @@ async function getProductStock(products) {
             const query = `
             SELECT
                 _id,
-                js->'data'->'locales'->$3->>'title' AS title,
-                js->'data'->'locales'->$3->>'sdesc' AS sdesc,
+                COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title') AS title,
+                COALESCE(js->'data'->'locales'->$3->>'sdesc', js->'data'->'locales'->'default'->>'sdesc') AS sdesc,
                 js->'data'->'title' AS title_default,
                 js->'data'->'var_price' AS var_price
             FROM data

@@ -15,12 +15,12 @@
 export const createConfigInterface = (values, integrationName) => {
     return {
         get(key) {
-            if (!(key in values)) {
-                // throw new Error(
-                //     `Config "${key}" not declared for ${integrationName}`
-                // )
-            }
-            return values[integrationName + ":" + key]
+
+            if (values[integrationName + ":" + key]) return values[integrationName + ":" + key]
+
+            if (values[key]) return values[key]
+
+            return undefined;
         }
     }
 }

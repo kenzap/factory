@@ -21,8 +21,8 @@ async function getProductSuggestions(filters) {
     let query = `
             SELECT
                 _id,
-                js->'data'->'locales'->$3->>'title' as title,
-                js->'data'->'locales'->$3->>'sdesc' as sdesc,
+                COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title') as title,
+                COALESCE(js->'data'->'locales'->$3->>'sdesc', js->'data'->'locales'->'default'->>'sdesc') as sdesc,
                 js->'data'->'formula_width' as formula_width,
                 js->'data'->'formula_length' as formula_length,
                 js->'data'->'formula_price' as formula_price,
@@ -45,7 +45,7 @@ async function getProductSuggestions(filters) {
         const keywords = filters.s.trim().split(/\s+/);
         const conditions = keywords.map((_, index) => {
             params.push(`%${keywords[index]}%`);
-            return `unaccent(js->'data'->'locales'->$3->>'title') ILIKE unaccent($${params.length})`;
+            return `unaccent(COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title')) ILIKE unaccent($${params.length})`;
         });
         query += ` AND (${conditions.join(' AND ')})`;
     }
@@ -54,15 +54,15 @@ async function getProductSuggestions(filters) {
             ORDER BY 
                 ${filters.s && filters.s.trim() !== '' ?
             `CASE 
-                WHEN unaccent(lower(js->'data'->'locales'->$3->>'title')) LIKE unaccent(lower($${params.length + 1})) THEN 1
-                WHEN unaccent(lower(js->'data'->'locales'->$3->>'title')) LIKE unaccent(lower('%' || $${params.length + 1} || '%')) THEN 2
+                WHEN unaccent(lower(COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title'))) LIKE unaccent(lower($${params.length + 1})) THEN 1
+                WHEN unaccent(lower(COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title'))) LIKE unaccent(lower('%' || $${params.length + 1} || '%')) THEN 2
                 ELSE 3
             END ASC,` : ''}
                 CASE 
                     WHEN js->'data'->>'priority' = '' OR js->'data'->>'priority' IS NULL THEN 1000000 
                     ELSE CAST(js->'data'->>'priority' AS INTEGER)
                 END ASC,
-                js->'data'->'locales'->$3->>'title' ASC
+                COALESCE(js->'data'->'locales'->$3->>'title', js->'data'->'locales'->'default'->>'title') ASC
             LIMIT 50`;
 
     if (filters.s && filters.s.trim() !== '') {

@@ -2,6 +2,7 @@ import express from 'express';
 import fs from 'fs';
 import path from 'path';
 import { getDbConnection } from '../index.js';
+import { getSettings } from '../settings.js';
 import { createExtensionContext } from './context.js';
 import { createCronManager } from './cron.js';
 import { checkFileExists } from './file.js';
@@ -33,12 +34,21 @@ export const loadExtensions = async (directory, app, logger, scheduledJobs, file
     if (!fs.existsSync(directory)) return
 
     const cronManager = createCronManager(scheduledJobs, logger);
+    const settings = await getSettings();
 
     const integrationFolders = fs.readdirSync(directory, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name)
 
     for (const folder of integrationFolders) {
+        const enabledRaw = settings?.[`${folder}:enabled`];
+        const isEnabled = !['', '0', 0, false, 'false'].includes(enabledRaw);
+
+        if (!isEnabled) {
+            logger.info(`Skipped integration (disabled): ${folder}`);
+            continue;
+        }
+
         const integrationPath = path.join(directory, folder, 'index.js')
 
         if (!checkFileExists(integrationPath, fileCache)) {

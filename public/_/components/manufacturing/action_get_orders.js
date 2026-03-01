@@ -7,6 +7,7 @@ import { Session } from "../../modules/session.js";
 import { isAuthorized } from "../../modules/unauthorized.js";
 import { renderOrders } from "./render_orders.js";
 import { renderStats } from "./render_stats.js";
+import { scrollOrdersToTop } from "./utils.js";
 
 export const actionGetOrders = async () => {
 
@@ -55,6 +56,11 @@ export const actionGetOrders = async () => {
 
         document.getElementById('loadingIndicator').style.display = 'none';
         document.getElementById('ordersContainer').style.display = 'block';
+
+        if (state.resetScrollOnNextLoad) {
+            scrollOrdersToTop();
+            state.resetScrollOnNextLoad = false;
+        }
 
         if (state.openOrderById) { document.querySelector('#orderSearch').value = state.openOrderById; state.Search.byOrderId(state.openOrderById); state.openOrderById = null; }
     });

@@ -18,7 +18,7 @@ import { Inventory } from "../_/modules/manufacturing/inventory.js";
 import { state } from "../_/modules/manufacturing/state.js";
 import { Modal } from "../_/modules/modal.js";
 
-/** 
+/**  
  * Manufacturing log. 
  * 
  * @version 1.0
@@ -48,6 +48,12 @@ class Manufacturing {
     }
 
     init() {
+
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+        state.resetScrollOnNextLoad = true;
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
         new Modal();
 
@@ -169,7 +175,9 @@ class Manufacturing {
             this.openWindow('_blank', `/cutting-list/?color=${color}&coating=${coating}&slug=${slugify(coating + " " + color)}`); return;
         }
 
-        new PreviewWorkLog({ type, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: state.user.id }, (response) => {
+        const groupedItems = this.getGroupedWorkItems(order_id, item_id);
+
+        new PreviewWorkLog({ type, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: state.user.id, grouped_items: groupedItems }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;
@@ -223,6 +231,46 @@ class Manufacturing {
     signOut(e) { signOut(e) }
 
     async getOrderDetails(orderId) { state.actionGetOrderDetails(orderId) }
+
+    getItemDisplayName(item) {
+        return `${item?.title || ''}${item?.sdesc?.length ? ' - ' + item.sdesc : ''}`.trim();
+    }
+
+    getItemDimensions(item) {
+        const width = parseFloat(item?.formula_width_calc || 0);
+        const length = parseFloat(item?.formula_length_calc || 0);
+
+        if (width > 0 && length > 0) return `${width} x ${length}`;
+        if (width > 0) return `${width}`;
+        if (length > 0) return `${length}`;
+        return '';
+    }
+
+    getGroupedWorkItems(order_id, item_id) {
+        const order = state.orders.find(o => o._id === order_id);
+        if (!order || !Array.isArray(order.items)) return [];
+
+        const anchorItem = order.items.find(i => i.id === item_id);
+        if (!anchorItem) return [];
+
+        const anchorGroup = String(anchorItem.group || '').trim();
+        if (!anchorGroup) return [];
+
+        return order.items
+            .filter(item => String(item.group || '').trim() === anchorGroup)
+            .map(item => ({
+                id: order.id,
+                order_id: order._id,
+                item_id: item.id,
+                product_id: item._id,
+                product_name: this.getItemDisplayName(item),
+                group: item.group || '',
+                color: item.color || '',
+                coating: item.coating || '',
+                dimensions: this.getItemDimensions(item),
+                qty: parseFloat(item.qty || 0)
+            }));
+    }
 
 }
 

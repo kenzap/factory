@@ -1,3 +1,4 @@
+import { extractCountryFromVAT } from '../../../../packages/tax-core/src/index.js';
 import { deleteClient } from "../../api/delete_client.js";
 import { getBankDetails } from "../../api/get_bank_details.js";
 import { getClientDetails } from "../../api/get_client_details.js";
@@ -8,9 +9,7 @@ import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
 import { ClientNotifications } from "../../components/order/client_notifications.js";
-import { __html, attr, countries, html, onChange, onClick, toast } from "../../helpers/global.js";
-import { extractCountryFromVAT } from '../../../../packages/tax-core/src/index.js';
-import { isEmail, isPhone } from "../../helpers/validation.js";
+import { __html, attr, countries, EU_COUNTRY_CODES, html, onChange, onClick, toast } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 import { state } from "../../modules/order/state.js";
 
@@ -67,7 +66,7 @@ export class ClientPane {
                     state.client.fname = nameParts.slice(1).join(' ') || '';
                 }
 
-                console.log('Client data after fetch:', state.order);
+                // console.log('Client data after fetch:', state.order);
 
                 bus.emit('order:client:data_loaded');
             }
@@ -235,11 +234,16 @@ export class ClientPane {
 
             // udpate badge
             document.querySelector('client-badge').innerHTML = /*html*/`<i class="bi ${entity == "company" ? "bi-building" : "bi-person fs-4"} me-2"></i> `;
+            this.updateVerifyActionsState();
         });
 
         onChange('.vat_status', (event) => {
 
             state.client.vat_status = event.target.checked ? '1' : '0';
+        });
+
+        onChange('#tax_region', () => {
+            this.updateVerifyActionsState();
         });
 
         // From the client side
@@ -350,9 +354,34 @@ export class ClientPane {
         });
 
         this.firstLoad = true;
+        this.updateVerifyActionsState();
+    }
+
+    isEuTaxRegion = (countryCode) => {
+        return EU_COUNTRY_CODES.has(String(countryCode || '').toUpperCase());
+    }
+
+    canVerifyVat = () => {
+        const entity = document.querySelector('input[name="entity"]:checked')?.dataset?.entity || state.client.entity;
+        const taxRegion = document.getElementById('tax_region')?.value || state.client.tax_region || state.settings.tax_region || '';
+        return entity === 'company' && this.isEuTaxRegion(taxRegion);
+    }
+
+    updateVerifyActionsState = () => {
+        const canVerify = this.canVerifyVat();
+        const verifyButtons = document.querySelectorAll('.verify_company, .verify_company_locally');
+        verifyButtons.forEach(btn => {
+            btn.style.opacity = canVerify ? '1' : '.35';
+            btn.style.pointerEvents = canVerify ? 'auto' : 'none';
+            btn.setAttribute('title', canVerify ? '' : __html('VAT verification is available only for EU tax regions.'));
+        });
     }
 
     verifyCompany = () => {
+        if (!this.canVerifyVat()) {
+            toast(__html('VAT verification is available only for EU tax regions.'));
+            return;
+        }
 
         // entity
         const entity = document.querySelector('input[name="entity"]:checked');
@@ -447,6 +476,10 @@ export class ClientPane {
     }
 
     showVerifiedBadge = () => {
+        if (!this.canVerifyVat()) {
+            document.querySelector('verified-badge').innerHTML = '';
+            return;
+        }
 
         // Early return if not a company with VAT status
         if (state.client.reg_number?.length < 2 || state.client.entity !== 'company') {
@@ -496,16 +529,6 @@ export class ClientPane {
         // Perform validation checks
         if (entity.dataset.entity == "company" && !reg_number) {
             document.getElementById('reg_number').classList.add('is-invalid');
-            hasErrors = true;
-        }
-
-        if (email && !isEmail(email)) {
-            document.getElementById('email').classList.add('is-invalid');
-            hasErrors = true;
-        }
-
-        if (clientPhoneRight && !isPhone(clientPhoneRight)) {
-            document.getElementById('clientPhoneRight').classList.add('is-invalid');
             hasErrors = true;
         }
 

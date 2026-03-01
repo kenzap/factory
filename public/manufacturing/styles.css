@@ -13,23 +13,23 @@
 
     /* URGENT — Red (low natural luminance, needs less correction) */
     --status-urgent-border: #a93226;         /* slightly darker/cooler */
-    --status-urgent-bg: rgba(231, 76, 60, 0.35);
+    --status-urgent-bg: rgba(231, 76, 60, 0.30);
 
     /* MANUFACTURING — Blue (very low luminance, needs more opacity to feel present) */
     --status-manufacturing-border: #1a6fa3;
-    --status-manufacturing-bg: rgba(52, 152, 219, 0.22); /* up from 0.20 */
+    --status-manufacturing-bg: rgba(52, 152, 219, 0.01); /* up from 0.20 */
 
     /* TODAY — Yellow/Amber (extremely high luminance, must dial back hard) */
     --status-today-border: #b7770d;          /* more muted, less glaring */
-    --status-today-bg: rgba(243, 156, 18, 0.22); /* down from 0.40 */
+    --status-today-bg: rgba(243, 156, 18, 0.17); /* down from 0.40 */
 
     /* READY — Green (high luminance, pull back moderately) */
     --status-ready-border: #1a8a47;
-    --status-ready-bg: rgba(39, 174, 96, 0.28); /* down from 0.40 */
+    --status-ready-bg: rgba(39, 174, 96, 0.23); /* down from 0.40 */
 
     /* ISSUED — Gray (neutral, near-balanced already) */
     --status-issued-border: #4e555b;
-    --status-issued-bg: rgba(108, 117, 125, 0.38);
+    --status-issued-bg: rgba(108, 117, 125, 0.33);
 }
 
 body {

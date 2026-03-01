@@ -10,7 +10,7 @@ export const EU_COUNTRIES = {
     CY: { name: "Cyprus", standard: 19, reduced: [5, 9] },
     CZ: { name: "Czech Republic", standard: 21, reduced: [10, 15] },
     DK: { name: "Denmark", standard: 25, reduced: [] },
-    EE: { name: "Estonia", standard: 22, reduced: [9] },
+    EE: { name: "Estonia", standard: 24, reduced: [9, 13] },
     FI: { name: "Finland", standard: 25.5, reduced: [10, 14] },
     FR: { name: "France", standard: 20, reduced: [5.5, 10] },
     DE: { name: "Germany", standard: 19, reduced: [7] },
@@ -19,7 +19,7 @@ export const EU_COUNTRIES = {
     IE: { name: "Ireland", standard: 23, reduced: [9, 13.5] },
     IT: { name: "Italy", standard: 22, reduced: [4, 5, 10] },
     LV: { name: "Latvia", standard: 21, reduced: [5, 12] },
-    LT: { name: "Lithuania", standard: 21, reduced: [5, 9] },
+    LT: { name: "Lithuania", standard: 21, reduced: [5, 12] },
     LU: { name: "Luxembourg", standard: 17, reduced: [8, 14] },
     MT: { name: "Malta", standard: 18, reduced: [5, 7] },
     NL: { name: "Netherlands", standard: 21, reduced: [9] },
@@ -50,6 +50,9 @@ const findRegimeByTaxId = (taxId, country) => {
 };
 
 const getStandardRegime = (countryCode) => {
+    const explicitStandard = TAX_REGIMES[`${countryCode}_STANDARD`];
+    if (explicitStandard) return explicitStandard;
+
     const country = EU_COUNTRIES[countryCode];
     if (!country) {
         return {

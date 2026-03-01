@@ -15,7 +15,9 @@ export const getAPI = () => {
  */
 export const getStorage = () => {
 
-    return localStorage.getItem("STORAGE") ? localStorage.getItem("STORAGE") : "https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com";
+    const cdn = (localStorage.getItem('cdn') || '').trim().replace(/\/+$/, '');
+    if (!cdn) return '/files';
+    return cdn.endsWith('/files') ? cdn : `${cdn}/files`;
 }
 
 /**
@@ -503,7 +505,7 @@ export const CDN = (region = '') => {
 
     if (localStorage.getItem('cdn')) return localStorage.getItem('cdn');
 
-    return 'https://kenzap-sites.oss-ap-southeast-1.aliyuncs.com';
+    return '';
 }
 
 /**

@@ -8,16 +8,6 @@
     "entity": "company",
     "drivers": [],
     "bank_acc": "",
-    "contacts": [
-      {
-        "id": "6cd7ad",
-        "name": "",
-        "email": "",
-        "notes": "",
-        "phone": "28443432",
-        "primary": true
-      }
-    ],
     "addresses": [],
     "bank_name": "",
     "discounts": {
@@ -30,11 +20,57 @@
       "rainwater-system-round": 0, 
       "rainwater-system-square": 0
     },
-    "legal_name": "ĀDAŽU ĪPAŠUMI SIA",
+    "legal_name": "Test Pavel",
     "reg_number": "50000000000",
     "vat_number": "LV50000000000",
     "vat_status": "0",
-    "reg_address": "Demo iela 6, Ādaži, Ādažu nov., LV-2121"
+    "reg_address": "Demo iela 6, Ādaži, Ādažu nov., LV-2121",
+    "type": null,
+    "fname": "Pavel",
+    "lname": "Test",
+    "reg_num": null,
+    "vat_last_verified": null,
+    "tax_region": null,
+    "contacts": [
+        {
+            "id": "sqrQLk",
+            "name": "Test Pavel",
+            "email": "dev@example.com",
+            "notes": "",
+            "phone": "6500000000",
+            "primary": true
+        }
+    ],
+    "notifications": {
+        "promotions": {
+            "email": true,
+            "whatsapp": true
+        },
+        "order_ready": {
+            "email": true,
+            "whatsapp": true
+        },
+        "ask_feedback": {
+            "email": true,
+            "whatsapp": true
+        },
+        "order_received": {
+            "email": true,
+            "whatsapp": true
+        },
+        "order_cancelled": {
+            "email": true,
+            "whatsapp": true
+        },
+        "order_confirmed": {
+            "email": true,
+            "whatsapp": true
+        },
+        "payment_received": {
+            "email": true,
+            "whatsapp": true
+        }
+    }
   },
   "meta": {
     "created": 1765027926,

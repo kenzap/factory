@@ -2,8 +2,8 @@ import pkg from 'pg';
 
 const { Client } = pkg;
 
-export const sid = 1002170; // Default space ID
-export const locale = "lv"; // Default locale
+export const sid = process.env.SID || 1000000; // Default space ID
+export const locale = process.env.LOCALE || "en"; // Default locale
 
 export function __html(locales, key, ...p) {
     // This function should return the HTML for the given key
@@ -284,6 +284,8 @@ export function getMinPrice(state, item, html = false) {
 
             obj.formula = obj.formula.replace(/COATING/g, obj.COATING);
             obj.formula_price = obj.formula_price.replace(/COATING/g, obj.COATING);
+            obj.formula = obj.formula.replace(/MATERIAL/g, obj.COATING);
+            obj.formula_price = obj.formula_price.replace(/MATERIAL/g, obj.COATING);
             obj.formula_price = obj.formula_price.replace(/M2/g, item.formula + "/1000000");
 
             item.input_fields.forEach(field => {

@@ -34,21 +34,25 @@ class WorkLog {
 
         this.btnWorkLogHTML = `<i class="bi bi-plus-circle me-1"></i>`;
 
+        const params = new URLSearchParams(window.location.search);
+
         this.record = {
-            id: new URLSearchParams(window.location.search).get('id') || "",
-            item_id: new URLSearchParams(window.location.search).get('item_id') || "",
-            order_id: new URLSearchParams(window.location.search).get('order_id') || "",
-            product_id: new URLSearchParams(window.location.search).get('product_id') || "",
-            product_name: unescape(new URLSearchParams(window.location.search).get('product_name')) || "",
-            color: new URLSearchParams(window.location.search).get('color') || "",
-            coating: new URLSearchParams(window.location.search).get('coating') || "",
-            qty: new URLSearchParams(window.location.search).get('qty') || 0,
-            type: new URLSearchParams(window.location.search).get('type') || '',
-            tag: new URLSearchParams(window.location.search).get('tag') || '',
-            label: new URLSearchParams(window.location.search).get('label') || '',
+            id: params.get('id') || "",
+            item_id: params.get('item_id') || "",
+            order_id: params.get('order_id') || "",
+            product_id: params.get('product_id') || "",
+            product_name: unescape(params.get('product_name')) || "",
+            color: params.get('color') || "",
+            coating: params.get('coating') || "",
+            qty: params.get('qty') || 0,
+            type: params.get('type') || '',
+            tag: params.get('tag') || '',
+            label: params.get('label') || '',
         }
 
-        this.filters.user_id = new URLSearchParams(window.location.search).get('user_id') || "";
+        this.groupCandidates = this.parseGroupCandidates(params.get('group_items'));
+
+        this.filters.user_id = params.get('user_id') || "";
 
         // pre-select user if called from manufacturing journal
         // if (!this.filters.user_id) this.filters.user_id = this.record.id ? this.user.id : "";
@@ -56,7 +60,7 @@ class WorkLog {
 
         // console.log('Worklog record initialized:', this.record);
 
-        this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
+        this.mini = params.get('mini') || false; // Order ID if applicable
 
         this.firstLoad = true;
 
@@ -86,6 +90,8 @@ class WorkLog {
             document.querySelector('#app .container').classList.remove('mt-4');
             document.querySelector('#app .container').classList.remove('container');
         }
+
+        this.renderGroupedWorkHint();
 
         this.listeners();
 
@@ -130,96 +136,350 @@ class WorkLog {
         });
 
         // Add work log record
-        onClick('.btn-add-worklog-record', (e) => {
-
-            // console.log('Add work log record clicked');
-
+        onClick('.btn-add-worklog-record', async (e) => {
             e.preventDefault();
 
-            // Validate required fields
-            const requiredFields = [
-                { selector: '#productName', name: 'Product name' },
-                { selector: '#qty', name: 'Quantity' },
-                { selector: '#type', name: 'Type' }
-            ];
+            const baseRecord = this.prepareBaseRecord();
+            if (!baseRecord) return;
 
-            for (const field of requiredFields) {
-                const element = document.querySelector(field.selector);
-                if (!element || !element.value.trim()) {
-                    toast(`${field.name} is required`);
-                    element?.focus();
+            this.setSubmitPendingState(e.currentTarget, true);
+
+            try {
+                if (this.groupCandidates.length > 1) {
+                    await this.openGroupedCreateModal(baseRecord);
                     return;
                 }
-            }
 
-            // Validate quantity is a positive number
-            const qtyValue = parseFloat(document.querySelector('#qty').value);
-            if (isNaN(qtyValue) || qtyValue <= 0) {
-                toast('Quantity must be a positive number');
-                document.querySelector('#qty').focus();
-                return;
-            }
-
-            // Validate time is a positive number
-            const timeValue = parseFloat(document.querySelector('#time').value);
-            if (document.querySelector('#time').value.length) if (isNaN(timeValue) || timeValue <= 0) {
-                toast('Time must be a positive number');
-                document.querySelector('#time').focus();
-                return;
-            }
-
-            const colorValue = document.querySelector('#productColor').value.trim();
-            const coatingValue = document.querySelector('#productCoating').value.trim();
-            if (!colorValue || !coatingValue) {
-                const shouldContinue = window.confirm('Color or coating is empty. Save this record anyway?');
-                if (!shouldContinue) {
-                    (!colorValue ? document.querySelector('#productColor') : document.querySelector('#productCoating'))?.focus();
+                const response = await this.createWorklogRecordAsync(baseRecord);
+                if (!response?.success) {
+                    toast(__html(`Failed to create work log record: %1$s`, response?.error || 'Unknown error'));
+                    this.setSubmitPendingState(e.currentTarget, false);
                     return;
                 }
+
+                this.data();
+            } catch (err) {
+                this.setSubmitPendingState(e.currentTarget, false);
+                toast(__html('Failed to create work log record'));
             }
+        });
+    }
 
-            let user_id = document.getElementById('filterEmployee').value || this.user.id;
+    parseGroupCandidates(rawValue) {
+        if (!rawValue) return [];
 
-            // console.log('Selected user ID for work log record:', document.getElementById('filterEmployee').value, this.user.id);
-            // return;
+        try {
+            const parsed = JSON.parse(rawValue);
+            if (!Array.isArray(parsed)) return [];
+            return parsed
+                .filter(item => item && item.item_id && item.order_id)
+                .map(item => ({
+                    id: item.id || '',
+                    order_id: item.order_id,
+                    item_id: item.item_id,
+                    product_id: item.product_id || '',
+                    product_name: item.product_name || '',
+                    group: item.group || '',
+                    color: item.color || '',
+                    coating: item.coating || '',
+                    dimensions: item.dimensions || '',
+                    qty: parseFloat(item.qty || 0)
+                }));
+        } catch (error) {
+            return [];
+        }
+    }
 
-            const record = {
-                title: document.querySelector('#productName').value.trim(),
-                qty: parseFloat(document.querySelector('#qty').value),
-                item_id: this.record.item_id ? this.record.item_id : '',
-                product_id: this.product ? this.product._id : this.record.product_id,
-                product_name: document.querySelector('#productName').value,
-                color: colorValue,
-                coating: coatingValue,
-                origin: document.querySelector('#origin').value,
-                time: parseInt(document.querySelector('#time').value) || 0,
-                type: document.querySelector('#type').value,
-                label: this.record?.label || '', // For simplicity, using type as category. Adjust if you have separate category field.
-                tag: this.record?.tag || '', // For simplicity, using type as category. Adjust if you have separate category field.
-                user_id: user_id,
-                order_id: this.record.order_id ? this.record.order_id : '',
-                order_ids: this.record.id ? [this.record.id] : []
+    renderGroupedWorkHint() {
+        const hint = document.getElementById('groupedWorkHint');
+        if (!hint || this.groupCandidates.length <= 1) return;
+
+        hint.innerHTML = `
+            <div class="alert alert-light border mb-3">
+                ${__html('Grouped items detected:')} <strong>${this.groupCandidates.length}</strong>.
+                ${__html('When you save, you can select all or individual products.')}
+            </div>
+        `;
+    }
+
+    prepareBaseRecord() {
+        const requiredFields = [
+            { selector: '#productName', name: 'Product name' },
+            { selector: '#qty', name: 'Quantity' },
+            { selector: '#type', name: 'Type' }
+        ];
+
+        for (const field of requiredFields) {
+            const element = document.querySelector(field.selector);
+            if (!element || !element.value.trim()) {
+                toast(`${field.name} is required`);
+                element?.focus();
+                return null;
             }
+        }
 
-            this.btnWorkLogHTML = e.currentTarget.innerHTML;
-            e.currentTarget.disabled = true;
-            e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+        const qtyValue = parseFloat(document.querySelector('#qty').value);
+        if (isNaN(qtyValue) || qtyValue <= 0) {
+            toast('Quantity must be a positive number');
+            document.querySelector('#qty').focus();
+            return null;
+        }
 
-            // insert record
-            createWorklogRecord(record, (response) => {
+        const timeInput = document.querySelector('#time');
+        const timeValue = parseFloat(timeInput.value);
+        if (timeInput.value.length && (isNaN(timeValue) || timeValue <= 0)) {
+            toast('Time must be a positive number');
+            timeInput.focus();
+            return null;
+        }
 
-                if (response.success) {
+        const colorValue = document.querySelector('#productColor').value.trim();
+        const coatingValue = document.querySelector('#productCoating').value.trim();
+        if (!colorValue || !coatingValue) {
+            const shouldContinue = window.confirm('Color or coating is empty. Save this record anyway?');
+            if (!shouldContinue) {
+                (!colorValue ? document.querySelector('#productColor') : document.querySelector('#productCoating'))?.focus();
+                return null;
+            }
+        }
 
-                    this.data(); // Refresh data
-                } else {
+        const selectedUser = document.getElementById('filterEmployee')?.value;
+        const user_id = selectedUser || this.user?.id;
 
-                    document.querySelector('.btn-add-worklog-record').innerHTML = this.btnWorkLogHTML;
-                    document.querySelector('.btn-add-worklog-record').disabled = false;
+        return {
+            title: document.querySelector('#productName').value.trim(),
+            qty: qtyValue,
+            item_id: this.record.item_id || '',
+            product_id: this.product ? this.product._id : this.record.product_id,
+            product_name: document.querySelector('#productName').value,
+            color: colorValue,
+            coating: coatingValue,
+            origin: document.querySelector('#origin').value,
+            time: parseInt(timeInput.value, 10) || 0,
+            type: document.querySelector('#type').value,
+            label: this.record?.label || '',
+            tag: this.record?.tag || '',
+            user_id: user_id,
+            order_id: this.record.order_id || '',
+            order_ids: this.record.id ? [this.record.id] : []
+        };
+    }
 
-                    toast(__html(`Failed to create work log record: %1$s`, response.error));
-                }
+    setSubmitPendingState(button, pending) {
+        if (!button) return;
+
+        if (pending) {
+            this.btnWorkLogHTML = button.innerHTML;
+            button.disabled = true;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+            return;
+        }
+
+        button.innerHTML = this.btnWorkLogHTML;
+        button.disabled = false;
+    }
+
+    createWorklogRecordAsync(record) {
+        return new Promise((resolve) => {
+            createWorklogRecord(record, (response) => resolve(response));
+        });
+    }
+
+    async openGroupedCreateModal(baseRecord) {
+        const modalElement = document.getElementById('groupWorklogModal');
+        const listContainer = document.getElementById('groupWorkItems');
+        const selectAll = document.getElementById('groupWorkSelectAll');
+        const confirmBtn = document.getElementById('groupWorkConfirm');
+        const confirmBtnTop = document.getElementById('groupWorkConfirmTop');
+        const submitBtn = document.querySelector('.btn-add-worklog-record');
+        const modalTitle = modalElement?.querySelector('.modal-title');
+
+        if (!modalElement || !listContainer || !selectAll || !confirmBtn || !confirmBtnTop) {
+            this.setSubmitPendingState(submitBtn, false);
+            return;
+        }
+
+        if (modalTitle) {
+            const orderLabel = this.record.id ? `#${this.record.id}` : '';
+            const typeLabel = this.getWorkTypeLabel(baseRecord.type);
+            modalTitle.textContent = `${orderLabel} · ${__html(typeLabel)}`.trim();
+        }
+
+        const rows = this.groupCandidates.map((candidate, index) => `
+            <tr>
+                <td style="width:32px;" class="p-2">
+                    <input class="form-check-input group-item-check d-flex" type="checkbox" data-index="${index}" tabindex="-1" ${candidate.item_id === this.record.item_id ? 'checked' : ''}>
+                </td>
+                <td style="min-width:220px;">${candidate.product_name || '-'}</td>
+                <td style="width:110px;">${candidate.color || '-'}</td>
+                <td style="width:120px;">${candidate.coating || '-'}</td>
+                <td style="width:120px;">${candidate.dimensions || '-'}</td>
+                <td style="width:130px;">
+                    <input type="number" class="form-control form-control-sm group-item-final-qty" data-index="${index}" min="0.01" step="0.01" value="${candidate.qty || 0}">
+                </td>
+            </tr>
+        `).join('');
+
+        listContainer.innerHTML = `
+            <table class="table table-sm align-middle">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>${__html('Product')}</th>
+                        <th>${__html('Color')}</th>
+                        <th>${__html('Coating')}</th>
+                        <th>${__html('Dimensions')}</th>
+                        <th>${__html('Qty')}</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+        `;
+
+        const modal = bootstrap.Modal.getOrCreateInstance(modalElement);
+        modal.show();
+
+        const getCheckedCount = () => listContainer.querySelectorAll('.group-item-check:checked').length;
+        selectAll.checked = getCheckedCount() === this.groupCandidates.length;
+
+        selectAll.onchange = () => {
+            listContainer.querySelectorAll('.group-item-check').forEach((checkbox) => {
+                checkbox.checked = selectAll.checked;
+            });
+        };
+
+        listContainer.querySelectorAll('.group-item-check').forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                selectAll.checked = getCheckedCount() === this.groupCandidates.length;
             });
         });
+
+        listContainer.querySelectorAll('.group-item-final-qty').forEach((input) => {
+            input.addEventListener('focus', (event) => {
+                event.target.select();
+            });
+        });
+
+        // Focus first qty input after modal is fully shown (post-animation).
+        const focusFirstSelectedInput = () => {
+            const firstSelectedCheckbox = listContainer.querySelector('.group-item-check:checked');
+            if (!firstSelectedCheckbox) return;
+
+            const firstIndex = firstSelectedCheckbox.dataset.index;
+            const firstQtyInput = listContainer.querySelector(`.group-item-final-qty[data-index="${firstIndex}"]`);
+            if (!firstQtyInput) return;
+
+            firstQtyInput.focus();
+            firstQtyInput.select();
+        };
+        modalElement.addEventListener('shown.bs.modal', focusFirstSelectedInput, { once: true });
+
+        const selectedRows = () => {
+            const checks = listContainer.querySelectorAll('.group-item-check');
+            const qtyInputs = listContainer.querySelectorAll('.group-item-final-qty');
+            const selected = [];
+
+            checks.forEach((checkbox) => {
+                if (!checkbox.checked) return;
+                const index = parseInt(checkbox.dataset.index, 10);
+                const qtyInput = Array.from(qtyInputs).find(input => parseInt(input.dataset.index, 10) === index);
+                const qty = parseFloat(qtyInput?.value || 0);
+
+                if (isNaN(qty) || qty <= 0) return;
+
+                selected.push({
+                    ...this.groupCandidates[index],
+                    final_qty: qty
+                });
+            });
+
+            return selected;
+        };
+
+        const submitSelection = async () => {
+            if (confirmBtn.disabled || confirmBtnTop.disabled) return;
+
+            const candidates = selectedRows();
+            if (!candidates.length) {
+                toast('Select at least one product with a valid quantity');
+                return;
+            }
+
+            confirmBtn.disabled = true;
+            confirmBtnTop.disabled = true;
+
+            let successCount = 0;
+            for (const candidate of candidates) {
+                const qty = parseFloat(candidate.final_qty || 0);
+                const baseQty = parseFloat(baseRecord.qty || 0);
+                const baseTime = parseFloat(baseRecord.time || 0);
+                const ratio = baseQty > 0 ? qty / baseQty : 0;
+                const time = Math.round(baseTime * ratio);
+
+                const payload = {
+                    ...baseRecord,
+                    title: candidate.product_name,
+                    qty: qty,
+                    item_id: candidate.item_id,
+                    product_id: candidate.product_id || baseRecord.product_id,
+                    product_name: candidate.product_name || baseRecord.product_name,
+                    color: candidate.color || baseRecord.color,
+                    coating: candidate.coating || baseRecord.coating,
+                    time: time,
+                    order_id: candidate.order_id || baseRecord.order_id,
+                    order_ids: candidate.id ? [candidate.id] : baseRecord.order_ids
+                };
+
+                const response = await this.createWorklogRecordAsync(payload);
+                if (response?.success) successCount += 1;
+            }
+
+            confirmBtn.disabled = false;
+            confirmBtnTop.disabled = false;
+            modal.hide();
+
+            this.setSubmitPendingState(submitBtn, false);
+
+            if (!successCount) {
+                toast(__html('Failed to create grouped work log records'));
+                return;
+            }
+
+            toast(__html(`Records created: %1$s`, successCount));
+            this.data();
+        };
+        confirmBtn.onclick = submitSelection;
+        confirmBtnTop.onclick = submitSelection;
+
+        const handleEnterSubmit = (event) => {
+            if (event.key !== 'Enter') return;
+            if (!(event.target instanceof HTMLInputElement)) return;
+            if (!event.target.closest('#groupWorklogModal')) return;
+
+            event.preventDefault();
+            submitSelection();
+        };
+        modalElement.addEventListener('keydown', handleEnterSubmit);
+
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            modalElement.removeEventListener('shown.bs.modal', focusFirstSelectedInput);
+            modalElement.removeEventListener('keydown', handleEnterSubmit);
+            this.setSubmitPendingState(submitBtn, false);
+            confirmBtn.disabled = false;
+            confirmBtnTop.disabled = false;
+        }, { once: true });
+    }
+
+    getWorkTypeLabel(type) {
+        const category = this.settings?.work_categories?.find(item => item.id === type);
+        if (category?.name) return category.name;
+        return type ? type.replace(/-/g, ' ') : __html('Work Log');
+    }
+
+    formatRowFinalQty(baseQty, productQty) {
+        const total = parseFloat(baseQty || 0) * parseFloat(productQty || 0);
+        if (!Number.isFinite(total)) return '0';
+        return Number.isInteger(total) ? String(total) : total.toFixed(2).replace(/\.00$/, '');
     }
 
     async data() {
@@ -497,7 +757,7 @@ class WorkLog {
     }
 
     deleteEntry(id) {
-        if (confirm('Delete this record?')) {
+        if (confirm(__html('Remove?'))) {
 
             deleteWorklogRecord({ id }, (response) => {
 
@@ -522,7 +782,7 @@ class WorkLog {
         if (!this.users) return userId;
 
         const user = this.users.find(u => u._id === userId);
-        return user ? user.fname + ' ' + user.lname.charAt(0) : userId;
+        return user ? user.fname + ' ' + user.lname.charAt(0) : userId.substring(0, 6) + "...";
     }
 
     formatIds(ids) {

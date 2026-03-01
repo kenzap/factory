@@ -1,13 +1,16 @@
-// import OSS from 'ali-oss';
-// import formidable from 'formidable';
-// import mime from 'mime-types';
-import sharp from 'sharp';
-// import { v4 as uuidv4 } from 'uuid';
-import OSS from 'ali-oss';
 import multer from 'multer';
 import path from 'path';
+import sharp from 'sharp';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { createStorageProvider } from '../_/helpers/storage/index.js';
+
+const toPublicFileUrl = (filename) => {
+    const encodedName = encodeURIComponent(filename);
+
+    const base = (process.env.PUBLIC_FILES_BASE_URL || '').replace(/\/+$/, '');
+    return base ? `${base}/files/${encodedName}` : `/files/${encodedName}`;
+};
 
 // Configure multer for memory storage (or disk storage if preferred)
 const storage = multer.memoryStorage(); // Use memoryStorage for cloud uploads
@@ -15,7 +18,7 @@ const storage = multer.memoryStorage(); // Use memoryStorage for cloud uploads
 const upload = multer({
     storage: storage,
     limits: {
-        fileSize: 20 * 1024 * 1024, // 10MB limit
+        fileSize: 20 * 1024 * 1024, // 20MB limit
     },
     fileFilter: (req, file, cb) => {
 
@@ -74,59 +77,41 @@ const storeFileInDb = async (f) => {
     return _id;
 }
 
-// Alibaba Cloud OSS upload function
-const uploadToBucket = async (file, metadata) => {
+const storageClient = createStorageProvider();
 
-    const client = new OSS({
-        region: process.env.BUCKET_REGION,
-        accessKeyId: process.env.BUCKET_KEY,
-        accessKeySecret: process.env.BUCKET_SECRET,
-        bucket: process.env.BUCKET_NAME,
-        // Optional: Use HTTPS
-        secure: true,
-        // Optional: Custom endpoint if using internal network
-        // endpoint: process.env.OSS_ENDPOINT
-    });
+const uploadToBucket = async (file, metadata) => {
+    if (!storageClient.isConfigured) {
+        throw new Error(`Storage provider "${storageClient.provider}" is not configured`);
+    }
 
     const objectKey = `${metadata.folder}/${metadata.filename}`;
-
-    console.log('Uploading to OSS:', objectKey, metadata);
+    console.log(`Uploading to ${storageClient.provider}:`, objectKey, metadata);
 
     try {
-        // Upload options
-        const options = {
-            headers: {
-                'Content-Type': file.mimetype,
-                'x-oss-meta-original-name': metadata.originalName || file.originalname,
-                'x-oss-meta-uploaded-by': metadata.userId || 'anonymous',
-                // 'x-oss-meta-slug': metadata.slug,
-                'x-oss-meta-upload-time': new Date().toISOString()
+        const result = await storageClient.putObject(objectKey, file.buffer, {
+            contentType: file.mimetype,
+            metadata: {
+                'original-name': metadata.originalName || file.originalname,
+                'uploaded-by': metadata.userId || 'anonymous',
+                'upload-time': new Date().toISOString(),
             },
-            // Optional: Set object ACL (private, public-read, public-read-write)
-            'x-oss-object-acl': 'private'
-        };
+            acl: 'private',
+        });
 
-        // Upload file buffer to OSS
-        const result = await client.put(objectKey, file.buffer, options);
-
-        // Generate public URL (if bucket allows public read)
-        // const publicUrl = client.generateObjectUrl(objectKey);
-
-        // Or generate signed URL for private access
-        const signedUrl = client.signatureUrl(objectKey, {
-            expires: 3600 // URL expires in 1 hour
+        const signedUrl = await storageClient.getSignedUrl(objectKey, {
+            expiresIn: 3600,
         });
 
         return {
             success: true,
-            url: result.url, // OSS object URL
-            signedUrl: signedUrl, // Signed URL for private access
+            url: result.url || signedUrl,
+            signedUrl,
             key: objectKey,
-            etag: result.res.headers.etag,
-            requestId: result.res.headers['x-oss-request-id']
+            etag: result.etag,
+            requestId: result.requestId,
         };
     } catch (error) {
-        throw new Error(`OSS upload failed: ${error.message}`);
+        throw new Error(`${storageClient.provider} upload failed: ${error.message}`);
     }
 }
 
@@ -153,13 +138,9 @@ const createSizeVariations = async (logger, file, metadata, fileId) => {
         return Promise.resolve();
     }
 
-    const client = new OSS({
-        region: process.env.BUCKET_REGION,
-        accessKeyId: process.env.BUCKET_KEY,
-        accessKeySecret: process.env.BUCKET_SECRET,
-        bucket: process.env.BUCKET_NAME,
-        secure: true
-    });
+    if (!storageClient.isConfigured) {
+        throw new Error(`Storage provider "${storageClient.provider}" is not configured`);
+    }
 
     const promises = sizes.map(async (size) => {
         try {
@@ -173,15 +154,15 @@ const createSizeVariations = async (logger, file, metadata, fileId) => {
                 .toBuffer();
 
             const sizeKey = `${metadata.folder}/${metadata.source ? metadata.source + '-' : ''}${fileId}-1-${size.width}${size.height ? 'x' + size.height : ''}.webp`;
-            logger.info(`Uploading size variation ${size.width}x${size.height || 'auto'} to OSS as ${sizeKey}`);
-            return client.put(sizeKey, resizedBuffer, {
-                headers: {
-                    'Content-Type': 'image/webp',
-                    'x-oss-meta-original-name': metadata.originalName || file.originalname,
-                    'x-oss-meta-uploaded-by': metadata.userId || 'anonymous',
-                    'x-oss-meta-upload-time': new Date().toISOString()
+            logger.info(`Uploading size variation ${size.width}x${size.height || 'auto'} to ${storageClient.provider} as ${sizeKey}`);
+            return storageClient.putObject(sizeKey, resizedBuffer, {
+                contentType: 'image/webp',
+                metadata: {
+                    'original-name': metadata.originalName || file.originalname,
+                    'uploaded-by': metadata.userId || 'anonymous',
+                    'upload-time': new Date().toISOString(),
                 },
-                'x-oss-object-acl': 'private'
+                acl: 'private',
             });
         } catch (error) {
             logger.error(`Failed to create size variation ${size.width}x${size.height || 'auto'}: ${error.message}`);
@@ -267,7 +248,7 @@ function uploadFileApi(app, logger) {
                     ext: ext,
                     filename: filename,
                     name: metadata.originalName,
-                    url: bucketResult.url,
+                    url: toPublicFileUrl(filename),
                     size: req.file.size,
                     type: req.file.mimetype,
                     sizes: sizes

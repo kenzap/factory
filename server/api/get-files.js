@@ -1,20 +1,13 @@
-import OSS from 'ali-oss';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getLocales, sid } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
+import { createStorageProvider } from '../_/helpers/storage/index.js';
 
-const getBucketClient = () => {
-    if (!process.env.BUCKET_NAME || !process.env.BUCKET_KEY || !process.env.BUCKET_SECRET || !process.env.BUCKET_REGION) {
-        return null;
-    }
+const toPublicFileUrl = (filename) => {
+    const encodedName = encodeURIComponent(filename);
 
-    return new OSS({
-        region: process.env.BUCKET_REGION,
-        accessKeyId: process.env.BUCKET_KEY,
-        accessKeySecret: process.env.BUCKET_SECRET,
-        bucket: process.env.BUCKET_NAME,
-        secure: true,
-    });
+    const base = (process.env.PUBLIC_FILES_BASE_URL || '').replace(/\/+$/, '');
+    return base ? `${base}/files/${encodedName}` : `/files/${encodedName}`;
 };
 
 const parseIntSafe = (value) => {
@@ -38,6 +31,7 @@ const uploadedMsExpr = `
 const getFiles = async (filters = {}) => {
     const client = getDbConnection();
     const files = [];
+    const storageClient = createStorageProvider();
 
     const limit = Number.isInteger(filters.limit) && filters.limit > 0 ? Math.min(filters.limit, 500) : 200;
     const offset = Number.isInteger(filters.offset) && filters.offset >= 0 ? filters.offset : 0;
@@ -89,14 +83,14 @@ const getFiles = async (filters = {}) => {
             });
         });
 
-        const bucketClient = getBucketClient();
+        const bucketClient = storageClient.isConfigured ? storageClient : null;
 
         if (bucketClient) {
-            files.forEach((file) => {
+            await Promise.all(files.map(async (file) => {
                 if (!file.ext) return;
-                const objectKey = `S${sid}/${file.id}.${file.ext}`;
-                file.view_url = bucketClient.signatureUrl(objectKey, { expires: 3600 });
-            });
+                const filename = `${file.id}.${file.ext}`;
+                file.view_url = toPublicFileUrl(filename);
+            }));
         }
 
         const filesMissingSize = files.filter((f) => !f.size && f.ext && bucketClient);
@@ -105,8 +99,8 @@ const getFiles = async (filters = {}) => {
             await Promise.all(filesMissingSize.map(async (file) => {
                 try {
                     const objectKey = `S${sid}/${file.id}.${file.ext}`;
-                    const head = await bucketClient.head(objectKey);
-                    const bucketSize = parseIntSafe(head?.res?.headers?.['content-length']);
+                    const head = await bucketClient.headObject(objectKey);
+                    const bucketSize = parseIntSafe(head?.contentLength);
 
                     if (bucketSize > 0) {
                         file.size = bucketSize;

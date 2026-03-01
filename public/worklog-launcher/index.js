@@ -1,6 +1,6 @@
 import { getHome } from "../_/api/get_home.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
-import { __html, hideLoader } from "../_/helpers/global.js";
+import { __html, hideLoader, normalizeStorageImageUrl } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -533,7 +533,7 @@ class Launcher {
                 <div class="card-stripe d-none"></div>
                 <div class="card-header bg-white border-0">
                     <div class="product-img-wrap">
-                        <img src="${p.image}" alt="${p.name}" onerror="this.outerHTML='<span class=\\'img-fallback\\'>⚙️</span>'"/>
+                        <img src="${normalizeStorageImageUrl(p.image)}" alt="${p.name}" onerror="this.outerHTML='<span class=\\'img-fallback\\'>⚙️</span>'"/>
                     </div>
                     <div class="product-info">
                         <div class="product-name">${p.name}</div>

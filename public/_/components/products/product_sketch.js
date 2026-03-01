@@ -5,7 +5,7 @@ import { SketchControls } from "../../components/sketch/controls.js";
 import { degToRad, hasRenderFiles } from "../../components/sketch/helpers.js";
 import { renderPreview } from "../../components/sketch/rendering.js";
 import { SketchStaticImage } from "../../components/sketch/sketch_static_image.js";
-import { __html, getProductId, log, onChange, onClick, onlyNumbers, spaceID, unescape } from "../../helpers/global.js";
+import { __html, fileUrl, getProductId, log, onChange, onClick, onlyNumbers, unescape } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 
 export class ProductSketch {
@@ -268,35 +268,48 @@ export class ProductSketch {
 
         let d = document;
         let id = getProductId();
-        let sid = spaceID();
-
-        // check for legacy jpeg and webp images
-        // let image_url = [getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.webp?' + this.product.updated, getStorage() + '/S' + sid + '/sketch-' + id + '-1-500x500.jpeg?' + this.product.updated];
-
         let image_url = [];
 
-        if (self.product.sketch.img && self.product.sketch.img.length && self.product.sketch.img[0]?.id) image_url = ['https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S' + sid + '/sketch-' + self.product.sketch.img[0].id + '-1-500x500.webp?' + this.product.updated];
+        if (self.product.sketch.img && self.product.sketch.img.length && self.product.sketch.img[0]?.id) {
+            const sketchMeta = self.product.sketch.img[0];
+
+            // Prefer generated preview size first; fallback to original uploaded file if missing.
+            image_url = [
+                fileUrl(`sketch-${sketchMeta.id}-1-500x500.webp`, this.product.updated),
+                fileUrl(`sketch-${sketchMeta.id}-1-500x500.jpeg`, this.product.updated),
+            ];
+
+            if (sketchMeta.ext) {
+                image_url.push(fileUrl(`${sketchMeta.id}.${sketchMeta.ext}`, this.product.updated));
+            }
+        }
 
         console.log("checking sketch images", image_url);
 
         // if 3d files provided try to load auto generated render instead 'https://render.factory.app.kenzap.cloud/'+id+'-polyester-rr20-1500.webp', 
-        if (hasRenderFiles(this.product)) image_url = ['https://render.factory.app.kenzap.cloud/' + id + '-polyester-2h3-1500.webp'];
+        if (hasRenderFiles(this.product)) image_url = [fileUrl(`${id}-polyester-2h3-1500.webp`)];
 
-        // sketch image
-        image_url.forEach((img, fi) => {
+        // Try sketch URLs in order (webp -> jpeg -> original), stop on first match.
+        const tryLoadSketch = (index = 0) => {
+            if (index >= image_url.length) return;
 
-            // async load image to verify if it exists 
-            setTimeout(() => {
-                let i = new Image();
-                i.onload = () => {
+            const candidate = image_url[index];
+            const img = new Image();
 
-                    // console.log('loaded', img);
+            img.onload = () => {
+                document.querySelectorAll('.images-sketch0').forEach(el => el.src = candidate);
+            };
 
-                    document.querySelectorAll('.images-sketch0').forEach(el => el.src = img);
-                };
-                i.src = img;
-            }, 300);
-        });
+            img.onerror = () => {
+                tryLoadSketch(index + 1);
+            };
+
+            img.src = candidate;
+        };
+
+        setTimeout(() => {
+            tryLoadSketch(0);
+        }, 300);
 
         // console.log(self.state.product.input_fields);
         if (self.product.input_fields) {

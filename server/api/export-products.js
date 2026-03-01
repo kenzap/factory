@@ -69,8 +69,8 @@ async function exportProductsXML(lang) {
         // Get products
         const productsQuery = `
             SELECT _id, 
-                   js->'data'->'locales'->$1->>'title' as title,
-                   js->'data'->'slugs'->>$1 as slug,
+                   COALESCE(js->'data'->'locales'->$1->>'title', js->'data'->'locales'->'default'->>'title') as title,
+                   COALESCE(js->'data'->'slugs'->>$1, js->'data'->'slugs'->>'default') as slug,
                    js->'data'->>'cats' as cats, 
                    js->'data'->>'input_fields' as input_fields, 
                    js->'data'->>'calc_price' as calc_price, 
@@ -79,7 +79,7 @@ async function exportProductsXML(lang) {
                    js->'data'->>'formula_price' as formula_price, 
                    js->'data'->>'cad_files' as cad_files 
             FROM data 
-            WHERE ref = $2 AND js->'data'->>'status' = '1' AND js->'data'->'slugs'->>$1 <> ''
+            WHERE ref = $2 AND js->'data'->>'status' = '1' AND COALESCE(js->'data'->'slugs'->>$1, js->'data'->'slugs'->>'default', '') <> ''
             LIMIT 1000
         `;
 

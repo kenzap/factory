@@ -253,6 +253,11 @@ export const execCostFormula = async (settings, product) => {
             if (priceEntry.parent == product.parent && priceEntry.title == product.title && formula.includes('COATING')) {
                 formula = formula.replace(new RegExp(`\\bCOATING\\b`, 'g'), priceEntry.price);
             }
+
+            // MATERIAL variable
+            if (priceEntry.parent == product.parent && priceEntry.title == product.title && formula.includes('MATERIAL')) {
+                formula = formula.replace(new RegExp(`\\bMATERIAL\\b`, 'g'), priceEntry.price);
+            }
         });
 
         // Evaluate the formula safely

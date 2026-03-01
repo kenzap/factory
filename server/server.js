@@ -6,11 +6,13 @@ import express from 'express';
 import fs from 'fs';
 import helmet from 'helmet';
 import livereload from 'livereload';
+import mime from 'mime-types';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { checkFileExists } from './_/helpers/extensions/file.js';
 import { loadExtensions } from './_/helpers/extensions/loader.js';
 import createLogger from './_/helpers/logger.js';
+import { createStorageProvider } from './_/helpers/storage/index.js';
 
 dotenv.config();
 
@@ -18,11 +20,17 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 
 const PUBLIC_DIR = path.join(__dirname, process.env.NODE_ENV === 'production' ? '../dist' : '../public');
+const OVERRIDE_PUBLIC_DIR = path.join(__dirname, '../overrides/public');
+const HAS_OVERRIDE_PUBLIC_DIR = fs.existsSync(OVERRIDE_PUBLIC_DIR);
 const PACKAGES_DIR = path.join(__dirname, '../packages');
 const API_DIR = path.join(__dirname, 'api');
 const DOCUMENT_DIR = path.join(__dirname, 'document');
+const OVERRIDE_API_DIR = path.join(__dirname, '../overrides/server/api');
+const OVERRIDE_DOCUMENT_DIR = path.join(__dirname, '../overrides/server/document');
 const EXTENSIONS_DIR = path.join(__dirname, 'extensions');
 const logger = createLogger('server');
+const storageClient = createStorageProvider();
+const DEFAULT_SPACE_ID = process.env.SID || 1000000;
 
 // Cache for file existence to avoid repeated fs calls
 const fileCache = new Map();
@@ -92,7 +100,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Static files with proper caching
-app.use(express.static(PUBLIC_DIR, {
+const staticOptions = {
     maxAge: process.env.NODE_ENV === 'production' ? '1y' : 0,
     etag: true,
     lastModified: true,
@@ -104,7 +112,13 @@ app.use(express.static(PUBLIC_DIR, {
             res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
         }
     }
-}));
+};
+
+// Global override layer: overrides/public shadows core /public files.
+if (HAS_OVERRIDE_PUBLIC_DIR) {
+    app.use(express.static(OVERRIDE_PUBLIC_DIR, staticOptions));
+}
+app.use(express.static(PUBLIC_DIR, staticOptions));
 
 // Expose shared runtime packages for browser ES module imports
 app.use('/packages', express.static(PACKAGES_DIR, {
@@ -113,31 +127,90 @@ app.use('/packages', express.static(PACKAGES_DIR, {
     lastModified: true,
 }));
 
-// Dynamic API route loading
-async function loadRoutes(directory, routeType) {
-    if (!fs.existsSync(directory)) return;
+function getRouteFiles(directory) {
+    if (!fs.existsSync(directory)) return [];
+    return fs
+        .readdirSync(directory)
+        .filter(file => file.endsWith('.js'))
+        .sort();
+}
 
-    const files = fs.readdirSync(directory).filter(file => file.endsWith('.js'));
-
-    await Promise.all(files.map(async (file) => {
-        try {
-            const module = await import(path.join(directory, file));
-            const handler = module.default || module;
-            if (typeof handler === 'function') {
-                handler(app, logger);
-            }
-        } catch (err) {
-            logger.error(`Error loading ${routeType} route ${file}:`, err);
+async function loadRouteFile(directory, file, routeType, source) {
+    try {
+        const module = await import(path.join(directory, file));
+        const handler = module.default || module;
+        if (typeof handler === 'function') {
+            handler(app, logger);
         }
-    }));
+    } catch (err) {
+        logger.error(`Error loading ${routeType} route ${file} (${source}):`, err);
+    }
+}
+
+// Load override routes first; core routes are loaded only when not overridden by filename.
+async function loadRoutesWithOverrides(coreDir, overrideDir, routeType) {
+    const overrideFiles = getRouteFiles(overrideDir);
+    const overrideSet = new Set(overrideFiles);
+    const coreFiles = getRouteFiles(coreDir).filter(file => !overrideSet.has(file));
+
+    for (const file of overrideFiles) {
+        await loadRouteFile(overrideDir, file, routeType, 'override');
+    }
+
+    for (const file of coreFiles) {
+        await loadRouteFile(coreDir, file, routeType, 'core');
+    }
 }
 
 // Load all routes at startup
-await loadRoutes(API_DIR, 'API');
-await loadRoutes(DOCUMENT_DIR, 'document');
+await loadRoutesWithOverrides(API_DIR, OVERRIDE_API_DIR, 'API');
+await loadRoutesWithOverrides(DOCUMENT_DIR, OVERRIDE_DOCUMENT_DIR, 'document');
 
 // Load integrations
 await loadExtensions(EXTENSIONS_DIR, app, logger, scheduledJobs, fileCache);
+
+// Public file gateway (hides storage endpoint and bucket details)
+app.get('/files/*', async (req, res) => {
+    if (!storageClient.isConfigured) {
+        return res.status(503).send('Storage is not configured');
+    }
+
+    const rawKey = req.params?.[0];
+    if (!rawKey) {
+        return res.status(400).send('Invalid file key');
+    }
+
+    const normalizedKey = decodeURIComponent(String(rawKey)).replace(/^\/+/, '');
+    const objectKey = normalizedKey.includes('/')
+        ? normalizedKey
+        : `S${DEFAULT_SPACE_ID}/${normalizedKey}`;
+
+    try {
+        const object = await storageClient.getObject(objectKey);
+
+        if (!object?.body) {
+            return res.status(404).send('File not found');
+        }
+
+        const guessedType = mime.lookup(objectKey) || '';
+        const contentType = (!object.contentType || object.contentType === 'application/octet-stream')
+            ? guessedType
+            : object.contentType;
+
+        if (contentType) {
+            res.setHeader('Content-Type', contentType);
+        } else {
+            res.setHeader('Content-Type', 'application/octet-stream');
+        }
+        if (object.contentLength) res.setHeader('Content-Length', String(object.contentLength));
+        if (object.etag) res.setHeader('ETag', object.etag);
+        res.setHeader('Cache-Control', object.cacheControl || 'public, max-age=31536000, immutable');
+
+        object.body.pipe(res);
+    } catch (_error) {
+        return res.status(404).send('File not found');
+    }
+});
 
 // Optimized Next.js-like routing with caching
 app.get('*', (req, res, next) => {
@@ -148,20 +221,27 @@ app.get('*', (req, res, next) => {
     }
 
     const requestedPath = req.path.endsWith('/') ? req.path + 'index' : req.path;
-    const fullPath = path.join(PUBLIC_DIR, requestedPath);
+    const relativeRequestedPath = requestedPath.replace(/^\/+/, '');
 
-    // Try files in order of likelihood
-    const filesToCheck = [
-        { path: `${fullPath}.js`, type: 'application/javascript' },
-        { path: `${fullPath}.html`, type: 'text/html' },
-        { path: path.join(fullPath, 'index.js'), type: 'application/javascript' },
-        { path: path.join(fullPath, 'index.html'), type: 'text/html' }
-    ];
+    const publicRoots = HAS_OVERRIDE_PUBLIC_DIR
+        ? [OVERRIDE_PUBLIC_DIR, PUBLIC_DIR]
+        : [PUBLIC_DIR];
 
-    for (const file of filesToCheck) {
-        if (checkFileExists(file.path, fileCache)) {
-            res.type(file.type);
-            return res.sendFile(file.path);
+    // Try files in order of likelihood, checking override root first.
+    for (const rootDir of publicRoots) {
+        const fullPath = path.join(rootDir, relativeRequestedPath);
+        const filesToCheck = [
+            { path: `${fullPath}.js`, type: 'application/javascript' },
+            { path: `${fullPath}.html`, type: 'text/html' },
+            { path: path.join(fullPath, 'index.js'), type: 'application/javascript' },
+            { path: path.join(fullPath, 'index.html'), type: 'text/html' }
+        ];
+
+        for (const file of filesToCheck) {
+            if (checkFileExists(file.path, fileCache)) {
+                res.type(file.type);
+                return res.sendFile(file.path);
+            }
         }
     }
 
@@ -179,4 +259,11 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     logger.info(`Server running on http://localhost:${PORT}`);
     logger.info(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    if (HAS_OVERRIDE_PUBLIC_DIR) {
+        logger.info(`Override public layer enabled: ${OVERRIDE_PUBLIC_DIR}`);
+    } else {
+        logger.info(`Override public layer not found: ${OVERRIDE_PUBLIC_DIR}`);
+    }
+    logger.info(`Override API layer: ${fs.existsSync(OVERRIDE_API_DIR) ? OVERRIDE_API_DIR : 'not found'}`);
+    logger.info(`Override document layer: ${fs.existsSync(OVERRIDE_DOCUMENT_DIR) ? OVERRIDE_DOCUMENT_DIR : 'not found'}`);
 });  

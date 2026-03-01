@@ -16,7 +16,21 @@ export class ProductPriceVariations {
         this.product = product;
         this.settings = settings;
         this.state = {};
-        this.var_parent = this.settings.var_parent;
+        this.var_parent = this.settings.var_parent || '';
+    }
+
+    getDimensionCount = () => {
+        const count = Number(this.settings?.variation_dims_count || 2);
+        return Math.min(3, Math.max(1, count));
+    }
+
+    getDimensionLabel = (index, fallback) => {
+        const map = {
+            1: this.settings?.variation_dim_1_name,
+            2: this.settings?.variation_dim_2_name,
+            3: this.settings?.variation_dim_3_name
+        };
+        return (map[index] || '').toString().trim() || fallback;
     }
 
     show() {
@@ -86,6 +100,9 @@ export class ProductPriceVariations {
     }
 
     view() {
+        const showDim2 = this.getDimensionCount() >= 2;
+        const dim1Label = this.getDimensionLabel(1, __html('P1'));
+        const dim2Label = this.getDimensionLabel(2, __html('P2'));
 
         this.state.modal.querySelector(".modal-body").innerHTML = `
 
@@ -94,7 +111,7 @@ export class ProductPriceVariations {
                     <div class="table-responsive">
                         <table class="price-table order-form mb-3">
                             <theader>
-                                <tr><th><div class="me-1 me-sm-3">${__html('Portal')}</div></th><th class="qty"><div class="me-1 me-sm-3">${__html('Code')}</div></th><th><div class="me-1 me-sm-3">${__html('P1')}</div></th><th><div class="me-1 me-sm-3">${__html('P2')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Price')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Stock')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Unit')}</div></th><th></th></tr>
+                                <tr><th><div class="me-1 me-sm-3">${__html('Portal')}</div></th><th class="qty"><div class="me-1 me-sm-3">${__html('Code')}</div></th><th><div class="me-1 me-sm-3">${dim1Label}</div></th><th class="${showDim2 ? '' : 'd-none'}"><div class="me-1 me-sm-3">${dim2Label}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Price')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Stock')}</div></th><th class="tp"><div class="me-1 me-sm-3">${__html('Unit')}</div></th><th></th></tr>
                                 <tr class="new-item-row">
                                     <td>
         
@@ -112,7 +129,7 @@ export class ProductPriceVariations {
                                             </select>
                                         </div>
                                     </td>
-                                    <td>
+                                    <td class="${showDim2 ? '' : 'd-none'}">
                                         <div class="me-1 me-sm-3 mt-2">
                                             <input type="text" value="" autocomplete="off" placeholder="" class="form-control price-title" data-id="" data-index="" list="item-suggestions">
                                         </div>
@@ -175,7 +192,8 @@ export class ProductPriceVariations {
         obj.unit = document.querySelector('.price-unit').value.trim();
         obj.public = true;
 
-        if (obj.title.length < 1 || obj.price.length < 1) return false;
+        const requiresDim2 = this.getDimensionCount() >= 2;
+        if ((requiresDim2 && obj.title.length < 1) || obj.price.length < 1) return false;
 
         console.log("Adding price variation", obj);
 
@@ -345,6 +363,7 @@ export class ProductPriceVariations {
      * @returns {string} HTML string for the table row
      */
     structCoatingRow(obj, i) {
+        const showDim2 = this.getDimensionCount() >= 2;
 
         console.log("structCoatingRow", obj.id, obj.title, obj.parent);
 
@@ -363,7 +382,7 @@ export class ProductPriceVariations {
                         <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-parent" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.parent ? obj.parent : ""}">
                     </div>
                 </td>
-                <td>
+                <td class="${showDim2 ? '' : 'd-none'}">
                     <div class="me-1 me-sm-3 my-1">
                         <input type="text" autocomplete="off" class="form-control form-control-sm text-right price-title" style="max-width:80px;" data-id="${obj.id}" data-i="${i}" value="${obj.title ? obj.title : ''}">
                     </div>

@@ -1,0 +1,16 @@
+{
+  "name": "Kenzap OTP Relay",
+  "version": "1.0.0",
+  "enabled": true,
+  "requires": {
+    "kenzap": ">=2.0.0"
+  },
+  "events": [
+    "otp.requested"
+  ],
+  "config": {
+    "TENANT_ID": { "title": "Tenant ID", "type": "text", "required": false, "default": "" },
+    "API_BASE_URL": { "title": "API Base URL", "type": "text", "required": false, "default": "https://api.kenzap.cloud" },
+    "API_KEY": { "title": "API Key", "type": "token", "required": false, "secret": true, "default": "" }
+  }
+}

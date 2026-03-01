@@ -19,12 +19,25 @@
  * // Returns: "Zéro Euro"
  * 
  */
-export const amountToWords = (amount, settings, countryCode = 'LV') => {
+export const amountToWords = (amount, settings) => {
     const amount_int = Math.floor(amount);
     const amount_cents = Math.round((amount - amount_int) * 100);
+    const countryCode = String(settings.system_language || "EN").toUpperCase();
+
+    console.log(`System language: ${countryCode}, Amount: ${amount}, Settings: ${JSON.stringify(settings)}`);
 
     // Localization data for each country
     const localizations = {
+        AR: {
+            units: ["", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة"],
+            teens: ["عشرة", "احدى عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"],
+            tens: ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"],
+            hundreds: ["", "مائة", "مائتان", "ثلاثمائة", "أربعمائة", "خمسمائة", "ستمائة", "سبعمائة", "ثمانمائة", "تسعمائة"],
+            thousand: "ألف",
+            zero: "صفر",
+            currency: { EUR: { main: "يورو", cents: "سنت" } },
+            connector: ", "
+        },
         AT: {
             units: ["", "ein", "zwei", "drei", "vier", "fünf", "sechs", "sieben", "acht", "neun"],
             teens: ["zehn", "elf", "zwölf", "dreizehn", "vierzehn", "fünfzehn", "sechzehn", "siebzehn", "achtzehn", "neunzehn"],
@@ -294,11 +307,21 @@ export const amountToWords = (amount, settings, countryCode = 'LV') => {
             zero: "noll",
             currency: { EUR: { main: "Euro", cents: "öre" } },
             connector: ", "
+        },
+        EN: {
+            units: ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"],
+            teens: ["ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"],
+            tens: ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"],
+            hundreds: ["", "one hundred", "two hundred", "three hundred", "four hundred", "five hundred", "six hundred", "seven hundred", "eight hundred", "nine hundred"],
+            thousand: "thousand",
+            zero: "zero",
+            currency: { EUR: { main: "Euro", cents: "cent" } },
+            connector: ", "
         }
     };
 
-    // Get localization or fall back to Latvian
-    const locale = localizations[countryCode] || localizations.LV;
+    // Get localization or fall back to English
+    const locale = localizations[countryCode] || localizations.EN;
     const { units, teens, tens, hundreds, thousand, zero, currency, connector } = locale;
 
     function numberToWords(num) {

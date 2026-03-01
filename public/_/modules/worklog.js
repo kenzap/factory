@@ -53,6 +53,7 @@ export const getHtml = (record) => {
                 </form>
             </div>
         </div>
+        <div id="groupedWorkHint"></div>
 
         <!-- Work Log Table -->
         <div class="work-log-table">
@@ -115,6 +116,31 @@ export const getHtml = (record) => {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">${__html('Cancel')}</button>
                     <button type="button" class="btn btn-primary" id="applyDateRange">${__html('Apply')}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="groupWorklogModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title">${__html('Work Log')}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                        <div class="form-check mb-0 ms-2">
+                            <input class="form-check-input" type="checkbox" id="groupWorkSelectAll">
+                            <label class="form-check-label ps-2" for="groupWorkSelectAll">${__html('Select all')}</label>
+                        </div>
+                        <button type="button" class="btn btn-dark btn-sm" id="groupWorkConfirmTop">${__html('Add')}</button>
+                    </div>
+                    <div id="groupWorkItems" class="table-responsive"></div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">${__html('Cancel')}</button>
+                    <button type="button" class="btn btn-dark" id="groupWorkConfirm">${__html('Add')}</button>
                 </div>
             </div>
         </div>
