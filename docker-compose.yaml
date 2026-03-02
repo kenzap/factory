@@ -20,7 +20,7 @@ services:
       interval: 2s
       timeout: 1s
       retries: 15
-      start_period: 1s  
+      start_period: 1s
   adminer:
     image: adminer:latest
     container_name: adminer
@@ -72,7 +72,7 @@ services:
       container_name: node
       restart: unless-stopped
       ports:
-        - "${APP_PORT:-3000}:3000"
+        - "127.0.0.1:${APP_PORT:-3000}:3000"
         - "${LIVERELOAD_PORT:-35729}:35729"  # LiveReload port
       volumes:
         - ./server:/app/server
@@ -97,11 +97,31 @@ services:
       env_file:
         - .env
       environment:
+        NODE_ENV: ${NODE_ENV:-development}
         S3_ENDPOINT: ${S3_ENDPOINT:-http://seaweedfs:8333}
         S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-true}
-      command: sh -c "npm install && npm run dev"
+      # command: sh -c "npm install && npm run dev"
       extra_hosts:  # 👈 Add this (Linux only, Mac/Windows doesn’t need it)
         - "host.docker.internal:host-gateway"
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    profiles: ["production"]
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      node:
+        condition: service_started
+    env_file:
+      - .env
+    volumes:
+      - ./docs/generated/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - kenzap_network
   redis:
     image: redis:7-alpine
     container_name: redis
@@ -128,6 +148,10 @@ volumes:
   seaweedfs_volume:
     driver: local
   node_modules_volume:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
     driver: local
 
 networks:

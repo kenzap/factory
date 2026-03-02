@@ -7,7 +7,8 @@
     "type": "module",
     "scripts": {
         "dev": "nodemon --delay 2 server/server.js",
-        "demo:data": "node server/scripts/demo-data.js",
+        "start": "node server/server.js",
+        "demo:data": "node senodemonrver/scripts/demo-data.js",
         "export:db": "node server/scripts/export-db.js",
         "export:buckets": "node server/scripts/export-buckets.js",
         "setup:client": "node server/scripts/apply-client-defaults.js",

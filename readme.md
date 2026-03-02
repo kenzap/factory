@@ -111,7 +111,13 @@ This will start all required services including PostgreSQL, Redis, and the Node.
 To launch the ERP system locally:
 
 ```bash
-docker compose up
+docker-compose up
+```
+
+To launch the ERP system in production with https proxy:
+
+```bash
+docker-compose --profile production up -d
 ```
 
 This will create 5 containers: Redis, Node.js, PostgreSQL, SeaweedFS and Adminer (for managing PostgreSQL data). Demo data is installed automatically from:
@@ -153,6 +159,29 @@ To open ERP dashboard
 ```bash
 http://localhost:3000/home/
 ```
+
+### Production HTTPS (VM)
+
+Use the `production` profile to run Node behind Caddy with automatic TLS certificates:
+
+```bash
+docker compose --profile production up -d --build
+```
+
+Required `.env` variables for TLS:
+
+```bash
+APP_DOMAIN=erp.your-domain.com
+LETSENCRYPT_EMAIL=ops@your-domain.com
+PUBLIC_FILES_BASE_URL=https://erp.your-domain.com
+NODE_ENV=production
+```
+
+Notes:
+
+- Expose only `80` and `443` publicly on VM firewall/security group.
+- `docker-compose.yaml` keeps Caddy under the `production` profile and switches Node to `npm run start` when `NODE_ENV=production`.
+- Keep `S3_ENDPOINT` internal (`http://seaweedfs:8333`).
 
 ### Storage Provider
 
