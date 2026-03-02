@@ -35,7 +35,7 @@ readme.txt
 .vscode/
 server.code-workspace
 
-dist/
+# dist/
 etc/
 
 build.sh

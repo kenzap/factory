@@ -1,0 +1,304 @@
+@import url("../assets/css/global.css");
+  
+:root {
+    /* 
+     * Perceptual luminance of hues (approx, per human eye sensitivity):
+     * Yellow ~0.93 | Green ~0.72 | Red ~0.21 | Blue ~0.07 | Gray ~0.18
+     * 
+     * Strategy:
+     *  - Bright hues (yellow, green) get lower alpha so they don't blast forward
+     *  - Dark hues (blue, gray) get higher alpha so they hold visual weight
+     *  - Border colors are desaturated/darkened to a consistent perceived darkness
+     */
+
+    /* URGENT — Red (low natural luminance, needs less correction) */
+    --status-urgent-border: #a93226;         /* slightly darker/cooler */
+    --status-urgent-bg: rgba(231, 76, 60, 0.30);
+
+    /* MANUFACTURING — Blue (very low luminance, needs more opacity to feel present) */
+    --status-manufacturing-border: #1a6fa3;
+    --status-manufacturing-bg: rgba(52, 152, 219, 0.01); /* up from 0.20 */
+
+    /* TODAY — Yellow/Amber (extremely high luminance, must dial back hard) */
+    --status-today-border: #b7770d;          /* more muted, less glaring */
+    --status-today-bg: rgba(243, 156, 18, 0.17); /* down from 0.40 */
+
+    /* READY — Green (high luminance, pull back moderately) */
+    --status-ready-border: #1a8a47;
+    --status-ready-bg: rgba(39, 174, 96, 0.23); /* down from 0.40 */
+
+    /* ISSUED — Gray (neutral, near-balanced already) */
+    --status-issued-border: #4e555b;
+    --status-issued-bg: rgba(108, 117, 125, 0.33);
+}
+
+body {
+    min-height: 100vh;
+}
+
+#app {
+    overflow: hidden;
+    margin-top: 75px;
+    font-size: 18px;
+}
+
+/* header */
+.search-container {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px;
+    /* backdrop-filter: blur(10px); */
+}
+
+.search-input {
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: 4px;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+}
+
+.search-input:focus {
+    background: white;
+    /* box-shadow: 0 0 20px rgba(52, 152, 219, 0.3); */
+    transform: scale(1.02);
+}
+
+#viewToggleSwitch{
+    width: 2.6em;
+    height: 1.3em;
+    background-color: #6c757d;
+    border-color: #6c757d;
+    
+}
+
+#viewToggleSwitch:focus {
+    border-color: #6c757d;
+    box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+}
+
+.container-fluid {
+    padding:0;
+}
+
+.elipsized {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+.elipsized:empty {
+  display: none;
+}
+
+.order-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0px;
+    /* backdrop-filter: blur(10px); */
+    margin-bottom: 1px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.order-card:hover {
+    /* transform: translateY(-1px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15); */
+}
+
+.status-urgent {
+    border-left: 8px solid var(--status-urgent-border);
+    background: var(--status-urgent-bg);
+}
+
+.status-manufacturing {
+    border-left: 8px solid var(--status-manufacturing-border);
+    background: var(--status-manufacturing-bg);
+}
+
+.status-today {
+    border-left: 8px solid var(--status-today-border);
+    background: var(--status-today-bg);
+}
+ 
+.status-ready {
+    border-left: 8px solid var(--status-ready-border);
+    background: var(--status-ready-bg);
+}
+
+.status-issued {
+    border-left: 8px solid var(--status-issued-border);
+    background: var(--status-issued-bg);
+}
+
+.row-issued {
+    background: rgb(185 189 193);
+    opacity: 1;
+    filter: grayscale(90%); 
+}
+
+.status-issued .row-issued{
+    filter: none;
+    opacity: 1;
+    background: transparent;
+}
+
+.order-id {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.product-name{
+    width: 480px;
+}
+
+.product-name.narrow{
+    width: auto;
+}
+
+.view-compact,
+.mode-narrow{
+    display: none;
+}
+
+.company-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.sub-items-row{
+    margin-bottom: 1px;
+}
+
+.sub-items-row tr td,
+.sub-items-row tr th{
+    background: transparent !important;
+    border-color: transparent !important;
+}
+
+.sub-items-row .table .action-ns input[type="checkbox"] {
+    font-size: 150%;
+    width: 1.3em;
+    height: 1.2em;
+    border-color:var(--bs-color-body);
+}
+
+.writeoff-amount{
+    border-color:var(--bs-color-body);
+}
+
+.action-items-col{
+    width: 160px;
+}
+
+.sub-items {
+    background: rgba(248, 249, 250, 0.8);
+    border-radius: 10px;
+    margin-top: 15px;
+    padding: 15px;
+}
+
+.sub-item {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--secondary-color);
+}
+
+.work-buttons {
+    display: flex;
+    gap: 0px;
+}
+
+.work-btn {
+    width: 42px;
+    height: 32px;
+    /* border-radius: 50%; */
+    /* border: none; */
+    font-size: 0.8rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.work-btn:hover {
+    transform: scale(1.1);
+}
+
+.stats-container {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px;
+    margin-left: 20px;
+    font-size: 14px;
+    padding: 8px 10px;
+    /* backdrop-filter: blur(10px); */
+}
+
+.close-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    /* background: linear-gradient(45deg, var(--danger-color), #c0392b); */
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    box-shadow: 0 4px 20px rgba(1, 1, 1, 0.3);
+    transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+    /* transform: scale(1.1);
+    background: linear-gradient(45deg, #c0392b, var(--danger-color)); */
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: white;
+}
+
+.dropdown-menu {
+    background: rgba(255, 255, 255, 0.95);
+    /* backdrop-filter: blur(10px); */
+    border: none;
+    border-radius: 10px;
+    /* box-shadow: 0 8px 32px rgba(0,0,0,0.1); */
+}
+
+.autocomplete-suggestions {
+    background: white;
+    border: 1px solid #ddd;
+    /* border-radius: 8px; */
+    max-height: 200px;
+    overflow-y: auto;
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+    /* box-shadow: 0 4px 12px rgba(0,0,0,0.1); */
+}
+
+.autocomplete-suggestion {
+    padding: 10px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+}
+
+.autocomplete-suggestion:hover {
+    background: var(--light-bg);
+}
+
+.autocomplete-suggestion:last-child {
+    border-bottom: none;
+}
+
+.form-control-xs {
+    min-height: calc(1.2em + .2rem + calc(var(--bs-border-width) * 2));
+    padding: .25rem .5rem;
+    font-size: .8rem;
+    border-radius: var(--bs-border-radius-sm)
+}

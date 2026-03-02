@@ -1,0 +1,25 @@
+:root{
+  --primary-color: #1941df;
+  --color-fg-primary: #1941df;
+}
+
+.container.range-plugin .calendar > .days-grid > .day.end, .container.range-plugin .calendar > .days-grid > .day.start {
+  background-color: #1941df;
+  color: var(--color-fg-selected);
+}
+
+.container.range-plugin .calendar > .days-grid > .day.start::after{
+  border-left: 8px solid #1941df;
+}
+
+.container.range-plugin .calendar > .days-grid > .day.end::after{
+  border-right: 8px solid #1941df;
+}
+
+.container.lock-plugin .calendar>.days-grid>.day.locked:not(.start):not(.end) {
+  background-image: repeating-linear-gradient(135deg, transparent, #ff9800 2px, transparent 0, transparent 4px);
+}
+
+.container.lock-plugin{
+  z-index:10;
+}
