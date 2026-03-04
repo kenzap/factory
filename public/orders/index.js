@@ -1,8 +1,10 @@
+import { priceFormat } from "../../packages/helpers/src/index.js";
 import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getOrders } from "../_/api/get_orders.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
+import { actionIssueOrder } from "../_/components/manufacturing/action_issue_order.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
-import { __html, hideLoader, log, priceFormat, toast } from "../_/helpers/global.js";
+import { __html, hideLoader, log, toast } from "../_/helpers/global.js";
 import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
@@ -382,26 +384,17 @@ class Orders {
                 field: "items",
                 width: 110,
                 headerSort: false,
-                formatter: (cell) => {
-                    const items = cell.getValue();
-
-                    if (!items || !Array.isArray(items) || items.length === 0) return '';
-
-                    // Check if all items have rdy_date
-                    const allHaveRdyDate = items.every(item =>
-                        item?.inventory?.isu_date && item?.inventory?.isu_date !== ''
-                    );
-
-                    if (!allHaveRdyDate) return '';
-
-                    // Find the latest isu_date
-                    const latestDate = items.reduce((latest, item) => {
-                        const itemDate = new Date(item?.inventory?.isu_date);
-                        return itemDate > latest ? itemDate : latest;
-                    }, new Date(0));
-
-                    return `<span class="fw-bold text-success">${latestDate.toLocaleDateString()}</span>`;
+                sorter: (a, b) => {
+                    const dateA = this.getLatestIssueDateFromItems(a);
+                    const dateB = this.getLatestIssueDateFromItems(b);
+                    return dateA - dateB;
                 },
+                formatter: (cell) => {
+                    const latestDate = this.getLatestIssueDateFromItems(cell.getValue());
+                    if (!latestDate) return '';
+                    return `<span class="fw-bold text-success">${new Date(latestDate).toLocaleDateString()}</span>`;
+                },
+                cellClick: (e, cell) => this.openIssueDateEditor(cell),
             },
             // {
             //     title: __html("Invoice"),
@@ -481,6 +474,101 @@ class Orders {
                 }
             }
         ];
+    }
+
+    getLatestIssueDateFromItems = (items) => {
+        if (!items || !Array.isArray(items) || items.length === 0) return null;
+
+        const allHaveIssueDate = items.every(item =>
+            item?.inventory?.isu_date && item?.inventory?.isu_date !== ''
+        );
+        if (!allHaveIssueDate) return null;
+
+        const latestDate = items.reduce((latest, item) => {
+            const itemDate = new Date(item?.inventory?.isu_date);
+            return itemDate > latest ? itemDate : latest;
+        }, new Date(0));
+
+        return latestDate.getTime() > 0 ? latestDate.toISOString() : null;
+    }
+
+    openIssueDateEditor = (cell) => {
+        const rowData = cell.getRow().getData();
+        if (rowData?.draft === true) {
+            toast(__html('Estimates cannot be edited.'));
+            return;
+        }
+
+        const input = document.createElement('input');
+        input.type = 'date';
+        input.className = 'form-control';
+
+        const cellElement = cell.getElement();
+        input.style.position = 'absolute';
+        input.style.width = cellElement.offsetWidth + 'px';
+        input.style.height = cellElement.offsetHeight + 'px';
+        input.style.zIndex = '1000';
+
+        const rect = cellElement.getBoundingClientRect();
+        input.style.left = rect.left + 'px';
+        input.style.top = rect.top + 'px';
+
+        const latestIssueDate = this.getLatestIssueDateFromItems(cell.getValue());
+        input.value = latestIssueDate ? new Date(latestIssueDate).toISOString().split('T')[0] : '';
+
+        document.body.appendChild(input);
+        input.focus();
+        input.click();
+
+        const closeInput = () => {
+            if (document.body.contains(input)) {
+                document.body.removeChild(input);
+            }
+        };
+
+        const applyValue = async () => {
+            const selectedDate = input.value;
+            closeInput();
+            await this.applyIssueDateToOrder(cell, selectedDate);
+        };
+
+        input.addEventListener('change', applyValue);
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') applyValue();
+            if (event.key === 'Escape') closeInput();
+        });
+        input.addEventListener('blur', () => setTimeout(closeInput, 100));
+    }
+
+    applyIssueDateToOrder = async (cell, selectedDate) => {
+        const rowData = cell.getRow().getData();
+        const items = Array.isArray(rowData?.items) ? rowData.items : [];
+        if (!rowData?._id || !rowData?.id || items.length === 0) {
+            toast(__html('No items found to update.'));
+            return;
+        }
+
+        // Reuse manufacturing issuing flow for persistence.
+        const order = {
+            _id: rowData._id,
+            id: rowData.id,
+            items: items.map((item) => ({
+                ...item,
+                inventory: item?.inventory || {}
+            }))
+        };
+
+        const isIssue = !!selectedDate;
+        await actionIssueOrder(order.id, isIssue, [order], (result) => {
+            if (!result?.success) {
+                toast(__html('Error updating issue date.'));
+                return;
+            }
+
+            cell.getRow().update({ items: result.order.items });
+            cell.getRow().reformat();
+            toast(__html('Changes applied'));
+        }, selectedDate ? new Date(selectedDate + 'T' + new Date().toTimeString().slice(0, 8)).toISOString() : null);
     }
 
     generateWaybillReport = () => {

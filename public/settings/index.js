@@ -1,6 +1,7 @@
+import { priceFormat } from "../../packages/helpers/src/index.js";
 import { getSettings } from "../_/api/get_settings.js";
 import { saveSettings } from "../_/api/save_settings.js";
-import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, priceFormat, toast, unescape } from "../_/helpers/global.js";
+import { __html, escape, initBreadcrumbs, link, onClick, onKeyUp, onlyNumbers, toast, unescape } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";

@@ -165,6 +165,12 @@ const calculateFormulaPrice = (settings, item, obj) => {
             : item.adj;
     }
 
+    // format final price to 2 digits
+    obj.price = Math.round(obj.price * 100) / 100;
+
+    // console.log('Price:', obj.price, ' QTY:', item.qty, ' Total:', obj.price * item.qty);
+
+    // Calculate total price
     obj.coating_price = coatingPrice;
     obj.total = obj.price * item.qty;
     obj.formula_width_calc = calculate(obj.formula_width_calc);

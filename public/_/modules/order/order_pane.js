@@ -1,10 +1,11 @@
+import { priceFormat } from "../../../../packages/helpers/src/index.js";
 import { refreshRowCalculations } from "../../components/order/order_calculations.js";
 import { numberEditor } from "../../components/order/order_number_editor.js";
 import { productEditor } from "../../components/order/order_product_editor.js";
 import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { suggestionEditor } from "../../components/order/order_suggestion_editor.js";
 import { textEditor } from "../../components/order/order_text_editor.js";
-import { __html, onClick, priceFormat, toast } from "../../helpers/global.js";
+import { __html, onClick, toast } from "../../helpers/global.js";
 import { getCoatings, getColors, isAllowedToEdit } from "../../helpers/order.js";
 import { addRow, navigateToNextCell, navigateToPreviousCell } from "../../helpers/order_table.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
@@ -74,13 +75,18 @@ export class OrderPane {
         bus.emit('order:table:changed', true);
     }
 
+    canAddRows = () => {
+        return !(state.order?.waybill?.number);
+    }
+
     view = () => {
+        const addDisabled = !this.canAddRows();
 
         // Add fade effect to indicate loading/disabled state
         document.querySelector('.right-pane').innerHTML = /*html*/`
             <div class="table-container">
                 <div class="btn-group mb-2" role="group">
-                    <button id="add-order-row" class="btn btn-outline-primary btn-sm">
+                    <button id="add-order-row" class="btn btn-outline-primary btn-sm" ${addDisabled ? 'disabled' : ''} title="${addDisabled ? __html('Waybill already issued. Adding new rows is disabled.') : ''}">
                         <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
                     </button>
                     <a href="/manufacturing/?id=${state.order.id}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
@@ -355,7 +361,7 @@ export class OrderPane {
                     formatter: function (cell) {
                         const row = cell.getRow().getData();
                         const price = parseFloat(row.price) || 0;
-                        return '<span class="calculated-field">' + priceFormat(state.settings, price) + '</span>';
+                        return '<span class="calculated-field">' + priceFormat(state.settings, price, 4) + '</span>';
                     }
                 },
                 {
@@ -561,7 +567,7 @@ export class OrderPane {
         state.table.on("cellEdited", (cell) => {
 
             // Check if this is the last row and automatically add a new one
-            if (state.table.getRows().length === 0) {
+            if (this.canAddRows() && state.table.getRows().length === 0) {
                 addRow();
             }
 
@@ -575,7 +581,7 @@ export class OrderPane {
             this.markOrderAsDirty();
         });
 
-        if (state.order?.items?.length === 0) setTimeout(() => { addRow() }, 100);
+        if (this.canAddRows() && state.order?.items?.length === 0) setTimeout(() => { addRow() }, 100);
     }
 
     syncItems = () => {
@@ -658,6 +664,10 @@ export class OrderPane {
 
         // Add new row button functionality
         onClick('#add-order-row', () => {
+            if (!this.canAddRows()) {
+                toast(__html('Waybill already issued. Adding new rows is disabled.'));
+                return;
+            }
             addRow();
             this.markOrderAsDirty();
         });

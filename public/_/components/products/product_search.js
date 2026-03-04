@@ -1,5 +1,5 @@
 import { getProductSuggestions } from "../../api/get_product_suggestions.js";
-import { FILES } from "../../helpers/global.js";
+import { Product } from "./product.js";
 
 export class ProductSearch {
 
@@ -75,6 +75,12 @@ export class ProductSearch {
 
             if (suggestions.length > 0) {
                 suggestions.forEach((suggestion, index) => {
+
+                    const product = new Product(suggestion);
+
+                    console.log('Suggestion:', suggestion);
+                    console.log('Product image URL:', product.imageUrl);
+
                     const option = document.createElement("div");
                     option.style.padding = "8px 12px";
                     option.style.cursor = "pointer";
@@ -92,7 +98,7 @@ export class ProductSearch {
                     optionImage.style.borderRadius = "4px";
                     optionImage.style.backgroundColor = "#f8f9fa";
                     optionImage.style.transition = "transform 0.2s ease";
-                    optionImage.src = FILES + "/" + suggestion._id + "-250.webp";
+                    optionImage.src = product.imageUrl;
 
                     // Add hover effect to scale image
                     optionImage.addEventListener("mouseenter", () => {

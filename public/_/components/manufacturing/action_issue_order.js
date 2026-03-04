@@ -2,7 +2,7 @@ import { execOrderItemAction } from "../../api/exec_order_item_action.js";
 import { __html } from "../../helpers/global.js";
 import { state } from "../../modules/manufacturing/state.js";
 
-export const actionIssueOrder = async (orderId, isIssue, orders, cb) => {
+export const actionIssueOrder = async (orderId, isIssue, orders, cb, isu_date) => {
 
     if (state.inQuery) return;
 
@@ -43,11 +43,13 @@ export const actionIssueOrder = async (orderId, isIssue, orders, cb) => {
                 });
             }
 
+            console.log('Processing item for issue/cancel:', item, isIssue);
+
             // mark as issued if not already
-            if (isIssue && item.inventory && item.inventory.rdy_date && !item.inventory.isu_date) {
+            if (isIssue && item.inventory && item.inventory.rdy_date && (!item.inventory.isu_date || item.inventory.isu_date != new Date().toISOString())) {
 
                 // update current state
-                item.inventory.isu_date = new Date().toISOString();
+                item.inventory.isu_date = isu_date ? isu_date : new Date().toISOString();
 
                 // action for db
                 actions.issue.push({
@@ -57,6 +59,8 @@ export const actionIssueOrder = async (orderId, isIssue, orders, cb) => {
                     item_id: item.id,
                     product_id: item._id
                 });
+
+                console.log('Prepared issue action for item:', item.id, 'with isu_date:', item.inventory.isu_date);
             }
         });
 

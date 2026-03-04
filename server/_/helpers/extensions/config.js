@@ -12,15 +12,21 @@
  * const apiKey = config.get('apiKey'); // Returns 'abc123'
  * config.get('invalidKey'); // Throws Error: Config "invalidKey" not declared for MyAPI
  */
-export const createConfigInterface = (values, integrationName) => {
+export const createConfigInterface = (valuesOrGetter, integrationName) => {
+    const readValues = () => {
+        if (typeof valuesOrGetter === 'function') return valuesOrGetter() || {};
+        return valuesOrGetter || {};
+    };
+
     return {
         get(key) {
+            const values = readValues();
 
-            if (values[integrationName + ":" + key]) return values[integrationName + ":" + key]
+            if (values[integrationName + ":" + key]) return values[integrationName + ":" + key];
 
-            if (values[key]) return values[key]
+            if (values[key]) return values[key];
 
             return undefined;
         }
-    }
-}
+    };
+};

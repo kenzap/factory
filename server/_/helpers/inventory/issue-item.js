@@ -1,4 +1,3 @@
-
 import { sseManager } from '../../helpers/sse.js';
 import { sid } from './../index.js';
 
@@ -18,7 +17,8 @@ export const issueItem = async (db, actions, user) => {
         }
 
         const inventory = {
-            isu_date: issueAction.isu_date ? new Date().toISOString() : null,
+            // isu_date: issueAction.isu_date ? new Date().toISOString() : null,
+            isu_date: issueAction.isu_date,
             isu_user: actions.user_id || null
         };
 

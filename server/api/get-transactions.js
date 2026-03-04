@@ -35,13 +35,19 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         FROM data 
         WHERE ref = $1 AND sid = $2 AND js->'data'->'deleted' IS NULL `;
 
+    // independent date scopes for summary calculations (payment vs waybill)
+    let paymentAmountDateScope = `1=1`;
+    let waybillAmountDateScope = `1=1`;
+
     // transactions summary query
     let query_summary = `
             SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN js->'data'->'price'->>'grand_total' IS NOT NULL AND js->'data'->'price'->>'grand_total' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_amount,
-                SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
-                SUM(CASE WHEN js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END) as total_waybill
+                SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' AND (__PAYMENT_SCOPE__) THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) as total_paid,
+                SUM(CASE WHEN js->'data'->'waybill'->>'amount' IS NOT NULL AND js->'data'->'waybill'->>'amount' != '' AND (__WAYBILL_SCOPE__) THEN (js->'data'->'waybill'->>'amount')::numeric ELSE 0 END) as total_waybill,
+                SUM(CASE WHEN js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != '' AND (__PAYMENT_SCOPE__) THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END)
+                - SUM(CASE WHEN js->'data'->'waybill'->>'amount' IS NOT NULL AND js->'data'->'waybill'->>'amount' != '' AND (__WAYBILL_SCOPE__) THEN (js->'data'->'waybill'->>'amount')::numeric ELSE 0 END) as total_outstanding
             FROM data
             WHERE ref = $1 AND sid = $2 `;
 
@@ -63,35 +69,54 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         params.push(`${filters.client.name.trim()}`);
     }
 
-    // filter by payment date
-    if (filters.dateFrom.trim() !== '' && filters.for === 'transactions' && filters.type === 'paid') {
-        chunk = ` AND (js->'data'->'payment'->>'date' >= $${params.length + 1})`;
+    // date filters:
+    // - paid mode filters rows by payment date only
+    // - non-paid modes filter rows by waybill OR payment date
+    // summary amounts always apply independent payment/waybill date scopes
+    if (filters.for === 'transactions' && filters.dateFrom.trim() !== '') {
+        const dateFromPlaceholder = `$${params.length + 1}`;
+
+        if (filters.type === 'paid') {
+            chunk = ` AND (js->'data'->'payment'->>'date' >= ${dateFromPlaceholder})`;
+        } else {
+            chunk = ` AND (
+                (js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' AND js->'data'->'waybill'->>'date' >= ${dateFromPlaceholder})
+                OR
+                (js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '' AND js->'data'->'payment'->>'date' >= ${dateFromPlaceholder})
+            )`;
+        }
+
         query += chunk;
-        query_summary += chunk
+        query_summary += chunk;
+        paymentAmountDateScope += ` AND js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '' AND js->'data'->'payment'->>'date' >= ${dateFromPlaceholder}`;
+        waybillAmountDateScope += ` AND js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' AND js->'data'->'waybill'->>'date' >= ${dateFromPlaceholder}`;
         params.push(filters.dateFrom.trim());
     }
 
-    if (filters.dateTo.trim() !== '' && filters.for === 'transactions' && filters.type === 'paid') {
-        chunk = ` AND (js->'data'->'payment'->>'date' <= $${params.length + 1})`;
+    if (filters.for === 'transactions' && filters.dateTo.trim() !== '') {
+        const dateToPlaceholder = `$${params.length + 1}`;
+
+        if (filters.type === 'paid') {
+            chunk = ` AND (js->'data'->'payment'->>'date' <= ${dateToPlaceholder})`;
+        } else {
+            chunk = ` AND (
+                (js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' AND js->'data'->'waybill'->>'date' <= ${dateToPlaceholder})
+                OR
+                (js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '' AND js->'data'->'payment'->>'date' <= ${dateToPlaceholder})
+            )`;
+        }
+
         query += chunk;
-        query_summary += chunk
+        query_summary += chunk;
+        paymentAmountDateScope += ` AND js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '' AND js->'data'->'payment'->>'date' <= ${dateToPlaceholder}`;
+        waybillAmountDateScope += ` AND js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '' AND js->'data'->'waybill'->>'date' <= ${dateToPlaceholder}`;
         params.push(filters.dateTo.trim());
     }
 
-    // filter by payment date or waybill date
-    if (filters.dateFrom.trim() !== '' && filters.for === 'transactions' && filters.type !== 'paid') {
-        chunk = ` AND (js->'data'->'waybill'->>'date' >= $${params.length + 1} OR js->'data'->'payment'->>'date' >= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
-        params.push(filters.dateFrom.trim());
-    }
-
-    if (filters.dateTo.trim() !== '' && filters.for === 'transactions' && filters.type !== 'paid') {
-        chunk = ` AND (js->'data'->'waybill'->>'date' <= $${params.length + 1} OR js->'data'->'payment'->>'date' <= $${params.length + 1})`;
-        query += chunk;
-        query_summary += chunk
-        params.push(filters.dateTo.trim());
-    }
+    // inject finalized date scopes into summary query
+    query_summary = query_summary
+        .replaceAll('__PAYMENT_SCOPE__', paymentAmountDateScope)
+        .replaceAll('__WAYBILL_SCOPE__', waybillAmountDateScope);
 
     if (typeof filters.draft === 'boolean') {
         chunk = ` AND js->'data'->'draft' = $${params.length + 1}`;
@@ -162,7 +187,8 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         orders.summary = {
             total: parseFloat(countResult.rows[0].total_amount) || 0,
             paid: parseFloat(countResult.rows[0].total_paid) || 0,
-            waybill: parseFloat(countResult.rows[0].total_waybill) || 0
+            waybill: parseFloat(countResult.rows[0].total_waybill) || 0,
+            outstanding: parseFloat(countResult.rows[0].total_outstanding) || 0
         };
 
     } finally {

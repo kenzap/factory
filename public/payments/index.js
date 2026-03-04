@@ -1,9 +1,10 @@
+import { priceFormat } from "../../packages/helpers/src/index.js";
 import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getTransactions } from "../_/api/get_transactions.js";
 import { saveTransaction } from "../_/api/save_transaction.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
-import { __html, hideLoader, log, priceFormat, toast } from "../_/helpers/global.js";
+import { __html, hideLoader, log, toast } from "../_/helpers/global.js";
 import { TabulatorFull } from '../_/libs/tabulator_esm.min.mjs';
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
@@ -11,7 +12,6 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { isAuthorized } from "../_/modules/unauthorized.js";
-
 /**
  * Transaction Log
  * 
@@ -814,6 +814,10 @@ class Transactions {
 
         const footerContents = document.querySelector('.tabulator-footer-contents');
         if (footerContents) {
+            const totalPaid = parseFloat(this.orders?.summary?.paid) || 0;
+            const totalWaybill = parseFloat(this.orders?.summary?.waybill) || 0;
+            const outstandingBalance = parseFloat(this.orders?.summary?.outstanding) || 0;
+            const outstandingClass = outstandingBalance < 0 ? 'text-danger' : 'text-success';
 
             // Create summary table
             const summaryTable = document.createElement('div');
@@ -822,9 +826,10 @@ class Transactions {
                         <table class="table table-sm table-borderless mb-0 d-inline-block">
                             <tr>
                                 <td class="p-1 pe-3"><i class="bi bi-hash"></i> ${this.orders.total}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> €${this.orders.summary?.total?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> €${this.orders.summary?.paid?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> €${this.orders.summary?.waybill?.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-currency-euro me-1 d-none"></i> ${priceFormat(this.settings, parseFloat(this.orders?.summary?.total) || 0)}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-bank me-1"></i> ${priceFormat(this.settings, totalPaid)}</td>
+                                <td class="p-1 pe-3"><i class="bi bi-receipt me-1"></i> ${priceFormat(this.settings, totalWaybill)}</td>
+                                <td class="p-1 pe-3 ${outstandingClass}" title="${__html('Outstanding balance')}"><i class="bi bi-calculator me-1"></i>${priceFormat(this.settings, outstandingBalance)}</td>
                             </tr>
                         </table>
                     `;

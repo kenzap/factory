@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { MTLLoader } from 'three/addons/loaders/MTLLoader.js';
 import { OBJLoader } from 'three/addons/loaders/OBJLoader.js';
-import { getStorage, log, spaceID } from "../../helpers/global.js";
+import { getStorage, log } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 
 export class ProductViewer {
@@ -73,8 +73,8 @@ export class ProductViewer {
 
         if (!mtlFileExists || !objFileExists) { self.state.viewerFirstLoad = true; return; }
 
-        const mtlFile = getStorage() + '/S' + spaceID() + '/' + this.product.cad_files.find(file => file.name.endsWith('.mtl')).id + '.mtl';
-        self.state.objFile = getStorage() + '/S' + spaceID() + '/' + this.product.cad_files.find(file => file.name.endsWith('.obj')).id + '.obj';
+        const mtlFile = getStorage() + '/' + this.product.cad_files.find(file => file.name.endsWith('.mtl')).id + '.mtl';
+        self.state.objFile = getStorage() + '/' + this.product.cad_files.find(file => file.name.endsWith('.obj')).id + '.obj';
 
         if (mtlFile && self.state.objFile) {
             const mtlLoader = new MTLLoader();

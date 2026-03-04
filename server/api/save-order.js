@@ -39,6 +39,8 @@ async function saveOrder(logger, data, user) {
                 _id: makeId(),
                 date: data.date || currentDate,
                 created: currentTime,
+                created_y: new Date(currentTime * 1000).getFullYear(),
+                created_ym: `${new Date(currentTime * 1000).getFullYear()}-${String(new Date(currentTime * 1000).getMonth() + 1).padStart(2, '0')}`,
                 updated: currentTime,
                 operator: data.operator || user.fname || ''
             };
@@ -74,7 +76,9 @@ async function saveOrder(logger, data, user) {
 
             data_new = {
                 ...mergedData,
-                date: existingData.date || currentDate,
+                date: existingData.date || new Date(existingData.created * 1000).toISOString(),
+                created_y: existingData.created_y || new Date(existingData.created * 1000).getFullYear(),
+                created_ym: existingData.created_ym || `${new Date(existingData.created * 1000).getFullYear()}-${String(new Date(existingData.created * 1000).getMonth() + 1).padStart(2, '0')}`,
                 updated: currentTime
             };
 
@@ -82,7 +86,7 @@ async function saveOrder(logger, data, user) {
                 data_new.operator = existingData.operator || user.fname || '';
             }
 
-            // logger.info(`Updating order:`, data_new);
+            logger.info(`Updating order:`, data_new);
 
             meta.updated = currentTime;
         }

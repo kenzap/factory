@@ -80,7 +80,8 @@ export const formatStatus = (st) => {
         case 1: return '<div class="badge bg-primary fw-light">' + __html('Published') + '</div>';
         case 2: return '<div class="badge bg-primary fw-light">' + __html('Published') + '</div>';
         case 3: return '<div class="badge bg-success fw-light">' + __html('Private') + '</div>';
-        default: return '<div class="badge bg-secondary fw-light">' + __html('Drafts') + '</div>';
+        case 4: return '<div class="badge bg-secondary fw-light">' + __html('Unpublished') + '</div>';
+        default: return '<div class="badge bg-secondary fw-light">' + __html('Draft') + '</div>';
     }
 }
 

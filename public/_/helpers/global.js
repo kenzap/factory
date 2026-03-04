@@ -12,9 +12,9 @@ const getConfiguredCdnBase = () => {
 };
 
 export const CDN = getConfiguredCdnBase();
-export const FILES = CDN ? (CDN.endsWith('/files') ? CDN : `${CDN}/files`) : '/files';
+export const FILES = CDN ? CDN : 'files';
 export const API_KEY = "";
-export const version = "2.0.0";
+export const version = "2.5.0";
 
 export const fileUrl = (filename, updated = '') => {
     const cacheBust = updated ? `?${updated}` : '';
@@ -416,33 +416,6 @@ export const formatStatus = (__, st) => {
         case 3: return '<div class="badge bg-secondary fw-light">' + __('Unpublished') + '</div>';
         default: return '<div class="badge bg-secondary fw-light">' + __('Drafts') + '</div>';
     }
-}
-
-/**
-* Render price
-* @public
-*/
-export const priceFormat = function (settings, price) {
-
-    price = makeNumber(price);
-
-    // Round to 2 decimal places using banker's rounding (round half to even)
-    const factor = 100;
-    price = (Math.round((parseFloat(price) + Number.EPSILON) * factor) / factor).toFixed(2);
-
-    // Add comma separators for large numbers
-    const parts = price.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    price = parts.join('.');
-
-    switch (settings.currency_symb_loc) {
-        case 'left': price = settings.currency_symb + price; break;
-        case 'right': price = price + settings.currency_symb; break;
-        case 'left_space': price = settings.currency_symb + ' ' + price; break;
-        case 'right_space': price = price + ' ' + settings.currency_symb; break;
-    }
-
-    return price;
 }
 
 export const makeNumber = function (price) {

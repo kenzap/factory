@@ -1,8 +1,9 @@
 import { getProductSuggestions } from "../../api/get_product_suggestions.js";
 import { refreshRowCalculations } from "../../components/order/order_calculations.js";
-import { FILES, toast } from "../../helpers/global.js";
+import { toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
 import { calculate } from "../../helpers/price.js";
+import { Product } from "../products/product.js";
 
 let productSuggestions = [];
 
@@ -113,6 +114,12 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
         if (suggestions.length > 0) {
             suggestions.forEach((suggestion, index) => {
+
+                const product = new Product(suggestion);
+
+                console.log('Suggestion:', suggestion);
+                console.log('Product image URL:', product.imageUrl);
+
                 const option = document.createElement("div");
                 option.style.padding = "8px 12px";
                 option.style.cursor = "pointer";
@@ -130,7 +137,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 optionImage.style.borderRadius = "4px";
                 optionImage.style.backgroundColor = "#f8f9fa";
                 optionImage.style.transition = "transform 0.2s ease";
-                optionImage.src = FILES + "/" + suggestion._id + "-250.webp";
+                optionImage.src = product.imageUrl;
 
                 // Add hover effect to scale image
                 optionImage.addEventListener("mouseenter", () => {
@@ -187,11 +194,10 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 option.addEventListener("mouseenter", (e) => {
 
                     // Show large preview image
-                    largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
+                    largeImage.src = product.imageLargeUrl;
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
                         largeImage.style.display = "none";
-                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
                     largeImage.style.display = "block";
                     largePreview.style.display = "block";
@@ -199,9 +205,6 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
                 option.addEventListener("mouseleave", (e) => {
                     e.preventDefault();
-                    // Don't reset selectedIndex on mouseleave to preserve keyboard navigation
-                    // selectedIndex = -1;
-                    // updateSelectedOption();
 
                     // Hide large preview image
                     largePreview.style.display = "none";
@@ -243,8 +246,6 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
     input.addEventListener("input", (e) => {
         const searchTerm = e.target.value.trim();
-
-        console.log('Searching for products with term:', searchTerm);
 
         // Clear previous timeout to debounce the search
         clearTimeout(searchTimeout);
@@ -293,11 +294,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 // Show large preview for keyboard navigation
                 const suggestion = productSuggestions[selectedIndex];
                 if (suggestion) {
-                    largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
+                    const product = new Product(suggestion);
+                    largeImage.src = product.imageLargeUrl;
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
                         largeImage.style.display = "none";
-                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
                     largeImage.style.display = "block";
                     largePreview.style.display = "block";
@@ -313,11 +314,11 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
                 // Show large preview for keyboard navigation
                 const suggestion = productSuggestions[selectedIndex];
                 if (suggestion) {
-                    largeImage.src = FILES + "/" + suggestion._id + "-polyester-2h3-1500.webp";
+                    const product = new Product(suggestion);
+                    largeImage.src = product.imageLargeUrl;
                     largeImage.onerror = () => {
                         largeImage.onerror = null; // Prevent infinite loop
                         largeImage.style.display = "none";
-                        // largeImage.src = FILES + "/" + suggestion._id + "-250.webp";
                     };
                     largePreview.style.display = "block";
                 }

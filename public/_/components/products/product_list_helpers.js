@@ -1,63 +1,9 @@
 import { createProduct } from "../../api/create_product.js";
 import { deleteProduct } from "../../api/delete_product.js";
 import { getProducts } from "../../api/get_products.js";
-import { formatStatus } from "../../components/products/helpers.js";
-import { __html, attr, CDN, formatTime, link, toast } from "../../helpers/global.js";
+import { __html, attr, link, toast } from "../../helpers/global.js";
 import { Component } from "../component.js";
-
-const getFilesBase = () => {
-    const configured = (localStorage.getItem('cdn') || CDN || '').trim();
-    if (!configured) return '/files';
-
-    const noSlash = configured.replace(/\/+$/, '');
-    if (noSlash.endsWith('/files')) return noSlash;
-    return `${noSlash}/files`;
-};
-
-const buildFileUrl = (filename, updated = '') => {
-    const base = getFilesBase();
-    const cacheBust = updated ? `?${updated}` : '';
-    return `${base}/${encodeURIComponent(filename)}${cacheBust}`;
-};
-
-// Product Model
-export class Product {
-    constructor(data) {
-        Object.assign(this, data);
-    }
-
-    get imageUrl() {
-        if (this.cad_files?.length) {
-            return buildFileUrl(`${this._id}-250.webp`);
-        }
-
-        if (this.sketch_img && this.sketch_img.length > 0 && this.sketch_img[0]?.id) {
-            return buildFileUrl(`sketch-${this.sketch_img[0].id}-1-100x100.webp`, this.updated);
-        }
-
-        if (this.img?.[0]) {
-            return buildFileUrl(`product-${this._id}-1-100x100.jpeg`, this.updated);
-        }
-
-        return '/assets/img/placeholder.png';
-    }
-
-    get displayTitle() {
-        return this.title || this.title_default || '';
-    }
-
-    get displayDescription() {
-        return this.sdesc || this.sdesc_default || '';
-    }
-
-    get formattedStatus() {
-        return formatStatus(this.status);
-    }
-
-    get formattedTime() {
-        return formatTime(this.updated_at || this.updated * 1000);
-    }
-}
+import { Product } from "./product.js";
 
 // Product Row Component
 export class ProductListRow extends Component {

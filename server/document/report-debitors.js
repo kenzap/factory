@@ -1,6 +1,7 @@
+import { priceFormat } from '@factory/helpers/index.js';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { __html, getDbConnection, getSettings, priceFormat, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, getSettings, sid } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
 
 /**
@@ -21,28 +22,14 @@ async function execDebitorReport(data) {
 
         await db.connect();
 
-        // Query to get all debitors grouped by eid where payment amount < grand_total
-        let query = `
-            SELECT
-                js->'data'->>'eid' as eid,
-                js->'data'->>'name' as name,
-            ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2) as total_amount_due,
-            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
-            ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END) - SUM(CASE WHEN js->'data'->'waybill'->>'amount' ~ '^-?[0-9]+\.?[0-9]*$' THEN (js->'data'->'waybill'->>'amount')::numeric ELSE 0 END), 2) as outstanding_balance,
-            COUNT(*) as order_count
-            FROM data
-            WHERE ref = $1 AND sid = $2 AND ((js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != '') OR (js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != '')) 
-            AND js->'data'->'deleted' IS NULL
-            `;
-
-        // AND ((js->'data'->'payment'->>'amount' IS NOT NULL AND js->'data'->'payment'->>'amount' != "") OR (js->'data'->'waybill'->>'amount' IS NOT NULL AND js->'data'->'waybill'->>'amount' != ""))
+        // Build independent date scopes for waybill and payment aggregates.
         const queryParams = ['order', sid];
         let paramIndex = 3;
+        let waybillDateScope = `js->'data'->'waybill'->>'date' IS NOT NULL AND js->'data'->'waybill'->>'date' != ''`;
+        let paymentDateScope = `js->'data'->'payment'->>'date' IS NOT NULL AND js->'data'->'payment'->>'date' != ''`;
 
         // Filter by client eid if provided
         if (data.eid) {
-            // query += ` AND js->'data'->>'eid' = $${paramIndex}`;
-            query += ` AND (js->'data'->>'eid' = $${paramIndex} OR LOWER(js->'data'->>'name') = LOWER($${paramIndex + 1})) `;
             queryParams.push(data.eid);
             queryParams.push(data.name || '');
             paramIndex += 2;
@@ -51,20 +38,41 @@ async function execDebitorReport(data) {
         // Filter by date if provided
         if (data.from || data.to) {
             if (data.from && data.from.trim() !== '') {
-                // query += ` AND js->'data'->'waybill'->>'date' >= $${paramIndex}`;
-                query += ` AND (js->'data'->'waybill'->>'date' >= $${paramIndex} OR js->'data'->'payment'->>'date' >= $${paramIndex})`;
-                queryParams.push(data.from); // Extract date part only
+                waybillDateScope += ` AND js->'data'->'waybill'->>'date' >= $${paramIndex}`;
+                paymentDateScope += ` AND js->'data'->'payment'->>'date' >= $${paramIndex}`;
+                queryParams.push(data.from);
                 paramIndex++;
             }
             if (data.to && data.to.trim() !== '') {
-                // query += ` AND js->'data'->'waybill'->>'date' <= $${paramIndex}`;
-                query += ` AND (js->'data'->'waybill'->>'date' <= $${paramIndex} OR js->'data'->'payment'->>'date' <= $${paramIndex})`;
-                queryParams.push(data.to); // Extract date part only
+                waybillDateScope += ` AND js->'data'->'waybill'->>'date' <= $${paramIndex}`;
+                paymentDateScope += ` AND js->'data'->'payment'->>'date' <= $${paramIndex}`;
+                queryParams.push(data.to);
                 paramIndex++;
             }
         }
 
-        // HAVING ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) != ROUND(SUM(CASE WHEN js->'data'->'price'->>'grand_total' ~ '^[0-9]+\.?[0-9]*$' THEN (js->'data'->'price'->>'grand_total')::numeric ELSE 0 END), 2)
+        // Query to get all debitors grouped by eid with independent payment/waybill date scopes.
+        let query = `
+            SELECT
+                js->'data'->>'eid' as eid,
+                js->'data'->>'name' as name,
+                ROUND(SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\\.?[0-9]*$' AND (${paymentDateScope}) THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END), 2) as total_amount_paid,
+                ROUND(
+                    SUM(CASE WHEN js->'data'->'payment'->>'amount' ~ '^-?[0-9]+\\.?[0-9]*$' AND (${paymentDateScope}) THEN (js->'data'->'payment'->>'amount')::numeric ELSE 0 END)
+                    - SUM(CASE WHEN js->'data'->'waybill'->>'amount' ~ '^-?[0-9]+\\.?[0-9]*$' AND (${waybillDateScope}) THEN (js->'data'->'waybill'->>'amount')::numeric ELSE 0 END),
+                    2
+                ) as outstanding_balance,
+                COUNT(*) as order_count
+            FROM data
+            WHERE ref = $1
+              AND sid = $2
+              AND js->'data'->'deleted' IS NULL
+        `;
+
+        if (data.eid) {
+            query += ` AND (js->'data'->>'eid' = $3 OR LOWER(js->'data'->>'name') = LOWER($4)) `;
+        }
+
         query += ` 
                 GROUP BY js->'data'->>'eid', js->'data'->>'name'
                 ORDER BY js->'data'->>'name'`;

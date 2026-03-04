@@ -7,10 +7,6 @@ export class ProductSidebar {
 
         this.product = product;
 
-        // this.product.keywords = this.state.product.keywords || [];
-
-        // console.log(this.state.product);
-
         this.view();
 
         this.bind();

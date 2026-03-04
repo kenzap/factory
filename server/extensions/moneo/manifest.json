@@ -9,6 +9,9 @@
     "MONEO_API_BASE": { "title": "API Base URL", "type": "text", "required": true, "default": "https://api.moneo.com/v1" },
     "MONEO_AUTH_TOKEN": { "title": "Auth Token", "type": "token", "required": true, "secret": true },
     "COMPANY_UID": { "title": "Company UID", "type": "text", "required": true },
-    "FIRM_ID": { "title": "Firm ID", "type": "text", "required": true }
+    "FIRM_ID": { "title": "Firm ID", "type": "text", "required": true },
+    "MONEO_INSECURE_TLS": { "title": "Disable TLS Cert Validation (dev only)", "type": "text", "required": false, "default": "" },
+    "MONEO_TLS_SERVERNAME": { "title": "TLS SNI Servername", "type": "text", "required": false, "default": "" },
+    "MONEO_TIMEOUT_MS": { "title": "Request Timeout (ms)", "type": "text", "required": false, "default": "30000" }
   }
 }

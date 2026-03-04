@@ -1,4 +1,5 @@
-import { __html, priceFormat } from '../index.js';
+import { priceFormat } from '@factory/helpers/index';
+import { __html } from '../index.js';
 import { amountToWords } from './totals.js';
 
 /**
@@ -46,7 +47,7 @@ export function getInvoiceItemsTable(detailed, settings, order, locales, calcula
                 <td>${formatItemDescription(detailed, item, settings, locales)}</td>
                 ${hasDiscount ? `<td>${priceFormat(settings, originalPrice)}</td>` : ''}
                 ${hasDiscount ? `<td>${item.discount > 0 ? `-${item.discount}%` : ''}</td>` : ''}
-                <td>${priceFormat(settings, item.price)}</td>
+                <td>${priceFormat(settings, item.price, 4)}</td>
                 <td>${item.qty}</td>
                 <td>${item.unit ? __html(locales, item.unit) : __html(locales, "pc")}</td>
                 <td>${priceFormat(settings, lineTotal)}</td>

@@ -174,12 +174,6 @@ export const getSettings = async (fields) => {
     return settings;
 }
 
-// Helper function to get locale
-// export async function getLocale(client, sid, lang) {
-//     // Implementation would depend on your locale storage structure
-//     return {};
-// }
-
 // Helper function to evaluate math expressions safely
 export function evalmath(equation) {
     if (equation.includes(':')) {
@@ -200,40 +194,6 @@ export function makeNumber(price) {
     price = price || 0;
     price = parseFloat(price);
     return Math.round(price * 100) / 100;
-}
-
-export function priceFormat(settings, price) {
-    price = makeNumber(price);
-    price = parseFloat(price).toFixed(2);
-
-    // Handle Swedish currency conversion
-    if (process.env.LANG === 'sv') {
-        settings.currency_symb = 'kr';
-        price = (parseFloat(price) * 12).toFixed(2);
-    }
-
-    // Add thousand separators for large numbers
-    price = parseFloat(price).toLocaleString('en-US', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    });
-
-    switch (settings.currency_symb_loc) {
-        case 'left':
-            price = settings.currency_symb + price;
-            break;
-        case 'right':
-            price = price + settings.currency_symb;
-            break;
-        case 'left_space':
-            price = settings.currency_symb + ' ' + price;
-            break;
-        case 'right_space':
-            price = price + ' ' + settings.currency_symb;
-            break;
-    }
-
-    return price;
 }
 
 export function getMinPrice(state, item, html = false) {

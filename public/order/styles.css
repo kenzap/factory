@@ -101,6 +101,7 @@ body {
     color: #495057;
 }
 
+.entity-user-item,
 .contact-item,
 .driver-item {
     border: 1px solid #dee2e6;

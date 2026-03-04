@@ -154,10 +154,9 @@ class Manufacturing {
 
             if (result.success) {
 
-                console.log('Order', result.order);
+                // console.log('Order', result.order);
 
                 renderInventoryButtons(result.order._id);
-                // updateWriteoffInputUI(result.order, result.order.items.find(i => i.id === result.item_id));
             } else {
                 toast(__html('Error updating order status'));
             }

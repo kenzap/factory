@@ -1,4 +1,5 @@
 import { getCoatings } from "../_/api/get_coatings.js";
+import { getMetalLog } from "../_/api/get_metal_log.js";
 import { getOrdersCuttingSummary } from "../_/api/get_orders_cutting_summary.js";
 import { __html, hideLoader } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
@@ -70,16 +71,21 @@ class Cutting {
             // init footer
             new Footer(response);
 
-            // init navigation blocks
-            this.initBlocks();
+            // Merge coating/color pairs from metal log so missing blocks are visible in cutting journal.
+            getMetalLog({}, (metalResponse) => {
+                this.metalRecords = metalResponse?.records || [];
 
-            // load page html 
-            this.html();
+                // init navigation blocks
+                this.initBlocks();
 
-            this.listeners();
+                // load page html
+                this.html();
 
-            // set page title
-            document.title = __html('Metal Cutting');
+                this.listeners();
+
+                // set page title
+                document.title = __html('Metal Cutting');
+            });
         });
 
         // get cutting summary
@@ -101,6 +107,10 @@ class Cutting {
 
     initBlocks = () => {
 
+        const normalize = (value) => String(value || '').trim();
+        const slugify = (value) => normalize(value).toLowerCase().replace(/\s+/g, '-');
+        const isAvailable = (status) => normalize(status).toLowerCase() === 'available';
+
         this.blocks = [
             {
                 coating: "Client Material",
@@ -116,7 +126,26 @@ class Cutting {
             },
         ];
 
-        this.settings.var_parent.split('\n').forEach((coating) => {
+        const coatingSet = new Set(
+            (this.settings.var_parent || '')
+                .split('\n')
+                .map(normalize)
+                .filter(Boolean)
+        );
+
+        // Include coating names that exist in settings.price.
+        (this.settings.price || []).forEach((priceItem) => {
+            if (priceItem?.parent) coatingSet.add(normalize(priceItem.parent));
+        });
+
+        // Include coating names from supplylog (metallog source of truth for available metal).
+        (this.metalRecords || []).forEach((record) => {
+            if (!isAvailable(record?.status)) return;
+            if (record?.coating) coatingSet.add(normalize(record.coating));
+        });
+
+        [...coatingSet].forEach((coating) => {
+            if (!coating) return;
 
             this.blocks.push({
                 coating: coating,
@@ -124,17 +153,34 @@ class Cutting {
             })
         });
 
-        this.settings.price.forEach((priceItem) => {
-            if (priceItem.public && priceItem.parent) {
+        // Fill colors from settings price matrix.
+        (this.settings.price || []).forEach((priceItem) => {
+            if (priceItem.parent) {
                 // Find the matching block by parent name
-                const block = this.blocks.find(b => b.coating === priceItem.parent);
+                const block = this.blocks.find(b => b.coating === normalize(priceItem.parent));
                 if (block) {
                     block.colors.push({
                         // /assets/textures/matt-polyester-2h3.jpeg
-                        slug: priceItem.parent.toLowerCase().replace(/\s+/g, '-') + '-' + (priceItem.title || '*').toLowerCase().replace(/\s+/g, '-'),
+                        slug: `${slugify(priceItem.parent)}-${slugify(priceItem.title || '*')}`,
                         color: priceItem.title || priceItem.id || '*',
                     });
                 }
+            }
+        });
+
+        // Fill colors from supplylog records to ensure missing blocks/cards appear in cutting journal.
+        (this.metalRecords || []).forEach((record) => {
+            if (!isAvailable(record?.status)) return;
+            const coating = normalize(record?.coating);
+            const color = normalize(record?.color);
+            if (!coating || !color) return;
+
+            const block = this.blocks.find(b => b.coating === coating);
+            if (!block) return;
+
+            const slug = `${slugify(coating)}-${slugify(color)}`;
+            if (!block.colors.some((c) => c.color === color)) {
+                block.colors.push({ slug, color });
             }
         });
 
@@ -148,19 +194,22 @@ class Cutting {
             <div class="container">
                     <div class="filter-tabs">
                         <div class="filter-tab active" data-filter="all">${__html('All')}</div>
-                        ${this.settings.var_parent.split('\n').map((filter) => {
-            return `<div class="filter-tab" data-filter="${filter}">${filter}</div>`;
-        }).join('')}
+                        ${this.blocks
+                .map((b) => b.coating)
+                .filter((coating) => coating !== 'Client Material' && coating !== 'Other')
+                .map((filter) => {
+                    return `<div class="filter-tab" data-filter="${filter}">${filter}</div>`;
+                }).join('')}
                         <div class="filter-tab" data-filter="others">${__html('Others')}</div>
                     </div>
                 ${this.blocks.map((o) => {
-            return `
+                    return `
 
         <div id="matpe-section" class="coating-section">
             <div class="section-title d-none">${__html(o.coating)}</div>
             <div class="color-grid" data-type="${o.coating}">
                 ${o.colors.sort((a, b) => a.color.localeCompare(b.color)).map((c) => {
-                return `
+                        return `
                     <div class="color-card" data-code="${c.color}" data-type="${o.coating}" data-slug="${c.slug}" >
                         <div class="color-preview" style="background-image: url('/assets/textures/${c.slug}.jpeg'); background-size: cover; background-position: center;">
                             <div class="counter-bubble">0</div>
@@ -170,11 +219,11 @@ class Cutting {
                             <div class="color-type">${__html(o.coating)}</div>
                         </div>
                     </div>`;
-            }).join('')}
+                    }).join('')}
             </div>
         </div>    
                         `
-        }).join('')}
+                }).join('')}
   
         </div>`;
     }

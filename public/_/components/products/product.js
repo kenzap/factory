@@ -1,4 +1,74 @@
-import { __html } from "../../helpers/global.js";
+import { formatStatus } from "../../components/products/helpers.js";
+import { __html, CDN, formatTime } from "../../helpers/global.js";
+
+// Product Model
+export class Product {
+    constructor(data) {
+        Object.assign(this, data);
+    }
+
+    get imageUrl() {
+        if (this.cad_files?.length) {
+            return `https://render.factory.app.kenzap.cloud/${this._id}-250.webp`;
+        }
+
+        if (this.sketch_img && this.sketch_img.length > 0 && this.sketch_img[0]?.id) {
+            return buildFileUrl(`sketch-${this.sketch_img[0].id}-1-100x100.webp`, this.updated);
+        }
+
+        if (this.img?.[0]) {
+            return buildFileUrl(`product-${this._id}-1-100x100.jpeg`, this.updated);
+        }
+
+        return '/assets/img/placeholder.png';
+    }
+
+    get imageLargeUrl() {
+        if (this.cad_files?.length) {
+            return `https://render.factory.app.kenzap.cloud/${this._id}-polyester-2h3-1500.webp`;
+        }
+
+        if (this.sketch_img && this.sketch_img.length > 0 && this.sketch_img[0]?.id) {
+            return buildFileUrl(`sketch-${this.sketch_img[0].id}-1-500x500.webp`, this.updated);
+        }
+
+        if (this.img?.[0]) {
+            return buildFileUrl(`product-${this._id}-1-100x100.jpeg`, this.updated);
+        }
+
+        return '/assets/img/placeholder.png';
+    }
+
+    get displayTitle() {
+        return this.title || this.title_default || '';
+    }
+
+    get displayDescription() {
+        return this.sdesc || this.sdesc_default || '';
+    }
+
+    get formattedStatus() {
+        return formatStatus(this.status);
+    }
+
+    get formattedTime() {
+        return formatTime(this.updated_at || this.updated * 1000);
+    }
+}
+
+const getFilesBase = () => {
+    const configured = (localStorage.getItem('cdn') || CDN || '').trim();
+    if (!configured) return '/files';
+
+    const noSlash = configured.replace(/\/+$/, '');
+    return `${noSlash}`;
+};
+
+const buildFileUrl = (filename, updated = '') => {
+    const base = getFilesBase();
+    const cacheBust = updated ? `?${updated}` : '';
+    return `${base}/${encodeURIComponent(filename)}${cacheBust}`;
+};
 
 export const getPageNumber = () => {
 
@@ -53,9 +123,6 @@ export const getPagination = (meta, cb) => {
             // update url
             if (window.history.replaceState) {
 
-                // let url = window.location.href.split('/page');
-                // let urlF = (url[0]+'/page'+p).replace('//page', '/page');
-
                 let str = window.location.search;
                 str = replaceQueryParam('page', p, str);
 
@@ -69,18 +136,6 @@ export const getPagination = (meta, cb) => {
             e.preventDefault();
             return false;
         });
-    }
-}
-
-export const formatStatus = (st) => {
-
-    st = parseInt(st);
-    switch (st) {
-        case 0: return '<div class="badge bg-warning text-dark fw-light">' + __html('Draft') + '</div>';
-        case 1: return '<div class="badge bg-primary fw-light">' + __html('Published') + '</div>';
-        case 2: return '<div class="badge bg-primary fw-light">' + __html('Private') + '</div>';
-        case 3: return '<div class="badge bg-secondary fw-light">' + __html('Unpublished') + '</div>';
-        default: return '<div class="badge bg-secondary fw-light">' + __html('Drafts') + '</div>';
     }
 }
 

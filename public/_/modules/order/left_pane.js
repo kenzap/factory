@@ -4,7 +4,7 @@ import { ClientAddressSearch } from "../../components/order/client_address_searc
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
-import { __attr, __html, onChange, onClick, priceFormat, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
+import { __attr, __html, onChange, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
 import { InvoiceCalculator } from "../../../../packages/tax-core/src/calculator.js";
 import { extractCountryFromVAT } from "../../../../packages/tax-core/src/index.js";
 import flatpickr from '../../libs/flatpickr.js';
@@ -12,6 +12,7 @@ import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 import { state } from "../../modules/order/state.js";
+import { priceFormat } from "../../../../packages/helpers/src/index.js";
 
 export class LeftPane {
 

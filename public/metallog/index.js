@@ -1,3 +1,4 @@
+import { priceFormat } from "../../packages/helpers/src/index.js";
 import { createSupplyRecord } from "../_/api/create_supply_record.js";
 import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getMetalLog } from "../_/api/get_metal_log.js";
@@ -5,7 +6,7 @@ import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { SupplierSuggestion } from "../_/components/metal/supplier_suggestion.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
-import { __html, hideLoader, onChange, onClick, parseUnit, priceFormat, toast, unescape } from "../_/helpers/global.js";
+import { __html, hideLoader, onChange, onClick, parseUnit, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";

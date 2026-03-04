@@ -40,7 +40,8 @@ async function getClientDetails(id) {
             js->'data'->'drivers' as drivers,
             js->'data'->'addresses' as addresses,
             js->'data'->'discounts' as discounts,
-            js->'data'->'notifications' as notifications
+            js->'data'->'notifications' as notifications,
+            js->'data'->'users' as users
         FROM data 
         WHERE ref = $1 AND sid = $2 AND _id = $3
     `;

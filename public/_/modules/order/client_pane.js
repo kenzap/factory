@@ -8,6 +8,7 @@ import { ClientAddresses } from "../../components/order/client_addresses.js";
 import { ClientContacts } from "../../components/order/client_contacts.js";
 import { ClientDiscounts } from "../../components/order/client_discounts.js";
 import { ClientDrivers } from "../../components/order/client_drivers.js";
+import { ClientEntityUsers } from "../../components/order/client_entity_users.js";
 import { ClientNotifications } from "../../components/order/client_notifications.js";
 import { __html, attr, countries, EU_COUNTRY_CODES, html, onChange, onClick, toast } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
@@ -19,7 +20,7 @@ export class ClientPane {
 
         this.firstLoad = true;
 
-        state.client = { _id: state.order.eid ? state.order.eid : null, legal_name: state.order.name, drivers: [], addresses: [], contacts: [] };
+        state.client = { _id: state.order.eid ? state.order.eid : null, legal_name: state.order.name, drivers: [], addresses: [], contacts: [], linked_users: [] };
 
         // check if header is already present
         this.init();
@@ -48,6 +49,7 @@ export class ClientPane {
                 state.client.drivers = state.client.drivers || [];
                 state.client.addresses = state.client.addresses || [];
                 state.client.contacts = state.client.contacts || [];
+                state.client.users = state.client.users || [];
 
                 state.order.vat_number = state.client.vat_number || '';
                 state.order.vat_status = state.client.vat_status || '0';
@@ -175,6 +177,9 @@ export class ClientPane {
             <!-- Client Notifications -->
             <client-notifications></client-notifications>
 
+            <!-- Entity Users Section -->
+            <client-entity-users></client-entity-users>
+
             <!-- Save Button -->
             <div class="text-end mb-3">
                 <div class="btn-group" role="group">
@@ -187,6 +192,8 @@ export class ClientPane {
         new ClientContacts(state.client);
 
         new ClientDrivers(state.client);
+
+        new ClientEntityUsers(state.client);
 
         new ClientAddresses(state.client);
 
@@ -256,7 +263,7 @@ export class ClientPane {
 
             if (!data._id) {
 
-                state.client = { _id: null, drivers: [], addresses: [], name: data.name };
+                state.client = { _id: null, drivers: [], addresses: [], contacts: [], users: [], name: data.name };
                 this.view();
             }
 
@@ -286,7 +293,7 @@ export class ClientPane {
                     bus.emit('client:removed', { _id: state.client._id });
 
                     // Optionally, redirect or clear the view
-                    state.client = { _id: null, drivers: [], addresses: [] };
+                    state.client = { _id: null, drivers: [], addresses: [], contacts: [], users: [] };
 
                     this.view();
                 });
@@ -348,6 +355,9 @@ export class ClientPane {
                     if (currentIndex >= 0 && currentIndex < focusableElements.length - 1) {
 
                         focusableElements[currentIndex + 1].focus();
+                        if (focusableElements[currentIndex + 1].classList.contains('discount-input')) {
+                            focusableElements[currentIndex + 1].select();
+                        }
                     }
                 }
             });
@@ -568,6 +578,19 @@ export class ClientPane {
             return false;
         }
 
+        const linkedUsers = (state.client.users || []).map((user) => ({
+            ...user,
+            email: String(user?.email || '').trim(),
+            phone: String(user?.phone || '').trim(),
+            notes: String(user?.notes || '').trim()
+        }));
+
+        const invalidLinkedUser = linkedUsers.find(user => !user.email && !user.phone);
+        if (invalidLinkedUser) {
+            toast(__html('Each entity user row must contain email or phone.'));
+            return false;
+        }
+
         const clientData = {
             _id: state.client._id || null,
             entity: entity.dataset.entity,
@@ -590,6 +613,7 @@ export class ClientPane {
             drivers: state.client.drivers,
             addresses: state.client.addresses,
             contacts: state.client.contacts,
+            users: linkedUsers,
             notifications: state.client.notifications || {}
         };
 

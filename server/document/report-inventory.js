@@ -1,6 +1,7 @@
+import { priceFormat } from '@factory/helpers/index.js';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
-import { __html, getDbConnection, priceFormat, sid } from '../_/helpers/index.js';
+import { __html, getDbConnection, sid } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
 import { execCostFormula } from '../_/helpers/product.js';
 import { getSettings } from '../_/helpers/settings.js';

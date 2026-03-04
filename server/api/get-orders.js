@@ -213,6 +213,8 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
                 orders.records.forEach(order => {
                     if (order.items && Array.isArray(order.items)) {
                         order.items = order.items.map(item => ({
+                            id: item.id,
+                            _id: item._id,
                             inventory: item.inventory
                         }));
                     }

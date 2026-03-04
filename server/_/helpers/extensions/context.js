@@ -21,7 +21,18 @@ export const createExtensionContext = async (extensionName, db, cronManager, rou
 
     const allowedEvents = getAllowedEvents(manifest)
 
-    const settings = await getSettings()
+    const settingsState = { current: await getSettings() };
+
+    // Keep extension config live without requiring process restart.
+    const refreshSettings = async () => {
+        try {
+            settingsState.current = await getSettings();
+        } catch (_err) {
+            // Keep last known settings on transient refresh failures.
+        }
+    };
+    const refreshTimer = setInterval(refreshSettings, 5000);
+    if (typeof refreshTimer.unref === 'function') refreshTimer.unref();
 
     // Example of controlled database access
     return {
@@ -43,7 +54,7 @@ export const createExtensionContext = async (extensionName, db, cronManager, rou
             // expose ERP services if needed
         },
 
-        config: createConfigInterface(settings, extensionName),
+        config: createConfigInterface(() => settingsState.current, extensionName),
 
         db: createManagedRawDb(db),
 
