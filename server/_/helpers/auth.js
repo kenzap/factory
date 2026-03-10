@@ -5,6 +5,7 @@ import { createClient } from 'redis';
 import { send_email } from './email.js';
 import { getDbConnection, sid } from './index.js';
 import createLogger from './logger.js';
+import { getSettings } from './settings.js';
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-key-provided-in-env';
 export const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-key-provided-in-env';
@@ -96,9 +97,13 @@ export const sendOtpEmail = async (email, otp) => {
     try {
 
         const body = `<p>Your One Time Password (OTP) is: <strong>${otp}</strong></p>`;
+        const settings = await getSettings();
+        const fromEmail = settings?.otp_email_from || "";
+        const replyTo = settings?.otp_email_reply_to || "";
+        const subject = settings?.otp_email_subject || "One Time Password";
 
         // Use the send_email function to send the OTP email
-        await send_email(email, "otp@skarda.design", "Skarda Design", "One Time Password", body);
+        await send_email(email, fromEmail, "", subject, body, [], { replyTo });
 
         return { success: true, message: 'OTP sent successfully' };
     } catch (error) {

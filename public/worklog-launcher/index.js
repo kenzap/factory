@@ -1,6 +1,8 @@
 import { getHome } from "../_/api/get_home.js";
+import { saveSettings } from "../_/api/save_settings.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
-import { __html, hideLoader, normalizeStorageImageUrl } from "../_/helpers/global.js";
+import { ProductSearch } from "../_/components/products/product_search.js";
+import { __html, attr, fileUrl, hideLoader, toast } from "../_/helpers/global.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -18,8 +20,7 @@ class Launcher {
 
     // construct class
     constructor() {
-
-        this.filters = ['K-style', 'Ø 125/100', 'Ø 150/120', 'Ø 150/140', 'Snow retention'];
+        this.filters = [];
 
         // connect to backend
         this.init();
@@ -74,432 +75,83 @@ class Launcher {
 
     initBlocks = () => {
 
-        // add or remove navigation blocks to the dashboard
-        this.blocks = [
-            // K-style
-            {
-                id: "ccb33b325da0bf4bb549cf5fe628ee35f1dd801a",
-                name: 'Teknes āķis, īsais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://cdn.skarda.design/ccb33b325da0bf4bb549cf5fe628ee35f1dd801a-polyester-2h3-1500.webp?1770631046',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'rounding', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-deg-bending', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "a285fbea7ea44db7d013baf8d14c4bf7aa3fb95f",
-                name: 'Teknes āķis, garais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://cdn.skarda.design/a285fbea7ea44db7d013baf8d14c4bf7aa3fb95f-polyester-2h3-1500.webp?1770298926',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'rounding', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-deg-bending', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "63be862d143d50c38de2ab88dc38752dffcc54de",
-                name: 'Teknes iekšējais stiprinājums',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-63be862d143d50c38de2ab88dc38752dffcc54de-1-500x500.jpeg?1770282682',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Pamatformas formēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'tail-forming', label: 'Astes formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "e440dce02c04e62e10bed94443c1721795326d9e",
-                name: 'Notekcaurules stiprinājums',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-e440dce02c04e62e10bed94443c1721795326d9e-1-500x500.jpeg?1770112847',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "rolling", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "stamping", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
-                ]
-            },
-            {
-                id: "89911cfe658ab585333dd41d0cba1cb54b79ece6",
-                name: 'Konektors',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://cdn.skarda.design/89911cfe658ab585333dd41d0cba1cb54b79ece6-polyester-2h3-1500.webp?1770282975',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "stamping", tag: 'cutting', label: 'Izgriešana', icon: '&#8544;&#8548;', style: 'warning' }
-                ]
-            },
-            {
-                id: "9a86fa4a62c37c566702dd5909c98c0b80e75cb6",
-                name: 'Teknes gals, kreisais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-9a86fa4a62c37c566702dd5909c98c0b80e75cb6-1-500x500.jpeg?1770284995',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "76f018d8083d99b46d8a40a2874cf5eacf9440df",
-                name: 'Teknes gals, labais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-76f018d8083d99b46d8a40a2874cf5eacf9440df-1-500x500.jpeg?1770284992',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "46b763e569fe5a5fec518f570012ccf6f7757af3",
-                name: 'Teknes stūris, iekšējais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-46b763e569fe5a5fec518f570012ccf6f7757af3-1-500x500.jpeg?1770285870',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "5bdfb7d0598bd4cf5cc98ee8f263cdf125a75e8a",
-                name: 'Teknes stūris, ārējais',
-                tags: [{ label: 'K-style', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-5bdfb7d0598bd4cf5cc98ee8f263cdf125a75e8a-1-500x500.jpeg?1770285873',
-                actions: [
-                    { type: "cutting", tag: 'strip-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "ba7f123a4ada5c56837971787bf797dd2f08ce90",
-                name: 'Teknes āķa pagarinājums (leņķis)',
-                tags: [{ label: 'K-style', cls: '' }, { label: 'Ø 125/100', cls: '' }, { label: 'Ø 150/120', cls: '' }, { label: 'Ø 150/140', cls: '' }],
-                image: 'https://cdn.skarda.design/ba7f123a4ada5c56837971787bf797dd2f08ce90-polyester-2h3-1500.webp?1770298951',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'oval-cutting', label: 'Ovāls', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '135-deg-bending', label: '135° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            // Ø 125/100
-            {
-                id: "0733c025924e3126b88b8166c01967c045158d5f",
-                name: 'Teknes āķis, īsais Ø125',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://cdn.skarda.design/0733c025924e3126b88b8166c01967c045158d5f-polyester-2h3-1500.webp?1770298744',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8544;&#8548;', style: 'warning' },
-                ]
-            },
-            {
-                id: "d9c8e1b3a0c8c9fbbacfa4e5b2a7c8f1e7a9b3c6d",
-                name: 'Teknes āķis, garais Ø125',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://cdn.skarda.design/0cc6ed971fee4ce60ebdcf26b3da94b35cebd588-polyester-2h3-1500.webp?1770298911',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurule', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8548;', style: 'danger' },
-                ]
-            },
-            {
-                id: "6d9925712cedf204aad09a5852bcdb13470d849b",
-                name: 'Tekņu savienotājs Ø125',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-6d9925712cedf204aad09a5852bcdb13470d849b-1-500x500.jpeg?1770301775',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "assembly", tag: 'clamp-assembly', label: 'Salikšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "6a74ea45d278d7f45b94c934e6eb040f3e872f9f",
-                name: 'Notekcaurules stiprinājums',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-6a74ea45d278d7f45b94c934e6eb040f3e872f9f-1-500x500.jpeg?1770363313',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "assembly", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
-                ]
-            },
-            {
-                id: "85ea7560e183a0bbae9d50d2b71c776959dfba7d",
-                name: 'Teknes gals Ø125 (pāris)',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-85ea7560e183a0bbae9d50d2b71c776959dfba7d-1-500x500.jpeg?1770285289',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-taper', label: 'Sašaurinājums', icon: '&#8544;&#8548;', style: 'warning' },
-                ]
-            },
-            {
-                id: "4ad7b31d0a62f0b960fd86fc3567ceaa13d9c68a",
-                name: 'Konektors Ø125/100',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-4ad7b31d0a62f0b960fd86fc3567ceaa13d9c68a-1-500x500.jpeg?1770361977',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            {
-                id: "b10f7d2ead324118b75db26f48e2e870af209660",
-                name: 'Teknes stūris, iekšējais Ø125',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-b10f7d2ead324118b75db26f48e2e870af209660-1-500x500.jpeg?1770286145',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            {
-                id: "c95858c9d98f1020557c33b4e778972ea7ea9b97",
-                name: 'Teknes stūris, ārējais Ø125',
-                tags: [{ label: 'Ø 125/100', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-c95858c9d98f1020557c33b4e778972ea7ea9b97-1-500x500.jpeg?1770286142',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            // Ø 150/120
-            {
-                id: "3c8997dfdb0063d345ae7f46de2949c4e356d3d7",
-                name: 'Teknes āķis, īsais Ø150',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://cdn.skarda.design/3c8997dfdb0063d345ae7f46de2949c4e356d3d7-polyester-2h3-1500.webp?1771313168',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8544;&#8548;', style: 'warning' },
-                ]
-            },
-            {
-                id: "064c779d06d32b73c0828b45aa5f89621f82fe05",
-                name: 'Teknes āķis, garais Ø150',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://cdn.skarda.design/064c779d06d32b73c0828b45aa5f89621f82fe05-polyester-2h3-1500.webp?1771313195',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Noapaļojums', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'oval-cutout', label: 'Ovāls', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurule', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'clamp-assembly', label: 'Klemmeris', icon: '&#8548;', style: 'danger' },
-                ]
-            },
-            {
-                id: "ac2e73fd910f9a937845304e3e76889652a4d906",
-                name: 'Tekņu savienotājs Ø150',
-                tags: [{ label: 'Ø 150/120', cls: '' }, { label: 'Ø 150/140', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-ac2e73fd910f9a937845304e3e76889652a4d906-1-500x500.jpeg?1770301765',
-                actions: [
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "assembly", tag: 'clamp-assembly', label: 'Salikšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "225d12324d8702b7dae6ec25e43b7baf3568d6fe",
-                name: 'Notekcaurules stiprinājums',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-225d12324d8702b7dae6ec25e43b7baf3568d6fe-1-500x500.jpeg?1770112798',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'strip-rolling', label: 'Velmēšana', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'rivet-assembly', label: 'Kniede', icon: '&#8548;', style: 'danger' },
-                ]
-            },
-            {
-                id: "fe6e81501cb55202e72f39f7a3c74ed99b693ba2",
-                name: 'Teknes gals Ø150 (pāris)',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-fe6e81501cb55202e72f39f7a3c74ed99b693ba2-1-500x500.jpeg?1771252441',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "stamping", tag: 'workpiece-preparation', label: 'Sagatave', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-taper', label: 'Sašaurinājums', icon: '&#8544;&#8548;', style: 'warning' },
-                ]
-            },
-            {
-                id: "f05f69b5a16917c9b55e273fb193f0fa870e6174",
-                name: 'Konektors Ø150/120',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://cdn.skarda.design/f05f69b5a16917c9b55e273fb193f0fa870e6174-polyester-2h3-1500.webp?1770362000',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            {
-                id: "14b157ef20efa1dffb61c1d9e57edf9956c5899c",
-                name: 'Konektors Ø150/140',
-                tags: [{ label: 'Ø 150/120', cls: '' }, { label: 'Ø 150/140', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-14b157ef20efa1dffb61c1d9e57edf9956c5899c-1-500x500.jpeg?1770361993',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            {
-                id: "8a3564b5e9e8ec00723b7824865a887b5d43e87a",
-                name: 'Teknes stūris, iekšējais Ø150',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-8a3564b5e9e8ec00723b7824865a887b5d43e87a-1-500x500.jpeg?1770819605',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            {
-                id: "2dee24be1f25d2104afd1f6bcb2441ad998436d9",
-                name: 'Teknes stūris, ārējais Ø150',
-                tags: [{ label: 'Ø 150/120', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-2dee24be1f25d2104afd1f6bcb2441ad998436d9-1-500x500.jpeg?1770819666',
-                actions: [
-                    { type: "cutting", tag: 'cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                ]
-            },
-            // sniega barjera stiprinājumi
-            {
-                id: "e2de74f32b4edcb2fbc39e7ee32132dcf9bde48c",
-                name: 'Sniega barjera stiprinājums, apaļai caurulei',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/e2de74f32b4edcb2fbc39e7ee32132dcf9bde48c-polyester-2h3-1500.webp?1770301845',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' }
-                ]
-            },
-            {
-                id: "73a8ce3cdd801ec74e21e597d8de09c19c9e8be9",
-                name: 'Sniega barjera stiprinājums, apaļai caurulei (15mm metāla dakstiņveida jumtam)',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/73a8ce3cdd801ec74e21e597d8de09c19c9e8be9-polyester-2h3-1500.webp?1770299168',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'tail-forming', label: 'Aste', icon: '&#8544;', style: 'danger' },
-                ]
-            },
-            {
-                id: "a5baac79b35cd9abfa1387fb9bac5082872330d2",
-                name: 'Sniega barjera stiprinājums, apaļai caurulei (35mm metāla dakstiņveida jumtam)',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/a5baac79b35cd9abfa1387fb9bac5082872330d2-polyester-2h3-1500.webp?1770299184',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'tail-forming', label: 'Aste', icon: '&#8544;', style: 'danger' },
-                ]
-            },
-            {
-                id: "27426689a5b18197a05a4ff3b643c6ac891e8bfe",
-                name: 'Sniega barjera stiprinājums, ovālai caurulei',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/27426689a5b18197a05a4ff3b643c6ac891e8bfe-polyester-2h3-1500.webp?1770301849',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                ]
-            },
-            {
-                id: "73a8ce3cdd801ec74e21e597d8de09c19c9e8be9",
-                name: 'Sniega barjera stiprinājums, ovālai caurulei (15mm metāla dakstiņveida jumtam)',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/002d5c97a84ac24f9efb20458b062988b35a3e48-polyester-2h3-1500.webp',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'tail-forming', label: 'Aste', icon: '&#8544;', style: 'danger' },
-                ]
-            },
-            {
-                id: "890da7910731bdd1a73d10dfb79016ed42a4b3d8",
-                name: 'Sniega barjera stiprinājums, ovālai caurulei (35mm metāla dakstiņveida jumtam)',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: 'https://cdn.skarda.design/890da7910731bdd1a73d10dfb79016ed42a4b3d8-polyester-2h3-1500.webp',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'hole-cutout', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' },
-                    { type: "forming", tag: 'tail-forming', label: 'Aste', icon: '&#8544;', style: 'danger' },
-                ]
-            },
-            {
-                id: "zuag9fbxl35o7uat4mpy9z3xeks8yo5oiax946c2",
-                name: 'Pretplāksne',
-                tags: [{ label: 'Snow retention', cls: '' }],
-                image: '',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'holes', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                    { type: "forming", tag: 'baseshape-forming', label: 'Formēšana', icon: '&#8544;&#8548;', style: 'warning' }
-                ]
-            },
-            {
-                id: "d769081bd7e0f55b298a7e9bae2fe8f667724524",
-                name: 'Apakškore',
-                tags: [{ label: 'Bending', cls: '' }],
-                image: 'https://cdn.skarda.design/d769081bd7e0f55b298a7e9bae2fe8f667724524-polyester-2h3-1500.webp?1764010632',
-                actions: [
-                    { type: "cutting", tag: 'laser-cutting', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'holes', label: 'Caurules', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "bending", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "d769081bd7e0f55b298a7e9bae2fe8f667724524",
-                name: 'Valcprofila fiksētie stiprinājumi',
-                tags: [{ label: 'Bending', cls: '' }],
-                image: 'https://cdn.skarda.design/43a2616a2ca44ed9466d045c4884e0b12da6786c-polyester-2h3-1500.webp?1770371759',
-                actions: [
-                    { type: "cutting", tag: 'baseshape-forming', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'forming', label: '1-daļa', icon: '&#8544;&#8544;', style: 'success' },
-                    // { type: "bending", tag: '90-degree-angle', label: '90° leņķis', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-            {
-                id: "b53b9dd346b121e181a0f6972f91373895f23b02",
-                name: 'Valcprofila slīdošie stiprinājumi',
-                tags: [{ label: 'Bending', cls: '' }],
-                image: 'https://kenzap-sites-eu.oss-eu-central-1.aliyuncs.com/S1002170/sketch-b53b9dd346b121e181a0f6972f91373895f23b02-1-500x500.jpeg?1770371818',
-                actions: [
-                    { type: "cutting", tag: 'baseshape-forming', label: 'Griešana', icon: '&#8544;', style: 'secondary' },
-                    { type: "forming", tag: 'forming-1', label: '1-daļa', icon: '&#8544;&#8544;', style: 'success' },
-                    { type: "forming", tag: 'forming-2', label: '2-daļa', icon: '&#8544;&#8544;&#8544;', style: 'info' },
-                ]
-            },
-        ]
+        const customBlocks = Array.isArray(this.settings?.worklog_launcher_blocks)
+            ? this.settings.worklog_launcher_blocks
+            : [];
+
+        this.blocks = customBlocks
+            .map((block) => this.normalizeBlock(block))
+            .filter(Boolean);
+
+        this.filters = this.getFiltersFromBlocks(this.blocks);
+    }
+
+    normalizeBlock = (block = {}) => {
+        const id = String(block?.id || '').trim();
+        const name = String(block?.name || '').trim();
+        if (!id || !name) return null;
+
+        const tags = (Array.isArray(block?.tags) ? block.tags : [])
+            .map((tag) => {
+                if (typeof tag === 'string') return { label: tag.trim(), cls: '' };
+                return {
+                    label: String(tag?.label || '').trim(),
+                    cls: String(tag?.cls || '').trim()
+                };
+            })
+            .filter((tag) => tag.label);
+
+        const actions = (Array.isArray(block?.actions) ? block.actions : [])
+            .map((action) => ({
+                type: String(action?.type || '').trim(),
+                tag: String(action?.tag || '').trim(),
+                label: String(action?.label || '').trim(),
+                icon: String(action?.icon || '').trim(),
+                style: String(action?.style || '').trim()
+            }))
+            .filter((action) => action.type && action.label);
+
+        return {
+            id,
+            name,
+            image: String(block?.image || '').trim() || fileUrl(`product-${id}-1-100x100.jpeg`),
+            tags,
+            actions
+        };
+    }
+
+    getFiltersFromBlocks = (blocks = []) => {
+        const seen = new Set();
+        const filters = [];
+
+        blocks.forEach((block) => {
+            const tags = Array.isArray(block?.tags) ? block.tags : [];
+            tags.forEach((tag) => {
+                const label = String(tag?.label || '').trim();
+                if (!label || seen.has(label)) return;
+                seen.add(label);
+                filters.push(label);
+            });
+        });
+
+        return filters;
+    }
+
+    getBlockImageCandidates = (block = {}) => {
+        const id = String(block?.id || '').trim();
+        const custom = String(block?.image || '').trim();
+        const candidates = [];
+
+        if (custom) candidates.push(custom);
+        if (id) {
+            candidates.push(fileUrl(`sketch-${id}-1-500x500.webp`));
+            candidates.push(fileUrl(`sketch-${id}-1-500x500.jpeg`));
+            candidates.push(fileUrl(`product-${id}-1-100x100.jpeg`));
+            candidates.push(fileUrl(`product-${id}-1-100x100.webp`));
+        }
+        candidates.push('/assets/img/placeholder.png');
+
+        return [...new Set(candidates.filter(Boolean))];
     }
 
     // load page
@@ -521,9 +173,24 @@ class Launcher {
 
     // generate card HTML for a product
     card = (p, pi) => {
+        if (p?.__isAddCard) {
+            return /*html*/`
+                <div class="card card-add-block" data-filter="all" onclick="launcher.openBlockBuilderModal()" style="cursor:pointer;">
+                    <div class="card-header bg-white border-0 d-flex align-items-center justify-content-center" style="min-height:190px;">
+                        <div class="d-flex align-items-center justify-content-center text-muted opacity-75" style="gap:8px;">
+                            <i class="bi bi-plus-circle" style="font-size:1.05rem;"></i>
+                            <span class="product-name mb-0">${__html('Add product')}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
 
         // product
         const tagsHtml = p.tags.map(t => `<span class="tag ${t.cls}">${__html(t.label)}</span>`).join('');
+        const imageCandidates = this.getBlockImageCandidates(p);
+        const initialImage = imageCandidates[0] || '/assets/img/placeholder.png';
+        const fallbacks = attr(JSON.stringify(imageCandidates.slice(1)));
 
         // actions
         const btnsHtml = p.actions.map((a, ai) => `<button class="action-btn ${a.style}" onclick="launcher.openWorkLog('${pi}', '${ai}')"><span class="btn-icon">${a.icon}</span>${a.label}</button>`).join('');
@@ -533,10 +200,18 @@ class Launcher {
                 <div class="card-stripe d-none"></div>
                 <div class="card-header bg-white border-0">
                     <div class="product-img-wrap">
-                        <img src="${normalizeStorageImageUrl(p.image)}" alt="${p.name}" onerror="this.outerHTML='<span class=\\'img-fallback\\'>⚙️</span>'"/>
+                        <img src="${attr(initialImage)}" data-fallbacks='${fallbacks}' alt="${p.name}" onerror="launcher.onBlockImageError(this)"/>
                     </div>
                     <div class="product-info">
-                        <div class="product-name">${p.name}</div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="product-name">${p.name}</div>
+                            <button type="button"
+                                class="btn btn-sm p-0 border-0 bg-transparent text-muted opacity-75"
+                                title="${__html('Edit')}"
+                                onclick="event.stopPropagation(); launcher.openBlockBuilderModal('${attr(p.id)}')">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                        </div>
                         <div class="product-tags">${tagsHtml}</div>
                     </div>
                 </div>
@@ -546,12 +221,33 @@ class Launcher {
         `;
     }
 
+    onBlockImageError = (img) => {
+        if (!img) return;
+
+        let queue = [];
+        try {
+            queue = JSON.parse(img.dataset.fallbacks || '[]');
+        } catch (_err) {
+            queue = [];
+        }
+
+        const next = Array.isArray(queue) ? queue.shift() : '';
+        if (next) {
+            img.dataset.fallbacks = JSON.stringify(queue);
+            img.src = next;
+            return;
+        }
+
+        img.outerHTML = `<span class='img-fallback'>⚙️</span>`;
+    }
+
     // render page
     render = () => {
 
         const grid = document.getElementById('cards');
 
-        const cardsHtml = this.blocks.map((p, index) => this.card(p, index)).join('');
+        const blocks = [...this.blocks, { __isAddCard: true }];
+        const cardsHtml = blocks.map((p, index) => this.card(p, index)).join('');
         grid.innerHTML = cardsHtml;
 
         document.title = __html('Home');
@@ -583,6 +279,10 @@ class Launcher {
             cards.forEach(card => card.style.display = 'block');
         } else {
             cards.forEach(card => {
+                if (card.classList.contains('card-add-block')) {
+                    card.style.display = 'block';
+                    return;
+                }
                 if (card.dataset.filter.indexOf(filterType) !== -1) {
                     card.style.display = 'block';
                 } else {
@@ -590,6 +290,319 @@ class Launcher {
                 }
             });
         }
+    }
+
+    getBlockActionRow = (action = {}) => {
+        const type = String(action.type || '').trim();
+        const icon = String(action.icon || '').trim();
+        const style = String(action.style || '').trim();
+        return /*html*/`
+            <tr class="block-action-row">
+                <td>
+                    <select class="form-select form-select-sm block-action-type">
+                        <option value="">${__html('Select')}</option>
+                        ${this.getWorkCategoryTypeOptions(type)}
+                    </select>
+                </td>
+                <td><input type="text" class="form-control form-control-sm block-action-tag" placeholder="${__html('Tag')}" value="${attr(action.tag || '')}"></td>
+                <td><input type="text" class="form-control form-control-sm block-action-label" placeholder="${__html('Button label')}" value="${attr(action.label || '')}"></td>
+                <td>
+                    <select class="form-select form-select-sm block-action-icon">
+                        <option value="">${__html('Select')}</option>
+                        ${this.getIconOptions(icon)}
+                    </select>
+                </td>
+                <td>
+                    <select class="form-select form-select-sm block-action-style">
+                        ${this.getStyleOptions(style)}
+                    </select>
+                </td>
+                <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger block-action-remove">${__html('Remove')}</button></td>
+            </tr>
+        `;
+    }
+
+    getIconOptions = (selectedIcon = '') => {
+        const icons = ['&#8544;', '&#8544;&#8544;', '&#8544;&#8544;&#8544;', '&#8544;&#8548;', '&#8548;'];
+        const options = [];
+        const inList = icons.includes(selectedIcon);
+
+        if (selectedIcon && !inList) {
+            options.push(`<option value="${attr(selectedIcon)}" selected>${selectedIcon}</option>`);
+        }
+
+        icons.forEach((icon) => {
+            const selected = icon === selectedIcon ? 'selected' : '';
+            options.push(`<option value="${icon}" ${selected}>${icon}</option>`);
+        });
+
+        return options.join('');
+    }
+
+    getStyleOptions = (selectedStyle = '') => {
+        const styles = [
+            { value: 'secondary', label: __html('Gray'), swatch: '⬛' },
+            { value: 'success', label: __html('Green'), swatch: '🟩' },
+            { value: 'info', label: __html('Cyan'), swatch: '🟦' },
+            { value: 'warning', label: __html('Yellow'), swatch: '🟨' },
+            { value: 'danger', label: __html('Red'), swatch: '🟥' },
+            { value: 'primary', label: __html('Blue'), swatch: '🔵' },
+            { value: 'dark', label: __html('Black'), swatch: '⚫' },
+            { value: 'light', label: __html('Light'), swatch: '⚪' }
+        ];
+
+        const options = [];
+        const inList = styles.some((style) => style.value === selectedStyle);
+
+        options.push(`<option value="" ${selectedStyle === '' ? 'selected' : ''}>${__html('Select')}</option>`);
+
+        if (selectedStyle && !inList) {
+            options.push(`<option value="${attr(selectedStyle)}" selected>${__html(selectedStyle)}</option>`);
+        }
+
+        styles.forEach((style) => {
+            const selected = style.value === selectedStyle ? 'selected' : '';
+            options.push(`<option value="${style.value}" ${selected}>${style.swatch} ${style.label}</option>`);
+        });
+
+        return options.join('');
+    }
+
+    getWorkCategoryTypeOptions = (selectedType = '') => {
+        const categories = Array.isArray(this.settings?.work_categories) ? this.settings.work_categories : [];
+        const options = [];
+        const inSettings = categories.some((category) => String(category?.id || '') === selectedType);
+
+        if (selectedType && !inSettings) {
+            options.push(`<option value="${attr(selectedType)}" selected>${__html(selectedType)}</option>`);
+        }
+
+        categories.forEach((category) => {
+            const id = String(category?.id || '').trim();
+            if (!id) return;
+            const name = String(category?.name || id).trim();
+            const selected = id === selectedType ? 'selected' : '';
+            options.push(`<option value="${attr(id)}" ${selected}>${__html(name)}</option>`);
+        });
+
+        return options.join('');
+    }
+
+    getBlockDraftFromModal = (modal) => {
+        const root = modal.querySelector('.launcher-block-builder');
+        if (!root) return {};
+
+        const actions = Array.from(root.querySelectorAll('.block-action-row')).map((row) => ({
+            type: row.querySelector('.block-action-type')?.value?.trim() || '',
+            tag: row.querySelector('.block-action-tag')?.value?.trim() || '',
+            label: row.querySelector('.block-action-label')?.value?.trim() || '',
+            icon: row.querySelector('.block-action-icon')?.value?.trim() || '',
+            style: row.querySelector('.block-action-style')?.value?.trim() || ''
+        })).filter((action) => action.type || action.tag || action.label || action.icon || action.style);
+
+        const rawTags = (root.querySelector('#block_builder_tags')?.value || '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+
+        return {
+            id: root.querySelector('#block_builder_id')?.value?.trim() || '',
+            name: root.querySelector('#block_builder_name')?.value?.trim() || '',
+            image: root.querySelector('#block_builder_image')?.value?.trim() || '',
+            tags: rawTags.map((label) => ({ label, cls: '' })),
+            actions
+        };
+    }
+
+    updateBlockBuilderPreview = () => {
+        const modal = document.querySelector('.modal-item');
+        if (!modal) return;
+
+        const preview = modal.querySelector('#block_builder_preview');
+        if (!preview) return;
+
+        const draft = this.getBlockDraftFromModal(modal);
+        preview.textContent = JSON.stringify(draft, null, 2);
+    }
+
+    openBlockBuilderModal = (blockId = '') => {
+        const modal = document.querySelector('.modal-item');
+        if (!modal) return;
+        const selectedId = String(blockId || '').trim();
+        const selectedBlock = selectedId
+            ? this.normalizeBlock(this.blocks.find((block) => String(block?.id || '').trim() === selectedId))
+            : null;
+        const initialActions = (selectedBlock?.actions && selectedBlock.actions.length > 0) ? selectedBlock.actions : [{}];
+        const initialTags = Array.isArray(selectedBlock?.tags) ? selectedBlock.tags.map((tag) => tag?.label).filter(Boolean).join(', ') : '';
+        const initialSearch = selectedBlock?.name || '';
+
+        const modalDialog = modal.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.classList.remove('modal-sm', 'modal-xl', 'modal-fullscreen');
+            modalDialog.classList.add('modal-xl');
+        }
+
+        modal.querySelector(".modal-body").classList.remove('p-0');
+        modal.querySelector(".modal-body").classList.remove('bg-light');
+
+        modal.querySelector('.modal-title').textContent = selectedBlock ? __html('Edit product') : __html('Add product');
+        modal.querySelector('.modal-body').innerHTML = /*html*/`
+            <div class="launcher-block-builder">
+                <div class="row g-2 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">${__html('Product')}</label>
+                        <div class="position-relative">
+                            <input id="block_builder_product_search" type="text" class="form-control form-control-sm pe-4" placeholder="${__html('Search product')}" value="${attr(initialSearch)}">
+                            <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-2 text-muted"></i>
+                        </div>
+                        <input id="block_builder_product_coating" type="hidden" value="">
+                        <input id="block_builder_product_color" type="hidden" value="">
+                        <input id="block_builder_id" type="hidden" value="${attr(selectedBlock?.id || '')}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">${__html('Block name')}</label>
+                        <input id="block_builder_name" type="text" class="form-control form-control-sm" placeholder="${__html('Product name')}" value="${attr(selectedBlock?.name || '')}">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label mb-1">${__html('Image URL')}</label>
+                        <input id="block_builder_image" type="text" class="form-control form-control-sm" placeholder="https://..." value="${attr(selectedBlock?.image || '')}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label mb-1">${__html('Tags')}</label>
+                        <input id="block_builder_tags" type="text" class="form-control form-control-sm" placeholder="${__html('Comma separated, e.g. K-style, Ø 125/100')}" value="${attr(initialTags)}">
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">${__html('Actions')}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="block_builder_add_action">${__html('Add action')}</button>
+                </div>
+
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-bordered align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>${__html('Type')}</th>
+                                <th>${__html('Tag')}</th>
+                                <th>${__html('Label')}</th>
+                                <th>${__html('Operation')}</th>
+                                <th>${__html('Style')}</th>
+                                <th style="width:90px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="block_builder_actions">
+                            ${initialActions.map((action) => this.getBlockActionRow(action)).join('')}
+                        </tbody>
+                    </table>
+                </div>
+
+                <h6 class="mb-2">${__html('JSON preview')}</h6>
+                <pre id="block_builder_preview" class="bg-light border rounded p-2 small mb-0" style="max-height:260px; overflow:auto;"></pre>
+            </div>
+        `;
+
+        modal.querySelector('.modal-footer').innerHTML = /*html*/`
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">${__html('Close')}</button>
+            <button type="button" class="btn btn-primary" id="block_builder_save">${__html('Save')}</button>
+        `;
+
+        const builder = modal.querySelector('.launcher-block-builder');
+        const actionsTable = modal.querySelector('#block_builder_actions');
+        const addBtn = modal.querySelector('#block_builder_add_action');
+        const saveBtn = modal.querySelector('#block_builder_save');
+        const productSearchInput = modal.querySelector('#block_builder_product_search');
+        const productIdInput = modal.querySelector('#block_builder_id');
+        const productNameInput = modal.querySelector('#block_builder_name');
+        const productImageInput = modal.querySelector('#block_builder_image');
+
+        const refreshPreview = () => this.updateBlockBuilderPreview();
+
+        builder?.addEventListener('input', refreshPreview);
+
+        addBtn?.addEventListener('click', () => {
+            actionsTable.insertAdjacentHTML('beforeend', this.getBlockActionRow());
+            refreshPreview();
+        });
+
+        actionsTable?.addEventListener('click', (event) => {
+            const btn = event.target.closest('.block-action-remove');
+            if (!btn) return;
+
+            const rows = actionsTable.querySelectorAll('.block-action-row');
+            if (rows.length === 1) {
+                rows[0].querySelectorAll('input, select').forEach((field) => { field.value = ''; });
+            } else {
+                btn.closest('.block-action-row')?.remove();
+            }
+
+            refreshPreview();
+        });
+
+        saveBtn?.addEventListener('click', () => {
+            const draft = this.normalizeBlock(this.getBlockDraftFromModal(modal));
+            if (!draft) {
+                toast(__html('Product is required'));
+                return;
+            }
+            if (!draft.actions?.length) {
+                toast(__html('Add at least one action'));
+                return;
+            }
+
+            const current = Array.isArray(this.settings?.worklog_launcher_blocks) ? this.settings.worklog_launcher_blocks : [];
+            const next = [...current.filter((item) => item?.id !== draft.id), draft];
+
+            saveSettings({ worklog_launcher_blocks: next }, (response) => {
+                if (!response?.success) {
+                    toast(__html('Failed to save'));
+                    return;
+                }
+                this.refreshAfterBlockSave(modal);
+            });
+        });
+
+        // Reuse existing product picker behavior from bundle/worklog flows.
+        new ProductSearch({
+            name: '#block_builder_product_search',
+            coating: '#block_builder_product_coating',
+            color: '#block_builder_product_color'
+        }, (product) => {
+
+            if (productIdInput) productIdInput.value = product?._id || '';
+            if (productNameInput && !productNameInput.value.trim()) productNameInput.value = product?.title || '';
+            if (productImageInput && !productImageInput.value.trim()) {
+                productImageInput.value = product?.sketch_img || product?.image || '';
+            }
+            if (productSearchInput) {
+                productSearchInput.value = [product?.title || '', product?.sdesc || ''].join(' ').trim();
+            }
+
+            refreshPreview();
+        });
+
+        refreshPreview();
+
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+        bsModal.show();
+    }
+
+    refreshAfterBlockSave = (modal) => {
+        getHome((response) => {
+            if (!response?.success) {
+                this.settings.worklog_launcher_blocks = Array.isArray(this.settings?.worklog_launcher_blocks)
+                    ? this.settings.worklog_launcher_blocks
+                    : [];
+            } else {
+                this.settings = response.settings || this.settings;
+            }
+
+            this.initBlocks();
+            this.html();
+            this.render();
+
+            bootstrap.Modal.getOrCreateInstance(modal).hide();
+            toast(__html('Saved'));
+        });
     }
 
     // open work log modal for a specific product and action

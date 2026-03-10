@@ -58,6 +58,11 @@ export class Visualization {
             const width = parseFloat(item.formula_width_calc);
             const length = parseFloat(item.formula_length_calc);
             const qty = parseInt(item.qty);
+
+            // Skip invalid items to prevent pathological packing loops and bad placements.
+            if (!Number.isFinite(width) || !Number.isFinite(length) || width <= 0 || length <= 0 || !Number.isFinite(qty) || qty <= 0) {
+                return;
+            }
             const color = this.colors[index % this.colors.length]; // Assign color per unique item
 
             for (let q = 0; q < qty; q++) {
@@ -92,6 +97,7 @@ export class Visualization {
     findBestPlacement = (packed, width, length, maxXUsed) => {
         let bestPlacement = null;
         let bestScore = Infinity;
+        let bestLanes = -1;
 
         const orientations = [
             { w: width, l: length, rotated: false },
@@ -102,6 +108,7 @@ export class Visualization {
             if (orientation.w > this.coil.width || orientation.l > this.coil.length) {
                 continue;
             }
+            const lanes = Math.max(1, Math.floor(this.coil.width / orientation.w));
 
             // Performance optimization: Generate candidate positions instead of full grid search
             const candidates = this.getCandidatePositions(packed, orientation, maxXUsed);
@@ -117,7 +124,12 @@ export class Visualization {
                 if (!this.hasOverlap(packed, x, y, orientation.l, orientation.w)) {
                     const score = this.calculatePlacementScore(x, y, orientation.l, orientation.w, maxXUsed);
 
-                    if (score < bestScore) {
+                    const isBetter =
+                        lanes > bestLanes ||
+                        (lanes === bestLanes && score < bestScore);
+
+                    if (isBetter) {
+                        bestLanes = lanes;
                         bestScore = score;
                         bestPlacement = {
                             x: x,
@@ -128,7 +140,7 @@ export class Visualization {
                         };
 
                         // Early termination: if score is perfect (0 = fits in existing space at origin)
-                        if (score === 0) {
+                        if (score === 0 && lanes >= 2) {
                             return bestPlacement;
                         }
                     }

@@ -3,6 +3,7 @@ import { extractCountryFromVAT } from '@factory/tax-core/index';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getInvoiceNextNumber, parseDocument } from '../_/helpers/document/index.js';
+import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
 import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
@@ -93,7 +94,8 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
             html: parsedDocument,
             totals: totals,
             peppolXml: data.peppol_xml,
-            invoiceNumber: data.order.invoice.number
+            invoiceNumber: data.order.invoice.number,
+            settings: data.settings || {}
         };
 
     } finally {
@@ -154,12 +156,9 @@ function viewInvoiceApi(app, logger) {
             const doc_path = `/app/server/document/pdf/invoice-${id}.pdf`;
 
             await page.emulateMedia({ media: 'screen' });
-            const pdfBuffer = await page.pdf({
-                path: doc_path,
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
-            });
+            const pdfBuffer = await page.pdf(
+                getPaginatedPdfOptions(doc_path, __html(locale, 'Page'))
+            );
 
             // Save screenshot in development
             if (process.env.NODE_ENV === 'development') {
@@ -183,14 +182,17 @@ function viewInvoiceApi(app, logger) {
                     <h1>${__html(locale, "Invoice")} #${invoiceData.invoiceNumber}</h1>
                     <p>${__html(locale, "Total")}: ${invoiceData.totals.totalInvoiceAmount} ${invoiceData.totals.currency}</p>
                 `;
+                const mailFrom = invoiceData.settings?.documents_email_from || "";
+                const replyTo = invoiceData.settings?.documents_email_reply_to || "";
 
                 await send_email(
                     req.query.email,
-                    "invoice@skarda.design",
-                    "Skārda Nams SIA",
+                    mailFrom,
+                    "",
                     `${__html(locale, "Invoice")} #${invoiceData.invoiceNumber}`,
                     body,
-                    [doc_path]
+                    [doc_path],
+                    { replyTo }
                 );
 
                 // Clean up PDF after sending

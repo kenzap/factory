@@ -28,6 +28,8 @@ export class Visualization {
         this.sheetHeight = this.coil.length * this.scale; // Can be very long
         this.CANVAS_WIDTH = Math.max(600, this.sheetHeight + 2 * this.MARGIN); // Reduced from 800 to 600
 
+        // console.log('Visualization initialized with coil:', this.coil);
+
         // Update canvas dimensions
         canvas.setAttribute('width', this.CANVAS_WIDTH);
         canvas.setAttribute('height', this.CANVAS_HEIGHT);
@@ -63,10 +65,17 @@ export class Visualization {
             const length = parseFloat(item.formula_length_calc);
             const qty = parseInt(item.qty);
 
+            // Skip invalid items to prevent pathological packing loops and bad placements.
+            if (!Number.isFinite(width) || !Number.isFinite(length) || width <= 0 || length <= 0 || !Number.isFinite(qty) || qty <= 0) {
+                return;
+            }
+
             for (let q = 0; q < qty; q++) {
                 let placed = false;
                 let bestX = 0, bestY = 0, bestRotated = false;
-                let minXExtent = this.coil.length; // Start with maximum possible length
+                let bestW = width, bestL = length;
+                let bestXExtent = this.coil.length; // Start with maximum possible length
+                let bestLanes = -1;
 
                 // Try both normal and rotated orientations
                 const orientations = [
@@ -78,9 +87,25 @@ export class Visualization {
                     // Check if the orientation fits within the coil dimensions
                     if (orientation.w > this.coil.width || orientation.l > this.coil.length) continue;
 
+                    // Use edge-based candidate coordinates instead of fixed grid stepping.
+                    // This allows exact fits like 625+625=1250 that are missed by step=10 scans.
+                    const xCandidates = [0];
+                    const yCandidates = [0];
+                    packed.forEach((p) => {
+                        xCandidates.push(p.x + p.length);
+                        yCandidates.push(p.y + p.width);
+                    });
+
+                    const validX = [...new Set(xCandidates)]
+                        .filter((x) => x >= 0 && x <= this.coil.length - orientation.l)
+                        .sort((a, b) => a - b);
+                    const validY = [...new Set(yCandidates)]
+                        .filter((y) => y >= 0 && y <= this.coil.width - orientation.w)
+                        .sort((a, b) => a - b);
+
                     // Try to find the position that minimizes the extension of coil length usage
-                    for (let y = 0; y <= this.coil.width - orientation.w; y += 10) {
-                        for (let x = 0; x <= this.coil.length - orientation.l; x += 10) {
+                    for (const y of validY) {
+                        for (const x of validX) {
                             const overlaps = packed.some(p =>
                                 x < p.x + p.length && x + orientation.l > p.x &&
                                 y < p.y + p.width && y + orientation.w > p.y
@@ -88,24 +113,26 @@ export class Visualization {
 
                             if (!overlaps) {
                                 const xExtent = x + orientation.l;
-                                // Prefer positions that don't extend the used length, or extend it minimally
-                                if (xExtent <= maxXUsed || xExtent < minXExtent) {
+                                // Strong preference for higher lane count across coil width.
+                                const lanes = Math.max(1, Math.floor(this.coil.width / orientation.w));
+                                const isBetter =
+                                    lanes > bestLanes ||
+                                    (lanes === bestLanes && xExtent < bestXExtent) ||
+                                    (lanes === bestLanes && xExtent === bestXExtent && y < bestY);
+
+                                if (isBetter) {
                                     bestX = x;
                                     bestY = y;
                                     bestRotated = orientation.rotated;
-                                    minXExtent = xExtent;
+                                    bestW = orientation.w;
+                                    bestL = orientation.l;
+                                    bestXExtent = xExtent;
+                                    bestLanes = lanes;
                                     placed = true;
-
-                                    // If we can fit within already used length, break immediately
-                                    if (xExtent <= maxXUsed) break;
                                 }
                             }
                         }
-                        // If we found a position within already used length, break
-                        if (placed && minXExtent <= maxXUsed) break;
                     }
-                    // If we found a good position, break from orientation loop
-                    if (placed && minXExtent <= maxXUsed) break;
                 }
 
                 if (placed) {
@@ -113,15 +140,15 @@ export class Visualization {
                         ...item,
                         x: bestX,
                         y: bestY,
-                        width: bestRotated ? length : width,
-                        length: bestRotated ? width : length,
+                        width: bestW,
+                        length: bestL,
                         rotated: bestRotated,
                         color: this.colors[index % this.colors.length],
                         instanceId: `${item.order_id}_${q}`
                     });
 
                     // Update the maximum x position used
-                    maxXUsed = Math.max(maxXUsed, bestX + (bestRotated ? width : length));
+                    maxXUsed = Math.max(maxXUsed, bestX + bestL);
                 }
             }
         });

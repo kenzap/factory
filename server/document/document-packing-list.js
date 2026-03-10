@@ -1,10 +1,12 @@
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
+import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
 import { getPackingListItemsTable } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection, sid } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
+import { getSettings } from '../_/helpers/settings.js';
 
 const getDefaultPackingListTemplate = (locale) => `<!DOCTYPE html>
 <html lang="lv">
@@ -110,6 +112,7 @@ function viewPackingListApi(app, logger) {
 
             const locale = await getLocale({ locale: req.headers.locale, 'locale-checksum': 0 });
             const html = await viewPackingList(id, req.user, locale, lang);
+            const settings = await getSettings();
 
             if (format === 'html') {
                 res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -124,23 +127,23 @@ function viewPackingListApi(app, logger) {
 
             const docPath = `/app/server/document/pdf/packing-list-${id}.pdf`;
 
-            const pdfBuffer = await page.pdf({
-                path: docPath,
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
-            });
+            const pdfBuffer = await page.pdf(
+                getPaginatedPdfOptions(docPath, __html(locale, 'Page'))
+            );
 
             await browser.close();
 
             if (req.query.email) {
+                const mailFrom = settings?.documents_email_from || '';
+                const replyTo = settings?.documents_email_reply_to || '';
                 await send_email(
                     req.query.email,
-                    'invoice@skarda.design',
-                    'Skārda Nams SIA',
+                    mailFrom,
+                    '',
                     `${__html(locale, 'Packing List')} #${id}`,
                     `<h1>${__html(locale, 'Packing List')} #${id}</h1>`,
-                    [docPath]
+                    [docPath],
+                    { replyTo }
                 );
 
                 const fs = await import('fs');

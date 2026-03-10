@@ -92,7 +92,7 @@ class ProductManufacturingReport {
             (a.product_name || '').localeCompare((b.product_name || ''))
         );
 
-        const totalQty = data.reduce((sum, item) => sum + (parseFloat(item.total_qty) || 0), 0);
+        const totalOperationsQty = data.reduce((sum, item) => sum + (parseFloat(item.operations_qty) || 0), 0);
         const totalTime = data.reduce((sum, item) => sum + (parseFloat(item.total_time) || 0), 0);
 
         let tableHTML = `
@@ -100,19 +100,25 @@ class ProductManufacturingReport {
                 <thead>
                     <tr>
                         <th>${__html('Product')}</th>
-                        <th>${__html('Quantity')}</th>
+                        <th>${__html('Total operations')}</th>
                         <th>${__html('Time')}</th>
+                        <th>${__html('Details')}</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
-        data.forEach((item) => {
+        data.forEach((item, index) => {
             tableHTML += `
                 <tr>
                     <td>${item.product_name || '-'}</td>
-                    <td>${parseFloat(item.total_qty) || 0}</td>
+                    <td>${parseFloat(item.operations_qty) || 0}</td>
                     <td>${parseFloat(item.total_time) || 0}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary" type="button" onclick="productManufacturingReport.openDetails(${index})">
+                            ${__html('View')}
+                        </button>
+                    </td>
                 </tr>
             `;
         });
@@ -120,14 +126,88 @@ class ProductManufacturingReport {
         tableHTML += `
                 <tr class="table-light">
                     <td><strong>${__html('Total')}</strong></td>
-                    <td><strong>${totalQty}</strong></td>
+                    <td><strong>${totalOperationsQty}</strong></td>
                     <td><strong>${totalTime}</strong></td>
+                    <td></td>
                 </tr>
                 </tbody>
             </table>
         `;
 
         document.getElementById('productManufacturingTable').innerHTML = tableHTML;
+    }
+
+    openDetails(index) {
+        const item = this.product_report[index];
+        if (!item) return;
+
+        const tags = Array.isArray(item.tag_breakdown) ? item.tag_breakdown : [];
+        const tagColumns = tags.map((tag) => tag.tag);
+        const formatOperationLabel = (value = '') => {
+            const raw = String(value || '').trim();
+            if (!raw) return '';
+            const parts = raw.split('/').map((part) => part.trim()).filter(Boolean);
+            if (parts.length <= 1) return __html(parts[0] || raw);
+            const typeLabel = __html(parts[0]);
+            const tagLabel = __html(parts.slice(1).join(' / '));
+            return `${typeLabel} / ${tagLabel}`;
+        };
+
+        const qtyCells = tagColumns.map((tagName) => {
+            const found = tags.find((t) => t.tag === tagName);
+            return `<td>${parseFloat(found?.total_qty) || 0}</td>`;
+        }).join('');
+
+        const listRows = tags.map((tag) => `
+            <tr>
+                <td>${formatOperationLabel(tag.tag)}</td>
+                <td>${parseFloat(tag.total_qty) || 0}</td>
+                <td>${parseFloat(tag.total_time) || 0}</td>
+            </tr>
+        `).join('');
+
+        const modal = document.querySelector('.modal-item');
+        if (!modal) return;
+        const modalDialog = modal.querySelector('.modal-dialog');
+        if (modalDialog) {
+            modalDialog.classList.remove('modal-sm', 'modal-xl', 'modal-fullscreen');
+            modalDialog.classList.add('modal-lg');
+        }
+
+        modal.querySelector('.modal-title').textContent = `${__html(item.product_name || '-')} - ${__html('Operations breakdown')}`;
+        modal.querySelector('.modal-body').innerHTML = `
+            <div class="table-responsive mb-3">
+                <table class="table table-sm table-bordered align-middle mb-0">
+                    <thead>
+                        <tr>
+                            ${tagColumns.map((tag) => `<th>${formatOperationLabel(tag)}</th>`).join('')}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            ${qtyCells || `<td>${__html('No operations')}</td>`}
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>${__html('Operation')}</th>
+                            <th>${__html('Qty')}</th>
+                            <th>${__html('Time')}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${listRows || `<tr><td colspan="3">${__html('No operations')}</td></tr>`}
+                    </tbody>
+                </table>
+            </div>
+        `;
+
+        const bsModal = bootstrap.Modal.getOrCreateInstance(modal);
+        bsModal.show();
     }
 
     applyFilters() {

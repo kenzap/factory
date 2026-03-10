@@ -8,6 +8,7 @@ import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
 import { TabExtensions } from "../_/modules/settings/tab_extensions.js";
+import { TabCommunications } from "../_/modules/settings/tab_email_templates.js";
 import { TabGeneral } from "../_/modules/settings/tab_general.js";
 import { TabParameters } from "../_/modules/settings/tab_parameters.js";
 import { TabRegion } from "../_/modules/settings/tab_region.js";
@@ -71,6 +72,7 @@ class Settings {
             // init tabs
             new TabGeneral(this.settings);
             new TabRegion();
+            new TabCommunications(this.settings, this.editors);
             new TabTemplates(this.settings, this.editors);
             new TabParameters(this.settings);
             new TabExtensions(this.settings, this.extensions);

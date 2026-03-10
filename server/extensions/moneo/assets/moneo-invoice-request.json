@@ -1,0 +1,73 @@
+{
+   "request": {
+     "compuid": "4223f769-b29aec7e-f81783de-1ff154f2-36fd7b56"
+   },
+   "data": {
+     "sales.invoices": {
+       "fieldlist": [
+         "legalnr",
+         "custcode",
+         "custname",
+         "okflag",
+         "address1",
+         "invdate",
+         "paydate",
+         "totquant",
+         "totsum",
+         "vatsum",
+         "sum",
+         "country",
+         "dealtype",
+         "usedvatcodes",
+         "paydeal",
+         "currency",
+         "currencyrate",
+         "reference",
+         "comment"
+       ],
+       "data": [
+         [
+           "SKA-228564",
+           "1001474",
+           "Lota-B SIA",
+           1,
+           "Sprīdīšu 7,Jelgava",
+           "2026-02-02",
+           "2026-01-30",
+           "1",
+           "513.00",
+           "0.00",
+           "513.00",
+           "LV",
+           "PAV",
+           [
+             "RR7"
+           ],
+           "10",
+           "EUR",
+           0,
+           "42998",
+           "#42998"
+         ]
+       ]
+     },
+     "sales.invoices_items_rows": {
+       "fieldlist": [
+         "itemname",
+         "quant",
+         "price",
+         "accnumber",
+         "vatcode"
+       ],
+       "data": [
+         [
+           "Produkti RR7",
+           "1.00",
+           "513.00",
+           "6210",
+           "RR7"
+         ]
+       ]
+     }
+   }
+}

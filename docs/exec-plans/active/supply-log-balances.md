@@ -1,0 +1,3 @@
+# Supply log balances
+
+When inventory products are topped up via Supply Journal every time the incoming price of a product should vary. This means that when we prepare final inventory reports we need to estimate totals based on each supply entry's price and quantity rather than averages. It should then be properly reflected in the final reports and profit balances that show actual revenue of items sold via warehouse.

@@ -2,9 +2,7 @@
 
 ![Factory](https://raw.githubusercontent.com/kenzap/factory/main/preview.png)
 
-**About**: An open-source, compilation-free ES6 and Node.js ERP system built for metal fabrication.
-
-Production, costing, and planning designed for job-based manufacturing.
+**About**: Manufacturing resource planning and quotation software. Production, costing, estimation and planning designed for job-based manufacturing.
 
 **Stack:**
 - PostgreSQL
@@ -16,7 +14,7 @@ Production, costing, and planning designed for job-based manufacturing.
 
 ## What is "Kenzap Factory"?
 
-An ERP system designed specifically for metal fabricators. It supports real production workflows, not accounting-driven workarounds. The focus is on job shops, make-to-order production, and compliance.
+An ERP system designed specifically for metal fabricators. It supports real production workflows. The focus is on job shops, make-to-order production, and compliance.
 
 **Key Features:**
 - Manufacturing journal
@@ -81,7 +79,7 @@ Below is a comprehensive overview of user workflows within this ERP system. Item
 ### Sales Representative
 - Generate sales reports -
 - Access product analytics (top-selling products, trending, declining) -
-- View total number of products sold -
+- View total number of products sold ✓
 
 ### Marketing Specialist
 - Create and publish articles to the factory portal ✓

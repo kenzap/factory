@@ -3,6 +3,7 @@ import { extractCountryFromVAT } from '@factory/tax-core/index';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
+import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
 import { getProductionItemsTable } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
@@ -71,7 +72,8 @@ async function viewProductionSlip(_id, user, locale, lang, options = {}, logger)
 
         return {
             html: parsedDocument,
-            totals: totals
+            totals: totals,
+            settings: data.settings || {}
         };
 
     } finally {
@@ -125,12 +127,9 @@ function viewProductionSlipApi(app, logger) {
             const doc_path = `/app/server/document/pdf/production-slip-${id}.pdf`;
 
             await page.emulateMedia({ media: 'screen' });
-            const pdfBuffer = await page.pdf({
-                path: doc_path,
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '10mm', bottom: '10mm', left: '15mm', right: '15mm' }
-            });
+            const pdfBuffer = await page.pdf(
+                getPaginatedPdfOptions(doc_path, __html(locale, 'Page'))
+            );
 
             // Save screenshot in development
             if (process.env.NODE_ENV === 'development') {
@@ -152,14 +151,17 @@ function viewProductionSlipApi(app, logger) {
                 const body = `
                     <h1>${__html(locale, "Production Slip")} #${id}</h1>
                 `;
+                const mailFrom = slipData.settings?.documents_email_from || "";
+                const replyTo = slipData.settings?.documents_email_reply_to || "";
 
                 await send_email(
                     req.query.email,
-                    "invoice@skarda.design",
-                    "Skārda Nams SIA",
+                    mailFrom,
+                    "",
                     `${__html(locale, "Production Slip")} #${id}`,
                     body,
-                    [doc_path]
+                    [doc_path],
+                    { replyTo }
                 );
 
                 // Clean up PDF after sending

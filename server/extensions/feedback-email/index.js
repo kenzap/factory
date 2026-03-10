@@ -49,7 +49,9 @@ export function register({ router, cron, db, logger, config }) {
                         message.fromEmail,
                         message.fromName,
                         message.subject,
-                        message.body
+                        message.body,
+                        [],
+                        { replyTo: message.replyTo }
                     );
 
                     if (sendResult?.send === true) {
@@ -63,7 +65,9 @@ export function register({ router, cron, db, logger, config }) {
                         message.fromEmail,
                         message.fromName,
                         message.subject,
-                        message.body
+                        message.body,
+                        [],
+                        { replyTo: message.replyTo }
                     );
 
                 } catch (error) {

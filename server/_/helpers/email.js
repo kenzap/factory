@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getDbConnection, log_error, sid } from './index.js';
+import { getSettings } from './settings.js';
 
 /**
  * SMTP email handler script
@@ -10,9 +11,11 @@ import { getDbConnection, log_error, sid } from './index.js';
  * @param 	{String} 	subject			email subject
  * @param 	{String} 	body			email body
  * @param 	{String} 	attach			attachment files (optional)
+ * @param 	{Object} 	options			extra options (optional)
+ * @param 	{String} 	options.replyTo	reply-to email (optional)
  * @return 	{Object} 	status			operation success report
  */
-export async function send_email(mail_to, mail_from, from, subject, body, attach = []) {
+export async function send_email(mail_to, mail_from, from, subject, body, attach = [], options = {}) {
     const output = {
         success: true,
         mail_to: mail_to,
@@ -30,17 +33,26 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
         }
     });
 
+    let fromName = from;
+    if (!fromName) {
+        try {
+            const settings = await getSettings();
+            fromName = settings?.brand_name || '';
+        } catch (error) {
+            log_error(`Failed to load brand_name setting: ${error.message}`);
+        }
+    }
+
     // Mail options
     const mailOptions = {
-        from: `${from || 'Skarda Design'} <${mail_from}>`,
+        from: `${fromName || 'Skarda Design'} <${mail_from}>`,
         to: mail_to,
         subject: subject,
         html: body
     };
 
-    // Add reply-to for specific email
-    if (mail_from === 'no-reply@skarda.design' || mail_from === 'invoice@skarda.design') {
-        mailOptions.replyTo = 'info@skardanams.com';
+    if (options?.replyTo) {
+        mailOptions.replyTo = options.replyTo;
     }
 
     // Add attachments if provided

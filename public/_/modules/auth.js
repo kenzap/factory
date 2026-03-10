@@ -440,9 +440,6 @@ export class Auth {
             // close modal 
             self.modalCont.hide();
 
-            // forces to reload session data
-            // self.settings = "";
-
             // force rerender everything
             self.firstLoad = true;
 
@@ -483,8 +480,7 @@ export class Auth {
                         </div> 
                         <div class="card-2 otp-note"> 
                             <div class="content d-flex justify-content-center align-items-center form-text"> 
-                                <span>${__html('Need more help?')}</span> 
-                                <a href="mailto:support@skarda.design" class="ms-3 btn-resend-otp">${__html('Contact support')}</a> 
+                                <span>${__html('Need more help?')}</span> <span>${__html('Contact support')}</span>
                             </div> 
                         </div> 
                     </div>

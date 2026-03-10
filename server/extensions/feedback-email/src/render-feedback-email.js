@@ -38,7 +38,8 @@ export const renderFeedbackEmail = (order, settings = {}) => {
 
     return {
         to: order?.email || '',
-        fromEmail: 'no-reply@skarda.design',
+        fromEmail: settings?.ask_feedback_order_client_email_from || '',
+        replyTo: settings?.ask_feedback_order_client_email_reply_to || '',
         fromName: settings?.brand_name || 'Skarda Design',
         subject: applyTemplate(subjectTemplate, vars),
         body: body || `${fallbackGreeting}<br><br>Lūdzu, novērtējiet mūsu pakalpojumus un produktus.<br><br><a href="${reviewLink}">Atstājiet atsauksmi par pasūtījumu #${vars.order_id}</a>.<br><br>Ar cieņu,<br>Skarda Design`,

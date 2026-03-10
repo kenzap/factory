@@ -99,6 +99,11 @@ Behavior:
 - Uses previous month as synchronization period.
 - Processes invoices first (orders with waybill and missing `extensions.moneo.invoiceid`).
 - If no invoice candidates found, processes receipts (orders with payment date, existing `invoiceid`, and missing `receiptid`).
+- If no receipt-create candidates found, processes carry-over payment updates:
+  - payments dated in previous month
+  - waybill date before previous month
+  - existing `extensions.moneo.receiptid` is required
+  - calls Moneo update API for receipt amount/date correction
 - Writes returned Moneo IDs to:
   - `extensions.moneo.invoiceid`
   - `extensions.moneo.receiptid`
@@ -149,6 +154,7 @@ Current real call in `sync-ids`:
 Current real calls in `sync-documents`:
 - `POST {MONEO_API_BASE}/sales.invoices/create/`
 - `POST {MONEO_API_BASE}/sales.receipts/create/`
+- `POST {MONEO_API_BASE}/sales.receipts/update/` (carry-over payment update path)
 
 Payload includes:
 - `name`

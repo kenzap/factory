@@ -107,8 +107,8 @@ export function getPackingListItemsTable(order, locales, productWeightById = {})
         const productName = [
             item?.title || '',
             item?.sdesc ? `- ${item.sdesc}` : '',
-            item?.coating || '',
-            item?.color || ''
+            item?.color || '',
+            item?.coating || ''
         ].join(' ').trim();
 
         table += `
@@ -143,8 +143,8 @@ export function getPackingListItemsTable(order, locales, productWeightById = {})
 function formatItemDescription(detailed, item, settings, locales) {
     let description = item.title || '';
 
-    if (item.coating) description += ` ${item.coating}`;
     if (item.color) description += ` ${item.color}`;
+    if (item.coating) description += ` ${item.coating}`;
     if (item.formula_width_calc || item.formula_length_calc) {
         const width = item.formula_width_calc || '';
         const length = item.formula_length_calc || '';
@@ -298,12 +298,15 @@ export function getProductionItemsTable(settings, order, locales) {
         (Number(summary?.totalQty) || 0) > 0 ||
         (Number(summary?.totalTM) || 0) > 0 ||
         (Number(summary?.totalMeters) || 0) > 0;
+    const getItemLength = (item) => Number(item?.formula_length_calc) || 0;
 
     // hardcoded sequence for production slip. TODO: implement settings control
     const sequence = [
-        "f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd", "d6870b81ca4de48181bee1996c39a276f5047f9c", "54ecdf4a1457e02be2af26dc6dbc20273188c69f", "f75c47f6b2e1a4782d467e05f480b111b9b41ab7", "c7ec25d153f22018ec487a7f68c5ceebaa38146d", "099d54a1bf5467d920756974f0deb0f4d41f27aa", "4428c8fae08c55de73a9faffdda38eb0008994cf", "285453e62fccedb3ba97a307041d91c14a5b9d10", "ad833cc8a7847ea08042c999aa84d3ceb8e80d4f", "0e6a7dff18fcfe6b99772eb62f1e00ce223ca277", "479b7df267dfc83722b5576765863a2d906f7d65", "357c3f4748cc71aef4cc76c2153e21769a6f287b", "f8bb892b38af6944b6c3397ae27b982a75c3b903", "d7baf98c909d7491e68c6a7ff235a13d98d5aa8a", "6c366463a32fcc680ba5c0a9739d80de08436564", "i8ow7dxk0x182fcsc4pfnr54wailz3k3f2sg4bir", "oyoxq18llpw66h8fb2uhliksm6efvqacsu6gsizg", "3a77950325ddf7ab231379b0dab228f5475af2d2",
-        // "ca2002d2f94566aedcb6d7edbf40710b513fc513", "987de8c4fb72806ad4ce71b3149f207552637067", "546cae599dc1c3cbb1cc9519e16332c686badbb1", "2429e26b2a8c6a179d48479a942a01110297fc00", "3de2da20b6655683a610e32dea35f3b434fd5a4d", "4c0d6027fdd9670ff000c0fe1fb0b5ebfc3389e4", "0f9ddabec2474c42f9dabc22fb269e76f8908ed6", "5109d21d32ee0741d22a03013b231245bc57070f", "c55fefcce684daac907015adc489adcbfdf2223e", "fd3f880d3c5194d4a403f3df9fdc66d491ed3fd7", "8b794917433d54b9dee3bc8ee118b7ba101a2e8b", "ad369303e4276caf3f0333c2484390d30613fbf9", "aebffd6dd5677509a5d9ac865bf53bb8f8a183d2", "6cd72b9bf83fe5288e7d215408b0a0b17f21c0f6", "eceb2bd4ff43d4301fa98a888338cd22d5033688",
-        "ca2002d2f94566aedcb6d7edbf40710b513fc513", "987de8c4fb72806ad4ce71b3149f207552637067", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d", // round gutters
+        // square
+        "f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd", "46b763e569fe5a5fec518f570012ccf6f7757af3", "5bdfb7d0598bd4cf5cc98ee8f263cdf125a75e8a", "d6870b81ca4de48181bee1996c39a276f5047f9c", "54ecdf4a1457e02be2af26dc6dbc20273188c69f", "f75c47f6b2e1a4782d467e05f480b111b9b41ab7", "c7ec25d153f22018ec487a7f68c5ceebaa38146d", "099d54a1bf5467d920756974f0deb0f4d41f27aa", "4428c8fae08c55de73a9faffdda38eb0008994cf", "285453e62fccedb3ba97a307041d91c14a5b9d10", "ad833cc8a7847ea08042c999aa84d3ceb8e80d4f", "0e6a7dff18fcfe6b99772eb62f1e00ce223ca277", "479b7df267dfc83722b5576765863a2d906f7d65", "357c3f4748cc71aef4cc76c2153e21769a6f287b", "f8bb892b38af6944b6c3397ae27b982a75c3b903", "d7baf98c909d7491e68c6a7ff235a13d98d5aa8a", "6c366463a32fcc680ba5c0a9739d80de08436564", "i8ow7dxk0x182fcsc4pfnr54wailz3k3f2sg4bir", "oyoxq18llpw66h8fb2uhliksm6efvqacsu6gsizg", "3a77950325ddf7ab231379b0dab228f5475af2d2",
+        // round
+        "ca2002d2f94566aedcb6d7edbf40710b513fc513", "987de8c4fb72806ad4ce71b3149f207552637067", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d", "fd1772dcbc3349d58fe9eae43c8ca91524693021", "a06e54816b8b9f08fe3f0b877edf2def378b5b7d",
+        "b10f7d2ead324118b75db26f48e2e870af209660", "c95858c9d98f1020557c33b4e778972ea7ea9b97", "8a3564b5e9e8ec00723b7824865a887b5d43e87a", "2dee24be1f25d2104afd1f6bcb2441ad998436d9", // gutter corners 
         "546cae599dc1c3cbb1cc9519e16332c686badbb1", "2429e26b2a8c6a179d48479a942a01110297fc00", "096b4c2c63dd1c97ad81424696d2f15619b8bac1", "4b8ef82ebeafa5d6ecf6b8164f3df504241e3237", "37f3edba12662d2410edf92ed4e3914ca9cf6af0", "5ecb016a0600966c1aa60f928e9e684cd4c511bd", // elbow A
         "3de2da20b6655683a610e32dea35f3b434fd5a4d", "4c0d6027fdd9670ff000c0fe1fb0b5ebfc3389e4", "53735c47953c64a0d46d6a58eb7649ce8a2b3692", "027969105c1dce2695ba8817d8236c19cd6fb0f4", "90ab60aa213e59085a73f1c5fb655ae13782bbb2", "a36f717ce72cdaf714e4300f2708355c07c617bc", // elbow B
         "0f9ddabec2474c42f9dabc22fb269e76f8908ed6", "5109d21d32ee0741d22a03013b231245bc57070f", "29c7e4d8d43546d9d8e790a79bd2ecd0342942b2", "e871395f3790410f7eea66c53a4afec7e07a67eb", "77d1e989fbfbe953cd1652612f915d1a8709ca9b", "63afafe92148909a49dce1e4c187bfac8eb3d5d9", // elbow S
@@ -331,27 +334,35 @@ export function getProductionItemsTable(settings, order, locales) {
             group.id == item?.group
         );
 
-        // Sort by sequence order first, then alphabetically by product name
+        // Sort by sequence order first; within same sequence rank sort by length desc.
         groupItems.sort((a, b) => {
             const seqIndexA = sequence.indexOf(a._id);
             const seqIndexB = sequence.indexOf(b._id);
+            const nameA = (a.title || '').toLowerCase();
+            const nameB = (b.title || '').toLowerCase();
 
-            // If both items are in sequence, sort by sequence order 
+            // If both items are in sequence, sort by sequence order.
             if (seqIndexA !== -1 && seqIndexB !== -1) {
-                return seqIndexA - seqIndexB;
+                if (seqIndexA !== seqIndexB) {
+                    return seqIndexA - seqIndexB;
+                }
+
+                // Same sequence rank: longer items first.
+                const lengthDiff = getItemLength(b) - getItemLength(a);
+                if (lengthDiff !== 0) return lengthDiff;
+
+                // Stable tie-breaker.
+                return nameA.localeCompare(nameB);
             }
 
-            // If only one item is in sequence, prioritize it
-            if (seqIndexA !== -1 && seqIndexB === -1) {
-                return -1;
-            }
+            // If only one item is in sequence, prioritize it.
+            if (seqIndexA !== -1 && seqIndexB === -1) return -1;
+
             if (seqIndexA === -1 && seqIndexB !== -1) {
                 return 1;
             }
 
-            // If neither item is in sequence, sort alphabetically by product name
-            const nameA = (a.title || '').toLowerCase();
-            const nameB = (b.title || '').toLowerCase();
+            // If neither item is in sequence, sort alphabetically by product name.
             return nameA.localeCompare(nameB);
         });
 
@@ -415,7 +426,7 @@ export function getProductionItemsTable(settings, order, locales) {
                         <tr class="${i == groupItems.length - 1 ? "border-secondary" : ""}">
                             <th scope="row">${itemIndex}</th>
                             <td>
-                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.coating} ${item.color}</div>
+                                <div>${item.title + (item.sdesc ? " - " + item.sdesc : "")} ${item.color} ${item.coating}</div>
                                 ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                             </td>
                             <td>${item.formula_width_calc ? item.formula_width_calc : ""}</td>
@@ -548,7 +559,7 @@ export function getProductionItemsTable(settings, order, locales) {
                     <tr class="${i == ungroupedItems.length - 1 ? "border-secondary" : ""}">
                         <th scope="row">${itemIndex}</th>
                         <td>
-                            <div>${item.title} ${item.coating} ${item.color}</div>
+                            <div>${item.title} ${item.color} ${item.coating}</div>
                             ${item.note ? `<div class="text-muted small">${item.note}</div>` : ``}
                         </td>
                         <td>${item.formula_width_calc ? item.formula_width_calc : ""}</td>

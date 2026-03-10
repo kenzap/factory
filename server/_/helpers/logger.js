@@ -1,4 +1,6 @@
 import { send_email } from "./email.js";
+import { getSettings } from "./settings.js";
+
 /**
  * Creates a logger instance with predefined log levels and scope formatting.
  * 
@@ -27,16 +29,28 @@ export const createLogger = (scope = 'erp') => {
                     typeof arg === 'object' ? JSON.stringify(arg, null, 2) : String(arg)
                 ).join(' ');
 
-                if (!process.env.ADMIN_EMAIL) return;
                 const stackTrace = new Error().stack;
-                send_email(
-                    process.env.ADMIN_EMAIL,
-                    "no-reply@skarda.design",
-                    "Error Report",
-                    `Error in ${scope}`,
-                    `<h3>Error Log</h3><p><strong>Scope:</strong> ${scope}</p><p><strong>Message:</strong></p><pre>${errorMessage}</pre><p><strong>Stack Trace:</strong></p><pre>${stackTrace}</pre><p><strong>Time:</strong> ${new Date().toISOString()}</p>`,
-                    []
-                );
+                (async () => {
+                    const settings = await getSettings();
+                    const mailTo = settings?.logger_email_to || process.env.ADMIN_EMAIL;
+                    if (!mailTo) return;
+
+                    const mailFrom = settings?.logger_email_from || "";
+                    const replyTo = settings?.logger_email_reply_to || "";
+                    const subject = settings?.logger_email_subject || `Error in ${scope}`;
+
+                    await send_email(
+                        mailTo,
+                        mailFrom,
+                        "Error Report",
+                        subject,
+                        `<h3>Error Log</h3><p><strong>Scope:</strong> ${scope}</p><p><strong>Message:</strong></p><pre>${errorMessage}</pre><p><strong>Stack Trace:</strong></p><pre>${stackTrace}</pre><p><strong>Time:</strong> ${new Date().toISOString()}</p>`,
+                        [],
+                        { replyTo }
+                    );
+                })().catch((emailError) => {
+                    console.error(`[error][${scope}] Failed to send error notification email:`, emailError);
+                });
             } catch (emailError) {
                 console.error(`[error][${scope}] Failed to send error notification email:`, emailError);
             }

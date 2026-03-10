@@ -1,0 +1,3 @@
+# Top rising and declining clients
+
+Identify top rising and declining clients. Some clients ordering similar product lines over multiple years, however, demand for specific product and the entire product line start decrease and increase over time. These meterics need to be spoted automatically but aligned with overall seasonal demand trends so that picture per each client individually is reflectefd accurately without any biases.

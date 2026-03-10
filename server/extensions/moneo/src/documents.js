@@ -71,6 +71,11 @@ async function getOrdersForReceiptSync(db, dateStart, dateEnd, limit) {
           AND sid = $2
           AND js->'data'->'payment'->>'date' >= $3
           AND js->'data'->'payment'->>'date' <= $4
+          AND (
+                js->'data'->'waybill'->>'date' IS NULL
+                OR js->'data'->'waybill'->>'date' = ''
+                OR js->'data'->'waybill'->>'date' >= $3
+          )
           AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
           AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)
           AND js->'extensions'->'moneo'->'receiptid' IS NULL
@@ -81,6 +86,93 @@ async function getOrdersForReceiptSync(db, dateStart, dateEnd, limit) {
 
     const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
     return result.rows || [];
+}
+
+/**
+ * Payments received in the previous month for waybills issued before previous month.
+ * These are carry-over receipts that were not synced in the original waybill month.
+ */
+async function getCarryOverPaymentsForReceiptSync(db, dateStart, dateEnd, limit) {
+    const query = `
+        SELECT
+            _id,
+            COALESCE(js->'data'->>'id', '') AS id,
+            COALESCE(js->'data'->>'name', '') AS name,
+            COALESCE(js->'data'->>'address', '') AS address,
+            COALESCE(js->'data'->>'eid', '') AS eid,
+            COALESCE(js->'data'->'price'->>'grand_total', '0') AS grand_total,
+            js->'data'->'invoice' AS invoice,
+            js->'data'->'payment' AS payment,
+            js->'data'->'waybill' AS waybill,
+            js->'extensions'->'moneo'->>'invoiceid' AS moneo_invoice_id,
+            js->'extensions'->'moneo'->>'receiptid' AS moneo_receipt_id
+        FROM data
+        WHERE ref = $1
+          AND sid = $2
+          AND js->'data'->'payment'->>'date' >= $3
+          AND js->'data'->'payment'->>'date' <= $4
+          AND js->'data'->'waybill'->>'date' IS NOT NULL
+          AND js->'data'->'waybill'->>'date' < $3
+          AND js->'data'->'waybill'->>'number' IS NOT NULL
+          AND js->'data'->'waybill'->>'number' != ''
+          AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
+          AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)
+          AND js->'extensions'->'moneo'->'receiptid' IS NOT NULL
+          AND js->'data'->'invoice'->>'number' != ''
+        ORDER BY js->'data'->'payment'->>'date' ASC
+        LIMIT $5
+    `;
+
+    const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
+    return result.rows || [];
+}
+
+function buildReceiptUpdatePayload(config, order) {
+    const hasWaybill = !!order?.waybill?.number;
+    const isWaybillPaid = order?.payment?.date && hasWaybill;
+    const id = order?.id || order?._id?.substring(0, 8) || '';
+    const comment = order?.invoice?.number || `#${id}`;
+    const rowComment = isWaybillPaid
+        ? `Pavadzīme (${order.waybill.number})`
+        : (order?.invoice?.number ? `Priekšapmaksa #${String(order.invoice.number).trim()}` : `Nav dati #${id}`);
+
+    return {
+        request: { compuid: config.get('COMPANY_UID') },
+        data: {
+            'sales.receipts': {
+                fieldlist: [
+                    'sernr',
+                    'regdate',
+                    'transdate',
+                    'paysum',
+                    'comment'
+                ],
+                data: [[
+                    String(order?.moneo_receipt_id || ''),
+                    convertToDateString(order?.invoice?.date),
+                    convertToDateString(order?.payment?.date),
+                    roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
+                    comment
+                ]]
+            },
+            'sales.receipts_details_rows': {
+                fieldlist: [
+                    '_sernr',
+                    '_rownr',
+                    'rowcomment',
+                    'rowsum',
+                    'bankrowsum'
+                ],
+                data: [[
+                    String(order?.moneo_receipt_id || ''),
+                    0,
+                    rowComment,
+                    roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
+                    roundToTwoDecimals(order?.payment?.amount || 0)
+                ]]
+            }
+        }
+    };
 }
 
 async function getTransactionsForReceiptSync(db, dateStart, dateEnd, limit) {
@@ -251,7 +343,6 @@ function buildInvoicePayload(config, order, client, sellerCountry = 'LV') {
 
 function buildReceiptPayload(config, order, client) {
     const hasWaybill = !!order?.waybill?.number;
-    // const isWaybillPaid = !!(order?.waybill?.date && order?.payment?.date && order.waybill.date <= order.payment.date && hasWaybill);
     const isWaybillPaid = order?.payment?.date && hasWaybill;
     const id = order?.id || order?._id.substring(0, 8) || '';
 
@@ -271,12 +362,12 @@ function buildReceiptPayload(config, order, client) {
                 data: [[
                     client?.moneoid || '',
                     (client?.legal_name || order?.name || '').trim(),
-                    convertToDateString(isWaybillPaid || !order?.id ? order?.waybill?.date : order?.invoice?.date),
+                    convertToDateString(order?.invoice?.date),
                     convertToDateString(order?.payment?.date),
                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
                     'SEB',
                     'EUR',
-                    isWaybillPaid || !order?.id ? ['PAV'] : ['PR'],
+                    ['PR'],
                     '0.00',
                     comment
                 ]]
@@ -292,7 +383,7 @@ function buildReceiptPayload(config, order, client) {
                     rowComment,
                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
                     'EUR',
-                    isWaybillPaid || !order?.id ? 'PAV' : 'PR',
+                    'PR',
                     '0.00',
                     'B',
                     roundToTwoDecimals(order?.payment?.amount || 0),
@@ -400,6 +491,43 @@ async function processReceipts(db, logger, orders, config, dryRun = false) {
     return results;
 }
 
+async function updateReceipt(db, logger, order, config, dryRun = false) {
+    const payload = buildReceiptUpdatePayload(config, order);
+    if (dryRun) {
+        return { order_id: order._id, moneo_receipt_id: String(order?.moneo_receipt_id || ''), status: 'pending', payload };
+    }
+
+    await makeMoneoRequest('/sales.receipts/update/', config, payload);
+    logger.info(`[moneo.syncDocuments] Receipt updated order=${order._id} moneo_receipt_id=${order?.moneo_receipt_id || ''}`);
+
+    return { order_id: order._id, moneo_receipt_id: String(order?.moneo_receipt_id || ''), payload, status: 'updated' };
+}
+
+async function processReceiptUpdates(db, logger, orders, config, dryRun = false) {
+    const results = [];
+
+    for (const order of orders) {
+        if (!order?.moneo_receipt_id) {
+            results.push({
+                order_id: order._id,
+                status: 'skipped',
+                reason: 'missing_receipt_moneo_id'
+            });
+            continue;
+        }
+
+        try {
+            const updated = await updateReceipt(db, logger, order, config, dryRun);
+            results.push(updated);
+        } catch (error) {
+            logger.error(`[moneo.syncDocuments] Receipt update failed for order ${order._id}: ${error.message}`);
+            results.push({ order_id: order._id, status: 'failed', error: error.message });
+        }
+    }
+
+    return results;
+}
+
 export const syncDocuments = async (db, logger, config, options = {}) => {
     const range = getPreviousMonthRange();
     const limit = Number.isFinite(Number(options?.limit)) && Number(options.limit) > 0
@@ -414,7 +542,8 @@ export const syncDocuments = async (db, logger, config, options = {}) => {
         to: range.to,
         limit,
         invoice: [],
-        receipt: []
+        receipt: [],
+        receipt_carry_over: []
     };
 
     try {
@@ -433,6 +562,14 @@ export const syncDocuments = async (db, logger, config, options = {}) => {
 
         if (receiptOrders.length > 0) {
             response.receipt = await processReceipts(db, logger, receiptOrders, config, dryRun);
+            return response;
+        }
+
+        const carryOverReceiptOrders = await getCarryOverPaymentsForReceiptSync(db, range.from, range.to, limit);
+        logger.info(`[moneo.syncDocuments] Carry-over receipt candidates: ${carryOverReceiptOrders.length}`);
+
+        if (carryOverReceiptOrders.length > 0) {
+            response.receipt_carry_over = await processReceiptUpdates(db, logger, carryOverReceiptOrders, config, dryRun);
             return response;
         }
 
