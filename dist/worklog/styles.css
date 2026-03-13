@@ -137,6 +137,49 @@ body {
     font-size: 0.75rem;
 }
 
+.coworker-chips {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.15rem 0 0.25rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.coworker-chips::-webkit-scrollbar {
+    height: 6px;
+}
+
+.coworker-chip {
+    border: 1px solid #d0d7de;
+    border-radius: 999px;
+    background: #fff;
+    color: #334155;
+    min-height: 42px;
+    padding: 0.35rem 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.coworker-chip small {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.coworker-chip.is-selected {
+    border-color: #1d4ed8;
+    background: #e8f0ff;
+    color: #1e3a8a;
+}
+
+.coworker-chip:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 1px;
+}
+
 @media (max-width: 768px) {
     .table-responsive {
         border-radius: 12px;
@@ -186,6 +229,12 @@ body {
 }
 
 @media (pointer: coarse) {
+    .coworker-chip {
+        min-height: 48px;
+        padding: 0.45rem 0.95rem;
+        font-size: 0.88rem;
+    }
+
     #groupWorklogModal .group-item-check,
     #groupWorklogModal #groupWorkSelectAll {
         width: 2.1rem;

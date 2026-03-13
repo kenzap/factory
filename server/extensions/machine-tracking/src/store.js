@@ -27,7 +27,7 @@ export const store = async (query, db, logger) => {
 
         const insertQuery = `
             INSERT INTO metering (time, reading, machine)
-            VALUES ($1, $2, $3)
+            VALUES (($1::timestamptz AT TIME ZONE 'UTC'), $2, $3)
             RETURNING _id, time, reading, machine
         `;
 

@@ -295,7 +295,7 @@ class Localization {
                         <div class="card border-white shadow-sm">
                             <div class="card-body">
                             <h4 class="card-title">${__html('Locales')}</h4>
-                            <p class="form-text">${__html('Choose a <a href="#">locale</a></code> from the list to start translating, or click the \'Add Locale\' button.')}</p>
+                            <p class="form-text">${__html("Choose a %1$locale%2$ from the list to start translating, or click the 'Add Locale' button.", '<code><a href="#">', '</a></code>')}</p>
                             <div class="row">
                                 <div class="col-sm-12">
                                     <div class="table-responsive">

@@ -50,6 +50,13 @@ export const getHtml = (record) => {
                             </button>
                         </div>
                     </div>
+                    <div class="row g-2 mt-1">
+                        <div class="col-12">
+                            <label class="form-label mb-1 small text-muted">${__html('Team')}</label>
+                            <div id="coworkerChips" class="coworker-chips" role="group" aria-label="${__attr('Team')}"></div>
+                            <small id="coworkerSummary" class="text-muted d-block mt-1"></small>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>

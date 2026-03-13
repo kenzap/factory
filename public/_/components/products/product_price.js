@@ -207,7 +207,7 @@ export class ProductPrice {
 
             d.querySelector("#formula").parentElement.classList.add('was-validated');
 
-            if (result > 0) d.querySelector(".formula-hint").innerHTML = __html("Result: <b>" + result / 1000000 + " ㎡</b> based on the input fields default values", result);
+            if (result > 0) d.querySelector(".formula-hint").innerHTML = html("Result: <b>" + result / 1000000 + " ㎡</b> based on the input fields default values", result);
         });
 
         // validate formula price

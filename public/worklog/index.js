@@ -51,6 +51,8 @@ class WorkLog {
         }
 
         this.groupCandidates = this.parseGroupCandidates(params.get('group_items'));
+        this.selectedUserIds = new Set();
+        this.activityScores = {};
 
         this.filters.user_id = params.get('user_id') || "";
 
@@ -150,11 +152,15 @@ class WorkLog {
                     return;
                 }
 
-                const response = await this.createWorklogRecordAsync(baseRecord);
-                if (!response?.success) {
-                    toast(__html(`Failed to create work log record: %1$s`, response?.error || 'Unknown error'));
+                const result = await this.createEntriesForSelectedUsers([baseRecord]);
+                if (!result.successCount) {
+                    toast(__html('Failed to create work log record'));
                     this.setSubmitPendingState(e.currentTarget, false);
                     return;
+                }
+
+                if (result.successCount > 1) {
+                    toast(__html(`Records created: %1$s`, result.successCount));
                 }
 
                 this.data();
@@ -243,8 +249,7 @@ class WorkLog {
             }
         }
 
-        const selectedUser = document.getElementById('filterEmployee')?.value;
-        const user_id = selectedUser || this.user?.id;
+        const selectedUserIds = this.getSelectedUserIds();
 
         return {
             title: document.querySelector('#productName').value.trim(),
@@ -259,10 +264,141 @@ class WorkLog {
             type: document.querySelector('#type').value,
             label: this.record?.label || '',
             tag: this.record?.tag || '',
-            user_id: user_id,
+            user_id: selectedUserIds[0] || this.user?.id,
             order_id: this.record.order_id || '',
             order_ids: this.record.id ? [this.record.id] : []
         };
+    }
+
+    initializeSelectedUsers() {
+        const currentUserId = this.user?.id || this.user?._id || '';
+        const validIds = new Set((this.users || []).map(user => user._id));
+
+        this.selectedUserIds = new Set(
+            Array.from(this.selectedUserIds).filter(userId => validIds.has(userId))
+        );
+
+        if (!this.selectedUserIds.size && currentUserId && validIds.has(currentUserId)) {
+            this.selectedUserIds.add(currentUserId);
+        }
+
+        if (!this.selectedUserIds.size && this.users?.length) {
+            this.selectedUserIds.add(this.users[0]._id);
+        }
+    }
+
+    renderCoworkerChips() {
+        const container = document.getElementById('coworkerChips');
+        const summary = document.getElementById('coworkerSummary');
+        if (!container || !summary) return;
+
+        if (!this.users?.length) {
+            container.innerHTML = '';
+            summary.textContent = '';
+            return;
+        }
+
+        const currentUserId = this.user?.id || this.user?._id || '';
+
+        container.innerHTML = this.users.map((user) => {
+            const userId = user._id;
+            const isSelected = this.selectedUserIds.has(userId);
+            const isCurrentUser = userId === currentUserId;
+            const shortName = `${user.fname || ''} ${user?.lname?.charAt(0) || ''}`.trim();
+
+            return `
+                <button
+                    type="button"
+                    class="coworker-chip ${isSelected ? 'is-selected' : ''}"
+                    data-user-id="${userId}"
+                    aria-pressed="${isSelected ? 'true' : 'false'}"
+                    title="${shortName}"
+                >
+                    <span>${shortName || __html('Employee')}</span>
+                    ${isCurrentUser ? `<small>${__html('You')}</small>` : ''}
+                </button>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.coworker-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const userId = chip.dataset.userId;
+                if (!userId) return;
+
+                if (this.selectedUserIds.has(userId)) {
+                    if (this.selectedUserIds.size === 1) {
+                        toast(__html('Select at least one employee'));
+                        return;
+                    }
+                    this.selectedUserIds.delete(userId);
+                } else {
+                    this.selectedUserIds.add(userId);
+                }
+
+                this.renderCoworkerChips();
+            });
+        });
+
+        const selectedCount = this.selectedUserIds.size;
+        summary.textContent = selectedCount > 1
+            ? __html(`Selected people: %1$s. One record will be created for each person.`, selectedCount)
+            : __html('Selected person: 1.');
+    }
+
+    getSelectedUserIds() {
+        if (!this.selectedUserIds.size) {
+            const fallbackId = this.user?.id || this.user?._id;
+            return fallbackId ? [fallbackId] : [];
+        }
+
+        return Array.from(this.selectedUserIds);
+    }
+
+    sortUsersByActivity(users = []) {
+        const currentUserId = this.user?.id || this.user?._id || '';
+        const scores = this.activityScores || {};
+
+        return [...users].sort((a, b) => {
+            const aId = a?._id || '';
+            const bId = b?._id || '';
+
+            if (aId === currentUserId && bId !== currentUserId) return -1;
+            if (bId === currentUserId && aId !== currentUserId) return 1;
+
+            const aScore = scores[aId]?.score || 0;
+            const bScore = scores[bId]?.score || 0;
+            if (aScore !== bScore) return bScore - aScore;
+
+            const aWeek = scores[aId]?.week || 0;
+            const bWeek = scores[bId]?.week || 0;
+            if (aWeek !== bWeek) return bWeek - aWeek;
+
+            const aLast = scores[aId]?.last_activity || '';
+            const bLast = scores[bId]?.last_activity || '';
+            if (aLast !== bLast) return bLast.localeCompare(aLast);
+
+            const aName = `${a?.fname || ''} ${a?.lname || ''}`.trim();
+            const bName = `${b?.fname || ''} ${b?.lname || ''}`.trim();
+            return aName.localeCompare(bName);
+        });
+    }
+
+    async createEntriesForSelectedUsers(baseRecords = []) {
+        const userIds = this.getSelectedUserIds();
+        let successCount = 0;
+
+        for (const record of baseRecords) {
+            for (const userId of userIds) {
+                const response = await this.createWorklogRecordAsync({
+                    ...record,
+                    user_id: userId
+                });
+
+                if (response?.success) successCount += 1;
+            }
+        }
+
+        return { successCount };
     }
 
     setSubmitPendingState(button, pending) {
@@ -408,7 +544,7 @@ class WorkLog {
             confirmBtn.disabled = true;
             confirmBtnTop.disabled = true;
 
-            let successCount = 0;
+            const payloads = [];
             for (const candidate of candidates) {
                 const qty = parseFloat(candidate.final_qty || 0);
                 const baseQty = parseFloat(baseRecord.qty || 0);
@@ -416,7 +552,7 @@ class WorkLog {
                 const ratio = baseQty > 0 ? qty / baseQty : 0;
                 const time = Math.round(baseTime * ratio);
 
-                const payload = {
+                payloads.push({
                     ...baseRecord,
                     title: candidate.product_name,
                     qty: qty,
@@ -428,11 +564,10 @@ class WorkLog {
                     time: time,
                     order_id: candidate.order_id || baseRecord.order_id,
                     order_ids: candidate.id ? [candidate.id] : baseRecord.order_ids
-                };
-
-                const response = await this.createWorklogRecordAsync(payload);
-                if (response?.success) successCount += 1;
+                });
             }
+
+            const { successCount } = await this.createEntriesForSelectedUsers(payloads);
 
             confirmBtn.disabled = false;
             confirmBtnTop.disabled = false;
@@ -502,11 +637,13 @@ class WorkLog {
             if (!isAuthorized(response, 'work_log_journal')) return
 
             this.user = response.user;
-            this.users = response.users;
+            this.activityScores = response.activity_scores || {};
+            this.users = this.sortUsersByActivity(response.users || []);
             this.settings = response.settings;
             this.records = response.records;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
+            this.initializeSelectedUsers();
 
             // session
             new Session();
@@ -524,6 +661,7 @@ class WorkLog {
             this.renderRecords();
 
             this.populateFilters();
+            this.renderCoworkerChips();
 
             document.title = __html('Work Log');
 

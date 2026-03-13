@@ -279,6 +279,49 @@ npm run demo:data -- --mode=seed --entities=30 --orders=120
 
 The script targets the current tenant `SID` (from `.env`) and uses `DATABASE_URL`.
 
+### Localization Automation
+
+Use these scripts to keep locale keys and translations up to date.
+
+1. Export locale keys from source (`__html`, `__attr`) into `server/assets/texts.json`:
+
+```bash
+npm run locales:export
+```
+
+2. Dry-run compare source keys with DB locale content (no writes):
+
+```bash
+npm run locales:sync:lv
+```
+
+Optional report file:
+
+```bash
+npm run locales:sync -- --locale=lv --report=server/assets/locales-missing-lv.json
+```
+
+3. Auto-translate only missing/empty keys and save to DB (existing non-empty translations are never overwritten):
+
+```bash
+npm run locales:translate:lv
+```
+
+Optional flags:
+
+```bash
+# target locale and extension
+npm run locales:translate -- --locale=lv --ext=dashboard
+
+# adjust batch size sent to translation API
+npm run locales:translate -- --locale=lv --chunk=80
+```
+
+Requirements:
+
+- `ANTHROPIC_API_KEY` in `.env`
+- reachable PostgreSQL from the environment where the script runs
+
 ### Client Provisioning Defaults
 
 Use a per-client JSON file to apply regional defaults into the `settings` row after provisioning.

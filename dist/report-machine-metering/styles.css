@@ -1,0 +1,68 @@
+@import url("../report-employee-performance/styles.css");
+
+.summary-cards {
+    padding: 0 24px 24px 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+}
+
+.summary-card h4 {
+    margin: 0 0 8px 0;
+    font-size: 0.95rem;
+    color: #5f6a7a;
+}
+
+.summary-card .metric {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #223047;
+}
+
+.table-container #shiftHeatmapTable {
+    border-radius: 15px;
+    overflow: auto;
+    padding: 24px;
+    background: white;
+}
+
+.heatmap-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 0.85rem;
+}
+
+.heatmap-table th,
+.heatmap-table td {
+    border: 1px solid #eef1f4;
+    text-align: center;
+    padding: 8px 6px;
+}
+
+.heatmap-table th:first-child,
+.heatmap-table td:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 1;
+    min-width: 120px;
+}
+
+.heat-cell {
+    color: #1f2937;
+    font-variant-numeric: tabular-nums;
+}
+
+.heat-legend {
+    margin-top: 12px;
+    color: #6b7280;
+    font-size: 0.8rem;
+}

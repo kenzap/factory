@@ -97,6 +97,12 @@ class AnalyticsMenu {
                                 rights: ['product_manufacturing_report'],
                             },
                             {
+                                text: __html('Machine Metering Report'),
+                                link: link('/report-machine-metering/'),
+                                target: '_blank',
+                                rights: ['analytics_access'],
+                            },
+                            {
                                 text: __html('Inventory Reports'),
                                 link: link('/inventory-reports/'),
                                 target: '_blank',
