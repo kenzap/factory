@@ -4,7 +4,7 @@ import { makeId, sid } from '../index.js';
  * Creates a managed database connection wrapper with restricted SQL operations.
  * 
  * This function provides a secure database interface that only allows specific
- * SQL operations on a designated "data" table while preventing potentially
+ * SQL operations on designated tables while preventing potentially
  * dangerous DDL operations.
  * 
  * @param {Function} getConnection - A function that returns a database connection object
@@ -23,10 +23,10 @@ import { makeId, sid } from '../index.js';
  * 
  * // Invalid operations (will throw errors)
  * // await managedDb.raw('DROP TABLE data'); // DDL not allowed
- * // await managedDb.raw('SELECT * FROM users'); // Only 'data' table allowed
+ * // await managedDb.raw('SELECT * FROM users'); // Only approved tables allowed
  * 
  * @throws {Error} When SQL contains operations other than SELECT/INSERT/UPDATE/DELETE
- * @throws {Error} When SQL attempts to access tables other than 'data'
+ * @throws {Error} When SQL attempts to access tables other than the approved set
  * @throws {Error} When SQL contains DDL statements (CREATE/ALTER/DROP/etc.)
  */
 export const createManagedRawDb = (getConnection) => {
@@ -41,7 +41,8 @@ export const createManagedRawDb = (getConnection) => {
     }
 
     const ALLOWED_OPS = /^(SELECT|INSERT|UPDATE|DELETE)\b/i
-    const DATA_TABLE = /\b(FROM|INTO|UPDATE)\s+data\b/i
+    const ALLOWED_TABLES = new Set(['data', 'metering'])
+    const TABLE_REF = /\b(FROM|INTO|UPDATE|JOIN)\s+("?[\w.]+"?)/gi
     const FORBIDDEN = /\b(CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE)\b/i
 
     return {
@@ -50,8 +51,17 @@ export const createManagedRawDb = (getConnection) => {
                 throw new Error('Only SELECT / INSERT / UPDATE / DELETE allowed')
             }
 
-            if (!DATA_TABLE.test(sql)) {
-                throw new Error('Only access to table "data" is allowed')
+            const tableMatches = [...sql.matchAll(TABLE_REF)]
+            if (tableMatches.length === 0) {
+                throw new Error('Could not determine target table')
+            }
+
+            for (const match of tableMatches) {
+                const tableRef = (match[2] || '').replace(/"/g, '')
+                const table = tableRef.split('.').pop().toLowerCase()
+                if (!ALLOWED_TABLES.has(table)) {
+                    throw new Error('Only access to tables "data" and "metering" is allowed')
+                }
             }
 
             if (FORBIDDEN.test(sql)) {

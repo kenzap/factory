@@ -56,7 +56,7 @@ app.use(helmet({
 }));
 
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://office.skarda.design'],
+    origin: ['http://localhost:3000', 'http://localhost', 'http://127.0.0.1', 'https://office.skarda.design'],
     credentials: true
 }));
 

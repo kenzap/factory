@@ -25,6 +25,9 @@ export async function getDocumentData(client, type, _id, user, locale) {
                        js->'data'->>'waybill_anulled_list' as waybill_anulled_list,
                        js->'data'->>'system_language' as system_language,
                        js->'data'->>'groups' as groups,
+                       js->'data'->>'documents_email_from' as documents_email_from,
+                       js->'data'->>'documents_email_reply_to' as documents_email_reply_to,
+                       js->'data'->>'documents_email_subject' as documents_email_subject,
                        js->'data'->>$3 as document_template
                 FROM data 
                 WHERE ref = $1 AND sid = $2
