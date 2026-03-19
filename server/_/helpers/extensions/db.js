@@ -57,6 +57,26 @@ export const createManagedRawDb = (getConnection) => {
             }
 
             for (const match of tableMatches) {
+                // Skip set-returning function calls in FROM/JOIN, e.g.:
+                // FROM jsonb_array_elements(...)
+                // JOIN some_fn(...)
+                const keyword = String(match[1] || '').toUpperCase()
+                const matchStart = typeof match.index === 'number' ? match.index : -1
+                const matchLen = (match[0] || '').length
+
+                // Ignore lock clauses like:
+                // FOR UPDATE SKIP LOCKED
+                if (matchStart >= 0 && keyword === 'UPDATE') {
+                    const prefix = sql.slice(0, matchStart).toUpperCase()
+                    if (/\bFOR\s*$/.test(prefix)) continue
+                }
+
+                if (matchStart >= 0 && (keyword === 'FROM' || keyword === 'JOIN')) {
+                    const rest = sql.slice(matchStart + matchLen)
+                    const nextNonSpaceChar = (rest.match(/^\s*(.)/) || [])[1]
+                    if (nextNonSpaceChar === '(') continue
+                }
+
                 const tableRef = (match[2] || '').replace(/"/g, '')
                 const table = tableRef.split('.').pop().toLowerCase()
                 if (!ALLOWED_TABLES.has(table)) {

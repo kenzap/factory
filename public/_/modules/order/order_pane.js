@@ -89,7 +89,7 @@ export class OrderPane {
                     <button id="add-order-row" class="btn btn-outline-primary btn-sm" ${addDisabled ? 'disabled' : ''} title="${addDisabled ? __html('Waybill already issued. Adding new rows is disabled.') : ''}">
                         <i class="bi bi-plus-circle"></i> ${__html('Add New Row')}
                     </button>
-                    <a href="/manufacturing/?id=${state.order.id}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
+                    <a id="open-manufacturing-link" href="/manufacturing/?id=${state.order.id || ''}" target="_blank" class="btn btn-outline-primary btn-sm d-flex align-items-center">
                         <i class="bi bi-box-arrow-up-right me-2"></i>
                         ${__html('Manufacturing')}
                     </a>
@@ -97,6 +97,16 @@ export class OrderPane {
                 </div>
                 <div id="order-table"></div>
             </div>`;
+
+        this.updateManufacturingLink(state.order.id);
+    }
+
+    updateManufacturingLink = (orderId = '') => {
+        const link = document.getElementById('open-manufacturing-link');
+        if (!link) return;
+
+        const normalizedId = String(orderId || '').trim();
+        link.href = `/manufacturing/?id=${encodeURIComponent(normalizedId)}`;
     }
 
     table = () => {
@@ -685,6 +695,11 @@ export class OrderPane {
             console.log('Order pane client updated:', client);
 
             this.refreshTable();
+        });
+
+        bus.on('order:updated', (id) => {
+            state.order.id = id || state.order.id || '';
+            this.updateManufacturingLink(state.order.id);
         });
     }
 }

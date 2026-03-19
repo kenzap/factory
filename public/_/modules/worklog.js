@@ -12,29 +12,29 @@ export const getHtml = (record) => {
                         <div class="col-md-3">
                             <label for="productName" class="form-label d-none">${__html('Product Name')}</label>
                             <div class="position-relative">
-                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="${__attr('Product')}" value="${record.product_name}" >
+                                <input type="text" class="form-control pe-5" id="productName" required placeholder="${__attr('Product')}" value="${record.product_name}" >
                                 <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
                             </div>
                         </div>
                         <div class="col-md-2">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__attr('Color')}" value="${record.color}">
+                            <input type="text" class="form-control" id="productColor" placeholder="${__attr('Color')}" value="${record.color}">
                         </div>
                         <div class="col-md-2">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__attr('Coating')}" value="${record.coating}">
+                            <input type="text" class="form-control" id="productCoating" placeholder="${__attr('Coating')}" value="${record.coating}">
                         </div>
                         <div class="col-md-1">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
-                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="${__attr('Quantity')}" value="${record.qty}" required>
+                            <input type="number" class="form-control" style="width:8 0px;" id="qty" min="1" placeholder="${__attr('Quantity')}" value="${record.qty}" required>
                         </div>
                         <div class="col-md-1">
                             <label for="time" class="form-label d-none">${__html('Time (min)')}</label>
-                            <input type="number" class="form-control border-0" id="time" min="1" placeholder="Min">
+                            <input type="number" class="form-control" id="time" min="1" placeholder="Min">
                         </div>
                         <div class="col-md-1 d-none">
                             <label for="origin" class="form-label d-none">${__html('Origin')}</label>
-                            <select class="form-select border-0" id="origin" required>
+                            <select class="form-select" id="origin" required>
                                 <option value="w">${__html('Warehouse')}</option>
                                 <option value="o" ${record.order_id ? "selected" : ""}>${__html('Order')}</option>
                                 <option value="">-</option>
@@ -42,7 +42,7 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2">
                             <label for="type" class="form-label d-none">${__html('Type')}</label>
-                            <select class="form-select border-0" id="type" required></select>
+                            <select class="form-select" id="type" required></select>
                         </div>
                         <div class="col-md-1 d-flex align-items-end">
                             <button type="submit" class="btn btn-dark border-0 btn-add-worklog-record w-100">

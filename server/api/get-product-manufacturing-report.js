@@ -83,6 +83,8 @@ async function getProductManufacturingReport(filters = {}, settings = {}) {
                 COALESCE(js->'data'->>'tag', '') AS tag,
                 COALESCE(js->'data'->>'item_id', '') AS item_id,
                 COALESCE(js->'data'->>'order_id', '') AS order_id,
+                COALESCE(js->'data'->>'color', '') AS color,
+                COALESCE(js->'data'->>'coating', '') AS coating,
                 COALESCE((js->'data'->>'qty')::numeric, 0) AS qty,
                 COALESCE((js->'data'->>'time')::numeric, 0) AS time
             FROM data
@@ -99,6 +101,16 @@ async function getProductManufacturingReport(filters = {}, settings = {}) {
         if (filters.type) {
             query += ` AND js->'data'->>'type' = $${params.length + 1}`;
             params.push(filters.type);
+        }
+
+        if (filters.color) {
+            query += ` AND COALESCE(js->'data'->>'color', '') ILIKE $${params.length + 1}`;
+            params.push(`%${filters.color}%`);
+        }
+
+        if (filters.coating) {
+            query += ` AND COALESCE(js->'data'->>'coating', '') ILIKE $${params.length + 1}`;
+            params.push(`%${filters.coating}%`);
         }
 
         if (filters.dateFrom) {
@@ -234,7 +246,7 @@ function getProductManufacturingReportApi(app) {
     app.post('/api/get-product-manufacturing-report/', authenticateToken, async (req, res) => {
         try {
             const users = await getUsers();
-            const settings = await getSettings(['work_categories', 'worklog_tag_aliases', 'worklog_taxonomy']);
+            const settings = await getSettings(['work_categories', 'worklog_tag_aliases', 'worklog_taxonomy', 'price']);
             const product_report = await getProductManufacturingReport(req.body.filters || {}, settings || {});
             const locale = await getLocale(req.headers);
             const locales = await getLocales();

@@ -11,46 +11,46 @@ export const getHtml = (record) => {
                     <div class="row g-3">
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="thickness" class="form-label d-none">${__html('Thickness')}</label>
-                            <input type="number" class="form-control border-0" id="thickness" placeholder="${__html('Thickness')}" value="0.5" required>
+                            <input type="number" class="form-control" id="thickness" placeholder="${__html('Thickness')}" value="0.5" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="width" class="form-label d-none">${__html('Width')}</label>
-                            <input type="number" class="form-control border-0" id="width" placeholder="${__html('Width (millimeters)')}" value="1250" required>
+                            <input type="number" class="form-control" id="width" placeholder="${__html('Width (millimeters)')}" value="1250" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="metal">
                             <label for="length" class="form-label d-none">${__html('Length')}</label>
-                            <input type="number" class="form-control border-0" id="length" placeholder="${__html('Length (meters)')}" value="" required>
+                            <input type="number" class="form-control" id="length" placeholder="${__html('Length (meters)')}" value="" required>
                         </div>
                         <div class="col-md-4 form-cont d-none" data-type="product">
                             <label for="productName" class="form-label d-none">${__html('Product')}</label>
                             <div class="position-relative">
-                                <input type="text" class="form-control pe-5 border-0" id="productName" required placeholder="${__html('Product name')}" value="${record.product_name}" >
+                                <input type="text" class="form-control pe-5" id="productName" required placeholder="${__html('Product name')}" value="${record.product_name}" >
                                 <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3"></i>
                             </div>
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="productColor" class="form-label d-none">${__html('Color')}</label>
-                            <input type="text" class="form-control border-0" id="productColor" placeholder="${__html('Color')}" value="${record.color}" autocomplete="off" required>
+                            <input type="text" class="form-control" id="productColor" placeholder="${__html('Color')}" value="${record.color}" autocomplete="off" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="productCoating" class="form-label d-none">${__html('Coating')}</label>
-                            <input type="text" class="form-control border-0" id="productCoating" placeholder="${__html('Coating')}" value="${record.coating}" autocomplete="off" required>
+                            <input type="text" class="form-control" id="productCoating" placeholder="${__html('Coating')}" value="${record.coating}" autocomplete="off" required>
                         </div>
                         <div class="col-md-2 form-cont d-none" data-type="general">
                             <label for="qty" class="form-label d-none" >${__html('Quantity')}</label>
-                            <input type="number" class="form-control border-0" style="width:8 0px;" id="qty" min="1" placeholder="${__html('Quantity')}" value="" required>
+                            <input type="number" class="form-control" style="width:8 0px;" id="qty" min="1" placeholder="${__html('Quantity')}" value="" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="price" class="form-label d-none" >${__html('Price')}</label>
-                            <input type="number" class="form-control border-0" style="width:8 0px;" id="price" min="1" placeholder="${__html('Price')}" value="" required>
+                            <input type="number" class="form-control" style="width:8 0px;" id="price" min="1" placeholder="${__html('Price')}" value="" required>
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="document_id" class="form-label d-none">${__html('Document #')}</label>
-                            <input type="text" class="form-control border-0" id="document_id" placeholder="${__html('INV-100000')}" value="">
+                            <input type="text" class="form-control" id="document_id" placeholder="${__html('INV-100000')}" value="">
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="document_date" class="form-label d-none">${__html('Document date')}</label>
-                            <input type="date" class="form-control border-0" id="document_date" placeholder="" value="" >
+                            <input type="date" class="form-control" id="document_date" placeholder="" value="" >
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <supplier-suggestion></supplier-suggestion>
@@ -58,7 +58,7 @@ export const getHtml = (record) => {
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="status" class="form-label d-none">${__html('Status')}</label>
                             <div class="position-relative">
-                                <select class="form-select border-0" id="status" required>
+                                <select class="form-select" id="status" required>
                                     <option value="ordered">${__html('Ordered')}</option>
                                     <option value="available" selected>${__html('Available')}</option>
                                     <option value="used">${__html('Used')}</option>
@@ -67,7 +67,7 @@ export const getHtml = (record) => {
                         </div>
                         <div class="col-md-2 form-cont" data-type="general">
                             <label for="notes" class="form-label d-none">${__html('Notes')}</label>
-                            <input type="text" class="form-control border-0" id="notes" placeholder="${__html('Notes..')}" value="">
+                            <input type="text" class="form-control" id="notes" placeholder="${__html('Notes..')}" value="">
                         </div>
                         <div class="col-md-1 form-cont d-flex align-items-center" data-type="general">
                             <div class="form-check mb-0">

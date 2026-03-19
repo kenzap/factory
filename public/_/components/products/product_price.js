@@ -207,7 +207,7 @@ export class ProductPrice {
 
             d.querySelector("#formula").parentElement.classList.add('was-validated');
 
-            if (result > 0) d.querySelector(".formula-hint").innerHTML = html("Result: <b>" + result / 1000000 + " ㎡</b> based on the input fields default values", result);
+            if (result > 0) d.querySelector(".formula-hint").innerHTML = __html("Result: %1$ ㎡ based on the input fields default values", '<b>' + result / 1000000 + '</b>');
         });
 
         // validate formula price
@@ -465,7 +465,7 @@ export class ProductPrice {
             cost = self.getMaterialCost();
             d.querySelector("#formula_price").setCustomValidity("");
 
-            if (markup > 0) d.querySelector(".formula_price-hint").innerHTML = __html("Final price: <b>%1$</b> based on the input fields default values", priceFormat(self, cost + markup));
+            if (markup > 0) d.querySelector(".formula_price-hint").innerHTML = "Final price: <b>" + priceFormat(self, cost + markup) + "</b> based on the input fields default values";
         } catch (e) {
 
             console.log(e);

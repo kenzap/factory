@@ -17,7 +17,7 @@ import { sendOtp } from './src/send-otp.js';
  * @param {Object} params.db - Database connection/service instance
  * @param {Object} params.logger - Logger instance for application logging
  * 
- * @description
+ * @description 
  * - Listens for "otp.requested" events to send OTP messages
  * - Provides GET /orders-ready endpoint to retrieve orders ready for notification
  * - Provides GET /order-ready-test/:id endpoint for testing order notifications

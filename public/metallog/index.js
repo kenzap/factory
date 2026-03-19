@@ -6,6 +6,7 @@ import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { SupplierSuggestion } from "../_/components/metal/supplier_suggestion.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
+import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
 import { __html, hideLoader, onChange, onClick, parseUnit, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
@@ -49,6 +50,9 @@ class MetalLog {
         this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
 
         this.firstLoad = true;
+        this.lastEnterNavigationAt = 0;
+        this.productColorValidator = null;
+        this.productCoatingValidator = null;
 
         this.init();
     }
@@ -90,12 +94,31 @@ class MetalLog {
             console.log('Product search selected:', product);
         });
 
+        this.setupFormEnterNavigation();
+
+        this.productColorValidator = new ProductColorValidator({
+            input: '#productColor',
+            suggestions: this.colorSuggestions,
+            allowValues: ['-']
+        });
+        this.productColorValidator.bind();
+        this.productColorValidator.validate();
+
+        this.productCoatingValidator = new ProductColorValidator({
+            input: '#productCoating',
+            suggestions: this.coatingSuggestions,
+            allowValues: ['-']
+        });
+        this.productCoatingValidator.bind();
+        this.productCoatingValidator.validate();
+
         // Color suggestion
         new DropdownSuggestion({
             input: '#productColor',
             suggestions: this.colorSuggestions
         }, (suggestion) => {
             console.log('Suggestion selected:', suggestion);
+            this.productColorValidator?.validate();
         });
 
         // Coating suggestion
@@ -104,6 +127,7 @@ class MetalLog {
             suggestions: this.coatingSuggestions
         }, (suggestion) => {
             console.log('Suggestion selected:', suggestion);
+            this.productCoatingValidator?.validate();
         });
 
         // supplier suggestion
@@ -172,7 +196,8 @@ class MetalLog {
 
             // Validate color selection
             const colorElement = document.querySelector('#productColor');
-            if (!cm && colorElement && this.colorSuggestions.indexOf(colorElement.value.trim()) === -1) {
+            const hasValidColor = this.productColorValidator?.validate() ?? true;
+            if (!cm && colorElement && !hasValidColor) {
                 colorElement.classList.add('is-invalid');
 
                 const feedback = document.createElement('div');
@@ -185,7 +210,8 @@ class MetalLog {
 
             // Validate coating selection
             const coatingElement = document.querySelector('#productCoating');
-            if (!cm && coatingElement && this.coatingSuggestions.indexOf(coatingElement.value.trim()) === -1) {
+            const hasValidCoating = this.productCoatingValidator?.validate() ?? true;
+            if (!cm && coatingElement && !hasValidCoating) {
                 coatingElement.classList.add('is-invalid');
 
                 const feedback = document.createElement('div');
@@ -347,31 +373,65 @@ class MetalLog {
             }
         });
 
-        // Handle Enter key navigation in form fields
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.closest('#supplyEntryForm')) {
-                e.preventDefault();
-
-                // Get all focusable form elements
-                const formElements = document.querySelectorAll('#supplyEntryForm input, #supplyEntryForm select, #supplyEntryForm textarea');
-                const focusableElements = Array.from(formElements).filter(el =>
-                    !el.disabled &&
-                    !el.readOnly &&
-                    el.type !== 'hidden' &&
-                    el.offsetParent !== null // Element is visible
-                );
-
-                const currentIndex = focusableElements.indexOf(e.target);
-                const nextIndex = currentIndex + 1;
-
-                // Move to next element or first element if at the end
-                if (nextIndex < focusableElements.length) {
-                    focusableElements[nextIndex].focus();
-                } else {
-                    focusableElements[0].focus();
-                }
+        const clientMaterial = document.querySelector('#clientMaterial');
+        clientMaterial?.addEventListener('change', () => {
+            if (clientMaterial.checked) {
+                document.querySelector('#productColor')?.classList.remove('is-invalid');
+                document.querySelector('#productCoating')?.classList.remove('is-invalid');
+            } else {
+                this.productColorValidator?.validate();
+                this.productCoatingValidator?.validate();
             }
         });
+    }
+
+    setupFormEnterNavigation() {
+        const form = document.querySelector('#supplyEntryForm');
+        if (!form || form.dataset.enterNavBound === '1') return;
+
+        const getFocusableElements = () => Array.from(form.querySelectorAll('input, select, textarea, button[type="submit"]'))
+            .filter(el => !el.disabled && !el.readOnly && el.type !== 'hidden' && el.offsetParent !== null);
+
+        const moveFocusFrom = (target) => {
+            const focusableElements = getFocusableElements();
+            const currentIndex = focusableElements.indexOf(target);
+            if (currentIndex === -1) return;
+
+            const nextElement = focusableElements[currentIndex + 1];
+            if (nextElement) {
+                nextElement.focus();
+                if (nextElement instanceof HTMLInputElement && ['text', 'number', 'search', 'date'].includes(nextElement.type)) {
+                    nextElement.select?.();
+                }
+                return;
+            }
+
+            document.querySelector('.btn-add-worklog-record')?.click();
+        };
+
+        form.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            if (!(e.target instanceof HTMLElement)) return;
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+
+            e.preventDefault();
+            this.lastEnterNavigationAt = Date.now();
+            moveFocusFrom(e.target);
+        });
+
+        form.addEventListener('keyup', (e) => {
+            if (e.key !== 'Enter') return;
+            if (!(e.target instanceof HTMLElement)) return;
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+            if (document.activeElement !== e.target) return;
+            if (Date.now() - this.lastEnterNavigationAt < 250) return;
+
+            e.preventDefault();
+            this.lastEnterNavigationAt = Date.now();
+            moveFocusFrom(e.target);
+        });
+
+        form.dataset.enterNavBound = '1';
     }
 
     async data() {
@@ -399,6 +459,8 @@ class MetalLog {
             this.records = response.records;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
+            this.productColorValidator?.setSuggestions(this.colorSuggestions);
+            this.productCoatingValidator?.setSuggestions(this.coatingSuggestions);
 
             // session
             new Session();

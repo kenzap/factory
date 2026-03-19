@@ -8,7 +8,7 @@ export const updateItem = async (db, actions, user) => {
 
     if (actions) {
 
-        console.log('updateItem actions:', actions);
+        // console.log('updateItem actions:', actions);
 
         // validate update item data
         if (actions.order_id === undefined || actions.index === undefined || actions.item === undefined) {

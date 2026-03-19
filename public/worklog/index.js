@@ -3,6 +3,8 @@ import { deleteWorklogRecord } from "../_/api/delete_worklog_record.js";
 import { getWorkLog } from "../_/api/get_worklog.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
+import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
+import { openStockConversionModal } from "../_/components/worklog/stock_conversion_modal.js";
 import { __html, hideLoader, onClick, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
@@ -48,11 +50,18 @@ class WorkLog {
             type: params.get('type') || '',
             tag: params.get('tag') || '',
             label: params.get('label') || '',
+            stock: params.get('stock') || '0',
+            stock_color: params.get('stock_color') || '',
+            stock_coating: params.get('stock_coating') || '',
         }
 
         this.groupCandidates = this.parseGroupCandidates(params.get('group_items'));
         this.selectedUserIds = new Set();
         this.activityScores = {};
+        this.pendingStockConversion = null;
+        this.productColorValidator = null;
+        this.productCoatingValidator = null;
+        this.lastEnterNavigationAt = 0;
 
         this.filters.user_id = params.get('user_id') || "";
 
@@ -111,6 +120,33 @@ class WorkLog {
             document.querySelector('.btn-add-worklog-record')?.click();
         });
 
+        const applyDateRangeBtn = document.getElementById('applyDateRange');
+        if (applyDateRangeBtn && applyDateRangeBtn.dataset.bound !== '1') {
+            applyDateRangeBtn.addEventListener('click', () => {
+                this.applyFilters();
+                const dateRangeModal = document.getElementById('dateRangeModal');
+                if (!dateRangeModal) return;
+                bootstrap.Modal.getInstance(dateRangeModal)?.hide();
+            });
+            applyDateRangeBtn.dataset.bound = '1';
+        }
+
+        this.setupWorkEntryEnterNavigation();
+        this.productColorValidator = new ProductColorValidator({
+            input: '#productColor',
+            suggestions: this.colorSuggestions,
+            allowValues: ['-']
+        });
+        this.productColorValidator.bind();
+        this.productColorValidator.validate();
+        this.productCoatingValidator = new ProductColorValidator({
+            input: '#productCoating',
+            suggestions: this.coatingSuggestions,
+            allowValues: ['-']
+        });
+        this.productCoatingValidator.bind();
+        this.productCoatingValidator.validate();
+
         // Product search
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
 
@@ -126,6 +162,7 @@ class WorkLog {
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);
+            this.productColorValidator?.validate();
         });
 
         // Coating suggestion
@@ -135,6 +172,7 @@ class WorkLog {
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);
+            this.productCoatingValidator?.validate();
         });
 
         // Add work log record
@@ -147,12 +185,23 @@ class WorkLog {
             this.setSubmitPendingState(e.currentTarget, true);
 
             try {
+                this.pendingStockConversion = null;
+                if (this.shouldUseStockConversionFlow(baseRecord)) {
+                    const stockConversion = await this.openStockConversionConfig(baseRecord);
+                    if (stockConversion === null) {
+                        this.pendingStockConversion = null;
+                        this.setSubmitPendingState(document.querySelector('.btn-add-worklog-record') || e.currentTarget, false);
+                        return;
+                    }
+                    this.pendingStockConversion = stockConversion;
+                }
+
                 if (this.groupCandidates.length > 1) {
                     await this.openGroupedCreateModal(baseRecord);
                     return;
                 }
 
-                const result = await this.createEntriesForSelectedUsers([baseRecord]);
+                const result = await this.createEntriesForSelectedUsers([baseRecord], this.pendingStockConversion);
                 if (!result.successCount) {
                     toast(__html('Failed to create work log record'));
                     this.setSubmitPendingState(e.currentTarget, false);
@@ -162,8 +211,12 @@ class WorkLog {
                 if (result.successCount > 1) {
                     toast(__html(`Records created: %1$s`, result.successCount));
                 }
+                if (result.stockFailureCount > 0) {
+                    toast(__html('Work log saved, but stock update failed for some entries'));
+                }
 
                 this.data();
+                this.pendingStockConversion = null;
             } catch (err) {
                 this.setSubmitPendingState(e.currentTarget, false);
                 toast(__html('Failed to create work log record'));
@@ -241,6 +294,8 @@ class WorkLog {
 
         const colorValue = document.querySelector('#productColor').value.trim();
         const coatingValue = document.querySelector('#productCoating').value.trim();
+        this.productColorValidator?.validate();
+        this.productCoatingValidator?.validate();
         if (!colorValue || !coatingValue) {
             const shouldContinue = window.confirm('Color or coating is empty. Save this record anyway?');
             if (!shouldContinue) {
@@ -335,6 +390,7 @@ class WorkLog {
                     this.selectedUserIds.add(userId);
                 }
 
+                this.resetEmployeeFilterAfterChipChange();
                 this.renderCoworkerChips();
             });
         });
@@ -343,6 +399,16 @@ class WorkLog {
         summary.textContent = selectedCount > 1
             ? __html(`Selected people: %1$s. One record will be created for each person.`, selectedCount)
             : __html('Selected person: 1.');
+    }
+
+    resetEmployeeFilterAfterChipChange() {
+        const employeeFilter = document.getElementById('filterEmployee');
+        const hadEmployeeFilter = Boolean(this.filters?.user_id);
+
+        if (employeeFilter) employeeFilter.value = '';
+        this.filters.user_id = '';
+
+        if (hadEmployeeFilter) this.data();
     }
 
     getSelectedUserIds() {
@@ -383,9 +449,99 @@ class WorkLog {
         });
     }
 
-    async createEntriesForSelectedUsers(baseRecords = []) {
+    isStockReplenishmentEnabled() {
+        return String(this.record?.stock || '0') === '1';
+    }
+
+    normalizeWorkType(type = '') {
+        return String(type || '').trim().toLowerCase().replace(/_/g, '-');
+    }
+
+    isStockConversionType(type = '') {
+        const normalized = this.normalizeWorkType(type);
+        return normalized === 'powder-coating' || normalized === 'galvanization';
+    }
+
+    shouldUseStockConversionFlow(record = {}) {
+        return this.isStockConversionType(record?.type || '');
+    }
+
+    async openStockConversionConfig(record = {}) {
+        return openStockConversionModal({
+            userId: this.user?.id || this.user?._id || '',
+            productId: record?.product_id || this.record?.product_id || '',
+            sourceColor: '',
+            sourceCoating: '',
+            targetColor: String(record?.color || '').trim() || String(this.record?.stock_color || '').trim(),
+            targetCoating: String(record?.coating || '').trim() || String(this.record?.stock_coating || '').trim(),
+            typeLabel: this.getWorkTypeLabel(record?.type || ''),
+            typeId: record?.type || '',
+            qty: parseFloat(record?.qty || 0) || 0,
+            colorSuggestions: this.colorSuggestions || [],
+            coatingSuggestions: this.coatingSuggestions || []
+        });
+    }
+
+    makeConversionId() {
+        return `conv_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+    }
+
+    buildStockReplenishmentPayload(record, userId, stockConversion = null) {
+        const preferredTargetColor = String(stockConversion?.target_color || '').trim();
+        const preferredTargetCoating = String(stockConversion?.target_coating || '').trim();
+        const stockColor = preferredTargetColor || String(record?.color || '').trim() || String(this.record?.stock_color || '').trim();
+        const stockCoating = preferredTargetCoating || String(record?.coating || '').trim() || String(this.record?.stock_coating || '').trim();
+
+        if (!stockColor || !stockCoating) return null;
+
+        return {
+            title: record?.title || record?.product_name || '',
+            qty: parseFloat(record?.qty || 0),
+            item_id: '',
+            product_id: record?.product_id || '',
+            product_name: record?.product_name || record?.title || '',
+            color: stockColor,
+            coating: stockCoating,
+            origin: record?.origin || '',
+            time: 0,
+            type: 'stock-replenishment',
+            label: record?.label || '',
+            tag: record?.tag || '',
+            user_id: userId,
+            order_id: '',
+            order_ids: []
+        };
+    }
+
+    buildStockWriteOffPayload(record, userId, stockConversion = {}) {
+        const sourceColor = String(stockConversion?.source_color || '').trim();
+        const sourceCoating = String(stockConversion?.source_coating || '').trim();
+        if (!sourceColor || !sourceCoating) return null;
+
+        return {
+            title: record?.title || record?.product_name || '',
+            qty: parseFloat(record?.qty || 0),
+            item_id: '',
+            product_id: record?.product_id || '',
+            product_name: record?.product_name || record?.title || '',
+            color: sourceColor,
+            coating: sourceCoating,
+            origin: record?.origin || '',
+            time: 0,
+            type: 'stock-write-off',
+            label: record?.label || '',
+            tag: record?.tag || '',
+            user_id: userId,
+            order_id: '',
+            order_ids: []
+        };
+    }
+
+    async createEntriesForSelectedUsers(baseRecords = [], stockConversion = null) {
         const userIds = this.getSelectedUserIds();
         let successCount = 0;
+        let stockSuccessCount = 0;
+        let stockFailureCount = 0;
 
         for (const record of baseRecords) {
             for (const userId of userIds) {
@@ -394,11 +550,61 @@ class WorkLog {
                     user_id: userId
                 });
 
-                if (response?.success) successCount += 1;
+                if (!response?.success) continue;
+                successCount += 1;
+
+                const recordType = this.normalizeWorkType(record?.type || '');
+                if (recordType === 'stock-replenishment' || recordType === 'stock-write-off') continue;
+
+                if (this.shouldUseStockConversionFlow(record)) {
+                    const options = stockConversion || { writeOff: true, replenish: true };
+                    if (!options?.writeOff && !options?.replenish) continue;
+
+                    const conversionId = this.makeConversionId();
+
+                    if (options.writeOff) {
+                        const writeOffPayload = this.buildStockWriteOffPayload(record, userId, options);
+                        if (!writeOffPayload) {
+                            stockFailureCount += 1;
+                        } else {
+                            writeOffPayload.conversion_id = conversionId;
+                            writeOffPayload.conversion_type = record?.type || '';
+                            const writeOffResponse = await this.createWorklogRecordAsync(writeOffPayload);
+                            if (writeOffResponse?.success) stockSuccessCount += 1;
+                            else stockFailureCount += 1;
+                        }
+                    }
+
+                    if (options.replenish) {
+                        const replenishPayload = this.buildStockReplenishmentPayload(record, userId, options);
+                        if (!replenishPayload) {
+                            stockFailureCount += 1;
+                        } else {
+                            replenishPayload.conversion_id = conversionId;
+                            replenishPayload.conversion_type = record?.type || '';
+                            const replenishResponse = await this.createWorklogRecordAsync(replenishPayload);
+                            if (replenishResponse?.success) stockSuccessCount += 1;
+                            else stockFailureCount += 1;
+                        }
+                    }
+                    continue;
+                }
+
+                if (!this.isStockReplenishmentEnabled()) continue;
+
+                const stockPayload = this.buildStockReplenishmentPayload(record, userId, stockConversion);
+                if (!stockPayload) {
+                    stockFailureCount += 1;
+                    continue;
+                }
+
+                const stockResponse = await this.createWorklogRecordAsync(stockPayload);
+                if (stockResponse?.success) stockSuccessCount += 1;
+                else stockFailureCount += 1;
             }
         }
 
-        return { successCount };
+        return { successCount, stockSuccessCount, stockFailureCount };
     }
 
     setSubmitPendingState(button, pending) {
@@ -567,7 +773,7 @@ class WorkLog {
                 });
             }
 
-            const { successCount } = await this.createEntriesForSelectedUsers(payloads);
+            const { successCount, stockFailureCount } = await this.createEntriesForSelectedUsers(payloads, this.pendingStockConversion);
 
             confirmBtn.disabled = false;
             confirmBtnTop.disabled = false;
@@ -581,6 +787,9 @@ class WorkLog {
             }
 
             toast(__html(`Records created: %1$s`, successCount));
+            if (stockFailureCount > 0) {
+                toast(__html('Some stock entries failed to save'));
+            }
             this.data();
         };
         confirmBtn.onclick = submitSelection;
@@ -643,6 +852,8 @@ class WorkLog {
             this.records = response.records;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
+            this.productColorValidator?.setSuggestions(this.colorSuggestions);
+            this.productCoatingValidator?.setSuggestions(this.coatingSuggestions);
             this.initializeSelectedUsers();
 
             // session
@@ -710,6 +921,97 @@ class WorkLog {
         // Populate date filters
         if (dateFromInput) dateFromInput.value = this.filters.dateFrom || '';
         if (dateToInput) dateToInput.value = this.filters.dateTo || '';
+
+        this.setupFilterEnterNavigation();
+    }
+
+    setupFilterEnterNavigation() {
+        const bindEnterNavigation = (ids, onLast) => {
+            const controls = ids.map((id) => document.getElementById(id)).filter(Boolean);
+            if (!controls.length) return;
+
+            controls.forEach((control, index) => {
+                if (control.dataset.enterNavBound === '1') return;
+
+                control.addEventListener('keydown', (event) => {
+                    if (event.key !== 'Enter') return;
+
+                    event.preventDefault();
+
+                    const nextControl = controls[index + 1];
+                    if (nextControl) {
+                        nextControl.focus();
+                        if (typeof nextControl.select === 'function' && nextControl.tagName === 'INPUT') {
+                            nextControl.select();
+                        }
+                        return;
+                    }
+
+                    if (typeof onLast === 'function') onLast();
+                });
+
+                control.dataset.enterNavBound = '1';
+            });
+        };
+
+        bindEnterNavigation(['filterEmployee', 'productFilter', 'filterType'], () => {
+            this.applyFilters();
+        });
+
+        bindEnterNavigation(['filterStartDate', 'filterEndDate', 'applyDateRange'], () => {
+            document.getElementById('applyDateRange')?.click();
+        });
+    }
+
+    setupWorkEntryEnterNavigation() {
+        const controls = [
+            document.getElementById('productName'),
+            document.getElementById('productColor'),
+            document.getElementById('productCoating'),
+            document.getElementById('qty'),
+            document.getElementById('time'),
+            document.getElementById('type'),
+            document.querySelector('.btn-add-worklog-record')
+        ].filter(Boolean);
+        if (!controls.length) return;
+
+        controls.forEach((control, index) => {
+            if (control.dataset.enterNavBound === '1') return;
+
+            const moveToNextControl = () => {
+                const nextControl = controls[index + 1];
+                if (nextControl) {
+                    nextControl.focus();
+                    if (typeof nextControl.select === 'function' && nextControl.tagName === 'INPUT') {
+                        nextControl.select();
+                    }
+                    return;
+                }
+
+                control.click?.();
+            };
+
+            control.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+
+                event.preventDefault();
+                this.lastEnterNavigationAt = Date.now();
+                moveToNextControl();
+            });
+
+            // Fallback for datalist-driven inputs where Enter may bypass keydown navigation.
+            control.addEventListener('keyup', (event) => {
+                if (event.key !== 'Enter') return;
+                if (document.activeElement !== control) return;
+                if (Date.now() - this.lastEnterNavigationAt < 250) return;
+
+                event.preventDefault();
+                this.lastEnterNavigationAt = Date.now();
+                moveToNextControl();
+            });
+
+            control.dataset.enterNavBound = '1';
+        });
     }
 
     renderRecords() {

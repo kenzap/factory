@@ -107,7 +107,10 @@ class Launcher {
                 tag: String(action?.tag || '').trim(),
                 label: String(action?.label || '').trim(),
                 icon: String(action?.icon || '').trim(),
-                style: String(action?.style || '').trim()
+                style: String(action?.style || '').trim(),
+                stock: Boolean(action?.stock),
+                stock_color: String(action?.stock_color || '').trim(),
+                stock_coating: String(action?.stock_coating || '').trim()
             }))
             .filter((action) => action.type && action.label);
 
@@ -296,6 +299,9 @@ class Launcher {
         const type = String(action.type || '').trim();
         const icon = String(action.icon || '').trim();
         const style = String(action.style || '').trim();
+        const stock = Boolean(action?.stock);
+        const stockColor = String(action?.stock_color || '').trim();
+        const stockCoating = String(action?.stock_coating || '').trim();
         return /*html*/`
             <tr class="block-action-row">
                 <td>
@@ -317,6 +323,11 @@ class Launcher {
                         ${this.getStyleOptions(style)}
                     </select>
                 </td>
+                <td class="text-center">
+                    <input type="checkbox" class="form-check-input block-action-stock" ${stock ? 'checked' : ''} title="${__html('Add to stock')}">
+                </td>
+                <td><input type="text" class="form-control form-control-sm block-action-stock-color" placeholder="${__html('Color')}" value="${attr(stockColor)}"></td>
+                <td><input type="text" class="form-control form-control-sm block-action-stock-coating" placeholder="${__html('Coating')}" value="${attr(stockCoating)}"></td>
                 <td class="text-end"><button type="button" class="btn btn-sm btn-outline-danger block-action-remove">${__html('Remove')}</button></td>
             </tr>
         `;
@@ -397,8 +408,11 @@ class Launcher {
             tag: row.querySelector('.block-action-tag')?.value?.trim() || '',
             label: row.querySelector('.block-action-label')?.value?.trim() || '',
             icon: row.querySelector('.block-action-icon')?.value?.trim() || '',
-            style: row.querySelector('.block-action-style')?.value?.trim() || ''
-        })).filter((action) => action.type || action.tag || action.label || action.icon || action.style);
+            style: row.querySelector('.block-action-style')?.value?.trim() || '',
+            stock: Boolean(row.querySelector('.block-action-stock')?.checked),
+            stock_color: row.querySelector('.block-action-stock-color')?.value?.trim() || '',
+            stock_coating: row.querySelector('.block-action-stock-coating')?.value?.trim() || ''
+        })).filter((action) => action.type || action.tag || action.label || action.icon || action.style || action.stock || action.stock_color || action.stock_coating);
 
         const rawTags = (root.querySelector('#block_builder_tags')?.value || '')
             .split(',')
@@ -487,6 +501,9 @@ class Launcher {
                                 <th>${__html('Label')}</th>
                                 <th>${__html('Operation')}</th>
                                 <th>${__html('Style')}</th>
+                                <th>${__html('Stock')}</th>
+                                <th>${__html('Color')}</th>
+                                <th>${__html('Coating')}</th>
                                 <th style="width:90px;"></th>
                             </tr>
                         </thead>
@@ -514,13 +531,18 @@ class Launcher {
         const productIdInput = modal.querySelector('#block_builder_id');
         const productNameInput = modal.querySelector('#block_builder_name');
         const productImageInput = modal.querySelector('#block_builder_image');
+        const productColorInput = modal.querySelector('#block_builder_product_color');
+        const productCoatingInput = modal.querySelector('#block_builder_product_coating');
 
         const refreshPreview = () => this.updateBlockBuilderPreview();
 
         builder?.addEventListener('input', refreshPreview);
 
         addBtn?.addEventListener('click', () => {
-            actionsTable.insertAdjacentHTML('beforeend', this.getBlockActionRow());
+            actionsTable.insertAdjacentHTML('beforeend', this.getBlockActionRow({
+                stock_color: productColorInput?.value?.trim() || '',
+                stock_coating: productCoatingInput?.value?.trim() || ''
+            }));
             refreshPreview();
         });
 
@@ -546,6 +568,11 @@ class Launcher {
             }
             if (!draft.actions?.length) {
                 toast(__html('Add at least one action'));
+                return;
+            }
+            const invalidStockAction = draft.actions.find((action) => action.stock && (!action.stock_color || !action.stock_coating));
+            if (invalidStockAction) {
+                toast(__html('Stock action requires color and coating'));
                 return;
             }
 
@@ -576,6 +603,15 @@ class Launcher {
             if (productSearchInput) {
                 productSearchInput.value = [product?.title || '', product?.sdesc || ''].join(' ').trim();
             }
+
+            const defaultColor = productColorInput?.value?.trim() || '';
+            const defaultCoating = productCoatingInput?.value?.trim() || '';
+            actionsTable?.querySelectorAll('.block-action-row').forEach((row) => {
+                const stockColorInput = row.querySelector('.block-action-stock-color');
+                const stockCoatingInput = row.querySelector('.block-action-stock-coating');
+                if (stockColorInput && !stockColorInput.value.trim()) stockColorInput.value = defaultColor;
+                if (stockCoatingInput && !stockCoatingInput.value.trim()) stockCoatingInput.value = defaultCoating;
+            });
 
             refreshPreview();
         });
@@ -614,9 +650,29 @@ class Launcher {
         let tag = action?.tag;
         let label = action?.label;
 
-        let id = "", order_id = "", item_id = "", product_id = block.id, product_name = block.name, type = action.type, qty = 0, color = "-", coating = "-";
+        const stockEnabled = Boolean(action?.stock);
+        const stockColor = String(action?.stock_color || '').trim();
+        const stockCoating = String(action?.stock_coating || '').trim();
 
-        new PreviewWorkLog({ type, tag, label, id, order_id, item_id, product_id, product_name, color, coating, qty, user_id: this.user.id }, (response) => {
+        let id = "", order_id = "", item_id = "", product_id = block.id, product_name = block.name, type = action.type, qty = 0, color = stockColor || "-", coating = stockCoating || "-";
+
+        new PreviewWorkLog({
+            type,
+            tag,
+            label,
+            id,
+            order_id,
+            item_id,
+            product_id,
+            product_name,
+            color,
+            coating,
+            qty,
+            user_id: this.user.id,
+            stock: stockEnabled ? '1' : '0',
+            stock_color: stockColor,
+            stock_coating: stockCoating
+        }, (response) => {
             if (!response.success) {
                 toast(__html('Error opening work log'));
                 return;

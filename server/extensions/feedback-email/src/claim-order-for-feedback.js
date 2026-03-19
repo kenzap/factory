@@ -42,6 +42,9 @@ export const claimOrderForFeedback = async (db, logger, minOrderAgeSeconds = 7 *
         const result = await db.query(query, params);
         return result.rows?.[0] || null;
     } catch (error) {
+
+        console.error('Error claiming order for feedback request:', error);
+
         logger.error('Error claiming order for feedback request:', error);
         return null;
     }

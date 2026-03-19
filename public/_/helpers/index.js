@@ -291,21 +291,6 @@ export const hideLoader = () => {
 }
 
 /**
- * @name initFooter
- * @description Removes full screen three dots loader.
- * @param {string} left - Text or html code to be present on the left bottom side of screen
- * @param {string} right - Text or html code to be present on the left bottom side of screen
- */
-export const initFooter = (left, right) => {
-
-    document.querySelector("footer .row").innerHTML = `
-    <div class="d-sm-flex justify-content-center justify-content-sm-between">
-        <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">${left}</span>
-        <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center text-muted">${right}</span>
-    </div>`;
-}
-
-/**
  * @name link
  * @description Handles Cloud navigation links between extensions and its pages. Takes care of custom url parameters.
  * @param {string} slug - Any inbound link

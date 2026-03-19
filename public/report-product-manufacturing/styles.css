@@ -1,5 +1,35 @@
 @import url("../report-employee-performance/styles.css");
 
+.filters {
+    grid-template-columns: 1.25fr 0.85fr 0.85fr 1fr 0.75fr 0.75fr;
+    gap: 12px;
+    align-items: center;
+}
+
+.filters .filter-group input,
+.filters .filter-group select {
+    padding: 9px 10px;
+    font-size: 0.92rem;
+}
+
+@media (max-width: 1200px) {
+    .filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .filters {
+        grid-template-columns: 1fr;
+    }
+}
+
 .table-container #productManufacturingTable {
     border-radius: 15px;
     overflow: hidden;

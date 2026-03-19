@@ -4,6 +4,7 @@ import { getSupplyLog } from "../_/api/get_supply_log.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
+import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
 import { __html, hideLoader, onChange, onClick, toast, unescape } from "../_/helpers/global.js";
 import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
@@ -35,6 +36,9 @@ class Supplies {
             type: new URLSearchParams(window.location.search).get('type') || '',
         }
 
+        // When stock sends a "-" coating placeholder, keep color aligned.
+        if (this.record.coating === '-') this.record.color = '-';
+
         this.filters = {
             product: "",
             product_id: this.record.product_id || "",
@@ -47,6 +51,9 @@ class Supplies {
         this.mini = new URLSearchParams(window.location.search).get('mini') || false; // Order ID if applicable
 
         this.firstLoad = true;
+        this.lastEnterNavigationAt = 0;
+        this.productColorValidator = null;
+        this.productCoatingValidator = null;
 
         this.init();
     }
@@ -80,6 +87,29 @@ class Supplies {
 
     listeners() {
 
+        const form = document.querySelector('#supplyEntryForm');
+        form?.addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.querySelector('.btn-add-worklog-record')?.click();
+        });
+
+        this.setupFormEnterNavigation();
+        this.productColorValidator = new ProductColorValidator({
+            input: '#productColor',
+            suggestions: this.colorSuggestions,
+            allowValues: ['-']
+        });
+        this.productColorValidator.bind();
+        this.productColorValidator.validate();
+
+        this.productCoatingValidator = new ProductColorValidator({
+            input: '#productCoating',
+            suggestions: this.coatingSuggestions,
+            allowValues: ['-']
+        });
+        this.productCoatingValidator.bind();
+        this.productCoatingValidator.validate();
+
         // Product search
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
 
@@ -95,6 +125,7 @@ class Supplies {
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);
+            this.productColorValidator?.validate();
         });
 
         // Coating suggestion
@@ -104,6 +135,7 @@ class Supplies {
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);
+            this.productCoatingValidator?.validate();
         });
 
         // Add work log record
@@ -152,6 +184,9 @@ class Supplies {
                 document.querySelector('#qty').focus();
                 return;
             }
+
+            this.productColorValidator?.validate();
+            this.productCoatingValidator?.validate();
 
             const record = {
                 type: type,
@@ -208,7 +243,9 @@ class Supplies {
                 }
             });
 
-            if (type === 'product') {
+            if (type === 'product' && this.record.product_id) {
+                document.querySelector('#productColor').focus();
+            } else if (type === 'product') {
                 document.querySelector('#productName').focus();
             } else {
                 document.querySelector('#width').focus();
@@ -220,6 +257,70 @@ class Supplies {
         if (supplyTypeSelect) {
             supplyTypeSelect.dispatchEvent(new Event('change'));
         }
+    }
+
+    setupFormEnterNavigation() {
+        const form = document.querySelector('#supplyEntryForm');
+        if (!form || form.dataset.enterNavBound === '1') return;
+
+        const moveFocusFrom = (target) => {
+            const next = this.getNextFormElement(target);
+            if (next) {
+                next.focus();
+                if (next instanceof HTMLInputElement && ['text', 'number', 'search', 'date'].includes(next.type)) {
+                    next.select?.();
+                }
+                return;
+            }
+
+            document.querySelector('.btn-add-worklog-record')?.click();
+        };
+
+        form.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter') return;
+            if (!(e.target instanceof HTMLElement)) return;
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+
+            e.preventDefault();
+            this.lastEnterNavigationAt = Date.now();
+            moveFocusFrom(e.target);
+        });
+
+        // Fallback for datalist behavior when keydown doesn't navigate.
+        form.addEventListener('keyup', (e) => {
+            if (e.key !== 'Enter') return;
+            if (!(e.target instanceof HTMLElement)) return;
+            if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'BUTTON') return;
+            if (document.activeElement !== e.target) return;
+            if (Date.now() - this.lastEnterNavigationAt < 250) return;
+
+            e.preventDefault();
+            this.lastEnterNavigationAt = Date.now();
+            moveFocusFrom(e.target);
+        });
+
+        form.dataset.enterNavBound = '1';
+    }
+
+    getNextFormElement(currentElement) {
+        const form = document.querySelector('#supplyEntryForm');
+        if (!form) return null;
+
+        const elements = Array.from(form.querySelectorAll('input, select, textarea, button[type="submit"]'))
+            .filter((element) => !element.disabled)
+            .filter((element) => this.isFormElementVisible(element));
+
+        const currentIndex = elements.indexOf(currentElement);
+        if (currentIndex === -1) return null;
+
+        return elements[currentIndex + 1] || null;
+    }
+
+    isFormElementVisible(element) {
+        if (!element) return false;
+        if (element.classList.contains('d-none')) return false;
+        if (element.closest('.d-none')) return false;
+        return true;
     }
 
     async data() {
@@ -247,6 +348,8 @@ class Supplies {
             this.records = response.records;
             this.coatingSuggestions = getCoatings(this.settings);
             this.colorSuggestions = getColors(this.settings);
+            this.productColorValidator?.setSuggestions(this.colorSuggestions);
+            this.productCoatingValidator?.setSuggestions(this.coatingSuggestions);
 
             // session
             new Session();

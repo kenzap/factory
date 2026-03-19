@@ -32,11 +32,14 @@ async function test() {
 }
 
 // API route
-function getClientsApi(app) {
+function getClientsApi(app, logger) {
 
     app.get('/api/test/', async (req, res) => {
         // app.get('/api/test/', authenticateToken, async (req, res) => {
         try {
+
+
+            logger.error(`Error getting records:`);
 
             // const locale = await getLocale(req.headers?.locale);
             const response = await test();

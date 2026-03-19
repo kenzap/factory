@@ -28,7 +28,7 @@ export class SupplierSuggestion {
         document.querySelector('supplier-suggestion').innerHTML = `
             <label for="supplier" class="form-label d-none">${__html('Supplier')}</label>
             <div class="position-relative">
-                <input type="text" class="form-control border-0" id="supplier" placeholder="${__html('Company AB')}" value="" autocomplete="off">
+                <input type="text" class="form-control" id="supplier" placeholder="${__html('Company AB')}" value="" autocomplete="off">
                 <div id="supplierSuggestions" class="dropdown-menu position-absolute w-100" style="max-height: 200px; overflow-y: auto; display: none; z-index: 1000;"></div>
             </div>
             `;

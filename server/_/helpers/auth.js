@@ -102,6 +102,8 @@ export const sendOtpEmail = async (email, otp) => {
         const replyTo = settings?.otp_email_reply_to || "";
         const subject = settings?.otp_email_subject || "One Time Password";
 
+        // console.log(`Sending OTP email to ${email} with OTP: ${otp}, from: ${fromEmail}, subject: ${subject}`);
+
         // Use the send_email function to send the OTP email
         await send_email(email, fromEmail, "", subject, body, [], { replyTo });
 
@@ -195,7 +197,7 @@ export const getUserByEmail = async (email) => {
                     js->'data'->>'blocks' as blocks,
                     js->'data'->>'portal' as portal
             FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'email' = $3
+            WHERE ref = $1 AND sid = $2 AND js->'data'->>'email' = $3 AND jsonb_array_length(js->'data'->'rights') > 0
             LIMIT 1
         `;
 
@@ -207,7 +209,7 @@ export const getUserByEmail = async (email) => {
                 fname: row.fname,
                 lname: row.lname,
                 rights: row.rights ? JSON.parse(row.rights) : [],
-                avatar: row.avatar ? JSON.parse(row.avatar) : null,
+                avatar: row.avatar ? row.avatar : null,
                 portal: row.portal || null
             };
         }
@@ -231,19 +233,19 @@ export const getUserByPhone = async (phone) => {
 
         // Get user
         const userQuery = `
-            SELECT  _id, 
-                    js->'data'->>'fname' as fname,
-                    js->'data'->>'lname' as lname,
-                    js->'data'->>'rights' as rights,
-                    js->'data'->>'avatar' as avatar,
-                    js->'data'->>'blocks' as blocks,
-                    js->'data'->>'portal' as portal
+            SELECT  _id,
+            js -> 'data' ->> 'fname' as fname,
+            js -> 'data' ->> 'lname' as lname,
+            js -> 'data' ->> 'rights' as rights,
+            js -> 'data' ->> 'avatar' as avatar,
+            js -> 'data' ->> 'blocks' as blocks,
+            js -> 'data' ->> 'portal' as portal
             FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'phone' = $3
+            WHERE ref = $1 AND sid = $2 AND js -> 'data' ->> 'phone' = $3
             LIMIT 1
-        `;
+            `;
 
-        console.log(`Executing getUserByPhone with phone: ${phone}, sid: ${sid}`);
+        console.log(`Executing getUserByPhone with phone: ${phone}, sid: ${sid} `);
 
 
         const userResult = await client.query(userQuery, ['user', sid, phone]);
@@ -278,13 +280,13 @@ export const getUserById = async (id) => {
 
         // Get user
         const userQuery = `
-            SELECT  _id, 
-                    js->'data'->>'fname' as fname,
-                    js->'data'->>'lname' as lname,
-                    js->'data'->>'rights' as rights,
-                    js->'data'->>'avatar' as avatar,
-                    js->'data'->>'blocks' as blocks,
-                    js->'data'->>'portal' as portal
+            SELECT  _id,
+            js -> 'data' ->> 'fname' as fname,
+            js -> 'data' ->> 'lname' as lname,
+            js -> 'data' ->> 'rights' as rights,
+            js -> 'data' ->> 'avatar' as avatar,
+            js -> 'data' ->> 'blocks' as blocks,
+            js -> 'data' ->> 'portal' as portal
             FROM data 
             WHERE ref = $1 AND sid = $2 AND _id = $3
             LIMIT 1
@@ -337,7 +339,7 @@ export const cacheUserSession = async (user) => {
         const redisClient = createClient({ url: process.env.REDIS_URL });
         await redisClient.connect();
 
-        const key = `user:${user.id}`;
+        const key = `user:${user.id} `;
 
         // Store user session in Redis with a TTL of 1 hour
         await redisClient.setEx(key, 3600 * 10, JSON.stringify(user));
@@ -360,9 +362,9 @@ export const clearUserSession = async (id) => {
         const redisClient = createClient({ url: process.env.REDIS_URL });
         await redisClient.connect();
 
-        const key = `user:${id}`;
+        const key = `user:${id} `;
 
-        console.log(`Clearing user session for user ID: ${id}`);
+        console.log(`Clearing user session for user ID: ${id} `);
 
         // Store user session in Redis with a TTL of 1 hour
         await redisClient.del(key);
@@ -387,24 +389,24 @@ export const getUserSessionById = async (id) => {
 
         redisClient = createClient({ url: process.env.REDIS_URL });
         redisClient.on('error', (err) => {
-            logger.error(`Redis client error in getUserSessionById(${id}):`, err);
+            logger.error(`Redis client error in getUserSessionById(${id}): `, err);
         });
 
         await redisClient.connect();
 
-        const key = `user:${id}`;
+        const key = `user:${id} `;
 
         user = await redisClient.get(key) || "";
 
         if (user) { user = JSON.parse(user); }
 
-        // console.log(`Retrieved user session for user ID: ${id}`, user);
+        // console.log(`Retrieved user session for user ID: ${ id } `, user);
 
         return user;
 
     } catch (error) {
 
-        logger.error(`Error getting user session by ID ${id}:`, error);
+        logger.error(`Error getting user session by ID ${id}: `, error);
 
         return null;
 
@@ -413,7 +415,7 @@ export const getUserSessionById = async (id) => {
             try {
                 await redisClient.quit();
             } catch (quitError) {
-                logger.error(`Error closing Redis client in getUserSessionById(${id}):`, quitError);
+                logger.error(`Error closing Redis client in getUserSessionById(${id}): `, quitError);
             }
         }
     }

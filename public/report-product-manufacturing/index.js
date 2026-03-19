@@ -1,5 +1,7 @@
 import { getProductManufacturingReport } from "../_/api/get_product_manufacturing_report.js";
+import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
 import { __html, hideLoader } from "../_/helpers/global.js";
+import { getCoatings, getColors } from "../_/helpers/order.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
@@ -13,11 +15,14 @@ class ProductManufacturingReport {
         this.filters = {
             user_id: "",
             type: "",
+            color: "",
+            coating: "",
             dateFrom: new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), 1, 0, 0, 0)).toISOString(),
             dateTo: ""
         };
 
         this.product_report = [];
+        this.filterSuggestionsBound = false;
         this.init();
     }
 
@@ -45,6 +50,12 @@ class ProductManufacturingReport {
             this.users = response.users || [];
             this.settings = response.settings || {};
             this.product_report = response.product_report || [];
+            const settingsForSuggestions = {
+                ...this.settings,
+                price: Array.isArray(this.settings?.price) ? this.settings.price : []
+            };
+            this.colorSuggestions = getColors(settingsForSuggestions);
+            this.coatingSuggestions = getCoatings(settingsForSuggestions);
 
             new Session();
             new Header({
@@ -58,9 +69,27 @@ class ProductManufacturingReport {
 
             this.view();
             this.populateFilters();
+            this.setupFilterSuggestions();
             this.renderTable();
             document.title = __html('Product Manufacturing Report');
         });
+    }
+
+    setupFilterSuggestions() {
+        if (this.filterSuggestionsBound) return;
+        if (!document.getElementById('filterColor') || !document.getElementById('filterCoating')) return;
+
+        new DropdownSuggestion({
+            input: '#filterColor',
+            suggestions: this.colorSuggestions || []
+        }, () => { });
+
+        new DropdownSuggestion({
+            input: '#filterCoating',
+            suggestions: this.coatingSuggestions || []
+        }, () => { });
+
+        this.filterSuggestionsBound = true;
     }
 
     populateFilters() {
@@ -213,12 +242,16 @@ class ProductManufacturingReport {
     applyFilters() {
         const employeeFilter = document.getElementById('filterEmployee').value;
         const typeFilter = document.getElementById('filterType').value;
+        const colorFilter = document.getElementById('filterColor').value;
+        const coatingFilter = document.getElementById('filterCoating').value;
         const filterStartDate = document.getElementById('filterStartDate').value;
         const filterEndDate = document.getElementById('filterEndDate').value;
 
         this.filters = {
             user_id: employeeFilter,
             type: typeFilter,
+            color: colorFilter,
+            coating: coatingFilter,
             dateFrom: filterStartDate ? new Date(filterStartDate + 'T00:00:00').toISOString() : '',
             dateTo: filterEndDate ? new Date(filterEndDate + 'T23:59:59').toISOString() : ''
         };

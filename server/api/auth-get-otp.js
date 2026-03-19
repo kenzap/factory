@@ -90,7 +90,8 @@ function getOtpApi(app, logger) {
             res.json({ success: true, code: 200, nonce: nonce, message: 'otp sent successfully' });
         } catch (err) {
 
-            logger.error(`Error requesting OTP: ${err.stack?.split('\n')[1]?.trim() || 'unknown'} ${err.message}`);
+            console.error(`Error requesting OTP: ${err.stack || err.message}`);
+            logger.error(`Error requesting OTP: ${err.stack || err.message}`);
 
             res.status(500).json({ success: false, error: 'failed to request otp', code: 500 });
         }

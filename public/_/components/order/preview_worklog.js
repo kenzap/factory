@@ -17,6 +17,9 @@ export class PreviewWorkLog {
         this.qty = o.qty;
         this.user_id = o.user_id;
         this.grouped_items = o.grouped_items || [];
+        this.stock = o?.stock || '0';
+        this.stock_color = o?.stock_color || '';
+        this.stock_coating = o?.stock_coating || '';
 
         this.cb = cb;
 
@@ -40,7 +43,7 @@ export class PreviewWorkLog {
 
         this.modal.querySelector(".modal-body").innerHTML = `
             <div class="form-cont" style="height: calc(100vh - 126px);">
-                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&tag=' + this.tag + '&label=' + this.label + '&id=' + escape(this.id + "") + '&item_id=' + this.item_id + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&user_id=' + this.user_id + '&group_items=' + encodeURIComponent(JSON.stringify(this.grouped_items)) + '&mini=true'}"></iframe>
+                <iframe id="workLogPreview" style="width: 100%; height: 100%; border: none;" src="${API() + '/worklog/?type=' + this.type + '&tag=' + this.tag + '&label=' + this.label + '&id=' + escape(this.id + "") + '&item_id=' + this.item_id + '&order_id=' + this.order_id + '&product_id=' + this.product_id + '&product_name=' + escape(this.product_name) + '&color=' + this.color + '&coating=' + this.coating + '&qty=' + this.qty + '&user_id=' + this.user_id + '&stock=' + this.stock + '&stock_color=' + escape(this.stock_color) + '&stock_coating=' + escape(this.stock_coating) + '&group_items=' + encodeURIComponent(JSON.stringify(this.grouped_items)) + '&mini=true'}"></iframe>
             </div>`;
 
         this.modal.querySelector(".modal-header").classList.add('bg-light');
