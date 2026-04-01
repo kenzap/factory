@@ -1,5 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
+import { eventBus } from '../_/helpers/extensions/events.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { diffOrderItems } from '../_/helpers/order-item-changes.js';
 import { getNextOrderId } from '../_/helpers/order.js';
 
 /**
@@ -16,6 +18,7 @@ async function saveOrder(logger, data, user) {
     const db = getDbConnection();
 
     let response = null, meta = {}, data_new = {};
+    let orderItemsChangeEvent = null;
 
     try {
 
@@ -49,6 +52,21 @@ async function saveOrder(logger, data, user) {
                 created: currentTime,
                 updated: currentTime
             };
+
+            const itemsDiff = diffOrderItems([], data_new.items || []);
+            if (itemsDiff.hasChanges) {
+                orderItemsChangeEvent = {
+                    event: 'order.items.changed',
+                    sid,
+                    order_record_id: data_new._id,
+                    order_id: data_new.id,
+                    timestamp: currentDate,
+                    summary: itemsDiff.summary,
+                    changed_items: itemsDiff.changes,
+                    order_items: Array.isArray(data_new.items) ? data_new.items : [],
+                    trigger: 'created',
+                };
+            }
         } else {
 
             // Updating existing order
@@ -86,9 +104,24 @@ async function saveOrder(logger, data, user) {
                 data_new.operator = existingData.operator || user.fname || '';
             }
 
-            logger.info(`Updating order:`, data_new);
+            // logger.info(`Updating order:`, data_new);
 
             meta.updated = currentTime;
+
+            const itemsDiff = diffOrderItems(existingData.items || [], data_new.items || []);
+            if (itemsDiff.hasChanges) {
+                orderItemsChangeEvent = {
+                    event: 'order.items.changed',
+                    sid,
+                    order_record_id: data_new._id,
+                    order_id: data_new.id,
+                    timestamp: currentDate,
+                    summary: itemsDiff.summary,
+                    changed_items: itemsDiff.changes,
+                    order_items: Array.isArray(data_new.items) ? data_new.items : [],
+                    trigger: 'updated',
+                };
+            }
         }
 
         // Get orders
@@ -103,6 +136,10 @@ async function saveOrder(logger, data, user) {
         const result = await db.query(query_update, [data_new._id, 0, 'order', sid, JSON.stringify({ data: data_new, meta: meta })]);
 
         response = result.rows[0] || {};
+
+        if (orderItemsChangeEvent) {
+            eventBus.emit('order.items.changed', orderItemsChangeEvent);
+        }
 
     } finally {
         await db.end();

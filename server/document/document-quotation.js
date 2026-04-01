@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, parseDocument } from '../_/helpers/document/index.js';
 import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
-import { getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
+import { getInvoiceItemsTable, getInvoiceTotals, isExcludedFromInvoice } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
@@ -48,11 +48,13 @@ async function viewQuotation(_id, user, locale, lang, options = {}, logger) {
             data.entity?.country_code ||
             extractCountryFromVAT(data.entity?.vat_number) ||
             sellerCountry;
+        const billableItems = (data.order?.items || []).filter((item) => !isExcludedFromInvoice(item));
+        const orderForBilling = { ...data.order, items: billableItems };
 
         // Initialize invoice calculator
         const calculator = new InvoiceCalculator(
             data.settings,
-            data.order,
+            orderForBilling,
             sellerCountry,
             buyerCountry,
             data.entity
@@ -65,7 +67,7 @@ async function viewQuotation(_id, user, locale, lang, options = {}, logger) {
         data.invoice_items_table = getInvoiceItemsTable(
             data.detailed,
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             calculator
         );
@@ -73,7 +75,7 @@ async function viewQuotation(_id, user, locale, lang, options = {}, logger) {
         // Generate totals section
         data.invoice_totals = getInvoiceTotals(
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             totals
         );

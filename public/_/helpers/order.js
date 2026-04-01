@@ -46,6 +46,14 @@ export const formatClientName = (entity) => {
 }
 
 /**
+ * Returns full client name without abbreviation.
+ * Useful for tooltips where abbreviated individual names are displayed.
+ */
+export const getFullClientName = (entity) => {
+    return entity?.legal_name || entity?.name || '';
+}
+
+/**
  * The purpose of this function is to format a company name for display. And hide individual names for physical persons.
  * It checks if the company name contains certain abbreviations (like "SIA", "BDR", "AS") and if it does not,
  * it abbreviates the name to the first letter of the first two words.
@@ -90,4 +98,18 @@ export const isAllowedToEdit = (rowData) => {
     if (inventory.rdy_date) return { allow: false, reason: 'Item is manufactured' };
 
     return { allow: true };;
+}
+
+/**
+ * Item is excluded from invoice/quotation totals and line tables.
+ * Accept legacy or new flag naming for compatibility.
+ */
+export const isExcludedFromInvoice = (item) => {
+    if (!item) return false;
+    return item.cancelled_from_invoice === true
+        || item.cancelled_from_invoice === 1
+        || item.cancelled_from_invoice === '1'
+        || item.hidden_from_invoice === true
+        || item.hidden_from_invoice === 1
+        || item.hidden_from_invoice === '1';
 }

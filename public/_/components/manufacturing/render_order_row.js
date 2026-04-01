@@ -1,5 +1,5 @@
 import { attr, toLocalUserDate, toLocalUserTime } from "../../helpers/global.js";
-import { formatClientName } from "../../helpers/order.js";
+import { formatClientName, getFullClientName } from "../../helpers/order.js";
 import { state } from "../../modules/manufacturing/state.js";
 
 export const renderOrderRow = (order, index) => {
@@ -13,6 +13,8 @@ export const renderOrderRow = (order, index) => {
     const shortId = order.id.substring(0, order.id.length - 4);
     const lastFour = order.id.substring(order.id.length - 4);
 
+    const fullClientName = getFullClientName(order);
+
     div.innerHTML = `
             <div class="card-body d-flex flex-row justify-content-between align-items-center" data-order-id="${order.id}">
                 <div class="row flex-grow-1 align-items-center">
@@ -22,7 +24,7 @@ export const renderOrderRow = (order, index) => {
                         </div>
                     </div>
                     <div class="col-md-5 po px-0 py-2" onclick="manufacturing.getOrderDetails('${order.id}')">
-                        <div class="company-name">${formatClientName(order)}</div>
+                        <div class="company-name" title="${attr(fullClientName)}">${formatClientName(order)}</div>
                         <small class="text-muted elipsized order-notes">${order.notes}</small>
                     </div>
                     <div class="col-md-${state.mode == 'narrow' ? '2' : '1'} po" onclick="manufacturing.getOrderDetails('${order.id}')">
@@ -57,7 +59,9 @@ export const updateOrderRowUI = (order) => {
     // row.style.animationDelay = `${0.24}s`;
 
     // Update due date
-    row.querySelector('.company-name').textContent = formatClientName(order);
+    const companyNameEl = row.querySelector('.company-name');
+    companyNameEl.textContent = formatClientName(order);
+    companyNameEl.setAttribute('title', getFullClientName(order));
     row.querySelector('.order-notes').textContent = order.notes;
     row.querySelector('.due-date').textContent = toLocalUserDate(order.due_date);
     row.querySelector('.due-time').textContent = toLocalUserTime(order.due_date);

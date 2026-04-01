@@ -2,7 +2,7 @@ import { createSupplyRecord } from "../_/api/create_supply_record.js";
 import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getSupplyLog } from "../_/api/get_supply_log.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
-import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
+import { SuggestionPopup } from "../_/components/products/suggestion_popup.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
 import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
 import { __html, hideLoader, onChange, onClick, toast, unescape } from "../_/helpers/global.js";
@@ -119,7 +119,7 @@ class Supplies {
         });
 
         // Color suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productColor',
             suggestions: this.colorSuggestions
         }, (suggestion) => {
@@ -129,7 +129,7 @@ class Supplies {
         });
 
         // Coating suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productCoating',
             suggestions: this.coatingSuggestions
         }, (suggestion) => {

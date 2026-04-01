@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
-import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
+import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals, isExcludedFromInvoice } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
@@ -48,11 +48,13 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
             data.entity?.country_code ||
             extractCountryFromVAT(data.entity?.vat_number) ||
             sellerCountry;
+        const billableItems = (data.order?.items || []).filter((item) => !isExcludedFromInvoice(item));
+        const orderForBilling = { ...data.order, items: billableItems };
 
         // Initialize calculator with entity info
         const calculator = new InvoiceCalculator(
             data.settings,
-            data.order,
+            orderForBilling,
             sellerCountry,
             buyerCountry,
             data.entity  // Entity contains type, vat_status, vat_number
@@ -67,7 +69,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
         data.waybill_items_table = getInvoiceItemsTable(
             data.detailed,
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             calculator
         );
@@ -79,7 +81,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
         // Generate totals section
         data.waybill_totals = getInvoiceTotals(
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             totals
         );
@@ -87,7 +89,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
         // Store totals for PEPPOL export if needed
         data.calculated_totals = totals;
         data.peppol_xml = options.format === 'peppol'
-            ? generatePeppolXML(data.order, totals, data.settings)
+            ? generatePeppolXML(orderForBilling, totals, data.settings)
             : null;
 
         logger.info(`Waybill ${data.order.waybill.number} - Total: ${totals.totalInvoiceAmount}`);

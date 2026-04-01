@@ -34,6 +34,16 @@ export class ClientSearch {
                 placeholder="${__html('Search..')}"
                 autocomplete="off"
             >
+            <button
+                type="button"
+                id="clientFilterClear"
+                class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-1 d-none"
+                aria-label="${__html('Clear search')}"
+                title="${__html('Clear search')}"
+                style="z-index: 1001;"
+            >
+                <i class="bi bi-x-circle"></i>
+            </button>
             <div id="clientSuggestions" class="autocomplete-suggestions position-absolute w-100 bg-white border border-top-0 shadow-sm d-none" style="max-height: 360px; overflow-y: auto; z-index: 1000; scrollbar-width: thick; scrollbar-color: #888 #f1f1f1;"></div>
             </div>
         `;
@@ -44,10 +54,16 @@ export class ClientSearch {
         self = this;
 
         const clientInput = document.getElementById('clientFilter');
+        const clearBtn = document.getElementById('clientFilterClear');
         const suggestions = document.getElementById('clientSuggestions');
+        const updateClearButton = () => {
+            const hasValue = Boolean(clientInput.value.trim());
+            clearBtn?.classList.toggle('d-none', !hasValue);
+        };
 
         clientInput.addEventListener('input', (e) => {
             const value = e.target.value.toLowerCase();
+            updateClearButton();
 
             if (value.length === 0) {
                 suggestions.classList.add('d-none');
@@ -77,6 +93,7 @@ export class ClientSearch {
         suggestions.addEventListener('click', (e) => {
             if (e.target.classList.contains('autocomplete-item')) {
                 clientInput.value = e.target.textContent;
+                updateClearButton();
                 suggestions.classList.add('d-none');
                 bus.emit('table:refresh', { _id: e.target.dataset._id, name: clientInput.value });
             }
@@ -121,8 +138,12 @@ export class ClientSearch {
                 e.preventDefault();
                 if (activeItem) {
                     clientInput.value = activeItem.textContent;
+                    updateClearButton();
                     suggestions.classList.add('d-none');
                     bus.emit('table:refresh', { _id: activeItem.dataset._id, name: clientInput.value });
+                } else {
+                    suggestions.classList.add('d-none');
+                    bus.emit('table:refresh', { _id: '', name: clientInput.value });
                 }
             } else if (e.key === 'Escape') {
                 suggestions.classList.add('d-none');
@@ -136,10 +157,20 @@ export class ClientSearch {
             }
         });
 
+        clearBtn?.addEventListener('click', () => {
+            clientInput.value = '';
+            updateClearButton();
+            suggestions.classList.add('d-none');
+            clientInput.focus();
+            bus.emit('table:refresh', { _id: '', name: '' });
+        });
+
         // Select all text when input is focused
         clientInput.addEventListener('focus', (e) => {
             e.target.select();
         });
+
+        updateClearButton();
     }
 
     highlightItem = (items, index) => {

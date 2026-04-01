@@ -9,7 +9,7 @@ import { getLocale } from '../_/helpers/locale.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getTransactions(filters = { client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false, sort_by: 'id', sort_dir: 'desc' }) {
+async function getTransactions(filters = { client: { name: "", eid: "" }, search: '', dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false, sort_by: 'id', sort_dir: 'desc' }) {
 
     const db = getDbConnection();
 
@@ -67,6 +67,23 @@ async function getTransactions(filters = { client: { name: "", eid: "" }, dateFr
         query_summary += chunk
         params.push(`${filters.client.eid.trim()}`);
         params.push(`${filters.client.name.trim()}`);
+    }
+
+    const searchText = String(filters.search || '').trim();
+    if (searchText) {
+        const searchConditions = [];
+
+        if (/^\d+$/.test(searchText)) {
+            searchConditions.push(`js->'data'->>'id' = $${params.length + 1}`);
+            params.push(searchText);
+        }
+
+        searchConditions.push(`COALESCE(js->'data'->'waybill'->>'number', '') ILIKE $${params.length + 1}`);
+        params.push(`%${searchText}%`);
+
+        chunk = ` AND (${searchConditions.join(' OR ')})`;
+        query += chunk;
+        query_summary += chunk;
     }
 
     // date filters:

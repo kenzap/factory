@@ -11,6 +11,7 @@ import { Search } from "../_/components/manufacturing/search.js";
 import { SSEService } from "../_/components/manufacturing/sse.js";
 import { filterByGroup, refreshOrders, toggleNarrowMode } from "../_/components/manufacturing/utils.js";
 import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
+import { sketchEditor } from "../_/components/order/order_sketch_editor.js";
 import { signOut } from "../_/helpers/auth.js";
 import { __html, hideLoader, slugify, toast } from "../_/helpers/global.js";
 import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
@@ -115,6 +116,17 @@ class Manufacturing {
             }
             state.sse.disconnect();
         });
+    }
+
+    previewSketch(event, itemId, orderId) {
+
+        event.preventDefault();
+
+        const order = state.orders.find(o => o._id === orderId);
+        const item = order?.items.find(i => i._id === itemId);
+        if (!item || !order) return;
+
+        sketchEditor(item, state.settings, order, () => {});
     }
 
     addBundle(event, _id, title, color, coating, orderId) {

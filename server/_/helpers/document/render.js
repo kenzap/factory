@@ -2,11 +2,22 @@ import { priceFormat } from '@factory/helpers/index';
 import { __html } from '../index.js';
 import { amountToWords } from './totals.js';
 
+export const isExcludedFromInvoice = (item) => {
+    if (!item) return false;
+    return item.cancelled_from_invoice === true
+        || item.cancelled_from_invoice === 1
+        || item.cancelled_from_invoice === '1'
+        || item.hidden_from_invoice === true
+        || item.hidden_from_invoice === 1
+        || item.hidden_from_invoice === '1';
+};
+
 /**
  * Generate invoice items table
  */
 export function getInvoiceItemsTable(detailed, settings, order, locales, calculator) {
-    const hasDiscount = settings.discount_visibility === '1' && order.items.some(item => item.discount && item.discount > 0);
+    const items = (order?.items || []).filter((item) => !isExcludedFromInvoice(item));
+    const hasDiscount = settings.discount_visibility === '1' && items.some(item => item.discount && item.discount > 0);
     const showTax = order.vat_status !== "0";
 
     let table = `
@@ -29,7 +40,7 @@ export function getInvoiceItemsTable(detailed, settings, order, locales, calcula
             <tbody>
     `;
 
-    order.items.forEach((item, i) => {
+    items.forEach((item, i) => {
         if (!item.total) return;
 
         const originalPrice = item.discount && item.discount > 0
@@ -42,7 +53,7 @@ export function getInvoiceItemsTable(detailed, settings, order, locales, calcula
         const lineTotalWithTax = lineTotal + lineTax;
 
         table += `
-            <tr class="${i === order.items.length - 1 ? 'border-secondary' : ''}">
+            <tr class="${i === items.length - 1 ? 'border-secondary' : ''}">
                 <th scope="row">${i + 1}</th>
                 <td>${formatItemDescription(detailed, item, settings, locales)}</td>
                 ${hasDiscount ? `<td>${priceFormat(settings, originalPrice)}</td>` : ''}
@@ -641,6 +652,347 @@ export function getProductionItemsTable(settings, order, locales) {
     `;
 
     return tables;
+}
+
+const toSafeString = (value) => String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
+const normalizeSketchLabel = (label) => {
+    if (label === 'u03b1') return 'α';
+    if (label === 'u03b2') return 'β';
+    return label || '';
+};
+
+const degToRad = (deg) => ((deg - 90) * Math.PI) / 180.0;
+
+const getSvgLabelPosition = (field) => {
+    const rawPoints = String(field?.points || '');
+    const nums = rawPoints.match(/-?\d+(\.\d+)?/g)?.map(Number) || [];
+    const firstX = nums[0] || 0;
+    const firstY = nums[1] || 0;
+    const secondX = nums[2] || firstX;
+    const secondY = nums[3] || firstY;
+
+    if (field?.type === 'polyline') {
+        if (field?.arrow) {
+            const deg = Math.atan2(secondY - firstY, secondX - firstX) * 180 / Math.PI;
+            return {
+                x: firstX + (1 * Math.cos(degToRad(deg))),
+                y: firstY + (1 * Math.sin(degToRad(deg)))
+            };
+        }
+
+        return {
+            x: (firstX + secondX) / 2,
+            y: (firstY + secondY) / 2
+        };
+    }
+
+    if (field?.type === 'arc' && field?.params) {
+        const params = field.params;
+        const startAngle = Number(params.startAngle) || 0;
+        let endAngle = Number(params.endAngle) || 0;
+        if (startAngle > endAngle) endAngle += 360;
+        const angle = startAngle + ((endAngle - startAngle) / 2);
+        const radius = Number(params.radius) || 0;
+        const x = Number(params.x) || 0;
+        const y = Number(params.y) || 0;
+        const labelOffset = 20;
+
+        return {
+            x: x + (labelOffset + radius) * Math.cos(degToRad(angle)),
+            y: y + (labelOffset + radius) * Math.sin(degToRad(angle))
+        };
+    }
+
+    return { x: firstX, y: firstY };
+};
+
+const renderArrowPolygon = (field, x1, y1, x2, y2) => {
+    if (!field?.arrow) return '';
+
+    const deg = Math.atan2(x2 - x1, y2 - y1) * 180 / Math.PI * -1;
+    const xe = x2 - 4;
+    const ye = y2 - 4;
+
+    const arrowCoords = [
+        { x: xe + 5 + (5 * Math.cos(degToRad(deg + 90))), y: ye + 5 + (5 * Math.sin(degToRad(deg + 90))) },
+        { x: xe + 5 + (16 * Math.cos(degToRad(deg + 180))), y: ye + 5 + (16 * Math.sin(degToRad(deg + 180))) },
+        { x: xe + 5 + (5 * Math.cos(degToRad(deg + 270))), y: ye + 5 + (5 * Math.sin(degToRad(deg + 270))) }
+    ];
+
+    const arrowPoints = arrowCoords
+        .map((p) => `${Math.trunc(p.x)},${Math.trunc(p.y)}`)
+        .join(' ');
+
+    return `<polygon points="${arrowPoints}"></polygon>`;
+};
+
+const getLabelPlacement = (field, labelPos, x1, y1, x2, y2, base) => {
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    let x = base.x;
+    let y = base.y;
+
+    if (field?.type === 'polyline') {
+        const sign = (labelPos && labelPos.includes('left')) ? -1 : 1;
+        const normalOffset = field?.arrow ? 14 : 18;
+        x += nx * normalOffset * sign;
+        y += ny * normalOffset * sign;
+    }
+
+    if (labelPos) {
+        if (labelPos.includes('top')) y -= 12;
+        if (labelPos.includes('bottom') || labelPos.includes('botom')) y += 12;
+        if (labelPos.endsWith('left')) x -= 10;
+        if (labelPos.endsWith('right')) x += 10;
+        if (labelPos === 'left') x -= 6;
+        if (labelPos === 'right') x += 6;
+    }
+
+    return { x, y };
+};
+
+const renderSketchOverlay = (fields) => {
+    if (!Array.isArray(fields) || fields.length === 0) return '';
+
+    const layers = fields.map((field) => {
+        const type = field?.type || '';
+        const points = String(field?.points || '');
+        const coords = points.match(/-?\d+(\.\d+)?/g)?.map(Number) || [];
+        const x1 = coords[0] || 0;
+        const y1 = coords[1] || 0;
+        const x2 = coords[2] || x1;
+        const y2 = coords[3] || y1;
+        const labelPos = field?.label_pos || '';
+        const baseLabelPos = getSvgLabelPosition(field);
+        const placedLabel = getLabelPlacement(field, labelPos, x1, y1, x2, y2, baseLabelPos);
+        const label = normalizeSketchLabel(field?.label || '');
+
+        let shape = '';
+        if (type === 'polyline') {
+            shape = `
+                <g>
+                    <polyline points="${toSafeString(points)}"></polyline>
+                    <rect x="${x1 - 4}" y="${y1 - 4}" width="8" height="8" rx="8"></rect>
+                    <rect x="${x2 - 4}" y="${y2 - 4}" width="8" height="8" rx="8"></rect>
+                    ${renderArrowPolygon(field, x1, y1, x2, y2)}
+                </g>
+            `;
+        }
+
+        return `
+            ${shape}
+            ${label ? `<text x="${placedLabel.x}" y="${placedLabel.y}" class="annotation-label">${toSafeString(label)}</text>` : ''}
+        `;
+    }).join('');
+
+    return `<svg viewBox="0 0 500 500" xmlns="http://www.w3.org/2000/svg" class="overlay">${layers}</svg>`;
+};
+
+const resolveSketchImageUrl = (item, productFallback = {}, origin = '') => {
+    const filesBase = `${origin.replace(/\/+$/, '')}/files`;
+    const updated = item?.updated || productFallback?.updated || '';
+    const cacheBust = updated ? `?${updated}` : '';
+    const productId = item?._id || productFallback?._id;
+    const sketchImg = item?.sketch_img?.[0]?.id || productFallback?.sketch_img?.[0]?.id;
+    const placeholderUrl = `${origin.replace(/\/+$/, '')}/assets/img/placeholder.png`;
+    const hasCadFiles = Array.isArray(item?.cad_files)
+        ? item.cad_files.length > 0
+        : Array.isArray(productFallback?.cad_files) && productFallback.cad_files.length > 0;
+
+    const darkRenderUrl = (hasCadFiles && productId)
+        ? `https://render.factory.app.kenzap.cloud/${productId}-polyester-2h3-1500.webp`
+        : '';
+
+    const sketchUrl = sketchImg
+        ? `${filesBase}/sketch-${encodeURIComponent(sketchImg)}-1-500x500.webp${cacheBust}`
+        : '';
+
+    const productUrl = ((item?.img?.[0] || productFallback?.img?.[0]) && productId)
+        ? `${filesBase}/product-${encodeURIComponent(productId)}-1-100x100.jpeg${cacheBust}`
+        : '';
+
+    return {
+        candidates: [darkRenderUrl, sketchUrl, productUrl].filter(Boolean),
+        placeholderUrl
+    };
+};
+
+const sketchImageUrlExistsCache = new Map();
+const sketchImageDataUriCache = new Map();
+
+const getAuthHeaders = (requestHeaders = {}) => {
+    const headers = {};
+    if (requestHeaders?.cookie) headers.cookie = requestHeaders.cookie;
+    if (requestHeaders?.authorization) headers.authorization = requestHeaders.authorization;
+    return headers;
+};
+
+const urlExists = async (url, requestHeaders = {}) => {
+    if (!url) return false;
+    const cacheKey = `${url}::${requestHeaders?.cookie ? 'c1' : 'c0'}::${requestHeaders?.authorization ? 'a1' : 'a0'}`;
+    if (sketchImageUrlExistsCache.has(cacheKey)) {
+        return sketchImageUrlExistsCache.get(cacheKey);
+    }
+
+    const checkPromise = (async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 2500);
+
+        try {
+            const headResponse = await fetch(url, {
+                method: 'HEAD',
+                redirect: 'follow',
+                headers: getAuthHeaders(requestHeaders),
+                signal: controller.signal
+            });
+            if (headResponse.ok) return true;
+        } catch (_) {
+            // ignore and try GET fallback
+        }
+
+        try {
+            const getResponse = await fetch(url, {
+                method: 'GET',
+                redirect: 'follow',
+                headers: { ...getAuthHeaders(requestHeaders), Range: 'bytes=0-0' },
+                signal: controller.signal
+            });
+            return getResponse.ok;
+        } catch (_) {
+            return false;
+        } finally {
+            clearTimeout(timeout);
+        }
+    })();
+
+    sketchImageUrlExistsCache.set(cacheKey, checkPromise);
+    return checkPromise;
+};
+
+const selectFirstExistingSketchImageUrl = async ({ candidates = [], placeholderUrl }, requestHeaders = {}) => {
+    for (const candidate of candidates) {
+        const exists = await urlExists(candidate, requestHeaders);
+        if (exists) {
+            return { url: candidate, fallback: placeholderUrl };
+        }
+    }
+
+    return { url: placeholderUrl, fallback: placeholderUrl };
+};
+
+const fetchImageAsDataUri = async (url, requestHeaders = {}) => {
+    if (!url) return '';
+
+    const cacheKey = `${url}::${requestHeaders?.cookie ? 'c1' : 'c0'}::${requestHeaders?.authorization ? 'a1' : 'a0'}`;
+    if (sketchImageDataUriCache.has(cacheKey)) {
+        return sketchImageDataUriCache.get(cacheKey);
+    }
+
+    const dataUriPromise = (async () => {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000);
+
+        try {
+            const response = await fetch(url, {
+                method: 'GET',
+                redirect: 'follow',
+                headers: getAuthHeaders(requestHeaders),
+                signal: controller.signal
+            });
+            if (!response.ok) return '';
+
+            const contentType = response.headers.get('content-type') || 'image/webp';
+            const bytes = await response.arrayBuffer();
+            if (!bytes || bytes.byteLength === 0) return '';
+
+            const b64 = Buffer.from(bytes).toString('base64');
+            return `data:${contentType};base64,${b64}`;
+        } catch (_) {
+            return '';
+        } finally {
+            clearTimeout(timeout);
+        }
+    })();
+
+    sketchImageDataUriCache.set(cacheKey, dataUriPromise);
+    return dataUriPromise;
+};
+
+const renderSketchValuesRows = (item) => {
+    const fields = Array.isArray(item?.input_fields) ? item.input_fields : [];
+    const values = item?.input_fields_values || {};
+
+    const rows = fields
+        .map((field) => {
+            const rawLabel = String(field?.label || '').trim();
+            if (!rawLabel) return null;
+            const key = `input${rawLabel}`;
+            const value = values[key];
+            if (value === undefined || value === null || value === '') return null;
+            const label = normalizeSketchLabel(rawLabel);
+            const isAngle = field?.type === 'arc' || Boolean(field?.arrow);
+            const unit = isAngle ? '°' : 'mm';
+            return `<tr><td>${toSafeString(label)}</td><td><strong>${toSafeString(value)} ${unit}</strong></td></tr>`;
+        })
+        .filter(Boolean);
+
+    if (!rows.length) {
+        return `<tr><td colspan="2">${toSafeString(__html({}, 'No sketch values'))}</td></tr>`;
+    }
+
+    return rows.join('');
+};
+
+export async function getSketchListItems(order, locales, productMap = {}, origin = '', requestHeaders = {}) {
+    const sketchItems = (order?.items || []).filter(item => Boolean(item?.sketch_attached));
+
+    if (sketchItems.length === 0) {
+        return `
+            <section class="sketch-sheet">
+                <div class="empty-state">${__html(locales, 'No sketch-attached items found.')}</div>
+            </section>
+        `;
+    }
+
+    const sheets = await Promise.all(sketchItems.map(async (item) => {
+        const fallbackProduct = productMap[item?._id] || {};
+        const imageCandidates = resolveSketchImageUrl(item, fallbackProduct, origin);
+        const image = await selectFirstExistingSketchImageUrl(imageCandidates, requestHeaders);
+        const embeddedImage = await fetchImageAsDataUri(image.url, requestHeaders);
+        const imageSrc = embeddedImage || image.url;
+        const fields = Array.isArray(item?.input_fields) ? item.input_fields : [];
+        const title = [item?.title || '', item?.color || '', item?.coating || ''].join(' ').trim();
+        const qty = Number(item?.qty) || 0;
+
+        return `
+            <section class="sketch-sheet">
+                <div class="sheet-grid">
+                    <div class="sheet-image-wrap">
+                        <img class="sheet-image" src="${toSafeString(imageSrc)}" alt="${toSafeString(title)}">
+                        ${renderSketchOverlay(fields)}
+                    </div>
+                    <div class="sheet-values">
+                        <h3 class="sheet-title">${toSafeString(title)}${qty ? ` x ${qty}` : ''}</h3>
+                        <table>
+                            <tbody>${renderSketchValuesRows(item)}</tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        `;
+    }));
+
+    return sheets.join('');
 }
 
 /**

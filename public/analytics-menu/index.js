@@ -120,14 +120,14 @@ class AnalyticsMenu {
                                 rights: ['product_sales_report'],
                             },
                             {
-                                text: __html('Customer Analytics'),
-                                link: link('/customer-analytics/'),
+                                text: __html('Top Clients Revenue Report'),
+                                link: link('/report-client-revenue/'),
                                 target: '_blank',
                                 rights: ['product_sales_report'],
                             },
                             {
                                 text: __html('Product Analytics'),
-                                link: link('/product-analytics/'),
+                                link: link('/report-product-analytics/'),
                                 target: '_blank',
                                 rights: ['product_sales_report'],
                             }

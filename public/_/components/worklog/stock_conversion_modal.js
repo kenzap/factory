@@ -1,6 +1,6 @@
 import { getProductStock } from "../../api/get_product_stock.js";
 import { __html } from "../../helpers/global.js";
-import { DropdownSuggestion } from "../products/dropdown_suggestion.js";
+import { SuggestionPopup } from "../products/suggestion_popup.js";
 
 const STORAGE_KEY_PREFIX = 'worklog_stock_conversion_v1';
 
@@ -310,19 +310,19 @@ export const openStockConversionModal = ({
     targetCoatingEl?.addEventListener('input', updateTargetStockDebounced);
     syncState();
 
-    new DropdownSuggestion({
+    new SuggestionPopup({
         input: `#${modalId}-source-color`,
         suggestions: colorSuggestions
     }, () => updateSourceStockDebounced());
-    new DropdownSuggestion({
+    new SuggestionPopup({
         input: `#${modalId}-source-coating`,
         suggestions: coatingSuggestions
     }, () => updateSourceStockDebounced());
-    new DropdownSuggestion({
+    new SuggestionPopup({
         input: `#${modalId}-target-color`,
         suggestions: colorSuggestions
     }, () => updateTargetStockDebounced());
-    new DropdownSuggestion({
+    new SuggestionPopup({
         input: `#${modalId}-target-coating`,
         suggestions: coatingSuggestions
     }, () => updateTargetStockDebounced());

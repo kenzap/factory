@@ -6,6 +6,14 @@ export const renderWriteoffInput = (order, item, i) => {
 
 export const updateWriteoffInputUI = (order, updatedItem) => {
 
+    // Find the specific row for this item
+    const itemRow = document.querySelector(`.order-item-row[data-id="${updatedItem.id}"][data-order_id="${order._id}"]`);
+
+    if (!itemRow) {
+        console.warn('Item row not found for:', updatedItem._id);
+        return;
+    }
+
     // Find the index of the updated item in the order
     const itemIndex = order.items.findIndex(i => i.id === updatedItem.id);
     if (itemIndex === -1) {

@@ -11,9 +11,6 @@ node_modules/
 # Cached documents
 server/document/pdf
 
-# template overrides
-overrides
-
 # readme txt
 readme.txt
 
@@ -34,8 +31,9 @@ readme.txt
  
 .vscode/
 server.code-workspace
+.claude
 
-# dist/
+dist/
 etc/
 
 build.sh

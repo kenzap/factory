@@ -28,6 +28,7 @@ class Transactions {
         this.filters = {
             for: "transactions",
             client: {},
+            search: '',
             dateFrom: new Date(new Date().getFullYear(), 0, 1).toISOString(),
             dateTo: '',
             type: '',
@@ -273,6 +274,7 @@ class Transactions {
         bus.on('table:refresh', (value) => {
             log('Refreshing table data...', value);
             self.filters.client = { name: value.name, eid: value._id };
+            self.filters.search = value?._id ? '' : String(value?.name || '').trim();
             self.table.setPage(1);
         });
 
@@ -297,6 +299,18 @@ class Transactions {
                 return;
             }
         });
+    }
+
+    toNumber = (value) => {
+        const parsed = parseFloat(value);
+        return Number.isFinite(parsed) ? parsed : 0;
+    }
+
+    hasPaymentMismatch = (rowData = {}) => {
+        const total = this.toNumber(rowData.total);
+        const paid = this.toNumber(rowData?.payment?.amount);
+        if (total === 0 || paid === 0) return false;
+        return Math.abs(total - paid) > 0.009;
     }
 
     columns = () => {
@@ -490,8 +504,10 @@ class Transactions {
                     const amount = payment.amount;
                     const rowData = cell.getRow().getData();
                     const isEdited = this.editedRows && this.editedRows.has(rowData.id);
+                    const mismatch = this.hasPaymentMismatch(rowData);
                     const bgClass = isEdited ? 'bg-warning bg-opacity-25' : '';
-                    return `<span class="fw-bold- ${amount < 0 ? 'text-danger' : 'text-success-'} ${bgClass}">${amount ? priceFormat(this.settings, amount) : ""}</span>`;
+                    const amountClass = (amount < 0 || mismatch) ? 'text-danger fw-bold' : 'text-success-';
+                    return `<span class="fw-bold- ${amountClass} ${bgClass}">${amount ? priceFormat(this.settings, amount) : ""}</span>`;
                 },
                 cellClick: (event, cell) => {
 

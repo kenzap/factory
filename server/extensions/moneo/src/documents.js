@@ -260,7 +260,11 @@ async function updateOrderMoneoId(db, orderId, field, value) {
 }
 
 function buildInvoicePayload(config, order, client, sellerCountry = 'LV') {
-    const calculationItems = Array.isArray(order?.items) ? order.items.map((item) => ({ ...item })) : [];
+    const calculationItems = Array.isArray(order?.items)
+        ? order.items
+            .filter((item) => !item?.cancelled_from_invoice && !item?.hidden_from_invoice)
+            .map((item) => ({ ...item }))
+        : [];
     const buyerCountry = (client?.country_code || extractCountryFromVAT(client?.vat_number) || sellerCountry || 'LV').toUpperCase();
     const calculator = new InvoiceCalculator(
         { currency: 'EUR' },

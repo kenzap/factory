@@ -9,6 +9,78 @@ import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
 
+const getRequestOrigin = (req) => {
+    const host = req.get('host') || '';
+    const forwarded = req.headers['x-forwarded-proto'];
+    const proto = (Array.isArray(forwarded) ? forwarded[0] : String(forwarded || '')).split(',')[0].trim()
+        || req.protocol
+        || 'http';
+
+    return host ? `${proto}://${host}` : '';
+};
+
+const toQrApiUrl = (targetUrl, size = 108) => {
+    const params = new URLSearchParams({
+        size: `${size}x${size}`,
+        margin: '0',
+        data: targetUrl
+    });
+    return `https://api.qrserver.com/v1/create-qr-code/?${params.toString()}`;
+};
+
+const getQrDataUri = async (targetUrl) => {
+    const qrUrl = toQrApiUrl(targetUrl);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 6000);
+
+    try {
+        const response = await fetch(qrUrl, { method: 'GET', redirect: 'follow', signal: controller.signal });
+        if (!response.ok) return qrUrl;
+
+        const contentType = response.headers.get('content-type') || 'image/png';
+        const bytes = await response.arrayBuffer();
+        if (!bytes || bytes.byteLength === 0) return qrUrl;
+
+        return `data:${contentType};base64,${Buffer.from(bytes).toString('base64')}`;
+    } catch (_) {
+        return qrUrl;
+    } finally {
+        clearTimeout(timeout);
+    }
+};
+
+const injectProductionSlipQr = (html, qrSrc, targetUrl) => {
+    if (!html || !qrSrc || !targetUrl) return html;
+
+    const block = `
+        <style>
+            .production-slip-qr {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 14mm;
+                z-index: 9999;
+            }
+            .production-slip-qr img {
+                width: 14mm;
+                height: 14mm;
+                display: block;
+                margin: 0;
+                background: #fff;
+            }
+        </style>
+        <a class="production-slip-qr" href="${targetUrl}">
+            <img src="${qrSrc}" alt="Manufacturing QR">
+        </a>
+    `;
+
+    if (html.includes('</body>')) {
+        return html.replace('</body>', `${block}</body>`);
+    }
+
+    return `${html}${block}`;
+};
+
 /**
  * Production slip PDF Document Generator
  * 
@@ -98,6 +170,9 @@ function viewProductionSlipApi(app, logger) {
             // logger.info(`Generating production slip ID: ${id} in format: ${format} for user: ${req.user.username}`);
 
             const locale = await getLocale({ locale: req.headers.locale, 'locale-checksum': 0 });
+            const origin = getRequestOrigin(req);
+            const manufacturingUrl = `${origin}/manufacturing/?id=${encodeURIComponent(String(id))}`;
+            const qrSrc = await getQrDataUri(manufacturingUrl);
 
             // Additional options
             const options = {
@@ -108,6 +183,7 @@ function viewProductionSlipApi(app, logger) {
 
             // Generate HTML for waybill
             const slipData = await viewProductionSlip(id, req.user, locale, lang, options, logger);
+            slipData.html = injectProductionSlipQr(slipData.html, qrSrc, manufacturingUrl);
 
             // Handle HTML format
             if (format === 'html') {

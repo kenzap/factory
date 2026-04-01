@@ -4,7 +4,7 @@ import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getMetalLog } from "../_/api/get_metal_log.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { SupplierSuggestion } from "../_/components/metal/supplier_suggestion.js";
-import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
+import { SuggestionPopup } from "../_/components/products/suggestion_popup.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
 import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
 import { __html, hideLoader, onChange, onClick, parseUnit, toast, unescape } from "../_/helpers/global.js";
@@ -113,18 +113,20 @@ class MetalLog {
         this.productCoatingValidator.validate();
 
         // Color suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productColor',
-            suggestions: this.colorSuggestions
+            suggestions: this.colorSuggestions,
+            maxItems: 25
         }, (suggestion) => {
             console.log('Suggestion selected:', suggestion);
             this.productColorValidator?.validate();
         });
 
         // Coating suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productCoating',
-            suggestions: this.coatingSuggestions
+            suggestions: this.coatingSuggestions,
+            maxItems: 25
         }, (suggestion) => {
             console.log('Suggestion selected:', suggestion);
             this.productCoatingValidator?.validate();

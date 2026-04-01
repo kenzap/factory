@@ -9,7 +9,7 @@ import { getLocale } from '../_/helpers/locale.js';
  * @param {string} lang - Language code for product titles and categories
  * @returns {Array<Object>} - Orders
 */
-async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false }) {
+async function getOrders(filters = { for: "", client: { name: "", eid: "" }, search: '', dateFrom: '', dateTo: '', type: '', offset: 0, limit: 250, items: false }) {
 
     const db = getDbConnection();
 
@@ -55,6 +55,21 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, dat
         whereConditions.push(`(js->'data'->>'eid' = $${params.length + 1} OR unaccent(js->'data'->>'name') ILIKE unaccent($${params.length + 2}))`);
         params.push(`${filters.client.eid.trim()}`);
         params.push(`${filters.client.name.trim()}`);
+    }
+
+    const searchText = String(filters.search || '').trim();
+    if (searchText) {
+        const searchConditions = [];
+
+        if (/^\d+$/.test(searchText)) {
+            searchConditions.push(`js->'data'->>'id' = $${params.length + 1}`);
+            params.push(searchText);
+        }
+
+        searchConditions.push(`COALESCE(js->'data'->'waybill'->>'number', '') ILIKE $${params.length + 1}`);
+        params.push(`%${searchText}%`);
+
+        whereConditions.push(`(${searchConditions.join(' OR ')})`);
     }
 
     // Date filtering logic (consolidated)

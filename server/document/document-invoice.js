@@ -4,7 +4,7 @@ import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDocumentData, getInvoiceNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
-import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals } from '../_/helpers/document/render.js';
+import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals, isExcludedFromInvoice } from '../_/helpers/document/render.js';
 import { markOrderEmailSent, send_email } from '../_/helpers/email.js';
 import { __html, getDbConnection } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
@@ -48,11 +48,13 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
             data.entity?.country_code ||
             extractCountryFromVAT(data.entity?.vat_number) ||
             sellerCountry;
+        const billableItems = (data.order?.items || []).filter((item) => !isExcludedFromInvoice(item));
+        const orderForBilling = { ...data.order, items: billableItems };
 
         // Initialize invoice calculator
         const calculator = new InvoiceCalculator(
             data.settings,
-            data.order,
+            orderForBilling,
             sellerCountry,
             buyerCountry,
             data.entity
@@ -65,7 +67,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
         data.invoice_items_table = getInvoiceItemsTable(
             data.detailed,
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             calculator
         );
@@ -73,7 +75,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
         // Generate totals section
         data.invoice_totals = getInvoiceTotals(
             data.settings,
-            data.order,
+            orderForBilling,
             locale,
             totals
         );
@@ -81,7 +83,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
         // Store totals for PEPPOL export if needed
         data.calculated_totals = totals;
         data.peppol_xml = options.format === 'peppol'
-            ? generatePeppolXML(data.order, totals, data.settings)
+            ? generatePeppolXML(orderForBilling, totals, data.settings)
             : null;
 
         // console.log(`Invoice ${data.order.invoice.number} - Total: ${totals.totalInvoiceAmount}`);

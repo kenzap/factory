@@ -511,7 +511,7 @@ export class ClientPane {
 
         const reg_number = document.getElementById('reg_number').value.trim();
         const vat_number = document.getElementById('vat_number').value.trim();
-        const legal_name = document.getElementById('legal_name').value.trim();
+        const legalNameInput = document.getElementById('legal_name').value.trim();
         const fname = document.getElementById('fname').value.trim();
         const lname = document.getElementById('lname').value.trim();
         const clientPhoneRight = document.getElementById('clientPhoneRight').value.trim();
@@ -527,6 +527,15 @@ export class ClientPane {
         if (!entity) {
             alert(__html('Select a client type.'));
             return false;
+        }
+
+        const legal_name = entity.dataset.entity === "individual"
+            ? [lname, fname].filter(Boolean).join(' ').trim()
+            : legalNameInput;
+
+        // Keep hidden/shared field in sync for individual clients.
+        if (entity.dataset.entity === "individual") {
+            document.getElementById('legal_name').value = legal_name;
         }
 
         // Clear previous validation states

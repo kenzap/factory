@@ -79,10 +79,12 @@ export const actionGetOrderDetails = async (orderId) => {
                                                 ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
                                             </div>
                                             <div class="dropdown itemsActionsCont ms-2">
-                                                <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                                                <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-bs-strategy="fixed" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                                 </svg>
                                                 <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
+                                                    <li><a class="dropdown-item po" href="#" onclick="manufacturing.previewSketch(event, '${item._id}', '${order._id}')"><i class="bi bi-bezier2 me-1"></i> ${__html('Sketch')}</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
                                                     <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
                                                     <li><hr class="dropdown-divider d-none"></li>
                                                     <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
@@ -138,10 +140,12 @@ export const actionGetOrderDetails = async (orderId) => {
                                         ${item?.note.length ? `<div class="form-text">${item?.note}</div>` : ''}
                                     </div>
                                     <div class="dropdown itemsActionsCont ms-2">
-                                        <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
+                                        <svg id="itemsActions${i}" data-bs-toggle="dropdown" data-bs-strategy="fixed" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                             <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                         </svg>
                                         <ul class="dropdown-menu" aria-labelledby="itemsActions${i}">
+                                            <li><a class="dropdown-item po" href="#" onclick="manufacturing.previewSketch(event, '${item._id}', '${order._id}')"><i class="bi bi-bezier2 me-1"></i> ${__html('Sketch')}</a></li>
+                                            <li><hr class="dropdown-divider"></li>
                                             <li><a class="dropdown-item po set-cm" href="#" data-index="${i}" onclick="manufacturing.addBundle(event, '${item._id}', '${item.title}', '${item.color}', '${item.coating}', '${order._id}')"><i class="bi bi-boxes me-1"></i> ${__html('Bundles')}</a></li>
                                             <li><hr class="dropdown-divider d-none"></li>
                                             <li><a class="dropdown-item po delete-row d-none" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
@@ -179,7 +183,7 @@ export const actionGetOrderDetails = async (orderId) => {
         // Render sub-items as a table
         subRow.innerHTML = `
                 <div class="p-3-">
-                    <div class="table-responsive">
+                    <div>
                         <table class="table table-sm table-bordered- mb-0">
                             <thead class="table-light">
                                 <tr>

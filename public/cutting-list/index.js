@@ -1,8 +1,8 @@
 import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
-import { __html, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
-import { formatClientName } from "../_/helpers/order.js";
+import { __html, attr, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
+import { formatClientName, getFullClientName } from "../_/helpers/order.js";
 // import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
@@ -166,7 +166,7 @@ class CuttingList {
                     ${this.orders && this.orders.length > 0 ? this.orders.map(order => `
                     <div class="order-group">
                         <div class="order-header ${this.getEntireOrderStatusClass(order)}">
-                            <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - ${formatClientName(order) || 'N/A'} (${formatDate(order.due_date) || 'N/A'})</span>
+                            <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - <span title="${attr(getFullClientName(order) || '')}">${formatClientName(order) || 'N/A'}</span> (${formatDate(order.due_date) || 'N/A'})</span>
                             <span class="me-2 form-text text-dark">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
                         </div>
                         <div class="order-items">

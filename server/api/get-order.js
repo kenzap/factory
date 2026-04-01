@@ -24,6 +24,7 @@ async function getOrderDetails(id) {
             _id,
             js->'data'->'id' as id,
             js->'data'->'eid' as eid,
+            js->'data'->'date' as "date",
             js->'data'->'phone' as "phone",
             js->'data'->'draft' as "draft",
             js->'data'->'email' as "email",
@@ -44,6 +45,7 @@ async function getOrderDetails(id) {
             js->'data'->'invoice' as "invoice",
             js->'data'->'quotation' as "quotation",
             js->'data'->'production_slip' as "production_slip",
+            js->'data'->'sketch_list' as "sketch_list",
             js->'data'->'items' as "items"
         FROM data
         WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 AND js->'data'->'deleted' IS NULL

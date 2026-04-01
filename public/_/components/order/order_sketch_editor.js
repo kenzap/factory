@@ -3,7 +3,7 @@ import { calculate } from "../../helpers/price.js";
 
 export const sketchEditor = (cell, settings, order, cb) => {
 
-    let row = cell.getRow().getData();
+    let row = typeof cell?.getRow === 'function' ? cell.getRow().getData() : cell;
 
     // init variables
     let modal = document.querySelector(".modal");
@@ -42,53 +42,55 @@ export const sketchEditor = (cell, settings, order, cb) => {
 
             case 'confirm':
 
-                // Update the current row with the sketch data
-                const currentRowData = cell.getRow().getData();
-                const updatedRowData = { ...currentRowData };
+                if (typeof cell?.getRow === 'function') {
+                    // Update the current row with the sketch data
+                    const currentRowData = cell.getRow().getData();
+                    const updatedRowData = { ...currentRowData };
 
-                updatedRowData.sketch_attached = true;
+                    updatedRowData.sketch_attached = true;
 
-                if (data.coating) {
-                    updatedRowData.coating = data.coating;
+                    if (data.coating) {
+                        updatedRowData.coating = data.coating;
+                    }
+
+                    if (data.color) {
+                        updatedRowData.color = data.color;
+                    }
+
+                    if (data.qty) {
+                        updatedRowData.qty = parseFloat(data.qty);
+                    }
+
+                    if (data.input_fields_values) {
+                        updatedRowData.input_fields_values = data.input_fields_values;
+                    }
+
+                    // calculate width and length using input_fields_values
+                    if (data.input_fields_values) {
+                        const updateFormula = (formulaKey, targetKey) => {
+                            let formula = data[formulaKey];
+                            if (formula) {
+                                Object.keys(data.input_fields_values).forEach(key => {
+                                    const cleanKey = key.replace('input', '');
+                                    if (formula.includes(cleanKey)) {
+                                        formula = formula.replaceAll(cleanKey, data.input_fields_values[key]);
+                                    }
+                                });
+                                updatedRowData[targetKey] = calculate(formula);
+                            }
+                        };
+
+                        updateFormula('formula_length', 'formula_length_calc');
+                        updateFormula('formula_width', 'formula_width_calc');
+                    }
+
+                    // Update the row in the table
+                    cell.getRow().update(updatedRowData);
+
+                    // console.log(updatedRowData);
+
+                    cb(event.data);
                 }
-
-                if (data.color) {
-                    updatedRowData.color = data.color;
-                }
-
-                if (data.qty) {
-                    updatedRowData.qty = parseFloat(data.qty);
-                }
-
-                if (data.input_fields_values) {
-                    updatedRowData.input_fields_values = data.input_fields_values;
-                }
-
-                // calculate width and length using input_fields_values
-                if (data.input_fields_values) {
-                    const updateFormula = (formulaKey, targetKey) => {
-                        let formula = data[formulaKey];
-                        if (formula) {
-                            Object.keys(data.input_fields_values).forEach(key => {
-                                const cleanKey = key.replace('input', '');
-                                if (formula.includes(cleanKey)) {
-                                    formula = formula.replaceAll(cleanKey, data.input_fields_values[key]);
-                                }
-                            });
-                            updatedRowData[targetKey] = calculate(formula);
-                        }
-                    };
-
-                    updateFormula('formula_length', 'formula_length_calc');
-                    updateFormula('formula_width', 'formula_width_calc');
-                }
-
-                // Update the row in the table
-                cell.getRow().update(updatedRowData);
-
-                // console.log(updatedRowData);
-
-                cb(event.data);
 
                 break;
 

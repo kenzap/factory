@@ -1,7 +1,7 @@
 import { createWorklogRecord } from "../_/api/create_worklog_record.js";
 import { deleteWorklogRecord } from "../_/api/delete_worklog_record.js";
 import { getWorkLog } from "../_/api/get_worklog.js";
-import { DropdownSuggestion } from "../_/components/products/dropdown_suggestion.js";
+import { SuggestionPopup } from "../_/components/products/suggestion_popup.js";
 import { ProductSearch } from "../_/components/products/product_search.js";
 import { ProductColorValidator } from "../_/components/worklog/product_color_validator.js";
 import { openStockConversionModal } from "../_/components/worklog/stock_conversion_modal.js";
@@ -156,9 +156,10 @@ class WorkLog {
         });
 
         // Color suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productColor',
-            suggestions: this.colorSuggestions
+            suggestions: this.colorSuggestions,
+            maxItems: 25
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);
@@ -166,9 +167,10 @@ class WorkLog {
         });
 
         // Coating suggestion
-        new DropdownSuggestion({
+        new SuggestionPopup({
             input: '#productCoating',
-            suggestions: this.coatingSuggestions
+            suggestions: this.coatingSuggestions,
+            maxItems: 25
         }, (suggestion) => {
 
             console.log('Suggestion selected:', suggestion);

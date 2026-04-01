@@ -1,6 +1,7 @@
 import { priceFormat } from "../../packages/helpers/src/index.js";
 import { deleteTransaction } from "../_/api/delete_transaction.js";
 import { getOrders } from "../_/api/get_orders.js";
+import { saveTransaction } from "../_/api/save_transaction.js";
 import { ClientSearch } from "../_/components/entity/client_search.js";
 import { actionIssueOrder } from "../_/components/manufacturing/action_issue_order.js";
 import { PreviewReport } from "../_/components/payments/preview_report.js";
@@ -29,6 +30,7 @@ class Orders {
         this.filters = {
             for: "orders",
             client: {},
+            search: '',
             dateFrom: new Date(Date.UTC(new Date().getFullYear(), 0, 1, 0, 0, 0)).toISOString(),
             dateTo: '',
             items: true,
@@ -261,6 +263,7 @@ class Orders {
         bus.on('table:refresh', (value) => {
             log('Refreshing table data...', value);
             this.filters.client = { name: value.name, eid: value._id };
+            this.filters.search = value?._id ? '' : String(value?.name || '').trim();
             this.table.setPage(1);
         });
 
@@ -468,12 +471,25 @@ class Orders {
                 field: "notes",
                 headerSort: false,
                 minWidth: 180,
+                editor: "input",
                 formatter: (cell) => {
                     const value = cell.getValue();
                     return `<span title="${value}">${value}</span>`;
-                }
+                },
+                cellEdited: (cell) => this.saveOrderNotes(cell)
             }
         ];
+    }
+
+    saveOrderNotes = (cell) => {
+        const rowData = cell.getRow()?.getData?.() || {};
+        if (!rowData?._id) return;
+
+        const notes = String(cell.getValue() || '').trim();
+        saveTransaction([{ _id: rowData._id, notes }], () => {
+            cell.getRow().update({ notes });
+            toast(__html('Changes applied'));
+        });
     }
 
     getLatestIssueDateFromItems = (items) => {

@@ -1,3 +1,6 @@
+import { priceFormat } from "../../../../packages/helpers/src/index.js";
+import { InvoiceCalculator } from "../../../../packages/tax-core/src/calculator.js";
+import { extractCountryFromVAT } from "../../../../packages/tax-core/src/index.js";
 import { deleteTransaction } from "../../api/delete_transaction.js";
 import { saveOrder } from "../../api/save_order.js";
 import { ClientAddressSearch } from "../../components/order/client_address_search.js";
@@ -5,14 +8,12 @@ import { ClientContactSearch } from "../../components/order/client_contact_searc
 import { ClientOrderSearch } from "../../components/order/client_order_search.js";
 import { PreviewDocument } from "../../components/order/preview_document.js";
 import { __attr, __html, onChange, onClick, simulateClick, toast, toLocalDateTime } from "../../helpers/global.js";
-import { InvoiceCalculator } from "../../../../packages/tax-core/src/calculator.js";
-import { extractCountryFromVAT } from "../../../../packages/tax-core/src/index.js";
+import { isExcludedFromInvoice } from "../../helpers/order.js";
 import flatpickr from '../../libs/flatpickr.js';
 import { bus } from "../../modules/bus.js";
 import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 import { state } from "../../modules/order/state.js";
-import { priceFormat } from "../../../../packages/helpers/src/index.js";
 
 export class LeftPane {
 
@@ -28,6 +29,12 @@ export class LeftPane {
     }
 
     view = () => {
+        const orderDateRaw = state.order?.date || '';
+        const orderDate = orderDateRaw ? new Date(orderDateRaw) : null;
+        const hasValidOrderDate = orderDate instanceof Date && !Number.isNaN(orderDate?.getTime?.());
+        const orderDateLabel = hasValidOrderDate
+            ? orderDate.toLocaleDateString()
+            : '';
 
         document.querySelector('.left-pane').innerHTML = /*html*/`
         <!-- Left Pane -->
@@ -37,13 +44,18 @@ export class LeftPane {
                 <div class="form-section p-0 pb-3 border-0">
                     <h6 class="d-none"><i class="bi bi-hash me-2"></i>${state.order.id ? __html('Edit Order') : __html('New Order')}</h6>
                     <div class="mb-2">
-                        <div class="draft-check-cnt">
+                        <div class="draft-check-cnt d-flex align-items-center justify-content-between gap-2">
                             <div class="form-check p-0 mb-0 d-flex align-items-center">
                                 <input class="form-check-input m-0 me-2" type="checkbox" id="draft" autocomplete="nope" ${state.order.draft ? 'checked' : ''} style="accent-color: #333;" ${state.order.waybill?.number ? 'disabled' : ''}>
                                 <label class="form-check-label" for="draft">
                                     ${__html('Estimate')}
                                 </label>
                             </div>
+                            ${hasValidOrderDate ? `
+                                <small class="text-muted text-nowrap" title="${__html('Order date')}">
+                                    ${orderDateLabel}
+                                </small>
+                            ` : ''}
                         </div>
                     </div>
                     <div class="mb-2">
@@ -103,6 +115,7 @@ export class LeftPane {
                                 </svg>
                                 <ul class="dropdown-menu">
                                     <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="packing-list">${__html('Packing List')}</button></li>
+                                    <li><button ${state.order?.id ? '' : 'disabled'} class="dropdown-item document-btn mb-1" data-type="sketch-list">${__html('Sketch List')}</button></li>
                                 </ul>
                             </div>
                         </div>
@@ -326,6 +339,10 @@ export class LeftPane {
                     new PreviewDocument('packing-list', state.order);
                     button.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
                     break;
+                case 'sketch-list':
+                    new PreviewDocument(type, state.order);
+                    button.innerHTML = '<span class="spinner-border spinner-border-ss" role="status" aria-hidden="true" style="width: 0.75rem; height: 0.75rem;"></span>';
+                    break;
             }
         });
 
@@ -488,6 +505,11 @@ export class LeftPane {
 
         let options = {};
         let entity = { entity: state.order.entity, vat_status: state.order.vat_status, vat_number: state.order.vat_number };
+        const includedItems = (state.order.items || []).filter(item => !isExcludedFromInvoice(item));
+        const orderForCalculation = {
+            ...state.order,
+            items: includedItems
+        };
 
         // Determine countries for tax calculation
         const sellerCountry = options.sellerCountry ||
@@ -502,7 +524,7 @@ export class LeftPane {
         // Initialize invoice calculator
         const calculator = new InvoiceCalculator(
             state.settings,
-            state.order,
+            orderForCalculation,
             sellerCountry,
             buyerCountry,
             entity

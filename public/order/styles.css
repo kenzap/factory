@@ -248,6 +248,16 @@ body {
 
 .tabulator-row{
     min-height: auto;
+    position: relative;
+    z-index: 1;
+}
+
+.tabulator-row.dropdown-open-row{
+    z-index: 40;
+}
+
+.tableActionsCont .dropdown-menu{
+    z-index: 2000;
 }
 
 /* Remove number input arrows */

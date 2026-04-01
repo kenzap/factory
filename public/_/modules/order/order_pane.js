@@ -6,7 +6,7 @@ import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { suggestionEditor } from "../../components/order/order_suggestion_editor.js";
 import { textEditor } from "../../components/order/order_text_editor.js";
 import { __html, onClick, toast } from "../../helpers/global.js";
-import { getCoatings, getColors, isAllowedToEdit } from "../../helpers/order.js";
+import { getCoatings, getColors, isAllowedToEdit, isExcludedFromInvoice } from "../../helpers/order.js";
 import { addRow, navigateToNextCell, navigateToPreviousCell } from "../../helpers/order_table.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
 import { state } from "../../modules/order/state.js";
@@ -75,7 +75,168 @@ export class OrderPane {
         bus.emit('order:table:changed', true);
     }
 
+    handleTableMenuAction = (action, row) => {
+        if (!row) return;
+
+        if (action === 'toggle-invoice-exclusion') {
+            const rowData = row.getData();
+            const nextExcluded = !isExcludedFromInvoice(rowData);
+
+            row.update({
+                cancelled_from_invoice: nextExcluded
+            });
+
+            this.syncItems();
+            this.refreshTable();
+            bus.emit('order:table:refreshed', state.order);
+            this.markOrderAsDirty();
+            return;
+        }
+
+        if (action === 'delete-row') {
+            const rowData = row.getData();
+            const is = isAllowedToEdit(rowData);
+            if (!is.allow) {
+                toast(is.reason || 'You are not allowed to edit this row.');
+                return;
+            }
+            row.delete();
+            return;
+        }
+
+        if (action === 'update-cm') {
+            const currentCM = row.getData().cm;
+            if (currentCM !== null && currentCM !== undefined) {
+                state.table.getRows().forEach(r => r.update({ cm: currentCM }));
+                this.syncItems();
+                this.refreshTable();
+                bus.emit('order:table:refreshed', state.order);
+            }
+            return;
+        }
+
+        if (action === 'update-coating') {
+            const currentCoating = row.getData().coating;
+            if (currentCoating && currentCoating !== '-') {
+                const allRows = state.table.getRows();
+                allRows.forEach(r => {
+                    const rowData = r.getData();
+                    if (rowData.coating !== '-') r.update({ coating: currentCoating });
+                });
+
+                this.syncItems();
+                allRows.forEach(r => {
+                    const firstCell = r.getCells()[2];
+                    refreshRowCalculations(firstCell, state.settings);
+                });
+                this.syncItems();
+                this.refreshTable();
+            }
+            return;
+        }
+
+        if (action === 'update-color') {
+            const currentColor = row.getData().color;
+            if (currentColor && currentColor !== '-') {
+                const allRows = state.table.getRows();
+                allRows.forEach(r => {
+                    const rowData = r.getData();
+                    if (rowData.color !== '-') r.update({ color: currentColor });
+                    const firstCell = r.getCells()[2];
+                    refreshRowCalculations(firstCell, state.settings);
+                });
+                this.syncItems();
+                this.refreshTable();
+                bus.emit('order:table:refreshed', state.order);
+                this.markOrderAsDirty();
+            }
+            return;
+        }
+
+        if (action === 'update-discount') {
+            const currentDiscount = row.getData().discount;
+            if (currentDiscount !== null && currentDiscount !== undefined) {
+                const allRows = state.table.getRows();
+                allRows.forEach(r => {
+                    r.update({ discount: currentDiscount });
+                    const firstCell = r.getCells()[2];
+                    refreshRowCalculations(firstCell, state.settings);
+                });
+                this.syncItems();
+                this.refreshTable();
+                bus.emit('order:table:refreshed', state.order);
+                this.markOrderAsDirty();
+            }
+            return;
+        }
+
+        if (action === 'view-sketch') {
+            const firstCell = row.getCells()[0];
+            sketchEditor(firstCell, state.settings, state.order, (data) => {
+                this.syncItems();
+                this.refreshTable();
+                bus.emit('order:table:refreshed', state.order);
+                this.markOrderAsDirty();
+                console.log('Updated sketch from editor:', data);
+            });
+        }
+    }
+
+    bindTableMenuActions = () => {
+        if (this._tableMenuActionsBound) return;
+        this._tableMenuActionsBound = true;
+
+        document.addEventListener('click', (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            const actionTarget = target?.closest?.('.tableActionsCont [data-action]');
+            if (!actionTarget) return;
+
+            const action = actionTarget.getAttribute('data-action') || '';
+            const index = actionTarget.getAttribute('data-index') || '';
+            let row = null;
+
+            const rowEl = actionTarget.closest('.tabulator-row');
+            if (rowEl) {
+                row = state.table?.getRows?.()?.find(r => r.getElement() === rowEl) || null;
+            }
+
+            if (state.table?.getRowFromPosition && !Number.isNaN(Number(index))) {
+                row = row || state.table.getRowFromPosition(Number(index));
+            }
+            if (!row) {
+                row = state.table?.getRows?.()?.find(r => String(r.getPosition()) === String(index));
+            }
+            if (!row) return;
+
+            event.preventDefault();
+            this.handleTableMenuAction(action, row);
+        });
+    }
+
+    bindDropdownLayering = () => {
+        if (this._dropdownLayeringBound) return;
+        this._dropdownLayeringBound = true;
+
+        document.addEventListener('shown.bs.dropdown', (event) => {
+            const dropdownRoot = event.target instanceof Element
+                ? event.target.closest('.tableActionsCont')
+                : null;
+            const rowEl = dropdownRoot?.closest?.('.tabulator-row');
+            if (rowEl) rowEl.classList.add('dropdown-open-row');
+        });
+
+        document.addEventListener('hidden.bs.dropdown', (event) => {
+            const dropdownRoot = event.target instanceof Element
+                ? event.target.closest('.tableActionsCont')
+                : null;
+            const rowEl = dropdownRoot?.closest?.('.tabulator-row');
+            if (rowEl) rowEl.classList.remove('dropdown-open-row');
+        });
+    }
+
     canAddRows = () => {
+        // For a fresh/new order (no order id yet), always allow row creation.
+        if (!state.order?.id) return true;
         return !(state.order?.waybill?.number);
     }
 
@@ -126,6 +287,15 @@ export class OrderPane {
             sortable: false,
             sorter: false,
             data: state.order.items || [],
+            rowFormatter: (row) => {
+                const el = row.getElement();
+                const excluded = isExcludedFromInvoice(row.getData());
+                if (excluded) {
+                    el.style.opacity = '0.55';
+                } else {
+                    el.style.opacity = '';
+                }
+            },
             rowHeight: 28, // Reduce row height from default 38px
             headerHeight: 30, // Optionally reduce header height too
             columns: [
@@ -405,169 +575,41 @@ export class OrderPane {
                     headerSort: false,
                     formatter: function (cell) {
                         const i = cell.getRow().getPosition();
+                        const rowData = cell.getRow().getData();
+                        const isEditable = isAllowedToEdit(rowData).allow;
+                        const isExcluded = isExcludedFromInvoice(rowData);
 
                         return /*html*/`
                             <div class="dropdown tableActionsCont">
                                 <svg id="tableActions${i}" data-bs-toggle="dropdown" data-boundary="viewport" aria-expanded="false" xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-three-dots-vertical dropdown-toggle po" viewBox="0 0 16 16">
                                     <path d="M9.5 13a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm0-5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0z"/>
                                 </svg>
-                                <ul class="dropdown-menu ${isAllowedToEdit(cell.getRow().getData()).allow ? '' : 'd-none'}" aria-labelledby="tableActions${i}">
-                                    <li><a class="dropdown-item po update-cm" href="#" data-index="${i}"><i class="bi bi-check2-square"></i> ${__html('CM')}</a></li>
-                                    ${hasSecondDimension ? `<li><a class="dropdown-item po update-color" href="#" data-index="${i}"><i class="bi bi-palette"></i> ${__html(dimension2Label)}</a></li>` : ''}
-                                    <li><a class="dropdown-item po update-coating" href="#" data-index="${i}"><i class="bi bi-droplet"></i> ${__html(dimension1Label)}</a></li>
-                                    <li><a class="dropdown-item po update-discount" href="#" data-index="${i}"><i class="bi bi-percent"></i> ${__html('Discount')}</a></li>
-                                    <li><a class="dropdown-item po view-sketch" href="#" data-index="${i}"><i class="bi bi-pencil-square"></i> ${__html('Sketch')}</a></li>
-                                    <li><hr class="dropdown-divider"></li>
-                                    <li><a class="dropdown-item po delete-row" href="#" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>
+                                <ul class="dropdown-menu" aria-labelledby="tableActions${i}">
+                                    ${isEditable ? `
+                                    <li><a class="dropdown-item po update-cm" href="#" data-action="update-cm" data-index="${i}"><i class="bi bi-check2-square"></i> ${__html('CM')}</a></li>
+                                    ${hasSecondDimension ? `<li><a class="dropdown-item po update-color" href="#" data-action="update-color" data-index="${i}"><i class="bi bi-palette"></i> ${__html(dimension2Label)}</a></li>` : ''}
+                                    <li><a class="dropdown-item po update-coating" href="#" data-action="update-coating" data-index="${i}"><i class="bi bi-droplet"></i> ${__html(dimension1Label)}</a></li>
+                                    <li><a class="dropdown-item po update-discount" href="#" data-action="update-discount" data-index="${i}"><i class="bi bi-percent"></i> ${__html('Discount')}</a></li>
+                                    <li><a class="dropdown-item po view-sketch" href="#" data-action="view-sketch" data-index="${i}"><i class="bi bi-pencil-square"></i> ${__html('Sketch')}</a></li>
+                                    <li><hr class="dropdown-divider"></li>` : ''}
+                                    ${!isEditable ? `
+                                    <li>
+                                        <a class="dropdown-item po toggle-invoice-exclusion" href="#" data-action="toggle-invoice-exclusion" data-index="${i}">
+                                            <i class="bi ${isExcluded ? 'bi-arrow-counterclockwise' : 'bi-x-circle'}"></i>
+                                            ${isExcluded ? __html('Restore') : __html('Cancel')}
+                                        </a>
+                                    </li>` : ''}
+                                    ${isEditable ? `
+                                    <li><a class="dropdown-item po delete-row" href="#" data-action="delete-row" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>` : ''}
                                 </ul>
                             </div>`;
-                    },
-                    cellClick: function (e, cell) {
-
-                        if (e.target.classList.contains('delete-row')) {
-
-                            const rowData = cell.getRow().getData();
-
-                            console.log('Deleting row:', rowData);
-
-                            const is = isAllowedToEdit(rowData);
-                            if (!is.allow) {
-
-                                toast(is.reason || 'You are not allowed to edit this row.');
-                                return;
-                            }
-
-                            cell.getRow().delete();
-                        }
-
-                        if (e.target.classList.contains('update-cm')) {
-                            e.preventDefault();
-                            const currentRowData = cell.getRow().getData();
-                            const currentCM = currentRowData.cm;
-                            if (currentCM !== null && currentCM !== undefined) {
-
-                                // Update CM for all rows
-                                const allRows = state.table.getRows();
-                                allRows.forEach(row => {
-                                    row.update({ cm: currentCM });
-                                });
-                                // Sync items after update
-                                self.syncItems();
-
-                                self.refreshTable();
-
-                                bus.emit('order:table:refreshed', state.order);
-                            }
-                        }
-
-                        if (e.target.classList.contains('update-coating')) {
-
-                            e.preventDefault();
-                            const currentRowData = cell.getRow().getData();
-                            const currentCoating = currentRowData.coating;
-
-                            if (currentCoating && currentCoating !== '-') {
-
-                                // Update coating for all rows except those with '-'
-                                const allRows = state.table.getRows();
-                                allRows.forEach(row => {
-                                    const rowData = row.getData();
-                                    if (rowData.coating !== '-') {
-                                        row.update({ coating: currentCoating });
-                                    }
-                                });
-
-                                // Sync items after update
-                                self.syncItems();
-
-                                allRows.forEach(row => {
-                                    const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    refreshRowCalculations(firstCell, state.settings);
-                                });
-
-                                self.syncItems();
-                                self.refreshTable();
-                            }
-                        }
-
-                        if (e.target.classList.contains('update-color')) {
-
-                            e.preventDefault();
-                            const currentRowData = cell.getRow().getData();
-                            const currentColor = currentRowData.color;
-                            if (currentColor && currentColor !== '-') {
-
-                                // Update color for all rows except those with '-'
-                                const allRows = state.table.getRows();
-                                allRows.forEach(row => {
-                                    const rowData = row.getData();
-                                    if (rowData.color !== '-') {
-                                        row.update({ color: currentColor });
-                                    }
-
-                                    const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    refreshRowCalculations(firstCell, state.settings);
-                                });
-
-                                // Sync items after update
-                                self.syncItems();
-                                self.refreshTable();
-                                // state.table.redraw(true);
-
-                                bus.emit('order:table:refreshed', state.order);
-                                self.markOrderAsDirty();
-                            }
-                        }
-
-                        if (e.target.classList.contains('update-discount')) {
-
-                            e.preventDefault();
-                            const currentRowData = cell.getRow().getData();
-                            const currentDiscount = currentRowData.discount;
-                            if (currentDiscount !== null && currentDiscount !== undefined) {
-
-                                // Update discount for all rows
-                                const allRows = state.table.getRows();
-                                allRows.forEach(row => {
-                                    row.update({ discount: currentDiscount });
-
-                                    const firstCell = row.getCells()[2]; // Get any cell from the row
-                                    refreshRowCalculations(firstCell, state.settings);
-                                });
-
-                                // Sync items after update
-                                self.syncItems();
-                                self.refreshTable();
-                                // state.table.redraw(true);
-
-                                bus.emit('order:table:refreshed', state.order);
-                                self.markOrderAsDirty();
-                            }
-                        }
-
-                        if (e.target.classList.contains('view-sketch')) {
-
-                            console.log('View sketch for row:', cell.getRow().getData());
-
-                            sketchEditor(cell, state.settings, state.order, (data) => {
-
-                                // Sync items and trigger refresh
-                                self.syncItems();
-                                self.refreshTable();
-
-                                bus.emit('order:table:refreshed', state.order);
-                                self.markOrderAsDirty();
-                                // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
-                                console.log('Updated sketch from editor:', data);
-                            });
-                        }
                     }
                 }
             ]
         });
 
         // Add event listener for row deletion
-        state.table.on("rowDeleted", (row) => {
+        state.table.on("rowDeleted", () => {
             this.syncItems();
             bus.emit('order:table:refreshed', state.order);
             this.markOrderAsDirty();
@@ -591,7 +633,14 @@ export class OrderPane {
             this.markOrderAsDirty();
         });
 
-        if (this.canAddRows() && state.order?.items?.length === 0) setTimeout(() => { addRow() }, 100);
+        if (this.canAddRows()) {
+            setTimeout(() => {
+                const rowCount = state.table?.getRows?.().length || 0;
+                if (rowCount === 0) addRow();
+            }, 100);
+        }
+        this.bindTableMenuActions();
+        this.bindDropdownLayering();
     }
 
     syncItems = () => {
@@ -657,8 +706,6 @@ export class OrderPane {
     refreshTable = () => {
 
         // Preserve scroll position during redraw
-        const scrollElement = document.querySelector('#order-table .tabulator-tableholder');
-        const scrollLeft = scrollElement ? scrollElement.scrollLeft : 0;
         state.table.redraw(false);
         // setTimeout(() => {
         //     const scrollElementAfter = document.querySelector('#order-table .tabulator-tableholder');

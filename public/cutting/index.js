@@ -22,7 +22,26 @@ class Cutting {
     constructor() {
 
         // connect to backend
+        this.summary = [];
         this.init();
+    }
+
+    slugify = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '-');
+
+    applySummaryCounters = () => {
+        if (!Array.isArray(this.summary) || this.summary.length === 0) return;
+
+        this.summary.forEach((item) => {
+            const coating = this.slugify(item?.coating);
+            const color = this.slugify(item?.color);
+            const selector = `.color-card[data-slug="${coating}-${color}"] .counter-bubble`;
+            const counterBubble = document.querySelector(selector);
+            if (!counterBubble) return;
+
+            const count = Number(item?.count) || 0;
+            counterBubble.textContent = String(count);
+            counterBubble.style.display = count > 0 ? 'block' : 'none';
+        });
     }
 
     init = () => {
@@ -82,6 +101,7 @@ class Cutting {
                 this.html();
 
                 this.listeners();
+                this.applySummaryCounters();
 
                 // set page title
                 document.title = __html('Metal Cutting');
@@ -91,17 +111,8 @@ class Cutting {
         // get cutting summary
         getOrdersCuttingSummary({}, (response) => {
 
-            response.summary.forEach((item) => {
-
-                const selector = `.color-card[data-slug="${item.coating.toLowerCase().replace(/\s+/g, '-')}-${item.color.toLowerCase().replace(/\s+/g, '-')}"] .counter-bubble`;
-
-                const counterBubble = document.querySelector(selector);
-
-                if (counterBubble) {
-                    counterBubble.textContent = item.count;
-                    counterBubble.style.display = item.count > 0 ? 'block' : 'none';
-                }
-            });
+            this.summary = Array.isArray(response?.summary) ? response.summary : [];
+            this.applySummaryCounters();
         });
     }
 
