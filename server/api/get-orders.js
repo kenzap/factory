@@ -57,6 +57,12 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, sea
         params.push(`${filters.client.name.trim()}`);
     }
 
+    const directOrderId = String(filters.id || '').trim();
+    if (directOrderId) {
+        whereConditions.push(`js->'data'->>'id' = $${params.length + 1}`);
+        params.push(directOrderId);
+    }
+
     const searchText = String(filters.search || '').trim();
     if (searchText) {
         const searchConditions = [];
@@ -84,7 +90,7 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, sea
     }
 
     // transactions log
-    if (filters.for === 'manufacturing') {
+    if (filters.for === 'manufacturing' && !directOrderId) {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 1);
         whereConditions.push(`((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL) 

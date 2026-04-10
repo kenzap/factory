@@ -3,7 +3,11 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { makeMoneoRequest } from './utils.js';
 
-const isNonEmpty = (value) => typeof value === 'string' && value.trim() !== '';
+const isNonEmpty = (value) => {
+    if (value === null || value === undefined) return false;
+    const normalized = String(value).trim().toLowerCase();
+    return normalized !== '' && normalized !== 'null' && normalized !== 'undefined';
+};
 const normalizeName = (value = '') => value.toString().trim().toLowerCase();
 
 const normalizeRegNumber = (value = '') => value
@@ -253,7 +257,7 @@ export const syncOldClientIds = async (db, logger, options = {}) => {
         const dryRun = options?.dryRun === true;
 
         const __dirname = path.dirname(fileURLToPath(import.meta.url));
-        const clientsPath = path.join(__dirname, '../assets/clients.json');
+        const clientsPath = path.join(__dirname, '../assets/clients_with_ids_for_moneo.json');
         const fileData = JSON.parse(fs.readFileSync(clientsPath, 'utf8'));
         const legacyRows = fileData?.[2]?.data || [];
 
@@ -262,6 +266,7 @@ export const syncOldClientIds = async (db, logger, options = {}) => {
                 _id,
                 js->'data'->>'name' AS name,
                 js->'data'->>'legal_name' AS legal_name,
+                js->'data'->>'reg_number' AS reg_number,
                 js->'extensions'->'moneo'->>'id' AS moneo_id
             FROM data
             WHERE ref = $1 AND sid = $2

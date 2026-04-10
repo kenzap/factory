@@ -50,33 +50,34 @@ export class PreviewDocument {
 
         // render modal
         this.modal.querySelector(".modal-dialog").classList.add('modal-xl');
-        this.modal.querySelector(".modal-title").innerHTML = "";
-
-        // modal footer
-        const modalFooter = this.modal.querySelector(".modal-footer");
-        modalFooter.classList.remove('d-none');
-        modalFooter.innerHTML = `
-            <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
-                <i class="bi bi-envelope me-1"></i> ${__html('Email')}
-                ${this.order[this.typeKey]?.email_sent_date ? ` ${toLocalUserDateTime(this.order[this.typeKey].email_sent_date)}` : ''}
-            </button>
-            <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
-                <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}
-            </button>
-            <button type="button" class="btn btn-outline-dark btn-print-pdf d-none btn-modal">
-                <i class="bi bi-printer me-1"></i> ${__html('Print')}
-            </button>
-            <button type="button" class="btn btn-outline-dark btn-download-pdf d-none btn-modal">
-                <i class="bi bi-download me-1"></i> ${__html('Download PDF')}
-            </button>
-            <button type="button" class="btn btn-dark btn-close-modal btn-modal" data-bs-dismiss="modal">
-                ${__html('Close')}
-            </button>
-        `;
-
-        this.modal.querySelector(".modal-body").innerHTML = `
-            <div class="form-cont pdf-cont">
-                 <iframe id="pdfPreview" style="width: 100%; height: 600px; border: none;"></iframe>
+        this.modal.querySelector(".modal-dialog").classList.remove('modal-fullscreen');
+        this.modal.querySelector(".modal-content").innerHTML = `
+            <div class="modal-header border-0">
+                <h5 class="modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" tabindex="-1"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-cont pdf-cont">
+                    <iframe id="pdfPreview" style="width: 100%; height: 600px; border: none;"></iframe>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-outline-dark btn-document-send-email btn-modal">
+                    <i class="bi bi-envelope me-1"></i> ${__html('Email')}
+                    ${this.order[this.typeKey]?.email_sent_date ? ` ${toLocalUserDateTime(this.order[this.typeKey].email_sent_date)}` : ''}
+                </button>
+                <button type="button" class="btn btn-outline-dark btn-document-annul btn-modal ${this.type !== 'waybill' ? 'd-none' : ''}">
+                    <i class="bi bi-x-circle me-1"></i> ${__html('Annul')}
+                </button>
+                <button type="button" class="btn btn-outline-dark btn-print-pdf d-none btn-modal">
+                    <i class="bi bi-printer me-1"></i> ${__html('Print')}
+                </button>
+                <button type="button" class="btn btn-outline-dark btn-download-pdf d-none btn-modal">
+                    <i class="bi bi-download me-1"></i> ${__html('Download PDF')}
+                </button>
+                <button type="button" class="btn btn-dark btn-close-modal btn-modal" data-bs-dismiss="modal">
+                    ${__html('Close')}
+                </button>
             </div>`;
 
         this.modal_cont.show();

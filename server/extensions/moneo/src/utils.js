@@ -1,4 +1,12 @@
 /**
+ * Small async sleep utility used for throttling requests.
+ * @param {number} ms - Delay duration in milliseconds.
+ * @returns {Promise<void>}
+ */
+export const delay = (ms = 0) =>
+    new Promise((resolve) => setTimeout(resolve, Math.max(0, Number(ms) || 0)));
+
+/**
  * Makes an authenticated request to the Moneo API
  * @async
  * @param {string} endpoint - The API endpoint path (e.g., '/api/v1/resource')
@@ -12,6 +20,8 @@
  * @throws {Error} When the API response status is not ok (response.ok === false)
  */
 export const makeMoneoRequest = async (endpoint, config, payload) => {
+
+    await delay(250)
 
     if (!config.get("MONEO_API_BASE") || !config.get("MONEO_AUTH_TOKEN") || !config.get("COMPANY_UID")) {
         throw new Error('Missing Moneo config. Ensure MONEO_API_BASE, MONEO_AUTH_TOKEN and COMPANY_UID are set.');

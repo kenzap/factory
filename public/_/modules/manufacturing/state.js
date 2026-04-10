@@ -1,6 +1,7 @@
 export const state = {
     filters: {
         for: "manufacturing",
+        id: '',
         client: {},
         dateFrom: '',
         dateTo: '',

@@ -12,7 +12,7 @@ import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 */
 async function saveClient(data) {
 
-    const client = getDbConnection();
+    const db = getDbConnection();
 
     if (!data) return { success: false, error: 'no data provided' };
 
@@ -20,6 +20,16 @@ async function saveClient(data) {
     if (!data._id) data._id = makeId();
 
     let response = null;
+    const now = Math.floor(Date.now() / 1000);
+
+    let existingJs = {};
+
+    const selectQuery = `
+        SELECT js
+        FROM data
+        WHERE _id = $1 AND ref = $2 AND sid = $3
+        LIMIT 1
+    `;
 
     // Get orders
     let query = `
@@ -30,18 +40,39 @@ async function saveClient(data) {
             js = EXCLUDED.js
         RETURNING _id`;
 
-    const params = [data._id, 0, 'entity', sid, JSON.stringify({ data: data, meta: { created: Math.floor(Date.now() / 1000), updated: Math.floor(Date.now() / 1000) } })];
-
     try {
 
-        await client.connect();
+        await db.connect();
 
-        const result = await client.query(query, params);
+        const existingResult = await db.query(selectQuery, [data._id, 'entity', sid]);
+        existingJs = existingResult.rows?.[0]?.js || {};
+
+        const mergedData = {
+            ...(existingJs.data || {}),
+            ...data
+        };
+
+        const mergedMeta = {
+            ...(existingJs.meta || {}),
+            created: existingJs.meta?.created || now,
+            updated: now
+        };
+
+        // Preserve unknown top-level keys (e.g. extensions.moneo) on update.
+        const mergedJs = {
+            ...existingJs,
+            data: mergedData,
+            meta: mergedMeta
+        };
+
+        const params = [data._id, 0, 'entity', sid, JSON.stringify(mergedJs)];
+
+        const result = await db.query(query, params);
 
         response = result.rows[0];
 
     } finally {
-        await client.end();
+        await db.end();
     }
 
     return response;
@@ -52,12 +83,8 @@ function saveClientApi(app) {
 
     app.post('/api/save-client/', authenticateToken, async (_req, res) => {
 
-        // console.log('saveClientApi _req.body', _req.body);
-
         const data = _req.body;
         const response = await saveClient(data);
-
-        // console.log('/api/save-client/ response', response);
 
         res.json({ success: true, data: response });
     });

@@ -1,5 +1,8 @@
 import { InvoiceCalculator } from '@factory/tax-core/calculator';
 import { extractCountryFromVAT } from '@factory/tax-core/index';
+import { getClient, getSellerCountry } from './db/clients.js'; // waybills and invoices
+import { getOrdersForInvoiceSync, updateOrderMoneoId } from './db/invoices.js'; // waybills and invoices
+import { getCarryOverPaymentsForReceiptSync } from './db/payments.js'; // payments
 import { convertToDateString, makeMoneoRequest, roundToTwoDecimals } from './utils.js';
 
 const getPreviousMonthRange = () => {
@@ -21,243 +24,53 @@ const extractMoneoId = (response) => {
     return row[1][4][0] || null;
 };
 
-async function getOrdersForInvoiceSync(db, dateStart, dateEnd, limit) {
-    const query = `
-        SELECT
-            _id,
-            COALESCE(js->'data'->>'id', '') AS id,
-            COALESCE(js->'data'->>'name', '') AS name,
-            COALESCE(js->'data'->>'address', '') AS address,
-            COALESCE(js->'data'->>'eid', '') AS eid,
-            COALESCE(js->'data'->'price'->>'tax_total', '0') AS tax_total,
-            COALESCE(js->'data'->'price'->>'grand_total', '0') AS grand_total,
-            js->'data'->'invoice' AS invoice,
-            js->'data'->'payment' AS payment,
-            js->'data'->'waybill' AS waybill,
-            js->'data'->'items' AS items
-        FROM data
-        WHERE ref = $1
-          AND sid = $2
-          AND js->'data'->'waybill'->>'number' IS NOT NULL
-          AND js->'data'->'waybill'->>'number' != ''
-          AND js->'data'->'waybill'->>'date' >= $3
-          AND js->'data'->'waybill'->>'date' <= $4
-          AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
-          AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)
-          AND js->'extensions'->'moneo'->'invoiceid' IS NULL
-        ORDER BY js->'data'->'waybill'->>'date' ASC
-        LIMIT $5
-    `;
+// function buildReceiptUpdatePayload(config, order) {
+//     const hasWaybill = !!order?.waybill?.number;
+//     const isWaybillPaid = order?.payment?.date && hasWaybill;
+//     const id = order?.id || order?._id?.substring(0, 8) || '';
+//     const comment = order?.invoice?.number || `#${id}`;
+//     const rowComment = isWaybillPaid
+//         ? `Pavadzīme (${order.waybill.number})`
+//         : (order?.invoice?.number ? `Priekšapmaksa #${String(order.invoice.number).trim()}` : `Nav dati #${id}`);
 
-    const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
-    return result.rows || [];
-}
-
-async function getOrdersForReceiptSync(db, dateStart, dateEnd, limit) {
-    const query = `
-        SELECT
-            _id,
-            COALESCE(js->'data'->>'id', '') AS id,
-            COALESCE(js->'data'->>'name', '') AS name,
-            COALESCE(js->'data'->>'address', '') AS address,
-            COALESCE(js->'data'->>'eid', '') AS eid,
-            COALESCE(js->'data'->'price'->>'grand_total', '0') AS grand_total,
-            js->'data'->'invoice' AS invoice,
-            js->'data'->'payment' AS payment,
-            js->'data'->'waybill' AS waybill,
-            js->'extensions'->'moneo'->>'invoiceid' AS moneo_invoice_id
-        FROM data
-        WHERE ref = $1
-          AND sid = $2
-          AND js->'data'->'payment'->>'date' >= $3
-          AND js->'data'->'payment'->>'date' <= $4
-          AND (
-                js->'data'->'waybill'->>'date' IS NULL
-                OR js->'data'->'waybill'->>'date' = ''
-                OR js->'data'->'waybill'->>'date' >= $3
-          )
-          AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
-          AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)
-          AND js->'extensions'->'moneo'->'receiptid' IS NULL
-          AND js->'data'->'invoice'->>'number' != ''
-        ORDER BY js->'data'->'payment'->>'date' ASC
-        LIMIT $5
-    `;
-
-    const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
-    return result.rows || [];
-}
-
-/**
- * Payments received in the previous month for waybills issued before previous month.
- * These are carry-over receipts that were not synced in the original waybill month.
- */
-async function getCarryOverPaymentsForReceiptSync(db, dateStart, dateEnd, limit) {
-    const query = `
-        SELECT
-            _id,
-            COALESCE(js->'data'->>'id', '') AS id,
-            COALESCE(js->'data'->>'name', '') AS name,
-            COALESCE(js->'data'->>'address', '') AS address,
-            COALESCE(js->'data'->>'eid', '') AS eid,
-            COALESCE(js->'data'->'price'->>'grand_total', '0') AS grand_total,
-            js->'data'->'invoice' AS invoice,
-            js->'data'->'payment' AS payment,
-            js->'data'->'waybill' AS waybill,
-            js->'extensions'->'moneo'->>'invoiceid' AS moneo_invoice_id,
-            js->'extensions'->'moneo'->>'receiptid' AS moneo_receipt_id
-        FROM data
-        WHERE ref = $1
-          AND sid = $2
-          AND js->'data'->'payment'->>'date' >= $3
-          AND js->'data'->'payment'->>'date' <= $4
-          AND js->'data'->'waybill'->>'date' IS NOT NULL
-          AND js->'data'->'waybill'->>'date' < $3
-          AND js->'data'->'waybill'->>'number' IS NOT NULL
-          AND js->'data'->'waybill'->>'number' != ''
-          AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
-          AND ((js->'data'->'transaction')::boolean = false OR js->'data'->'transaction' IS NULL)
-          AND js->'extensions'->'moneo'->'receiptid' IS NOT NULL
-          AND js->'data'->'invoice'->>'number' != ''
-        ORDER BY js->'data'->'payment'->>'date' ASC
-        LIMIT $5
-    `;
-
-    const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
-    return result.rows || [];
-}
-
-function buildReceiptUpdatePayload(config, order) {
-    const hasWaybill = !!order?.waybill?.number;
-    const isWaybillPaid = order?.payment?.date && hasWaybill;
-    const id = order?.id || order?._id?.substring(0, 8) || '';
-    const comment = order?.invoice?.number || `#${id}`;
-    const rowComment = isWaybillPaid
-        ? `Pavadzīme (${order.waybill.number})`
-        : (order?.invoice?.number ? `Priekšapmaksa #${String(order.invoice.number).trim()}` : `Nav dati #${id}`);
-
-    return {
-        request: { compuid: config.get('COMPANY_UID') },
-        data: {
-            'sales.receipts': {
-                fieldlist: [
-                    'sernr',
-                    'regdate',
-                    'transdate',
-                    'paysum',
-                    'comment'
-                ],
-                data: [[
-                    String(order?.moneo_receipt_id || ''),
-                    convertToDateString(order?.invoice?.date),
-                    convertToDateString(order?.payment?.date),
-                    roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
-                    comment
-                ]]
-            },
-            'sales.receipts_details_rows': {
-                fieldlist: [
-                    '_sernr',
-                    '_rownr',
-                    'rowcomment',
-                    'rowsum',
-                    'bankrowsum'
-                ],
-                data: [[
-                    String(order?.moneo_receipt_id || ''),
-                    0,
-                    rowComment,
-                    roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
-                    roundToTwoDecimals(order?.payment?.amount || 0)
-                ]]
-            }
-        }
-    };
-}
-
-async function getTransactionsForReceiptSync(db, dateStart, dateEnd, limit) {
-    const query = `
-        SELECT
-            _id,
-            COALESCE(js->'data'->>'id', '') AS id,
-            COALESCE(js->'data'->>'name', '') AS name,
-            COALESCE(js->'data'->>'address', '') AS address,
-            COALESCE(js->'data'->>'eid', '') AS eid,
-            COALESCE(js->'data'->'price'->>'grand_total', '0') AS grand_total,
-            js->'data'->'invoice' AS invoice,
-            js->'data'->'payment' AS payment,
-            js->'data'->'waybill' AS waybill,
-            js->'extensions'->'moneo'->>'invoiceid' AS moneo_invoice_id
-        FROM data
-        WHERE ref = $1
-          AND sid = $2
-          AND js->'data'->'payment'->>'date' >= $3
-          AND js->'data'->'payment'->>'date' <= $4
-          AND ((js->'data'->'draft')::boolean = false OR js->'data'->'draft' IS NULL)
-          AND ((js->'data'->'transaction')::boolean = true AND js->'data'->'transaction' IS NOT NULL)
-          AND js->'extensions'->'moneo'->'receiptid' IS NULL
-          AND js->'extensions'->'moneo'->'invoiceid' IS NULL
-        ORDER BY js->'data'->'payment'->>'date' ASC
-        LIMIT $5
-    `;
-
-    const result = await db.query(query, ['order', db.sid, dateStart, dateEnd, limit]);
-    return result.rows || [];
-}
-
-async function getClient(eid, db) {
-    const result = await db.query(
-        `SELECT
-            _id,
-            js->'data'->>'legal_name' AS legal_name,
-            js->'data'->>'entity' AS entity,
-            js->'data'->>'vat_status' AS vat_status,
-            js->'data'->>'vat_number' AS vat_number,
-            js->'data'->>'country_code' AS country_code,
-            js->'extensions'->'moneo'->>'id' AS moneoid
-         FROM data WHERE ref = $1 AND sid = $2 AND _id = $3`,
-        ['entity', db.sid, eid]
-    );
-
-    return result.rows?.[0] || {};
-}
-
-async function getSellerCountry(db) {
-    const query = `
-        SELECT COALESCE(js->'data'->>'tax_region', 'LV') AS tax_region
-        FROM data
-        WHERE ref = $1 AND sid = $2
-        LIMIT 1
-    `;
-    const result = await db.query(query, ['settings', db.sid]);
-    return (result.rows?.[0]?.tax_region || 'LV').toUpperCase();
-}
-
-async function updateOrderMoneoId(db, orderId, field, value) {
-    const query = `
-        UPDATE data
-        SET js = jsonb_set(
-            jsonb_set(
-                jsonb_set(
-                    COALESCE(js, '{}'),
-                    '{extensions}',
-                    COALESCE(js->'extensions', '{}'),
-                    true
-                ),
-                '{extensions,moneo}',
-                COALESCE(js->'extensions'->'moneo', '{}'),
-                true
-            ),
-            ARRAY['extensions', 'moneo', $1]::text[],
-            to_jsonb($2::text),
-            true
-        )
-        WHERE _id = $3 AND ref = $4 AND sid = $5
-        RETURNING _id
-    `;
-
-    await db.query(query, [field, String(value), orderId, 'order', db.sid]);
-}
+//     return {
+//         request: { compuid: config.get('COMPANY_UID') },
+//         data: {
+//             'sales.receipts': {
+//                 fieldlist: [
+//                     'sernr',
+//                     'regdate',
+//                     'transdate',
+//                     'paysum',
+//                     'comment'
+//                 ],
+//                 data: [[
+//                     String(order?.moneo_invoice_id || ''),
+//                     convertToDateString(order?.invoice?.date),
+//                     convertToDateString(order?.payment?.date),
+//                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
+//                     comment
+//                 ]]
+//             },
+//             'sales.receipts_details_rows': {
+//                 fieldlist: [
+//                     '_sernr',
+//                     '_rownr',
+//                     'rowcomment',
+//                     'rowsum',
+//                     'bankrowsum'
+//                 ],
+//                 data: [[
+//                     String(order?.moneo_invoice_id || ''),
+//                     0,
+//                     rowComment,
+//                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
+//                     roundToTwoDecimals(order?.payment?.amount || 0)
+//                 ]]
+//             }
+//         }
+//     };
+// }
 
 function buildInvoicePayload(config, order, client, sellerCountry = 'LV') {
     const calculationItems = Array.isArray(order?.items)
@@ -366,12 +179,12 @@ function buildReceiptPayload(config, order, client) {
                 data: [[
                     client?.moneoid || '',
                     (client?.legal_name || order?.name || '').trim(),
-                    convertToDateString(order?.invoice?.date),
+                    convertToDateString(order?.waybill?.date),
                     convertToDateString(order?.payment?.date),
                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
                     'SEB',
                     'EUR',
-                    ['PR'],
+                    [order?.waybill?.date <= order?.payment?.date && order?.waybill?.number ? 'PAV' : 'PR'], // ['PAV'],
                     '0.00',
                     comment
                 ]]
@@ -383,15 +196,15 @@ function buildReceiptPayload(config, order, client) {
                 ],
                 data: [[
                     '',
-                    String(order?.moneo_invoice_id || ''),
+                    parseInt(order?.moneo_invoice_id || 0),
                     rowComment,
                     roundToTwoDecimals(order.id ? order?.grand_total || 0 : order?.payment?.amount || 0),
                     'EUR',
-                    'PR',
+                    order?.waybill?.date <= order?.payment?.date && order?.waybill?.number ? 'PAV' : 'PR', // 'PAV',
                     '0.00',
                     'B',
                     roundToTwoDecimals(order?.payment?.amount || 0),
-                    ''
+                    ``
                 ]]
             }
         }
@@ -473,8 +286,12 @@ async function processReceipts(db, logger, orders, config, dryRun = false) {
     for (const order of orders) {
         const client = await getClient(order.eid, db);
 
+        logger.info(`[moneo.processReceipts] Order: ${order.id}`, order)
+        logger.info(`[moneo.processReceipts] Client:`, client)
+
         if (!client?.moneoid) {
             results.push({
+                id: order.id,
                 order_id: order._id,
                 status: 'skipped',
                 reason: 'missing_client_moneo_id',
@@ -495,42 +312,43 @@ async function processReceipts(db, logger, orders, config, dryRun = false) {
     return results;
 }
 
-async function updateReceipt(db, logger, order, config, dryRun = false) {
-    const payload = buildReceiptUpdatePayload(config, order);
-    if (dryRun) {
-        return { order_id: order._id, moneo_receipt_id: String(order?.moneo_receipt_id || ''), status: 'pending', payload };
-    }
+// async function updateReceipt(db, logger, order, config, dryRun = false) {
+//     const payload = buildReceiptUpdatePayload(config, order);
+//     // const payload = buildReceiptPayload(config, order);
+//     if (dryRun) {
+//         return { order_id: order._id, moneo_invoice_id: String(order?.moneo_invoice_id || ''), status: 'pending', payload };
+//     }
 
-    await makeMoneoRequest('/sales.receipts/update/', config, payload);
-    logger.info(`[moneo.syncDocuments] Receipt updated order=${order._id} moneo_receipt_id=${order?.moneo_receipt_id || ''}`);
+//     await makeMoneoRequest('/sales.receipts/update/', config, payload);
+//     logger.info(`[moneo.syncDocuments] Receipt updated order=${order._id} moneo_invoice_id=${order?.moneo_invoice_id || ''}`);
 
-    return { order_id: order._id, moneo_receipt_id: String(order?.moneo_receipt_id || ''), payload, status: 'updated' };
-}
+//     return { order_id: order._id, moneo_invoice_id: String(order?.moneo_invoice_id || ''), payload, status: 'updated' };
+// }
 
-async function processReceiptUpdates(db, logger, orders, config, dryRun = false) {
-    const results = [];
+// async function processReceiptUpdates(db, logger, orders, config, dryRun = false) {
+//     const results = [];
 
-    for (const order of orders) {
-        if (!order?.moneo_receipt_id) {
-            results.push({
-                order_id: order._id,
-                status: 'skipped',
-                reason: 'missing_receipt_moneo_id'
-            });
-            continue;
-        }
+//     for (const order of orders) {
+//         if (!order?.moneo_invoice_id) {
+//             results.push({
+//                 order_id: order._id,
+//                 status: 'skipped',
+//                 reason: 'missing_moneo_invoice_id'
+//             });
+//             continue;
+//         }
 
-        try {
-            const updated = await updateReceipt(db, logger, order, config, dryRun);
-            results.push(updated);
-        } catch (error) {
-            logger.error(`[moneo.syncDocuments] Receipt update failed for order ${order._id}: ${error.message}`);
-            results.push({ order_id: order._id, status: 'failed', error: error.message });
-        }
-    }
+//         try {
+//             const updated = await updateReceipt(db, logger, order, config, dryRun);
+//             results.push(updated);
+//         } catch (error) {
+//             logger.error(`[moneo.syncDocuments] Receipt update failed for order ${order._id}: ${error.message}`);
+//             results.push({ order_id: order._id, status: 'failed', error: error.message });
+//         }
+//     }
 
-    return results;
-}
+//     return results;
+// }
 
 export const syncDocuments = async (db, logger, config, options = {}) => {
     const range = getPreviousMonthRange();
@@ -561,28 +379,28 @@ export const syncDocuments = async (db, logger, config, options = {}) => {
             return response;
         }
 
-        const receiptOrders = await getOrdersForReceiptSync(db, range.from, range.to, limit);
-        logger.info(`[moneo.syncDocuments] Receipt candidates: ${receiptOrders.length}`);
+        // const receiptOrders = await getOrdersForReceiptSync(db, range.from, range.to, limit);
+        // logger.info(`[moneo.syncDocuments] Receipt candidates: ${receiptOrders.length}`);
 
-        if (receiptOrders.length > 0) {
-            response.receipt = await processReceipts(db, logger, receiptOrders, config, dryRun);
-            return response;
-        }
+        // if (receiptOrders.length > 0) {
+        //     response.receipt = await processReceipts(db, logger, receiptOrders, config, dryRun);
+        //     return response;
+        // }
 
         const carryOverReceiptOrders = await getCarryOverPaymentsForReceiptSync(db, range.from, range.to, limit);
         logger.info(`[moneo.syncDocuments] Carry-over receipt candidates: ${carryOverReceiptOrders.length}`);
 
         if (carryOverReceiptOrders.length > 0) {
-            response.receipt_carry_over = await processReceiptUpdates(db, logger, carryOverReceiptOrders, config, dryRun);
+            response.receipt_carry_over = await processReceipts(db, logger, carryOverReceiptOrders, config, dryRun);
             return response;
         }
 
-        const transactionOrders = await getTransactionsForReceiptSync(db, range.from, range.to, limit);
-        logger.info(`[moneo.syncDocuments] Transaction candidates: ${transactionOrders.length}`);
+        // const transactionOrders = await getTransactionsForReceiptSync(db, range.from, range.to, limit);
+        // logger.info(`[moneo.syncDocuments] Transaction candidates: ${transactionOrders.length}`);
 
-        if (transactionOrders.length > 0) {
-            response.transactions = await processReceipts(db, logger, transactionOrders, config, dryRun);
-        }
+        // if (transactionOrders.length > 0) {
+        //     response.transactions = await processReceipts(db, logger, transactionOrders, config, dryRun);
+        // }
 
         return response;
     } catch (error) {

@@ -207,19 +207,6 @@ function viewProductionSlipApi(app, logger) {
                 getPaginatedPdfOptions(doc_path, __html(locale, 'Page'))
             );
 
-            // Save screenshot in development
-            if (process.env.NODE_ENV === 'development') {
-                const screenshotBuffer = await page.screenshot({
-                    fullPage: true,
-                    type: 'png'
-                });
-
-                const fs = await import('fs');
-                const path = await import('path');
-                const screenshotPath = path.join(process.cwd(), '/public/production-slip-screenshot.png');
-                await fs.promises.writeFile(screenshotPath, screenshotBuffer);
-            }
-
             await browser.close();
 
             // Send email if requested

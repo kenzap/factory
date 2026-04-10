@@ -6,7 +6,7 @@ import { getHtml } from "../_/components/users/html.js";
 import { AddUser } from "../_/components/users/modal_add_user.js";
 import { EditUser } from "../_/components/users/modal_edit_user.js";
 import { ManageUserRights } from "../_/components/users/modal_manage_user_rights.js";
-import { __html, hideLoader, initBreadcrumbs, link, log, onChange, onClick, onKeyUp } from "../_/helpers/global.js";
+import { __html, hideLoader, initBreadcrumbs, link, onChange, onClick, onKeyUp } from "../_/helpers/global.js";
 import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
 import { Header } from "../_/modules/header.js";
@@ -47,9 +47,6 @@ class Users {
 
         getUsers(this.filters, (response) => {
 
-            log(response);
-
-            // show UI loader
             if (!response.success) return;
 
             // hide UI loader
@@ -226,15 +223,13 @@ class Users {
         // stop here
         if (!this.firstLoad) return;
 
-        // console.log('Init users page listeners');
-
-        // add user listener
+        // add new user listener
         onClick('.btn-add-user-dialog', e => { new AddUser(); });
 
         // view activity logs
         onClick('.btn-view-events', this.viewEvents);
 
-        // search products activation
+        // init search users input
         onClick('.bi-search', this.searchUserActivate);
 
         // portal filter
@@ -257,12 +252,11 @@ class Users {
         const str = replaceQueryParam('page', 1, window.location.search);
         window.history.replaceState("pagination", document.title, window.location.pathname + str);
 
-        // document.querySelector('.table .bi-search').style.display = 'none';
         document.querySelector('.table thead tr th:nth-child(2) span').style.display = 'none';
         document.querySelector('.table thead tr th:nth-child(2) .search-cont').style.display = 'flex';
         document.querySelector('.table thead tr th:nth-child(2) .search-cont input').focus();
 
-        // search products
+        // refine user search results while typing
         onKeyUp('.table thead tr th:nth-child(2) .search-cont input', e => { this.filters.s = e.currentTarget.value; this.init(); });
     }
 

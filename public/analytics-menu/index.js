@@ -103,6 +103,12 @@ class AnalyticsMenu {
                                 rights: ['analytics_access'],
                             },
                             {
+                                text: __html('Production Throughput Forecast'),
+                                link: link('/report-production-throughput/'),
+                                target: '_blank',
+                                rights: ['analytics_access'],
+                            },
+                            {
                                 text: __html('Inventory Reports'),
                                 link: link('/inventory-reports/'),
                                 target: '_blank',

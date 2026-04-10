@@ -1,0 +1,168 @@
+@import url("../report-employee-performance/styles.css");
+
+.production-throughput-report .filters {
+    grid-template-columns: 1fr 0.9fr 0.9fr 0.85fr;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 24px;
+}
+
+.summary-cards {
+    padding: 0 24px 12px 24px;
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.summary-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e8edf5;
+    padding: 12px;
+}
+
+.summary-card h4 {
+    margin: 0 0 6px 0;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.summary-card .metric {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.table-container .panel {
+    border-radius: 15px;
+    overflow-x: auto;
+    overflow-y: auto;
+    padding: 24px;
+    background: #fff;
+}
+
+#throughputHeatmap.panel {
+    padding: 16px 0;
+}
+
+#throughputHeatmap h3,
+#throughputHeatmap .legend-text {
+    padding: 0 24px;
+}
+
+.heatmap-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    min-width: max-content;
+    font-size: 0.84rem;
+}
+
+.heatmap-table th,
+.heatmap-table td {
+    border: 1px solid #eef1f4;
+    text-align: center;
+    padding: 7px 5px;
+}
+
+.heatmap-table th:first-child,
+.heatmap-table td:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: #fff;
+    min-width: 320px;
+    max-width: 320px;
+    white-space: normal;
+    overflow: hidden;
+    text-overflow: clip;
+    box-shadow: 1px 0 0 #eef1f4;
+}
+
+.heat-cell {
+    font-variant-numeric: tabular-nums;
+    color: #0f172a;
+    min-width: 56px;
+}
+
+.num-cell {
+    min-width: 84px;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.group-row td {
+    background: #f8fafc;
+    text-align: left !important;
+    font-size: 0.85rem;
+    color: #334155;
+}
+
+.group-total-row td {
+    background: #f8fafc;
+    border-top: 2px solid #e2e8f0;
+    font-weight: 600;
+}
+
+.group-total-cell {
+    color: #1e293b;
+}
+
+.product-label {
+    display: block;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    line-height: 1.25;
+}
+
+.legend-text {
+    margin-top: 10px;
+    color: #64748b;
+    font-size: 0.8rem;
+}
+
+.groups-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.groups-table th,
+.groups-table td {
+    border-bottom: 1px solid #eef1f4;
+    text-align: left;
+    padding: 10px 8px;
+}
+
+.groups-table td.num,
+.groups-table th.num {
+    text-align: right;
+}
+
+@media (max-width: 1200px) {
+    .production-throughput-report .filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-cards {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 768px) {
+    .summary-cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 480px) {
+    .production-throughput-report .filters {
+        grid-template-columns: 1fr;
+    }
+
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+}

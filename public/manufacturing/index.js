@@ -10,8 +10,8 @@ import { renderPage } from "../_/components/manufacturing/render_page.js";
 import { Search } from "../_/components/manufacturing/search.js";
 import { SSEService } from "../_/components/manufacturing/sse.js";
 import { filterByGroup, refreshOrders, toggleNarrowMode } from "../_/components/manufacturing/utils.js";
-import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { sketchEditor } from "../_/components/order/order_sketch_editor.js";
+import { PreviewWorkLog } from "../_/components/order/preview_worklog.js";
 import { signOut } from "../_/helpers/auth.js";
 import { __html, hideLoader, slugify, toast } from "../_/helpers/global.js";
 import { AddBundle } from "../_/modules/manufacturing/add_bundle.js";
@@ -36,6 +36,7 @@ class Manufacturing {
         const urlParams = new URLSearchParams(window.location.search);
         const orderId = urlParams.get('id');
 
+        state.filters.id = orderId ? String(orderId).trim() : '';
         state.openOrderById = orderId ? orderId.substring(orderId.length - 4) : null;
         state.mode = urlParams.get('mode') ? urlParams.get('mode') : 'normal';
         state.viewMode = localStorage.getItem('manufacturingViewMode') || 'compact';
@@ -126,7 +127,7 @@ class Manufacturing {
         const item = order?.items.find(i => i._id === itemId);
         if (!item || !order) return;
 
-        sketchEditor(item, state.settings, order, () => {});
+        sketchEditor(item, state.settings, order, () => { });
     }
 
     addBundle(event, _id, title, color, coating, orderId) {

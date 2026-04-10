@@ -3,7 +3,7 @@
     "version": "1.0.0",
     "author": "Kenzap",
     "description": "A simple vanilla ES6 Node.js template with Rollup bundler",
-    "license": "Unlicense",
+    "license": "Apache-2.0",
     "type": "module",
     "scripts": {
         "dev": "nodemon --delay 2 server/server.js",

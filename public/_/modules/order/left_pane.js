@@ -2,6 +2,7 @@ import { priceFormat } from "../../../../packages/helpers/src/index.js";
 import { InvoiceCalculator } from "../../../../packages/tax-core/src/calculator.js";
 import { extractCountryFromVAT } from "../../../../packages/tax-core/src/index.js";
 import { deleteTransaction } from "../../api/delete_transaction.js";
+import { getOrderEltEstimate } from "../../api/get_order_elt_estimate.js";
 import { saveOrder } from "../../api/save_order.js";
 import { ClientAddressSearch } from "../../components/order/client_address_search.js";
 import { ClientContactSearch } from "../../components/order/client_contact_search.js";
@@ -96,6 +97,7 @@ export class LeftPane {
                             <i class="bi bi-arrow-right"></i>
                         </button>
                     </div>
+                    <div id="eltEstimate" class="form-text mt-1 mb-1">${__html('ELT: calculating...')}</div>
                 </div>
                 
                 <!-- Document Types -->
@@ -195,6 +197,40 @@ export class LeftPane {
         });
 
         this.updateDocumentButtonsState();
+        this.updateEltEstimate();
+    }
+
+    updateEltEstimate = () => {
+        const el = document.getElementById('eltEstimate');
+        if (!el) return;
+
+        const items = (state.order?.items || [])
+            .filter(item => !isExcludedFromInvoice(item))
+            .filter(item => (Number(item?.qty || 0) > 0) && (item?._id || item?.title))
+            .map(item => ({
+                _id: item?._id || '',
+                title: item?.title || '',
+                group: item?.group || '',
+                qty: Number(item?.qty || 0)
+            }));
+
+        if (items.length === 0) {
+            // el.textContent = __html('ELT: add products to estimate manufacturing time');
+            return;
+        }
+
+        getOrderEltEstimate({ items, order_id: state.order?.id || '' }, (response) => {
+            const days = Number(response?.estimate_days || 0);
+            const bestCaseDays = Number(response?.estimate_days_best_case || 0);
+
+            if (!days || response?.reason === 'no_history') {
+                el.textContent = __html('ELT: insufficient history for estimate');
+                return;
+            }
+
+            const roundedBestCaseDays = bestCaseDays > 0 ? Math.round(bestCaseDays) : Math.round(days);
+            el.textContent = __html('ELT: about %1$ day(s)', roundedBestCaseDays);
+        });
     }
 
     updateDocumentButtonsState = () => {
@@ -422,6 +458,7 @@ export class LeftPane {
         bus.on('order:table:refreshed', (data) => {
 
             this.summary();
+            this.updateEltEstimate();
         });
 
         bus.on('order:table:changed', () => {
@@ -450,11 +487,13 @@ export class LeftPane {
             }
 
             this.summary();
+            this.updateEltEstimate();
         });
 
         bus.on('order:client:data_loaded', () => {
 
             this.summary();
+            this.updateEltEstimate();
         });
 
         // bus.clear('client:removed');
@@ -480,6 +519,7 @@ export class LeftPane {
             state.clientContactSearch.data();
 
             this.summary();
+            this.updateEltEstimate();
         });
 
         // Summary

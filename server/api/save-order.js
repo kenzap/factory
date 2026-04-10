@@ -28,6 +28,7 @@ async function saveOrder(logger, data, user) {
 
         const currentTime = Math.floor(Date.now() / 1000);
         const currentDate = new Date().toISOString();
+        const toBoolean = (value) => value === true || value === 1 || value === '1' || value === 'true';
 
         if (!data._id) {
 
@@ -99,6 +100,19 @@ async function saveOrder(logger, data, user) {
                 created_ym: existingData.created_ym || `${new Date(existingData.created * 1000).getFullYear()}-${String(new Date(existingData.created * 1000).getMonth() + 1).padStart(2, '0')}`,
                 updated: currentTime
             };
+
+            // Stamp release-to-production date once when draft transitions true -> false.
+            // Never override existing rtp_date on later save operations.
+            const wasDraft = toBoolean(existingData?.draft);
+            const isDraftNow = toBoolean(data_new?.draft);
+            if (existingData?.rtp_date) {
+                data_new.rtp_date = existingData.rtp_date;
+            } else if (existingData?.str_date) {
+                // Backward compatibility for previously stored field name.
+                data_new.rtp_date = existingData.str_date;
+            } else if (wasDraft && !isDraftNow) {
+                data_new.rtp_date = currentDate;
+            }
 
             if (!data_new.operator) {
                 data_new.operator = existingData.operator || user.fname || '';
