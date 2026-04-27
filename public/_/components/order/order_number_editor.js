@@ -23,8 +23,8 @@ export const numberEditor = (cell, onRendered, success, cancel, editorParams) =>
     const rowData = cell.getRow().getData();
     const is = isAllowedToEdit(rowData);
 
-    // only adj or discount fields can be edited when not allowed
-    if (!is.allow && editorParams.field !== 'adj') {
+    // Keep legacy adj override for inventory locks, but waybill lock is stricter.
+    if (!is.allow && (is.lock === 'waybill' || editorParams.field !== 'adj')) {
 
         toast(is.reason || 'You are not allowed to edit this row.');
         cancel();

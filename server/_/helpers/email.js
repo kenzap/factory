@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import { getDbConnection, log_error, sid } from './index.js';
+import { broadcastOrderUpdate } from './order-live-update.js';
 import { getSettings } from './settings.js';
 
 /**
@@ -104,6 +105,7 @@ export async function markOrderEmailSent(id, type, email, user, logger) {
         `;
 
         await db.query(query_update, ['order', sid, id, JSON.stringify(data)]);
+        await broadcastOrderUpdate(db, id, user);
 
         logger.info(`Marked email_sent for Order ID: ${id} ${JSON.stringify(data)}`);
 

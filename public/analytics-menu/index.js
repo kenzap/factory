@@ -136,6 +136,12 @@ class AnalyticsMenu {
                                 link: link('/report-product-analytics/'),
                                 target: '_blank',
                                 rights: ['product_sales_report'],
+                            },
+                            {
+                                text: __html('Product Group Analytics'),
+                                link: link('/report-product-group-analytics/'),
+                                target: '_blank',
+                                rights: ['product_sales_report'],
                             }
                         ]
                     },

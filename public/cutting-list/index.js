@@ -1,6 +1,7 @@
 import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
+import { getAuthToken } from "../_/helpers/auth.js";
 import { __html, attr, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
 import { formatClientName, getFullClientName } from "../_/helpers/order.js";
 // import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
@@ -9,6 +10,7 @@ import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
 import { Session } from "../_/modules/session.js";
+import { stockSSE } from "../_/modules/sse/stock_sse.js";
 import { isAuthorized } from "../_/modules/unauthorized.js";
 
 /**
@@ -35,6 +37,11 @@ class CuttingList {
             coating: this.coating == 'Other' ? '' : this.coating || '',
             items: true
         };
+        this.sseUnsubscribe = null;
+        this.liveRefreshTimer = null;
+        this.liveRefreshPending = { orders: false, stock: false };
+        this.liveRefreshInFlight = false;
+        this.liveRefreshQueued = false;
 
         // connect to backend
         this.init();
@@ -108,6 +115,7 @@ class CuttingList {
             this.html();
 
             this.listeners();
+            this.setupSSE();
 
             document.title = __html('%1$ %2$', this.color, this.coating);
         });
@@ -124,34 +132,7 @@ class CuttingList {
                     <span>Available Stock</span>
                 </div>
                 <div class="stock-list bg-light pt-0" id="stockList">
-
-                    ${this.stock && this.stock.length > 0 ? this.stock.map(coil => `
-                    <div class="stock-item ${!coil.parent_coil_id ? "parent" : "child"}" data-coil="${coil._id}">
-                        <div class="vertical-text wmc">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
-                        <div class="coil-info">
-                            <div class="coil-header d-flex align-items-center flex-fill justify-content-between">
-                                <div class="coil-dimensions fs-5 wmc">${Number(coil.width).toLocaleString()} × ${this.parseCoilLength(coil.length)}</div>
-                                <div class="coil-parameters">
-                                    <div class="d-flex me-2">
-                                        <div class="form-check form-check-inline cbo m-0 p-0">
-                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="soft_${coil._id}" value="soft" data-index="0" data-field="type" ${coil?.parameters?.softness === 'soft' ? 'checked' : ''}>
-                                            <label class="form-check-label form-text mt-0 d-none" for="soft_${coil._id}">K</label>
-                                        </div>
-                                        <div class="form-check form-check-inline cbs m-0 p-0">
-                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="hard_${coil._id}" value="hard" data-index="0" data-field="type" ${coil?.parameters?.softness === 'hard' ? 'checked' : ''}>
-                                            <label class="form-check-label form-text mt-0 d-none" for="hard_${coil._id}">Z</label>
-                                        </div>
-                                        <div class="form-check form-check-inline cbw m-0 p-0">
-                                            <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="unknown_${coil._id}" value="unknown" data-index="0" data-field="type" ${coil?.parameters?.softness === 'unknown' ? 'checked' : ''}>
-                                            <label class="form-check-label form-text mt-0 d-none" for="unknown_${coil._id}">X</label>
-                                        </div>
-                                    </div> 
-                                </div>
-                            </div>
-                            <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
-                        </div>
-                    </div>
-                    `).join('') : `<div class="no-stock text-center text-muted py-4">${__html('No stock available')}</div>`}
+                    ${this.getStockListHtml()}
 
                 </div>
                 <div class="writeoff-button-container">
@@ -159,37 +140,274 @@ class CuttingList {
                     <i class="bi bi-eye-slash"></i> ${__html('Write Off Selected')}
                     </button>
                 </div>
-            </div>    
+                </div>    
             <div class="orders-panel">
                 <div id="archiveOrders" class="tab-content d-none"></div>
-                <div id="waitingOrders" class="tab-content">
-                    ${this.orders && this.orders.length > 0 ? this.orders.map(order => `
-                    <div class="order-group">
-                        <div class="order-header ${this.getEntireOrderStatusClass(order)}">
-                            <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - <span title="${attr(getFullClientName(order) || '')}">${formatClientName(order) || 'N/A'}</span> (${formatDate(order.due_date) || 'N/A'})</span>
-                            <span class="me-2 form-text text-dark">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
-                        </div>
-                        <div class="order-items">
-                            ${order.items ? order.items.map((item, index) => `
-                            <div class="order-item ${this.getStatusClass(item)}">
-                                <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-type="cutting" data-item="${order.id}-${index}" data-width="${item.formula_width_calc || 0}">
-                                <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}" target="/manufacturing/">${order.id}</a></span>
-                                <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
-                                <span class="item-dimensions">
-                                    <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 
-                                    <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
-                                </span>
-                                <span class="item-quantity">${item.qty || 1}</span>
-                                <input type="checkbox" class="checkbox item-manufactured ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" onchange="window.cutting_list.itemManufactured(event);" ${item?.inventory?.origin == 'm' ? 'checked' : ''} >
-                            </div>
-                            `).join('') : ''}
-                        </div>
-                    </div>
-                    `).join('') : `<div class="no-orders text-center text-muted py-4"> <i class="bi bi-inbox fs-3 mb-3 d-block"></i> ${__html('No records added')}</div>`}
-                </div>
+                <div id="waitingOrders" class="tab-content">${this.getOrdersHtml()}</div>
             </div>
         </div>
         `;
+    }
+
+    getStockListHtml = () => {
+        return this.stock && this.stock.length > 0 ? this.stock.map(coil => `
+            <div class="stock-item ${!coil.parent_coil_id ? "parent" : "child"}" data-coil="${coil._id}">
+                <div class="vertical-text wmc">${coil.thickness ? coil.thickness + getDimUnit(this.settings) : ""}</div>
+                <div class="coil-info">
+                    <div class="coil-header d-flex align-items-center flex-fill justify-content-between">
+                        <div class="coil-dimensions fs-5 wmc">${Number(coil.width).toLocaleString()} × ${this.parseCoilLength(coil.length)}</div>
+                        <div class="coil-parameters">
+                            <div class="d-flex me-2">
+                                <div class="form-check form-check-inline cbo m-0 p-0">
+                                    <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="soft_${coil._id}" value="soft" data-index="0" data-field="type" ${coil?.parameters?.softness === 'soft' ? 'checked' : ''}>
+                                    <label class="form-check-label form-text mt-0 d-none" for="soft_${coil._id}">K</label>
+                                </div>
+                                <div class="form-check form-check-inline cbs m-0 p-0">
+                                    <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="hard_${coil._id}" value="hard" data-index="0" data-field="type" ${coil?.parameters?.softness === 'hard' ? 'checked' : ''}>
+                                    <label class="form-check-label form-text mt-0 d-none" for="hard_${coil._id}">Z</label>
+                                </div>
+                                <div class="form-check form-check-inline cbw m-0 p-0">
+                                    <input class="form-check-input mx-1" type="radio" name="type_${coil._id}" id="unknown_${coil._id}" value="unknown" data-index="0" data-field="type" ${coil?.parameters?.softness === 'unknown' ? 'checked' : ''}>
+                                    <label class="form-check-label form-text mt-0 d-none" for="unknown_${coil._id}">X</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="coil-supplier d-flex align-items-center flex-fill"><div class="supplier-name me-2 wmc flex-shrink-0">${coil.supplier}</div>${coil.notes ? "/" : ""}<div class="coil-note ms-2 flex-fill"><input type="text" class="editable-notes border-0 bg-transparent w-100" value="${coil.notes}" data-coil-id="${coil._id}" placeholder=""></div></div>
+                </div>
+            </div>
+        `).join('') : `<div class="no-stock text-center text-muted py-4">${__html('No stock available')}</div>`;
+    }
+
+    getOrdersHtml = () => {
+        return this.orders && this.orders.length > 0 ? this.orders.map(order => `
+            <div class="order-group" data-order-record-id="${order._id}" data-order-id="${order.id}">
+                <div class="order-header ${this.getEntireOrderStatusClass(order)}">
+                    <span><span class="po select-order" data-id="${order.id}">#${order.id}</span> - <span title="${attr(getFullClientName(order) || '')}">${formatClientName(order) || 'N/A'}</span> (${formatDate(order.due_date) || 'N/A'})</span>
+                    <span class="me-2 form-text text-dark">${__html('items: %1$', order.items ? order.items.length : 0)}</span>
+                </div>
+                <div class="order-items">
+                    ${order.items ? order.items.map((item, index) => `
+                    <div class="order-item ${this.getStatusClass(item)}" data-order-record-id="${order._id}" data-order-id="${order.id}" data-item-id="${item.id}">
+                        <input type="checkbox" class="checkbox ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-type="cutting" data-item="${order.id}-${index}" data-order-record-id="${order._id}" data-item-id="${item.id}" data-width="${item.formula_width_calc || 0}">
+                        <span class="item-id"><a class="${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" href="/manufacturing/?id=${order.id}" target="/manufacturing/">${order.id}</a></span>
+                        <span class="item-description">${item.title || 'N/A'}${item.sdesc ? " - " + item.sdesc + " " : ""} ${item.coating || ''} ${item.color || ''}</span>
+                        <span class="item-dimensions">
+                            <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-item-id="${item.id}" data-field="formula_width_calc">${Number(item.width_writeoff || item.formula_width_calc || 0).toLocaleString()}</span> × 
+                            <span class="editable-dimension" data-order-id="${order.id}" data-item-index="${index}" data-item-id="${item.id}" data-field="formula_length_calc">${Number(item.length_writeoff || item.formula_length_calc || 0).toLocaleString()}</span> ${getDimUnit(this.settings)}
+                        </span>
+                        <span class="item-quantity">${item.qty || 1}</span>
+                        <input type="checkbox" class="checkbox item-manufactured ${this.getStatusClass(item) === "complete-item" ? 'text-success' : ''}" data-item="${order.id}-${index}" data-order-record-id="${order._id}" data-item-id="${item.id}" onchange="window.cutting_list.itemManufactured(event);" ${item?.inventory?.origin == 'm' ? 'checked' : ''} >
+                    </div>
+                    `).join('') : ''}
+                </div>
+            </div>
+        `).join('') : `<div class="no-orders text-center text-muted py-4"> <i class="bi bi-inbox fs-3 mb-3 d-block"></i> ${__html('No records added')}</div>`;
+    }
+
+    renderStockPanel = () => {
+        const container = document.getElementById('stockList');
+        if (!container) return;
+        container.innerHTML = this.getStockListHtml();
+    }
+
+    renderOrdersPanel = (uiState = null) => {
+        const container = document.getElementById('waitingOrders');
+        if (!container) return;
+        container.innerHTML = this.getOrdersHtml();
+        if (uiState?.selectedCuttingItems?.length) {
+            this.restoreSelectedCuttingItems(uiState.selectedCuttingItems);
+        }
+        this.applyOrderVisibility();
+    }
+
+    getSelectedCuttingItems = () => {
+        return Array.from(document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked'))
+            .map((checkbox) => checkbox.dataset.item)
+            .filter(Boolean);
+    }
+
+    restoreSelectedCuttingItems = (selectedItems = []) => {
+        selectedItems.forEach((itemKey) => {
+            const checkbox = document.querySelector(`.order-item input[type="checkbox"][data-type="cutting"][data-item="${itemKey}"]`);
+            if (checkbox) checkbox.checked = true;
+        });
+    }
+
+    captureUiState = () => {
+        return {
+            selectedCuttingItems: this.getSelectedCuttingItems()
+        };
+    }
+
+    applyOrderVisibility = () => {
+        const searchTerm = String(document.getElementById('orderSearch')?.value || '').toLowerCase().trim();
+        const searchTerms = searchTerm === '' ? [] : searchTerm.split(/\s+/).filter(term => term.length > 0);
+        const allFilter = document.getElementById('allFilter');
+        const pendingFilter = document.getElementById('pendingFilter');
+        const completeFilter = document.getElementById('completeFilter');
+
+        document.querySelectorAll('.order-group').forEach(group => {
+            const orderId = String(group.dataset.orderId || '').toLowerCase();
+            const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => orderId.includes(term));
+            const orderItems = group.querySelectorAll('.order-item');
+            let visibleItems = 0;
+
+            orderItems.forEach(item => {
+                let shouldShowItem = matchesSearch;
+
+                if (shouldShowItem && pendingFilter?.checked) {
+                    shouldShowItem = item.classList.contains('pending-item');
+                } else if (shouldShowItem && completeFilter?.checked) {
+                    shouldShowItem = item.classList.contains('complete-item');
+                } else if (shouldShowItem && allFilter?.checked) {
+                    shouldShowItem = true;
+                }
+
+                item.style.display = shouldShowItem ? 'grid' : 'none';
+                if (shouldShowItem) visibleItems++;
+            });
+
+            group.style.display = matchesSearch && visibleItems > 0 ? 'block' : 'none';
+        });
+    }
+
+    setupSSE = () => {
+        if (this.sseUnsubscribe) return;
+
+        const token = getAuthToken();
+        if (!token) {
+            console.warn('No auth token, skipping cutting list SSE connection');
+            return;
+        }
+
+        stockSSE.connectWithPost(token);
+        this.sseUnsubscribe = stockSSE.subscribe((data) => this.handleLiveUpdate(data));
+
+        window.addEventListener('beforeunload', () => {
+            if (this.sseUnsubscribe) {
+                this.sseUnsubscribe();
+                this.sseUnsubscribe = null;
+            }
+            stockSSE.disconnect();
+        });
+    }
+
+    handleLiveUpdate = (data) => {
+        if (!data?.type) return;
+
+        switch (data.type) {
+            case 'items-update':
+                if (this.isRelevantItemsUpdate(data)) {
+                    this.scheduleLiveRefresh({ orders: true, stock: true });
+                }
+                break;
+            case 'stock-update':
+                if (this.isRelevantStockUpdate(data)) {
+                    this.scheduleLiveRefresh({ stock: true });
+                }
+                break;
+            case 'supplylog-update':
+                if (this.isRelevantSupplylogUpdate(data)) {
+                    this.scheduleLiveRefresh({ stock: true });
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    isRelevantItemsUpdate = (data) => {
+        if (this.orders.some(order => String(order._id) === String(data.order_id))) {
+            return true;
+        }
+
+        if (!Array.isArray(data.items)) return false;
+
+        return data.items.some((item) => this.matchesCurrentItemFilter(item));
+    }
+
+    isRelevantStockUpdate = (data) => {
+        if (this.filters.cm === true) return true;
+        return String(data.color || '') === String(this.filters.color || '')
+            && String(data.coating || '') === String(this.filters.coating || '');
+    }
+
+    isRelevantSupplylogUpdate = (data) => {
+        if (this.stock.some(coil => String(coil._id) === String(data.coil_id))) {
+            return true;
+        }
+
+        if (data.item_type && data.item_type !== 'metal') return false;
+        if (this.filters.cm === true) return data.cm === true;
+
+        return data.cm !== true
+            && String(data.color || '') === String(this.filters.color || '')
+            && String(data.coating || '') === String(this.filters.coating || '');
+    }
+
+    matchesCurrentItemFilter = (item) => {
+        if (this.filters.cm === true) {
+            return item?.cm === true || item?.cm === 'true';
+        }
+
+        const isClientMaterial = item?.cm === true || item?.cm === 'true';
+        return !isClientMaterial
+            && String(item?.color || '') === String(this.filters.color || '')
+            && String(item?.coating || '') === String(this.filters.coating || '');
+    }
+
+    scheduleLiveRefresh = ({ orders = false, stock = false } = {}) => {
+        this.liveRefreshPending.orders = this.liveRefreshPending.orders || orders;
+        this.liveRefreshPending.stock = this.liveRefreshPending.stock || stock;
+
+        if (this.liveRefreshInFlight) {
+            this.liveRefreshQueued = true;
+            return;
+        }
+
+        clearTimeout(this.liveRefreshTimer);
+        this.liveRefreshTimer = setTimeout(() => {
+            this.refreshLiveData();
+        }, 250);
+    }
+
+    refreshLiveData = () => {
+        if (this.liveRefreshInFlight) {
+            this.liveRefreshQueued = true;
+            return;
+        }
+
+        const refreshFlags = { ...this.liveRefreshPending };
+        if (!refreshFlags.orders && !refreshFlags.stock) return;
+
+        this.liveRefreshPending = { orders: false, stock: false };
+        this.liveRefreshQueued = false;
+        this.liveRefreshInFlight = true;
+
+        const uiState = this.captureUiState();
+
+        getOrdersForCutting(this.filters, (response) => {
+            try {
+                if (!response?.success) return;
+
+                if (refreshFlags.orders) {
+                    this.orders = response.orders || [];
+                    this.renderOrdersPanel(uiState);
+                }
+
+                if (refreshFlags.stock) {
+                    this.stock = response.stock || [];
+                    this.renderStockPanel();
+                }
+            } finally {
+                this.liveRefreshInFlight = false;
+
+                if (this.liveRefreshQueued || this.liveRefreshPending.orders || this.liveRefreshPending.stock) {
+                    this.scheduleLiveRefresh();
+                }
+            }
+        });
     }
 
     getEntireOrderStatusClass(order) {
@@ -222,12 +440,27 @@ class CuttingList {
     parseCoilLength(length) {
 
         let text = "";
-        if (!length || isNaN(length)) return '0';
-        if (length.toString().length > 3) {
-            text = length.toString().substr(0, length.toString().length - 3) + '<span class="small">,' + length.toString().substr(-3) + '</span>';
+        const numericLength = Number(length);
+        if (!numericLength || Number.isNaN(numericLength)) return '0';
+
+        // Normalize tiny floating-point errors like 1026400.0000000001 before formatting.
+        const roundedLength = Math.round(numericLength);
+        const normalizedLength = Math.abs(numericLength - roundedLength) < 1e-6
+            ? roundedLength
+            : numericLength;
+        const formattedLength = normalizedLength.toLocaleString('en-US', {
+            useGrouping: false,
+            maximumFractionDigits: 3
+        });
+        const [integerPart, fractionPart] = formattedLength.split('.');
+
+        if (integerPart.length > 3) {
+            text = integerPart.substr(0, integerPart.length - 3) + '<span class="small">,' + integerPart.substr(-3) + '</span>';
         } else {
-            text = length.toLocaleString();
+            text = integerPart;
         }
+
+        if (fractionPart) text += '.' + fractionPart;
 
         return text + ' <span class="small">' + getDimUnit(this.settings) + '</span>';
     }
@@ -238,69 +471,19 @@ class CuttingList {
         // Search functionality
         const searchInput = document.getElementById('orderSearch');
 
-        searchInput.addEventListener('input', function () {
-            const searchTerm = this.value.toLowerCase().trim();
-            const orderGroups = document.querySelectorAll('.order-group');
-
-            if (searchTerm === '') {
-                // Show all order groups if search is empty
-                orderGroups.forEach(group => {
-                    group.style.display = 'block';
-                });
-            } else {
-                // Split search terms by whitespace and filter
-                const searchTerms = searchTerm.split(/\s+/).filter(term => term.length > 0);
-
-                orderGroups.forEach(group => {
-                    const orderIdElement = group.querySelector('.po');
-                    if (orderIdElement) {
-                        const orderId = orderIdElement.textContent.replace('#', '').toLowerCase();
-
-                        // Check if any search term matches the order ID
-                        const matches = searchTerms.some(term => orderId.includes(term));
-
-                        group.style.display = matches ? 'block' : 'none';
-                    }
-                });
-            }
-        });
+        searchInput.addEventListener('input', () => this.applyOrderVisibility());
 
         // Filter functionality
         const allFilter = document.getElementById('allFilter');
         const pendingFilter = document.getElementById('pendingFilter');
         const completeFilter = document.getElementById('completeFilter');
 
-        const filterOrders = () => {
-            const orderGroups = document.querySelectorAll('.order-group');
-            orderGroups.forEach(group => {
-                const orderItems = group.querySelectorAll('.order-item');
-                let visibleItems = 0;
-
-                orderItems.forEach(item => {
-                    let shouldShowItem = false;
-
-                    if (allFilter.checked) {
-                        shouldShowItem = true;
-                    } else if (pendingFilter.checked) {
-                        shouldShowItem = item.classList.contains('pending-item');
-                    } else if (completeFilter.checked) {
-                        shouldShowItem = item.classList.contains('complete-item');
-                    }
-
-                    item.style.display = shouldShowItem ? 'grid' : 'none';
-                    if (shouldShowItem) visibleItems++;
-                });
-
-                // Hide the entire group if no items are visible
-                group.style.display = visibleItems > 0 ? 'block' : 'none';
-            });
-        };
-
-        allFilter.addEventListener('change', filterOrders);
-        pendingFilter.addEventListener('change', filterOrders);
-        completeFilter.addEventListener('change', filterOrders);
+        allFilter.addEventListener('change', () => this.applyOrderVisibility());
+        pendingFilter.addEventListener('change', () => this.applyOrderVisibility());
+        completeFilter.addEventListener('change', () => this.applyOrderVisibility());
 
         allFilter.checked = true;
+        this.applyOrderVisibility();
 
         // Editable dimension functionality
         onClick('.editable-dimension', e => {
@@ -435,7 +618,7 @@ class CuttingList {
             new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
 
                 if (updated) {
-                    this.init();
+                    this.scheduleLiveRefresh({ orders: true, stock: true });
                 }
             });
         });
@@ -487,7 +670,7 @@ class CuttingList {
             new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
 
                 if (updated) {
-                    this.init();
+                    this.scheduleLiveRefresh({ orders: true, stock: true });
                 }
             });
 

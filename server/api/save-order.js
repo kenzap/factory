@@ -84,8 +84,14 @@ async function saveOrder(logger, data, user) {
             // Preserve original inventory data for existing items
             const mergedData = { ...existingData, ...data };
             if (existingData.items && data.items) {
-                mergedData.items = data.items.map((item, index) => {
-                    const existingItem = existingData.items[index];
+                const existingItemsById = new Map(
+                    existingData.items
+                        .filter(existingItem => existingItem?.id !== undefined && existingItem?.id !== null)
+                        .map(existingItem => [String(existingItem.id), existingItem])
+                );
+
+                mergedData.items = data.items.map((item) => {
+                    const existingItem = existingItemsById.get(String(item.id));
                     return {
                         ...item,
                         inventory: existingItem?.inventory || item.inventory

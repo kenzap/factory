@@ -42,7 +42,7 @@ async function viewQuotation(_id, user, locale, lang, options = {}, logger) {
             data.settings?.tax_region ||
             'LV'; // Default to Latvia
 
-        logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
+        // logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
 
         const buyerCountry = options.buyerCountry ||
             data.entity?.country_code ||
@@ -104,7 +104,7 @@ function viewQuotationApi(app, logger) {
             const id = req.query.id;
             const format = req.query.format || 'pdf'; // pdf, html, peppol
 
-            logger.info(`Generating quotation ID: ${id} in format: ${format} for user: ${req.user.username}`);
+            // logger.info(`Generating quotation ID: ${id} in format: ${format} for user: ${req.user.username}`);
 
             if (!id) {
                 return res.status(400).json({ error: 'Order ID is required' });

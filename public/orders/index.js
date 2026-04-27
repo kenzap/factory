@@ -11,6 +11,7 @@ import { bus } from "../_/modules/bus.js";
 import { Footer } from "../_/modules/footer.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
+import { orderUpdatesSSE } from "../_/modules/sse/order_updates.js";
 import { Session } from "../_/modules/session.js";
 import { isAuthorized } from "../_/modules/unauthorized.js";
 
@@ -26,6 +27,8 @@ class Orders {
 
         this.table = null;
         this.firstLoad = true;
+        this.liveRefreshTimer = null;
+        this.unsubscribeOrderUpdates = null;
         this.selectedRows = [];
         this.filters = {
             for: "orders",
@@ -102,6 +105,7 @@ class Orders {
                             new Footer(response);
                             this.header();
                             this.listeners();
+                            this.subscribeToLiveUpdates();
                             this.table.setColumns(this.columns()); // Reapply columns to fix any localization
                             this.firstLoad = false;
                             document.title = __html('Orders');
@@ -268,6 +272,76 @@ class Orders {
         });
 
         this.firstLoad = false;
+    }
+
+    subscribeToLiveUpdates = () => {
+        if (this.unsubscribeOrderUpdates) return;
+
+        orderUpdatesSSE.connect();
+        this.unsubscribeOrderUpdates = orderUpdatesSSE.subscribe((data) => this.handleLiveUpdate(data));
+    }
+
+    handleLiveUpdate = (data) => {
+        if (!data?.type || !this.table) return;
+
+        switch (data.type) {
+            case 'items-update':
+                this.handleItemsUpdate(data);
+                break;
+            case 'order-update':
+                this.handleOrderUpdate(data);
+                break;
+            default:
+                break;
+        }
+    }
+
+    findVisibleRow = (orderRecordId, orderId) => {
+        if (!this.table?.getRows) return null;
+
+        return this.table.getRows().find((row) => {
+            const rowData = row.getData();
+            return (orderRecordId && String(rowData?._id || '') === String(orderRecordId))
+                || (orderId && String(rowData?.id || '') === String(orderId));
+        }) || null;
+    }
+
+    handleItemsUpdate = (data) => {
+        const row = this.findVisibleRow(data.order_id, null);
+        if (row && Array.isArray(data.items)) {
+            row.update({ items: data.items });
+            row.reformat();
+        }
+
+        if (['manufacturing', 'ready', 'issued'].includes(this.filters.type)) {
+            this.scheduleLiveRefresh();
+        }
+    }
+
+    handleOrderUpdate = (data) => {
+        const row = this.findVisibleRow(data.order_record_id, data.order_id);
+        if (row) {
+            const patch = {};
+
+            if (Array.isArray(data.items)) patch.items = data.items;
+            if (Object.prototype.hasOwnProperty.call(data, 'draft')) patch.draft = data.draft;
+            if (Object.prototype.hasOwnProperty.call(data, 'waybill')) patch.waybill = data.waybill;
+            if (Object.prototype.hasOwnProperty.call(data, 'invoice')) patch.invoice = data.invoice;
+
+            row.update(patch);
+            row.reformat();
+        }
+
+        this.scheduleLiveRefresh();
+    }
+
+    scheduleLiveRefresh = () => {
+        clearTimeout(this.liveRefreshTimer);
+        this.liveRefreshTimer = setTimeout(() => {
+            if (!this.table) return;
+            const currentPage = this.table.getPage ? this.table.getPage() : 1;
+            this.table.setPage(currentPage || 1);
+        }, 700);
     }
 
     // define table columns

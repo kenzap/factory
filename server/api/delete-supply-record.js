@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
 import { updateProductStock } from '../_/helpers/product.js';
+import { broadcastSupplylogUpdate, getSupplylogSnapshot } from '../_/helpers/supplylog-live-update.js';
 
 /**
  * Delete supply by id
@@ -19,12 +20,6 @@ async function deleteSupplyRecord(id, user) {
 
     let response = null;
 
-    // Get supply data before deletion to update stock
-    const supplyQuery = `
-        SELECT js->'data'->>'color' as color, js->'data'->>'coating' as coating, js->'data'->>'qty' as qty, js->'data'->>'product_id' as product_id 
-        FROM data 
-        WHERE ref = $1 AND sid = $2 AND _id = $3`;
-
     // Get orders
     const deleteQuery = `
         DELETE FROM data 
@@ -37,22 +32,23 @@ async function deleteSupplyRecord(id, user) {
 
         await db.connect();
 
-        const supplyResult = await db.query(supplyQuery, params);
+        const snapshot = await getSupplylogSnapshot(db, id);
         const deleteResult = await db.query(deleteQuery, params);
 
         response = deleteResult.rows;
 
-        // console.log('supplyResult', supplyResult.rows);
-
-        if (supplyResult.rows.length > 0) {
-            const supplyData = supplyResult.rows[0];
+        if (snapshot) {
             let data = {
-                coating: supplyData.coating,
-                color: supplyData.color,
-                amount: -1 * supplyData.qty,
-                _id: supplyData.product_id
+                coating: snapshot.coating,
+                color: snapshot.color,
+                amount: -1 * snapshot.qty,
+                _id: snapshot.product_id
             };
             await updateProductStock(db, data, user);
+            broadcastSupplylogUpdate({
+                ...snapshot,
+                action: 'deleted'
+            }, user);
         }
 
     } finally {

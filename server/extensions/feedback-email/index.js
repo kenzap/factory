@@ -15,7 +15,7 @@ export function register({ router, cron, db, logger, config }) {
 
             const claimedOrder = await claimOrderForFeedback(db, logger);
 
-            logger.info('orders:', claimedOrder);
+            // logger.info('orders:', claimedOrder);
 
             res.json({
                 status: "asking feedback for orders",
@@ -32,7 +32,7 @@ export function register({ router, cron, db, logger, config }) {
                 try {
                     const claimedOrder = await claimOrderForFeedback(db, logger);
 
-                    logger.info('feedback-email: claimed order for feedback request:', claimedOrder);
+                    // logger.info('feedback-email: claimed order for feedback request:', claimedOrder);
 
                     if (!claimedOrder) return;
 

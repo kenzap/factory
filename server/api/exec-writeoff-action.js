@@ -80,12 +80,12 @@ async function execWriteoffAction(data, user) {
 
             if (sheet.type != "stock") continue;
 
-            console.log('Adding sheet to stock:', sheet);
+            // console.log('Adding sheet to stock:', sheet);
 
-            record._width = sheet.width; // original width
+            record._width = parseInt(sheet.width); // original width
             record._length = sheet.length; // original length
-            record.width = sheet.width; // current width that can be written off
-            record.length = sheet.length; // current length that can be written off
+            record.width = parseInt(sheet.width); // current width that can be written off
+            record.length = parseInt(sheet.length); // current length that can be written off
             record.price = sheet.price;
             record.parent_coil_id = record.coil_id;
             record.qty = 1;
@@ -125,7 +125,7 @@ async function execWriteoffAction(data, user) {
         for (let [group, totalLength] of Object.entries(groupLengths)) {
 
             lastWriteoffLength = totalLength;
-
+ 
             if (!record.coil_id) { console.log("empty coil record"); continue; }
 
             // TODO: Implement write-off logic for each group

@@ -248,6 +248,74 @@ export class LeftPane {
         });
     }
 
+    refreshDocumentButtons = () => {
+        const draftToggle = document.getElementById('draft');
+        if (draftToggle) {
+            draftToggle.checked = Boolean(state.order.draft);
+            draftToggle.disabled = Boolean(state.order?.waybill?.number);
+        }
+
+        const setButtonState = (selector, variant, label, disabled) => {
+            const button = document.querySelector(selector);
+            if (!button) return;
+
+            if (typeof label === 'string') {
+                button.textContent = label;
+            }
+
+            if (variant) {
+                button.classList.remove('btn-dark', 'btn-primary', 'btn-outline-primary');
+                button.classList.add(variant);
+            }
+
+            button.disabled = disabled;
+        };
+
+        setButtonState(
+            '.document-btn[data-type="waybill"]',
+            state.order?.waybill?.number
+                ? (state.order?.waybill?.email_sent_date ? 'btn-dark' : 'btn-primary')
+                : 'btn-outline-primary',
+            state.order?.waybill?.number ? state.order.waybill.number : __html('Waybill'),
+            !(state.order?.id && state.order.draft == false)
+        );
+
+        setButtonState(
+            '.document-btn[data-type="invoice"]',
+            state.order?.invoice?.number
+                ? (state.order?.invoice?.email_sent_date ? 'btn-dark' : 'btn-primary')
+                : 'btn-outline-primary',
+            state.order?.invoice?.number ? __html('INV-%1$', state.order.invoice.number) : __html('Invoice'),
+            !state.order?.id
+        );
+
+        setButtonState(
+            '.document-btn[data-type="quotation"]',
+            state.order?.invoice?.number
+                ? (state.order?.quotation?.email_sent_date ? 'btn-dark' : 'btn-primary')
+                : 'btn-outline-primary',
+            __html('P1'),
+            !state.order?.id
+        );
+
+        setButtonState(
+            '.document-btn[data-type="production-slip"]',
+            state.order?.invoice?.number
+                ? (state.order?.production_slip?.email_sent_date ? 'btn-dark' : 'btn-primary')
+                : 'btn-outline-primary',
+            __html('P2'),
+            !state.order?.id
+        );
+
+        const packingListButton = document.querySelector('.document-btn[data-type="packing-list"]');
+        if (packingListButton) packingListButton.disabled = !state.order?.id;
+
+        const sketchListButton = document.querySelector('.document-btn[data-type="sketch-list"]');
+        if (sketchListButton) sketchListButton.disabled = !state.order?.id;
+
+        this.updateDocumentButtonsState();
+    }
+
     listeners = () => {
 
         // Save button

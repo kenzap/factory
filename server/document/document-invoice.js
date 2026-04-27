@@ -42,7 +42,7 @@ async function viewInvoice(_id, user, locale, lang, options = {}, logger) {
             data.settings?.tax_region ||
             'LV'; // Default to Latvia
 
-        logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
+        // logger.info(`Generating invoice for Order ID: ${_id}, Seller Country: ${sellerCountry}`);
 
         const buyerCountry = options.buyerCountry ||
             data.entity?.country_code ||

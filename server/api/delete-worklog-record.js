@@ -105,16 +105,16 @@ const revertCuttingAction = async (db, data, user) => {
             let items_db = order.items || [];
             let updated = false, item_id = null;
 
-            console.log('Comparing:', items_db, 'order to:', orderItems);
+            // console.log('Comparing:', items_db, 'order to:', orderItems);
 
             // update items for this order
             items_db.forEach(itm => {
                 const matchingItem = orderItems.find(item => item.id === itm.id && order.id === item.order_id);
                 if (matchingItem) {
-                    delete itm.inventory.wrt_date;
-                    delete itm.inventory.wrt_user;
-                    delete itm.inventory.writeoff_length;
-                    delete itm.inventory.coil_id;
+                    if(itm.inventory?.wrt_date) delete itm.inventory.wrt_date;
+                    if(itm.inventory?.wrt_user) delete itm.inventory.wrt_user;
+                    if(itm.inventory?.writeoff_length) delete itm.inventory.writeoff_length;
+                    if(itm.inventory?.coil_id) delete itm.inventory.coil_id;
                     itm.length_writeoff = 0;
                     itm.width_writeoff = 0;
                     item_id = itm.id;
@@ -170,7 +170,7 @@ const revertCuttingAction = async (db, data, user) => {
  */
 const revertStockReplenishmentAction = async (db, data, user) => {
 
-    console.log('Reverting stock replenishment action:', data, 'by user:', user?.id);
+    // console.log('Reverting stock replenishment action:', data, 'by user:', user?.id);
 
     // simply reduce stock by the replenished amount
     return updateProductStock(db, {
@@ -292,7 +292,7 @@ const revertWorklogFromOrderItem = async (db, data, user) => {
  * @param {String} id - ID
  * @returns {Object} - Query response
 */
-async function deleteWorklogRecord(id, user) {
+async function deleteWorklogRecord(id, user, logger) {
 
     const db = getDbConnection();
 
@@ -339,6 +339,9 @@ async function deleteWorklogRecord(id, user) {
 
     } catch (error) {
         await db.end();
+
+        logger.error(`Error deleting worklog record ${id}: `, error);
+        
         return { success: false, error: 'failed to check worklog record ' + error.message };
     }
 
@@ -346,11 +349,11 @@ async function deleteWorklogRecord(id, user) {
 }
 
 // API route
-function deleteWorklogRecordApi(app) {
+function deleteWorklogRecordApi(app, logger) {
 
     app.post('/api/delete-worklog-record/', authenticateToken, async (_req, res) => {
 
-        const response = await deleteWorklogRecord(_req.body.id, _req.user);
+        const response = await deleteWorklogRecord(_req.body.id, _req.user, logger);
 
         res.json({ success: true, response });
     });

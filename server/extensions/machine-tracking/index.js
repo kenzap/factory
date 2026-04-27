@@ -13,8 +13,6 @@ export function register({ router, db, logger }) {
     // register store reading route
     router.post('/store-reading', async (req, res) => {
 
-        console.log('Received request to store reading:', req.body);
-
         const hasMachine = Boolean(req.body?.machine || req.body?.machine_id);
         const hasReading = req.body && req.body.reading !== undefined && req.body.reading !== null;
 

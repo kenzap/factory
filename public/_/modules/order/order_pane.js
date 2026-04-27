@@ -78,8 +78,14 @@ export class OrderPane {
     handleTableMenuAction = (action, row) => {
         if (!row) return;
 
+        const rowData = row.getData();
+        const editState = isAllowedToEdit(rowData);
+        if (editState.lock === 'waybill') {
+            toast(editState.reason || 'You are not allowed to edit this row.');
+            return;
+        }
+
         if (action === 'toggle-invoice-exclusion') {
-            const rowData = row.getData();
             const nextExcluded = !isExcludedFromInvoice(rowData);
 
             row.update({
@@ -260,6 +266,7 @@ export class OrderPane {
             </div>`;
 
         this.updateManufacturingLink(state.order.id);
+        this.updateToolbarState();
     }
 
     updateManufacturingLink = (orderId = '') => {
@@ -268,6 +275,51 @@ export class OrderPane {
 
         const normalizedId = String(orderId || '').trim();
         link.href = `/manufacturing/?id=${encodeURIComponent(normalizedId)}`;
+    }
+
+    refreshRowActionMenus = () => {
+        if (!state.table?.getRows) return;
+
+        state.table.getRows().forEach((row) => {
+            if (typeof row?.reformat === 'function') {
+                row.reformat();
+            }
+        });
+    }
+
+    updateToolbarState = () => {
+        const addButton = document.getElementById('add-order-row');
+        const addDisabled = !this.canAddRows();
+
+        if (addButton) {
+            addButton.disabled = addDisabled;
+            addButton.title = addDisabled
+                ? __html('Waybill already issued. Adding new rows is disabled.')
+                : '';
+        }
+
+        this.updateManufacturingLink(state.order.id);
+
+        if (state.table?.redraw) {
+            state.table.redraw(false);
+        }
+
+        this.refreshRowActionMenus();
+    }
+
+    syncServerState = () => {
+        if (!state.table) return;
+
+        const items = Array.isArray(state.order.items) ? state.order.items : [];
+        const update = typeof state.table.replaceData === 'function'
+            ? state.table.replaceData(items)
+            : state.table.setData(items);
+
+        Promise.resolve(update).finally(() => {
+            this.updateToolbarState();
+            this.refreshRowActionMenus();
+            this.refreshTable();
+        });
     }
 
     table = () => {
@@ -576,7 +628,9 @@ export class OrderPane {
                     formatter: function (cell) {
                         const i = cell.getRow().getPosition();
                         const rowData = cell.getRow().getData();
-                        const isEditable = isAllowedToEdit(rowData).allow;
+                        const editState = isAllowedToEdit(rowData);
+                        const isEditable = editState.allow;
+                        const canToggleInvoiceExclusion = !isEditable && editState.lock !== 'waybill';
                         const isExcluded = isExcludedFromInvoice(rowData);
 
                         return /*html*/`
@@ -592,13 +646,15 @@ export class OrderPane {
                                     <li><a class="dropdown-item po update-discount" href="#" data-action="update-discount" data-index="${i}"><i class="bi bi-percent"></i> ${__html('Discount')}</a></li>
                                     <li><a class="dropdown-item po view-sketch" href="#" data-action="view-sketch" data-index="${i}"><i class="bi bi-pencil-square"></i> ${__html('Sketch')}</a></li>
                                     <li><hr class="dropdown-divider"></li>` : ''}
-                                    ${!isEditable ? `
+                                    ${canToggleInvoiceExclusion ? `
                                     <li>
                                         <a class="dropdown-item po toggle-invoice-exclusion" href="#" data-action="toggle-invoice-exclusion" data-index="${i}">
                                             <i class="bi ${isExcluded ? 'bi-arrow-counterclockwise' : 'bi-x-circle'}"></i>
                                             ${isExcluded ? __html('Restore') : __html('Cancel')}
                                         </a>
                                     </li>` : ''}
+                                    ${!isEditable ? `
+                                    <li><span class="dropdown-item-text text-muted small">${__html(editState.reason || 'This row is locked for editing.')}</span></li>` : ''}
                                     ${isEditable ? `
                                     <li><a class="dropdown-item po delete-row" href="#" data-action="delete-row" data-type="cancel" data-index="${i}"><i class="bi bi-trash text-danger"></i> ${__html('Delete')}</a></li>` : ''}
                                 </ul>
@@ -746,7 +802,7 @@ export class OrderPane {
 
         bus.on('order:updated', (id) => {
             state.order.id = id || state.order.id || '';
-            this.updateManufacturingLink(state.order.id);
+            this.updateToolbarState();
         });
     }
 }

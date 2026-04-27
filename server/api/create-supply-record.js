@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
 import { updateProductStock } from '../_/helpers/product.js';
+import { broadcastSupplylogUpdate } from '../_/helpers/supplylog-live-update.js';
 
 /**
  * Create supply record
@@ -46,6 +47,11 @@ async function createSupplyRecord(data, user) {
         response = result.rows[0] || {};
 
         await updateProductStock(db, { coating: data.coating, color: data.color, amount: data.qty, _id: data.product_id }, user);
+        broadcastSupplylogUpdate({
+            ...data,
+            coil_id: data._id,
+            action: 'created'
+        }, user);
 
     } finally {
         await db.end();

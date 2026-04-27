@@ -71,9 +71,9 @@ async function deleteOrderWaybill(id, user, logger) {
                 date: null,
                 number: null,
                 user_id: null,
-                user_id_del: user.user_id
+                user_id_del: user.id
             }
-        });
+        }, user);
 
         // Clear settings cache
         clearSettingsCache();

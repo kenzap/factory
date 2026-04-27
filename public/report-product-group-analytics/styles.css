@@ -1,0 +1,402 @@
+@import url("../assets/css/global.css");
+
+/* ─── Base ─────────────────────────────────────────────── */
+
+body {
+    background: #f4f6f9;
+}
+
+.main-header {
+    background: #fff;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.75rem 0;
+}
+
+/* ─── Page shell ────────────────────────────────────────── */
+
+.pga {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px 20px 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* ─── KPI strip ─────────────────────────────────────────── */
+
+.pga-kpis {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+    gap: 12px;
+}
+
+.pga-kpi {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pga-kpi.kpi-primary {
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+    border-color: transparent;
+}
+
+.pga-kpi-icon {
+    font-size: 0.95rem;
+    color: #9ca3af;
+    margin-bottom: 2px;
+}
+
+.pga-kpi.kpi-primary .pga-kpi-icon {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.pga-kpi-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    color: #9ca3af;
+}
+
+.pga-kpi.kpi-primary .pga-kpi-label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.pga-kpi-value {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.25;
+    margin-top: 2px;
+}
+
+.pga-kpi.kpi-primary .pga-kpi-value {
+    font-size: 1.6rem;
+    color: #fff;
+}
+
+.pga-kpi-value.val-positive { color: #059669; }
+.pga-kpi-value.val-negative { color: #dc2626; }
+
+/* ─── Filters ───────────────────────────────────────────── */
+
+.pga-filters {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 14px 20px;
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    gap: 24px;
+    align-items: end;
+}
+
+.pga-filter-item label {
+    display: block;
+    font-size: 0.69rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    color: #9ca3af;
+    margin-bottom: 6px;
+}
+
+.pga-filter-item input {
+    width: 100%;
+    border: none;
+    border-bottom: 1.5px solid #e5e7eb;
+    padding: 5px 0;
+    font-size: 0.88rem;
+    color: #111827;
+    background: transparent;
+    outline: none;
+    transition: border-color 0.15s;
+    font-family: inherit;
+}
+
+.pga-filter-item input::placeholder {
+    color: #d1d5db;
+}
+
+.pga-filter-item input:focus {
+    border-bottom-color: #2563eb;
+}
+
+/* ─── Chart rows ────────────────────────────────────────── */
+
+.pga-charts-top {
+    display: grid;
+    grid-template-columns: 3fr 2fr;
+    gap: 16px;
+}
+
+.pga-charts-bottom {
+    display: grid;
+    grid-template-columns: 2fr 3fr;
+    gap: 16px;
+}
+
+/* ─── Cards ─────────────────────────────────────────────── */
+
+.pga-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.pga-card-header {
+    padding: 16px 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.pga-card-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #6b7280;
+}
+
+.pga-chart-area {
+    position: relative;
+    height: 288px;
+    padding: 12px 18px 18px;
+}
+
+/* ─── Revenue share: donut + legend ────────────────────── */
+
+.pga-share-layout {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 16px 20px 20px;
+}
+
+.pga-share-donut {
+    width: 172px;
+    height: 172px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.pga-share-legend {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.pga-leg-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    min-width: 0;
+}
+
+.pga-leg-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 2px;
+    flex-shrink: 0;
+}
+
+.pga-leg-name {
+    flex: 1;
+    color: #374151;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+
+.pga-leg-pct {
+    color: #9ca3af;
+    font-size: 0.75rem;
+    white-space: nowrap;
+}
+
+.pga-leg-val {
+    color: #111827;
+    font-weight: 600;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    min-width: 64px;
+    text-align: right;
+}
+
+/* ─── Table card ────────────────────────────────────────── */
+
+.pga-table-card .pga-card-header {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.pga-table-wrapper {
+    overflow-x: auto;
+}
+
+.pga-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.pga-table thead th {
+    padding: 9px 14px;
+    font-size: 0.69rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #9ca3af;
+    white-space: nowrap;
+    border-bottom: 1px solid #f3f4f6;
+    text-align: left;
+}
+
+.pga-table tbody td {
+    padding: 10px 14px;
+    font-size: 0.875rem;
+    color: #374151;
+    border-bottom: 1px solid #f9fafb;
+    vertical-align: middle;
+}
+
+.pga-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.pga-table tbody tr:hover td {
+    background: #fafafa;
+}
+
+.pga-table .col-group {
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+}
+
+/* Revenue share bar */
+
+.share-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 110px;
+}
+
+.share-track {
+    flex: 1;
+    height: 5px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.share-fill {
+    height: 100%;
+    background: #2563eb;
+    border-radius: 3px;
+    min-width: 2px;
+}
+
+.share-pct {
+    font-size: 0.78rem;
+    color: #9ca3af;
+    white-space: nowrap;
+    min-width: 38px;
+    text-align: right;
+}
+
+/* Margin pill */
+
+.mpill {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.mpill-good     { background: #d1fae5; color: #065f46; }
+.mpill-ok       { background: #fef3c7; color: #92400e; }
+.mpill-bad      { background: #fee2e2; color: #991b1b; }
+.mpill-na       { background: #f3f4f6; color: #9ca3af; }
+
+/* Profit cell */
+
+.profit-pos { color: #059669; font-weight: 600; }
+.profit-neg { color: #dc2626; font-weight: 600; }
+
+/* Coverage */
+
+.cov-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cov-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cov-dot.ok   { background: #10b981; }
+.cov-dot.warn { background: #f59e0b; }
+
+/* Empty state */
+
+.pga-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+    font-size: 0.88rem;
+}
+
+/* ─── Responsive ────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+    .pga-kpis {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .pga-charts-top,
+    .pga-charts-bottom {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .pga {
+        padding: 14px 14px 40px;
+        gap: 12px;
+    }
+
+    .pga-kpis {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .pga-filters {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pga-kpis {
+        grid-template-columns: 1fr;
+    }
+}

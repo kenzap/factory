@@ -1,5 +1,6 @@
 
 import { sid } from '../index.js';
+import { broadcastOrderUpdate } from '../order-live-update.js';
 import { formatClientName } from '../order.js';
 import { clearSettingsCache } from '../settings.js';
 import { normalizeTimezoneOrUtc } from '../timezone.js';
@@ -106,7 +107,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
     };
 }
 
-export async function updateWaybillNumber(db, order) {
+export async function updateWaybillNumber(db, order, user) {
 
     console.log(`updateWaybillNumber: ${order.id}, waybill_number: ${order.waybill.number}`);
 
@@ -122,10 +123,14 @@ export async function updateWaybillNumber(db, order) {
 
     let response = await db.query(query, [JSON.stringify(waybill), sid, order.id]);
 
+    if (response.rows[0]) {
+        await broadcastOrderUpdate(db, order.id, user);
+    }
+
     return response.rows[0] ? response.rows[0]._id : null;
 }
 
-export async function updateInvoiceNumber(db, order) {
+export async function updateInvoiceNumber(db, order, user) {
 
     let invoice = order.invoice || {};
 
@@ -138,6 +143,10 @@ export async function updateInvoiceNumber(db, order) {
         `;
 
     let response = await db.query(query, [JSON.stringify(invoice), sid, order.id]);
+
+    if (response.rows[0]) {
+        await broadcastOrderUpdate(db, order.id, user);
+    }
 
     return response.rows[0] ? response.rows[0]._id : null;
 }
@@ -198,7 +207,7 @@ export async function getInvoiceNextNumber(db, order, settings, user) {
         user_id: user?.id || null
     }
 
-    await updateInvoiceNumber(db, { id: order.id, invoice: order.invoice });
+    await updateInvoiceNumber(db, { id: order.id, invoice: order.invoice }, user);
 
     return order.invoice;
 }
@@ -213,7 +222,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
 
         console.log('Waybill number already exists:', order.waybill.number, 'Updating amount to:', order.waybill.amount);
 
-        await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+        await updateWaybillNumber(db, { id: order.id, waybill: order.waybill }, user);
 
         return order.waybill;
     }
@@ -234,7 +243,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
                 user_id: user?.id || null
             }
 
-            await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+            await updateWaybillNumber(db, { id: order.id, waybill: order.waybill }, user);
 
             // Update settings with the new annulled list
             const updateSettingsQuery = `
@@ -288,7 +297,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
     // when waybill is annulled this request is skipped
     if (order.waybill.number) await db.query(settingsQuery, [JSON.stringify(order.waybill.number), sid]);
 
-    await updateWaybillNumber(db, { id: order.id, waybill: order.waybill });
+    await updateWaybillNumber(db, { id: order.id, waybill: order.waybill }, user);
 
     // Clear settings cache
     clearSettingsCache();

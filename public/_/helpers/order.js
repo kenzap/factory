@@ -1,3 +1,5 @@
+import { state } from "../modules/order/state.js";
+
 /**
  * Extracts distinct coating types from price settings.
  * 
@@ -78,26 +80,27 @@ export const formatCompanyName = (order) => {
 }
 
 /**
- * Determines whether an order row is allowed to be edited based on inventory dates.
- * An order is not allowed to be edited if any of the following dates are present:
- * isu_date (issue date), wrt_date (write date), or mnf_date (manufacture date).
+ * Determines whether an order row is allowed to be edited.
+ * A printed waybill locks the whole table except the note field, while
+ * inventory state locks the row-specific editing paths.
  * 
  * @param {Object} rowData - The row data object containing order information
  * @param {Object} [rowData.inventory] - The inventory object containing date fields
  * @param {string} [rowData.inventory.isu_date] - The issue date
  * @param {string} [rowData.inventory.wrt_date] - The write date  
  * @param {string} [rowData.inventory.mnf_date] - The manufacture date
- * @returns {boolean} Returns false if any inventory dates are present, otherwise false
+ * @returns {{allow: boolean, reason?: string, lock?: string}}
  */
 export const isAllowedToEdit = (rowData) => {
 
-    const inventory = rowData.inventory || false;
+    const inventory = rowData?.inventory || {};
 
-    if (inventory.isu_date) return { allow: false, reason: 'Item is issued' };
-    if (inventory.wrt_date) return { allow: false, reason: 'Item is written off' };
-    if (inventory.rdy_date) return { allow: false, reason: 'Item is manufactured' };
+    if (state.order?.waybill?.number) return { allow: false, reason: 'Waybill already issued', lock: 'waybill' };
+    if (inventory.isu_date) return { allow: false, reason: 'Item is issued', lock: 'issued' };
+    if (inventory.wrt_date) return { allow: false, reason: 'Item is written off', lock: 'written-off' };
+    if (inventory.rdy_date) return { allow: false, reason: 'Item is manufactured', lock: 'manufactured' };
 
-    return { allow: true };;
+    return { allow: true, lock: null };
 }
 
 /**
