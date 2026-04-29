@@ -73,6 +73,9 @@ export class InvoiceCalculator {
             totalTaxAmount += group.taxAmount;
         });
 
+        // round to 2 decimals so that final totalInvoiceAmount has no deviations
+        totalTaxAmount = Math.round(totalTaxAmount * 100) / 100;
+
         const totalInvoiceAmount = Math.round((totalTaxableAmount + totalTaxAmount) * 100) / 100;
 
         return {

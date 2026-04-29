@@ -1,48 +1,44 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { sseManager } from '../_/helpers/sse.js';
+import { prepareSseResponse, sseManager, writeSseComment, writeSseEvent } from '../_/helpers/sse.js';
 
 // Simple API route 
 function sseManufacturingUpdateApi(app, logger) {
+    const scope = 'manufacturing';
 
-    // SSE endpoint
-    app.post('/api/manufacturing-updates/connect', authenticateToken, (req, res) => {
+    const handleConnect = (req, res) => {
 
         logger.info(`Client connected to manufacturing updates: ${req.user.fname} (${req.user.id})`);
 
-        // Set SSE headers
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no');
+        prepareSseResponse(res);
 
-        // Send initial connection confirmation
-        res.write(`data: ${JSON.stringify({
+        writeSseEvent(res, {
             type: 'connected',
             message: 'Manufacturing updates connected',
-            clientCount: sseManager.getClientCount() + 1
-        })}\n\n`);
+            clientCount: sseManager.getClientCount(scope) + 1
+        });
 
-        // Add client with user metadata
         sseManager.addClient(res, {
+            scope,
             userId: req.user.id,
             username: req.user.username || req.user.email
         });
 
-        // Keep-alive heartbeat every 30 seconds
         const heartbeat = setInterval(() => {
             try {
-                res.write(`: heartbeat\n\n`);
+                writeSseComment(res);
             } catch (error) {
-                clearInterval(heartbeat);
+                cleanup();
             }
         }, 30000);
 
-        // Handle client disconnect
-        req.on('close', () => {
+        const cleanup = sseManager.bindClientLifecycle(req, res, () => {
             clearInterval(heartbeat);
             sseManager.removeClient(res);
         });
-    });
+    };
+
+    app.get('/api/manufacturing-updates/connect', authenticateToken, handleConnect);
+    app.post('/api/manufacturing-updates/connect', authenticateToken, handleConnect);
 }
 
 export default sseManufacturingUpdateApi;

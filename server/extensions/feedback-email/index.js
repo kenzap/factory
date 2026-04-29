@@ -76,7 +76,12 @@ export function register({ router, cron, db, logger, config }) {
                     await db.close();
                 }
             },
-            { timezone: config.get('default_timezone') || 'UTC' }
+            {
+                timezone: config.get('default_timezone') || 'UTC',
+                singleton: true,
+                lockKey: 'feedback-email:cron:request-feedback',
+                lockTtlMs: 5 * 60 * 1000
+            }
         );
 }
 

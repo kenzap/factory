@@ -3,6 +3,7 @@ import { markOrderReady } from './src/mark-order-ready.js';
 // import { notifyOrderNewAdmin } from './src/notify-order-new-admin.js';
 import { notifyOrderReady } from './src/notify-order-ready.js';
 import { sendOtp } from './src/send-otp.js';
+import { withRealtimeLock } from '../../_/helpers/redis.js';
 
 
 /**
@@ -29,11 +30,21 @@ export function register({ router, cron, config, events, db, logger }) {
 
     logger.info('Registering dialog360 extension')
 
-    events.on("otp.requested", async ({ phone, otp }) => {
+    events.on("otp.requested", async ({ phone, otp, nonce }) => {
 
         logger.info("OTP Request received:", phone, otp);
 
-        await sendOtp(phone, otp, config, logger);
+        await withRealtimeLock(
+            `dialog360:otp:${phone}:${nonce || otp}`,
+            30 * 1000,
+            async () => {
+                await sendOtp(phone, otp, config, logger);
+            },
+            {
+                logger,
+                onLocked: () => logger.info(`dialog360: skipped duplicate OTP dispatch for ${phone}`)
+            }
+        );
     });
 
     // Route to get orders ready for notification
@@ -68,25 +79,37 @@ export function register({ router, cron, config, events, db, logger }) {
     cron.register(
         'sync',
         '0,15,30,45 9,10,11,12,13,14,15,16 * * 1-5', // every weekday at 9:00, 9:30, 10:00, 10:30 .. 4:00, 4:30
-        async (ctx) => {
-
+        async () => {
             const orders = await getOrdersReady(db, logger);
 
             for (const order of orders) {
-
                 logger.info('cron: order ready for notification:', order?.id, order?.phone);
 
-                // keep sending while in debug mode
-                // if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                await withRealtimeLock(
+                    `dialog360:order-ready:${order.id}`,
+                    5 * 60 * 1000,
+                    async () => {
+                        if (process.env.NODE_ENV !== 'production') {
+                            await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                            return;
+                        }
 
-                // TODO: remove in future, only for testing with real phone number
-                if (process.env.NODE_ENV !== 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
-                if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
-
-                if (process.env.NODE_ENV === 'production') await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
-                if (process.env.NODE_ENV === 'production') await markOrderReady(order.id, db, logger);
+                        await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                        await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
+                        await markOrderReady(order.id, db, logger);
+                    },
+                    {
+                        logger,
+                        onLocked: () => logger.info(`dialog360: skipped duplicate ready notification for order #${order.id}`)
+                    }
+                );
             }
         },
-        { timezone: config.get('default_timezone') || 'UTC' }
+        {
+            timezone: config.get('default_timezone') || 'UTC',
+            singleton: true,
+            lockKey: 'dialog360:cron:sync',
+            lockTtlMs: 14 * 60 * 1000
+        }
     )
 }

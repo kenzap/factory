@@ -1,11 +1,16 @@
 class StockSSEService {
     constructor() {
         this.eventSource = null;
+        this.reader = null;
+        this.abortController = null;
         this.reconnectAttempts = 0;
         this.maxReconnectAttempts = 5;
         this.reconnectDelay = 2000;
+        this.reconnectTimeout = null;
         this.listeners = [];
         this.isConnected = false;
+        this.connectionPromise = null;
+        this.shouldReconnect = true;
     }
 
     /**
@@ -13,31 +18,51 @@ class StockSSEService {
      */
     async connectWithPost(token) {
         if (this.isConnected) return;
+        if (this.connectionPromise) return this.connectionPromise;
 
-        try {
-            const response = await fetch('/api/stock-updates/connect', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                credentials: 'include'
-            });
+        this.shouldReconnect = true;
 
-            console.log('SSE connection response:', response);
+        this.connectionPromise = (async () => {
+            try {
+                this.abortController = new AbortController();
 
-            if (!response.ok) {
-                throw new Error('Failed to connect to stock updates');
+                const response = await fetch('/api/stock-updates/connect', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'text/event-stream',
+                        'Cache-Control': 'no-cache',
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    credentials: 'include',
+                    signal: this.abortController.signal
+                });
+
+                console.log('SSE connection response:', response);
+
+                if (!response.ok) {
+                    throw new Error('Failed to connect to stock updates');
+                }
+
+                if (!response.body) {
+                    throw new Error('Stock updates stream body is not available');
+                }
+
+                this.reader = response.body.getReader();
+                this.setupEventStream(this.reader, token);
+                this.isConnected = true;
+                this.reconnectAttempts = 0;
+
+            } catch (error) {
+                if (error?.name === 'AbortError' || !this.shouldReconnect) return;
+                console.error('SSE connection error:', error);
+                this.attemptReconnect(token);
+            } finally {
+                this.connectionPromise = null;
             }
+        })();
 
-            this.setupEventStream(response.body.getReader());
-            this.isConnected = true;
-            this.reconnectAttempts = 0;
-
-        } catch (error) {
-            console.error('SSE connection error:', error);
-            this.attemptReconnect(token);
-        }
+        return this.connectionPromise;
     }
 
     /**
@@ -73,7 +98,7 @@ class StockSSEService {
     /**
      * Setup stream reader for POST-based connection
      */
-    setupEventStream(reader) {
+    setupEventStream(reader, token) {
         const decoder = new TextDecoder();
         let buffer = '';
 
@@ -82,6 +107,8 @@ class StockSSEService {
                 if (done) {
                     console.log('Stream closed');
                     this.isConnected = false;
+                    this.reader = null;
+                    if (this.shouldReconnect) this.attemptReconnect(token);
                     return;
                 }
 
@@ -98,8 +125,15 @@ class StockSSEService {
 
                 readStream();
             }).catch(error => {
+                if (error?.name === 'AbortError' || !this.shouldReconnect) {
+                    this.reader = null;
+                    return;
+                }
+
                 console.error('Stream read error:', error);
                 this.isConnected = false;
+                this.reader = null;
+                this.attemptReconnect(token);
             });
         };
 
@@ -151,6 +185,7 @@ class StockSSEService {
      * Attempt reconnection with exponential backoff
      */
     attemptReconnect(token) {
+        if (!this.shouldReconnect) return;
         if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             console.error('Max reconnection attempts reached');
             return;
@@ -161,7 +196,8 @@ class StockSSEService {
 
         console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
-        setTimeout(() => {
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = setTimeout(() => {
             this.connectWithPost(token);
         }, delay);
     }
@@ -170,13 +206,27 @@ class StockSSEService {
      * Disconnect from SSE
      */
     disconnect() {
+        this.shouldReconnect = false;
         this.isConnected = false;
+        clearTimeout(this.reconnectTimeout);
+        this.reconnectTimeout = null;
+
+        if (this.reader) {
+            this.reader.cancel().catch(() => { });
+            this.reader = null;
+        }
+
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
 
         if (this.eventSource) {
             this.eventSource.close();
             this.eventSource = null;
         }
 
+        this.connectionPromise = null;
         this.listeners = [];
     }
 }

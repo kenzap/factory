@@ -83,7 +83,7 @@ function getOtpApi(app, logger) {
 
             // Send OTP via email (you'll need to implement email service)
             if (isValidEmail(email_or_phone)) await sendOtpEmail(email_or_phone, otp);
-            if (isValidPhone(email_or_phone)) eventBus.emit('otp.requested', { phone: email_or_phone, otp }); // await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
+            if (isValidPhone(email_or_phone)) eventBus.emit('otp.requested', { phone: email_or_phone, otp, nonce }); // await sendOtpWhatsApp(email_or_phone, otp); // send nonce as well
 
             logger.info(`OTP generated for ${email_or_phone} - ${otp}`);
 

@@ -1,4 +1,5 @@
 import { forwardOtpToKenzap } from './src/forward-otp.js';
+import { withRealtimeLock } from '../../_/helpers/redis.js';
 
 export function register({ events, logger, config }) {
     const enabled = String(config.get('ENABLED') ?? process.env.KENZAP_OTP_RELAY_ENABLED ?? 'true').toLowerCase() !== 'false';
@@ -8,7 +9,7 @@ export function register({ events, logger, config }) {
         return;
     }
 
-    events.on('otp.requested', async ({ phone, otp }) => {
+    events.on('otp.requested', async ({ phone, otp, nonce }) => {
         const tenantId = config.get('TENANT_ID') || process.env.KENZAP_TENANT_ID || process.env.SID;
         const baseUrl = config.get('API_BASE_URL') || process.env.KENZAP_API_BASE_URL || 'https://api.kenzap.cloud';
         const apiKey = config.get('API_KEY') || process.env.KENZAP_API_KEY || '';
@@ -24,14 +25,24 @@ export function register({ events, logger, config }) {
         }
 
         try {
-            await forwardOtpToKenzap({
-                baseUrl,
-                tenantId,
-                otp,
-                phone,
-                apiKey,
-                logger
-            });
+            await withRealtimeLock(
+                `kenzap-otp-relay:otp:${tenantId}:${phone}:${nonce || otp}`,
+                30 * 1000,
+                async () => {
+                    await forwardOtpToKenzap({
+                        baseUrl,
+                        tenantId,
+                        otp,
+                        phone,
+                        apiKey,
+                        logger
+                    });
+                },
+                {
+                    logger,
+                    onLocked: () => logger.info(`kenzap-otp-relay: skipped duplicate OTP forward for ${phone}`)
+                }
+            );
         } catch (error) {
             logger.error(`kenzap-otp-relay: failed to forward OTP (${phone})`, error);
         }

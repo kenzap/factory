@@ -1,41 +1,43 @@
 import { authenticateToken } from '../_/helpers/auth.js';
-import { sseManager } from '../_/helpers/sse.js';
+import { prepareSseResponse, sseManager, writeSseComment, writeSseEvent } from '../_/helpers/sse.js';
 
 function sseOrderUpdateApi(app, logger) {
+    const scope = 'order';
 
-    app.post('/api/order-updates/connect', authenticateToken, (req, res) => {
+    const handleConnect = (req, res) => {
 
         logger.info(`Client connected to order updates: ${req.user.fname} (${req.user.id})`);
 
-        res.setHeader('Content-Type', 'text/event-stream');
-        res.setHeader('Cache-Control', 'no-cache');
-        res.setHeader('Connection', 'keep-alive');
-        res.setHeader('X-Accel-Buffering', 'no');
+        prepareSseResponse(res);
 
-        res.write(`data: ${JSON.stringify({
+        writeSseEvent(res, {
             type: 'connected',
             message: 'Order updates connected',
-            clientCount: sseManager.getClientCount() + 1
-        })}\n\n`);
+            clientCount: sseManager.getClientCount(scope) + 1
+        });
 
         sseManager.addClient(res, {
+            scope,
             userId: req.user.id,
             username: req.user.username || req.user.email
         });
 
         const heartbeat = setInterval(() => {
             try {
-                res.write(`: heartbeat\n\n`);
+                writeSseComment(res);
             } catch (error) {
-                clearInterval(heartbeat);
+                cleanup();
             }
         }, 30000);
 
-        req.on('close', () => {
+        const cleanup = sseManager.bindClientLifecycle(req, res, () => {
             clearInterval(heartbeat);
             sseManager.removeClient(res);
         });
-    });
+    };
+
+    app.get('/api/order-updates/connect', authenticateToken, handleConnect);
+    app.post('/api/order-updates/connect', authenticateToken, handleConnect);
 }
 
 export default sseOrderUpdateApi;

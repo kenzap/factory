@@ -9,9 +9,11 @@ import livereload from 'livereload';
 import mime from 'mime-types';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { eventBus } from './_/helpers/extensions/events.js';
 import { checkFileExists } from './_/helpers/extensions/file.js';
 import { loadExtensions } from './_/helpers/extensions/loader.js';
 import createLogger from './_/helpers/logger.js';
+import { sseManager } from './_/helpers/sse.js';
 import { createStorageProvider } from './_/helpers/storage/index.js';
 
 dotenv.config();
@@ -163,6 +165,11 @@ async function loadRoutesWithOverrides(coreDir, overrideDir, routeType) {
 }
 
 // Load all routes at startup
+await Promise.all([
+    sseManager.initialize(),
+    eventBus.initialize()
+]);
+
 await loadRoutesWithOverrides(API_DIR, OVERRIDE_API_DIR, 'API');
 await loadRoutesWithOverrides(DOCUMENT_DIR, OVERRIDE_DOCUMENT_DIR, 'document');
 

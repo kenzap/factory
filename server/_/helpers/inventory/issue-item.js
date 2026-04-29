@@ -9,8 +9,6 @@ export const issueItem = async (db, actions, user) => {
 
     for (const issueAction of actions) {
 
-        console.log('issueItem action:', issueAction);
-
         // validate issue data
         if (issueAction.isu_date === undefined) {
             return { success: false, error: 'no issue data provided' };

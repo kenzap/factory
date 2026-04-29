@@ -1,4 +1,13 @@
 import { EventEmitter } from 'events'
+import createLogger from '../logger.js';
+import {
+    REALTIME_CHANNELS,
+    getRealtimeNodeId,
+    publishRealtimeMessage,
+    subscribeToRealtimeChannel
+} from '../redis.js';
+
+const logger = createLogger('extensions-events');
 
 /**
  * Retrieves the allowed events from a manifest object.
@@ -55,10 +64,23 @@ export const isEventAllowed = (event, allowedEvents) => {
  * @returns {Object} An object with event handling methods scoped to the integration
  * @returns {Function} returns.on - Method to register event handlers with integration context
  */
-export const createEventInterface = (eventBus, integrationName) => {
+export const createEventInterface = (eventBus, integrationName, allowedEvents = []) => {
+    const canUseEvent = (event) => {
+        if (allowedEvents.length === 0) return true;
+        if (isEventAllowed(event, allowedEvents)) return true;
+
+        logger.warn(`${integrationName} attempted to use undeclared event "${event}"`);
+        return false;
+    };
+
     return {
         on(event, handler) {
+            if (!canUseEvent(event)) return;
             eventBus.on(event, handler, { integration: integrationName })
+        },
+        emit(event, ...args) {
+            if (!canUseEvent(event)) return false;
+            return eventBus.emit(event, ...args)
         }
     }
 }
@@ -79,6 +101,19 @@ class EventBus {
     constructor() {
         this.emitter = new EventEmitter()
         this.emitter.setMaxListeners(100)
+        this.initialized = false
+    }
+
+    async initialize() {
+        if (this.initialized) return
+
+        this.initialized = true
+
+        await subscribeToRealtimeChannel(REALTIME_CHANNELS.events, (payload, envelope) => {
+            if (envelope?.origin === getRealtimeNodeId()) return
+            if (!payload?.event) return
+            this.emitLocal(payload?.event, ...(payload?.args || []))
+        })
     }
 
     on(event, handler, meta = {}) {
@@ -86,7 +121,7 @@ class EventBus {
             try {
                 await handler(...args)
             } catch (err) {
-                console.error(
+                logger.warn(
                     `[system][error] ${event} (${meta.integration ?? 'core'})`,
                     err
                 )
@@ -94,8 +129,21 @@ class EventBus {
         })
     }
 
-    emit(event, ...args) {
+    emitLocal(event, ...args) {
         this.emitter.emit(event, ...args)
+    }
+
+    emit(event, ...args) {
+        if (!event) return false
+
+        this.emitLocal(event, ...args)
+
+        void publishRealtimeMessage(REALTIME_CHANNELS.events, { event, args })
+            .catch((error) => {
+                logger.warn(`Failed to publish event "${event}". ${error?.message || error}`)
+            })
+
+        return true
     }
 }
 

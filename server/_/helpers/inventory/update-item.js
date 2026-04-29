@@ -11,14 +11,8 @@ export const updateItem = async (db, actions, user) => {
         // console.log('updateItem actions:', actions);
 
         // validate update item data
-        if (actions.order_id === undefined || actions.index === undefined || actions.item === undefined) {
+        if (actions.order_id === undefined || actions.item === undefined) {
             return { success: false, error: 'no update item data provided' };
-        }
-
-        // validate index
-        actions.index = parseInt(actions.index);
-        if (isNaN(actions.index) || actions.index < 0 || actions.index > 1000) {
-            return { success: false, error: 'invalid update item index' };
         }
 
         // validate order_id
@@ -27,11 +21,21 @@ export const updateItem = async (db, actions, user) => {
         }
 
         const item = actions.item;
-        const index = actions.index;
+        const fallbackIndex = Number.isInteger(Number.parseInt(actions.index, 10))
+            ? Number.parseInt(actions.index, 10)
+            : null;
+        const itemId = actions.item_id || item?.id;
+
+        if (!itemId || typeof itemId !== 'string') {
+            return { success: false, error: 'invalid item_id' };
+        }
 
         // update item ready status
         if (item.inventory && item.inventory.origin == 'c') item.inventory.ready = null;
-        if (item.inventory && (item.inventory.origin == 'w' || item.inventory.origin == 'm')) { item.inventory.rdy_date = new Date().toISOString(); item.inventory.rdy_user = actions.user_id; }
+        if (item.inventory && (item.inventory.origin == 'w' || item.inventory.origin == 'm')) {
+            item.inventory.rdy_date = new Date().toISOString();
+            item.inventory.rdy_user = user?.id || null;
+        }
 
         // find the order item by id
         const itemQuery = `
@@ -43,7 +47,9 @@ export const updateItem = async (db, actions, user) => {
         const itemResult = await db.query(itemQuery, [actions.order_id, 'order', sid]);
 
         let items = itemResult.rows[0]?.items || [];
-        let targetItem = items[index];
+        const resolvedIndex = items.findIndex(existingItem => existingItem?.id === itemId);
+        const targetIndex = resolvedIndex !== -1 ? resolvedIndex : fallbackIndex;
+        const targetItem = Number.isInteger(targetIndex) ? items[targetIndex] : null;
 
         // check if main item exists
         if (!targetItem) {
@@ -52,17 +58,17 @@ export const updateItem = async (db, actions, user) => {
 
         // update only inventory and bundle_items keys
         if (item.inventory) {
-            items[index].inventory = {
+            items[targetIndex].inventory = {
                 ...targetItem.inventory,
                 ...item.inventory
             };
         }
 
         if (item.bundle_items) {
-            items[index].bundle_items = item.bundle_items;
+            items[targetIndex].bundle_items = item.bundle_items;
         }
 
-        // console.log('Updated main item:', items[index]);
+        // console.log('Updated main item:', items[targetIndex]);
 
         const updateQuery = `
                     UPDATE data

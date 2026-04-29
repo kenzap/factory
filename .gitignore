@@ -10,6 +10,8 @@ node_modules/
 
 # Cached documents
 server/document/pdf
+server/extensions/nesting
+server/extensions/fusion-sketching
 
 # readme txt
 readme.txt

@@ -217,7 +217,7 @@ async function execWriteoffAction(data, user) {
 
             if (updated) {
 
-                console.log('updating:', items_db);
+                // console.log('updating:', items_db);
 
                 // update order items
                 query = `UPDATE data SET js = jsonb_set(js, '{data,items}', $1::jsonb, true) WHERE _id = $2 AND ref = $3 AND sid = $4 RETURNING _id`;

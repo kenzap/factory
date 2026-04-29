@@ -279,6 +279,15 @@ class Orders {
 
         orderUpdatesSSE.connect();
         this.unsubscribeOrderUpdates = orderUpdatesSSE.subscribe((data) => this.handleLiveUpdate(data));
+
+        window.addEventListener('beforeunload', () => {
+            if (this.unsubscribeOrderUpdates) {
+                this.unsubscribeOrderUpdates();
+                this.unsubscribeOrderUpdates = null;
+            }
+
+            orderUpdatesSSE.disconnect();
+        });
     }
 
     handleLiveUpdate = (data) => {

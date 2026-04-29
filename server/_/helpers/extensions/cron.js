@@ -1,4 +1,5 @@
 import cron from 'node-cron'
+import { withRealtimeLock } from '../redis.js';
 
 /**
  * Creates a cron job manager for scheduling and managing multiple cron tasks.
@@ -20,6 +21,33 @@ import cron from 'node-cron'
  * cronManager.startAll();
  */
 export const createCronManager = (scheduledJobs, logger) => {
+    const runCronHandler = async (name, handler, options = {}) => {
+        const {
+            singleton = false,
+            lockKey = `cron:${name}`,
+            lockTtlMs = 5 * 60 * 1000,
+            failOpen = process.env.NODE_ENV !== 'production'
+        } = options;
+
+        if (!singleton) {
+            await handler();
+            return;
+        }
+
+        await withRealtimeLock(
+            lockKey,
+            lockTtlMs,
+            async () => {
+                await handler();
+            },
+            {
+                failOpen,
+                logger,
+                onLocked: () => logger.info(`[cron][${name}] skipped; lock already held by another node`)
+            }
+        );
+    };
+
     return {
         register(name, schedule, handler, options = { timezone: 'UTC' }) {
             if (scheduledJobs.has(name)) {
@@ -28,7 +56,7 @@ export const createCronManager = (scheduledJobs, logger) => {
 
             const task = cron.schedule(schedule, async () => {
                 try {
-                    await handler()
+                    await runCronHandler(name, handler, options)
                 } catch (err) {
                     logger.error(`[cron][${name}]`, err)
                 }

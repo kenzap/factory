@@ -2,7 +2,7 @@ import { execOrderItemAction } from "../_/api/exec_order_item_action.js";
 import { getOrdersForCutting } from "../_/api/get_orders_for_cutting.js";
 import { saveSupplylogValue } from "../_/api/save_supplylog_value.js";
 import { getAuthToken } from "../_/helpers/auth.js";
-import { __html, attr, formatDate, getDimUnit, hideLoader, onClick, toast } from "../_/helpers/global.js";
+import { __html, attr, formatDate, getDimUnit, hideLoader, toast } from "../_/helpers/global.js";
 import { formatClientName, getFullClientName } from "../_/helpers/order.js";
 // import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
@@ -42,6 +42,7 @@ class CuttingList {
         this.liveRefreshPending = { orders: false, stock: false };
         this.liveRefreshInFlight = false;
         this.liveRefreshQueued = false;
+        this.listenersBound = false;
 
         // connect to backend
         this.init();
@@ -465,8 +466,159 @@ class CuttingList {
         return text + ' <span class="small">' + getDimUnit(this.settings) + '</span>';
     }
 
+    activateDimensionEditor = (span) => {
+        const orderId = span.dataset.orderId;
+        const itemIndex = parseInt(span.dataset.itemIndex);
+        const field = span.dataset.field;
+        const currentValue = span.textContent.replace(/,/g, '');
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.value = currentValue;
+        input.className = 'form-control form-control-sm d-inline-block';
+        input.style.width = '80px';
+        input.style.fontSize = 'inherit';
+
+        span.style.display = 'none';
+        span.parentNode.insertBefore(input, span);
+        input.focus();
+        input.select();
+
+        const saveValue = () => {
+            const newValue = parseFloat(input.value) || 0;
+            const order = this.orders.find(o => o.id === orderId);
+
+            if (order && order.items[itemIndex]) {
+                order.items[itemIndex][field] = newValue;
+                span.textContent = newValue.toLocaleString();
+
+                if (field === 'formula_width_calc') {
+                    const checkbox = document.querySelector(`input[data-item="${orderId}-${itemIndex}"]`);
+                    if (checkbox) checkbox.dataset.width = newValue;
+                }
+            }
+
+            if (input.parentNode) input.remove();
+            span.style.display = 'inline';
+        };
+
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') saveValue();
+        });
+
+        input.addEventListener('blur', saveValue);
+    }
+
+    toggleOrderSelection = (orderId) => {
+        const orderItems = document.querySelectorAll(`.order-item input[type="checkbox"][data-item^="${orderId}-"][data-type="cutting"]`);
+        const validItems = Array.from(orderItems).filter(checkbox => checkbox.dataset.width !== '0');
+        const checkedItems = validItems.filter(checkbox => checkbox.checked);
+        const shouldSelect = checkedItems.length === 0;
+
+        validItems.forEach((checkbox) => {
+            checkbox.checked = shouldSelect;
+        });
+    }
+
+    collectSelectedItems = () => {
+        const items = [];
+
+        document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked').forEach((checkbox) => {
+            let itemId = checkbox.dataset.item;
+            let [orderId, index] = itemId.split('-');
+            let order = this.orders.find(o => o.id === orderId);
+
+            index = parseInt(index);
+
+            if (order) {
+                const item = order.items.find((i, ii) => ii === index);
+                if (item) {
+                    const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
+                    const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
+
+                    const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
+                    const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
+
+                    items.push({
+                        id: item.id,
+                        index,
+                        order_id: order.id,
+                        product_id: item._id,
+                        title: item.title,
+                        formula_width_calc,
+                        formula_length_calc,
+                        qty: item.qty
+                    });
+                }
+            }
+        });
+
+        return items;
+    }
+
+    openCoilWriteoff = (coilId) => {
+        const coil = this.stock.find(c => c._id === coilId);
+        const items = this.collectSelectedItems();
+
+        new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
+            if (updated) {
+                this.scheduleLiveRefresh({ orders: true, stock: true });
+            }
+        });
+    }
+
+    openWriteoffModal = () => {
+        const items = this.collectSelectedItems();
+
+        new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
+            if (updated) {
+                this.scheduleLiveRefresh({ orders: true, stock: true });
+            }
+        });
+    }
+
+    handleAppClick = (e) => {
+        if (e.target.closest('.editable-notes')) {
+            e.stopPropagation();
+            return;
+        }
+
+        const editableDimension = e.target.closest('.editable-dimension');
+        if (editableDimension) {
+            e.stopPropagation();
+            this.activateDimensionEditor(editableDimension);
+            return;
+        }
+
+        const selectOrder = e.target.closest('.select-order');
+        if (selectOrder) {
+            e.preventDefault();
+            this.toggleOrderSelection(selectOrder.dataset.id);
+            return;
+        }
+
+        const writeoffButton = e.target.closest('.writeoff-btn');
+        if (writeoffButton) {
+            e.preventDefault();
+            this.openWriteoffModal();
+            return;
+        }
+
+        const coilTrigger = e.target.closest('.wmc, .coil-info');
+        if (coilTrigger && !e.target.closest('.form-check-input, .form-check-label, .coil-note')) {
+            e.preventDefault();
+
+            const stockItem = coilTrigger.closest('.stock-item');
+            if (!stockItem?.dataset.coil) return;
+
+            this.openCoilWriteoff(stockItem.dataset.coil);
+        }
+    }
+
     // init page listeners
     listeners = () => {
+        if (this.listenersBound) return;
+        this.listenersBound = true;
 
         // Search functionality
         const searchInput = document.getElementById('orderSearch');
@@ -485,243 +637,7 @@ class CuttingList {
         allFilter.checked = true;
         this.applyOrderVisibility();
 
-        // Editable dimension functionality
-        onClick('.editable-dimension', e => {
-            e.stopPropagation();
-
-            const span = e.target;
-            const orderId = span.dataset.orderId;
-            const itemIndex = parseInt(span.dataset.itemIndex);
-            const field = span.dataset.field;
-            const currentValue = span.textContent.replace(/,/g, ''); // Remove commas for editing
-
-            // Create input element
-            const input = document.createElement('input');
-            input.type = 'number';
-            input.value = currentValue;
-            input.className = 'form-control form-control-sm d-inline-block';
-            input.style.width = '80px';
-            input.style.fontSize = 'inherit';
-
-            // Replace span with input
-            span.style.display = 'none';
-            span.parentNode.insertBefore(input, span);
-            input.focus();
-            input.select();
-
-            const saveValue = () => {
-                const newValue = parseFloat(input.value) || 0;
-
-                // Update the order data
-                const order = this.orders.find(o => o.id === orderId);
-                if (order && order.items[itemIndex]) {
-                    order.items[itemIndex][field] = newValue;
-
-                    // Update display
-                    span.textContent = newValue.toLocaleString();
-
-                    // Update checkbox data-width if it's width field
-                    if (field === 'formula_width_calc') {
-                        const checkbox = document.querySelector(`input[data-item="${orderId}-${itemIndex}"]`);
-                        if (checkbox) {
-                            checkbox.dataset.width = newValue;
-                        }
-                    }
-                }
-
-                // Remove input and show span only if input is still in DOM
-                if (input && input.parentNode) {
-                    input.remove();
-                }
-
-                span.style.display = 'inline';
-            };
-
-            // Save on Enter or blur
-            input.addEventListener('keypress', e => {
-                if (e.key === 'Enter') {
-                    saveValue();
-                }
-            });
-
-            input.addEventListener('blur', saveValue);
-        });
-
-        onClick('.select-order', e => {
-
-            e.preventDefault();
-
-            const orderId = e.target.dataset.id;
-
-            // Check if any items for this order are currently selected (excluding items with width=0)
-            const orderItems = document.querySelectorAll(`.order-item input[type="checkbox"][data-item^="${orderId}-"][data-type="cutting"]`);
-            const validItems = Array.from(orderItems).filter(checkbox => checkbox.dataset.width !== '0');
-            const checkedItems = validItems.filter(checkbox => checkbox.checked);
-
-            // If any are selected, deselect all; if none are selected, select all (excluding items with width=0)
-            const shouldSelect = checkedItems.length === 0;
-            validItems.forEach(checkbox => {
-                checkbox.checked = shouldSelect;
-            });
-        });
-
-        onClick('.wmc', e => {
-
-            e.preventDefault();
-
-            const clickedElement = e.target.closest('.stock-item');
-            const coilId = clickedElement ? clickedElement.dataset.coil : null;
-
-            console.log('Selected coil ID:', coilId);
-
-            let coil = this.stock.find(c => c._id === coilId);
-
-            let items = [];
-
-            // get selected items
-            document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked').forEach(checkbox => {
-                let itemId = checkbox.dataset.item;
-                let [orderId, index] = itemId.split('-');
-                let order = this.orders.find(o => o.id === orderId);
-
-                index = parseInt(index);
-
-                console.log('Selected item:', itemId, orderId, index, order);
-
-                if (order) {
-                    const item = order.items.find((i, ii) => ii === index);
-                    if (item) {
-                        // Get updated values from HTML elements
-                        const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
-                        const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
-
-                        const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
-                        const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
-
-                        items.push({
-                            id: item.id,
-                            index: index,
-                            order_id: order.id,
-                            product_id: item._id,
-                            title: item.title,
-                            formula_width_calc: formula_width_calc,
-                            formula_length_calc: formula_length_calc,
-                            qty: item.qty
-                        });
-                    }
-                }
-            });
-
-            console.log('Write off material from coil:', coil);
-            console.log('Selected items:', items);
-
-            new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
-
-                if (updated) {
-                    this.scheduleLiveRefresh({ orders: true, stock: true });
-                }
-            });
-        });
-
-        // mark write-off button click
-        onClick('.writeoff-btn', e => {
-
-            e.preventDefault();
-
-            console.log('Write off button clicked');
-
-            // get selected items
-            let items = [];
-
-            // get selected items
-            document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked').forEach(checkbox => {
-                let itemId = checkbox.dataset.item;
-                let [orderId, index] = itemId.split('-');
-                let order = this.orders.find(o => o.id === orderId);
-
-                index = parseInt(index);
-
-                console.log('Selected item:', itemId, orderId, index, order);
-
-                if (order) {
-                    const item = order.items.find((i, ii) => ii === index);
-                    if (item) {
-                        // Get updated values from HTML elements
-                        const widthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_width_calc"]`);
-                        const lengthElement = document.querySelector(`[data-order-id="${orderId}"][data-item-index="${index}"][data-field="formula_length_calc"]`);
-
-                        const formula_width_calc = widthElement ? parseFloat(widthElement.textContent.replace(/,/g, '')) || 0 : item.formula_width_calc;
-                        const formula_length_calc = lengthElement ? parseFloat(lengthElement.textContent.replace(/,/g, '')) || 0 : item.formula_length_calc;
-
-                        items.push({
-                            id: item.id,
-                            index: index,
-                            order_id: order.id,
-                            product_id: item._id,
-                            title: item.title,
-                            formula_width_calc: formula_width_calc,
-                            formula_length_calc: formula_length_calc,
-                            qty: item.qty
-                        });
-                    }
-                }
-            });
-
-            new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
-
-                if (updated) {
-                    this.scheduleLiveRefresh({ orders: true, stock: true });
-                }
-            });
-
-            // const orderIds = [...new Set(items.map(item => item.order_id).filter(id => id))];
-
-            // const record = {
-            //     qty: 0,
-            //     origin: "c",
-            //     type: "cutting",
-            //     title: __html(`Mark complete for %1$ item%2$ from order%3$ #%4$`, items.length, items.length !== 1 ? 's' : '', orderIds.length !== 1 ? 's' : '', orderIds.join(', #')),
-            //     product_name: "",
-            //     time: 0,
-            //     order_ids: orderIds,
-            //     items: items
-            // }
-
-            // if (items.length === 0) {
-            //     toast('No records selected');
-            //     return;
-            // }
-
-            // console.log('Write-off record:', record);
-
-            // // block ui button
-            // let htmlOriginal = e.currentTarget.innerHTML;
-            // e.currentTarget.disabled = true;
-            // e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
-
-            // // Create product bundle from the selected product
-            // execWriteoffAction(record, (response) => {
-
-            //     document.querySelector('.writeoff-btn').innerHTML = htmlOriginal;
-            //     document.querySelector('.writeoff-btn').disabled = false;
-
-            //     console.log('Write-off response:', response);
-
-            //     if (!response.success) {
-            //         alert(__html('Error: %1$', response.error));
-            //         return;
-            //     }
-
-            //     this.init();
-
-            //     toast(__html('Changes applied'));
-            // });
-        });
-
-        // Editable notes functionality
-        onClick('.editable-notes', e => {
-            e.stopPropagation(); // Prevent triggering parent click events
-        });
+        document.getElementById('app')?.addEventListener('click', this.handleAppClick);
 
         document.addEventListener('change', e => {
             if (e.target.classList.contains('editable-notes')) {
