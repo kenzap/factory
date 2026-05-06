@@ -252,8 +252,14 @@ body {
     z-index: 1;
 }
 
-.tabulator-row.dropdown-open-row{
-    z-index: 40;
+.tabulator-row.dropdown-open-row,
+.tabulator-row.editor-open-row{
+    z-index: 60;
+}
+
+.tabulator-row.editor-open-row .tabulator-cell.tabulator-editing{
+    position: relative;
+    z-index: 70;
 }
 
 .tableActionsCont .dropdown-menu{

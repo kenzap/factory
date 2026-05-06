@@ -14,7 +14,7 @@ const getConfiguredCdnBase = () => {
 export const CDN = getConfiguredCdnBase();
 export const FILES = CDN ? CDN : 'files';
 export const API_KEY = "";
-export const version = "2.5.0";
+export const version = "2.5.1";
 
 export const fileUrl = (filename, updated = '') => {
     const cacheBust = updated ? `?${updated}` : '';

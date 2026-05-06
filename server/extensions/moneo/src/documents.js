@@ -1,7 +1,7 @@
 import { InvoiceCalculator } from '@factory/tax-core/calculator';
 import { extractCountryFromVAT } from '@factory/tax-core/index';
 import { getClient, getSellerCountry } from './db/clients.js'; // waybills and invoices
-import { getOrdersForInvoiceSync, updateOrderMoneoId } from './db/invoices.js'; // waybills and invoices
+import { getOrdersForInvoiceSync, getOrdersForReceiptSync, updateOrderMoneoId } from './db/invoices.js'; // waybills and invoices
 import { getCarryOverPaymentsForReceiptSync } from './db/payments.js'; // payments
 import { convertToDateString, makeMoneoRequest, roundToTwoDecimals } from './utils.js';
 
@@ -379,13 +379,13 @@ export const syncDocuments = async (db, logger, config, options = {}) => {
             return response;
         }
 
-        // const receiptOrders = await getOrdersForReceiptSync(db, range.from, range.to, limit);
-        // logger.info(`[moneo.syncDocuments] Receipt candidates: ${receiptOrders.length}`);
+        const receiptOrders = await getOrdersForReceiptSync(db, range.from, range.to, limit);
+        logger.info(`[moneo.syncDocuments] Receipt candidates: ${receiptOrders.length}`);
 
-        // if (receiptOrders.length > 0) {
-        //     response.receipt = await processReceipts(db, logger, receiptOrders, config, dryRun);
-        //     return response;
-        // }
+        if (receiptOrders.length > 0) {
+            response.receipt = await processReceipts(db, logger, receiptOrders, config, dryRun);
+            return response;
+        }
 
         const carryOverReceiptOrders = await getCarryOverPaymentsForReceiptSync(db, range.from, range.to, limit);
         logger.info(`[moneo.syncDocuments] Carry-over receipt candidates: ${carryOverReceiptOrders.length}`);

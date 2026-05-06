@@ -79,3 +79,7 @@ export function clearSettingsCache() {
     settingsCache = null;
     cacheTimestamp = null;
 }
+
+export function getCachedSettings() {
+    return settingsCache;
+}

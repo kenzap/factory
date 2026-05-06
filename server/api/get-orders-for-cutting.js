@@ -164,7 +164,7 @@ async function getOrdersForCutting(filters = { client: { name: "" }, dateFrom: '
 
     // hide orders where all items were written off more than 2 days ago
     const twoDaysAgo = new Date();
-    twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+    twoDaysAgo.setDate(twoDaysAgo.getDate() - 7);
     query += ` AND EXISTS (
             SELECT 1 
             FROM jsonb_array_elements(js->'data'->'items') AS item 

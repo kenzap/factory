@@ -39,6 +39,9 @@ export class Header {
     }
 
     html = () => {
+        const taskMenuItem = this.response?.user?.rights?.includes('tasks_journal')
+            ? `<li><a class="dropdown-item" href="/tasks/" target="_self"><i class="bi bi-check2-square me-2"></i>${__html('Tasks')}</a></li>`
+            : '';
 
         return `
             <!-- Navigation -->
@@ -64,6 +67,7 @@ export class Header {
                                 <li><a class="dropdown-item" href="/manufacturing/" target="_self"><i class="bi bi-box me-2"></i>${__html('Manufacturing')}</a></li>
                                 <li><a class="dropdown-item" href="/worklog/" target="_self"><i class="bi bi-journal-text me-2"></i>${__html('Work Log')}</a></li>
                                 <li><a class="dropdown-item" href="/worklog-launcher/" target="_self"><i class="bi bi-journal-check me-2"></i>${__html('Work Report')}</a></li>
+                                ${taskMenuItem}
                                 <li><hr class="dropdown-divider"></li> 
                                 <li><a class="dropdown-item language-picker" href="#"><i class="bi bi-translate me-2"></i>${__html('Language')}</a></li>
                                 <li><hr class="dropdown-divider"></li>

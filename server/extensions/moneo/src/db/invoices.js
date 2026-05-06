@@ -1,5 +1,5 @@
 /*
-    Getting all waybills for current month pending sync with Moneo.
+    Get all waybills for current month pending sync with Moneo.
     For: sales.invoices
     Type: PAV (document generated after payment, pēcapmaksa)
 */
@@ -36,7 +36,7 @@ export async function getOrdersForInvoiceSync(db, dateStart, dateEnd, limit) {
 }
 
 /*
-    Getting all invoices for current month pending sync with Moneo.
+    Get all paid invoices for current month pending sync with Moneo.
     For: sales.invoices
     Type: PR (document generated before payment, priekšapmaksa)
 */

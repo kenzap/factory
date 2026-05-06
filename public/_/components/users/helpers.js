@@ -12,6 +12,11 @@ export const getRights = () => {
         cutting_journal: { text: __html('Cutting Journal'), category: 'factory', class: 'text-dark bg-light', note: __html('Allows managing the metal cutting log and processes.') },
         work_log_journal: { text: __html('Work Log Journal'), category: 'factory', class: 'text-dark bg-light', note: __html('Allows viewing and managing employee work logs.') },
 
+        // Tasks
+        tasks_journal: { text: __html('Tasks Journal'), category: 'tasks', class: 'text-dark bg-light', note: __html('Allows viewing operational tasks, reminders, and deadlines.') },
+        tasks_management: { text: __html('Tasks Management'), category: 'tasks', class: 'text-dark bg-light', note: __html('Allows creating, assigning, updating, and removing tasks.') },
+        tasks_notifications: { text: __html('Tasks Notifications'), category: 'tasks', class: 'text-dark bg-light', note: __html('Allows receiving task reminder and overdue notifications.') },
+
         // Finance
         payments_journal: { text: __html('Payments Journal'), category: 'finance', class: 'text-dark bg-light', note: __html('Allows processing and managing payments and invoices.') },
         financial_reports: { text: __html('Financial Reports'), category: 'finance', class: 'text-dark bg-light', note: __html('Allows viewing financial reports and summaries.') },

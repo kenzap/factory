@@ -43,6 +43,7 @@ All frontend files are located in this folder. They support rollup compilation b
     - public/metallog - metal inventory and supply journal
     - public/localization - ERP text localization module
     - public/manufacturing - live journal of all manufacturing processes
+    - public/tasks - operations task and reminder workspace with journal and calendar views
 
 Located at [public](./public)
 
@@ -69,6 +70,32 @@ Located at [server](./server)
 ## Observability
 
 Live system logs and crytical errors can be observed from `docker compose up` terminal output
+
+## Database Access
+
+- Backend request handlers use a shared per-process PostgreSQL `pg.Pool` through `getDbConnection()` instead of creating standalone clients for every request.
+- The compatibility wrapper preserves the existing `connect() / query() / end()` call pattern while pinning a pooled client only when a code path explicitly calls `connect()` for multi-query or transactional work.
+- Extension helper queries borrow pooled connections per query rather than holding a dedicated PostgreSQL session for the lifetime of the extension context.
+- The shared pool emits an operational warning email once usage reaches the configured threshold (70% by default) on a pod. Alerts are cooldown-limited so one saturation burst does not spam the inbox. Recipients default to `POSTGRES_POOL_ALERT_EMAIL_TO`, then cached logger email settings, then `ADMIN_EMAIL`.
+- Operations tasks are stored in the shared `data` table under `ref = 'task'`, which keeps the first release compatible with existing tenant scoping, backup, and audit conventions.
+
+## Realtime Coordination
+
+- Browser live updates use Server-Sent Events (SSE), but SSE client connections remain local to the Node.js process that accepted them.
+- Cross-container propagation is coordinated through Redis pub/sub channels under the tenant-scoped prefix `factory:<sid>:realtime`.
+- Two shared channels are used today:
+  - `...:sse` for order, stock, manufacturing, cutting-list, and related frontend live-update payloads
+  - `...:events` for extension/core event-bus messages such as OTP notifications and order item change events
+- Task journal live updates use the same SSE bridge and broadcast `task-update` / `task-delete` payloads after task writes, so all pods can refresh connected `/tasks/` views consistently.
+- Each container keeps its own in-memory SSE client list and extension listeners, subscribes to the shared Redis channels, and rebroadcasts inbound messages locally.
+- PostgreSQL remains the source of truth for persisted business state; Redis only transports ephemeral realtime notifications between containers.
+- Order-item mutation APIs must resolve items by stable `item.id` rather than client-visible array index, because journals can filter or reorder rows before dispatching actions.
+- Extension side effects that must happen only once per tenant request or schedule tick (for example OTP delivery and scheduled WhatsApp notifications) use Redis-backed cluster locks, because the same extension listeners and cron jobs are loaded in every container.
+- Extension cron jobs can opt into singleton execution through the shared cron manager, which acquires a Redis lock per job key so only one pod runs that scheduled tick in production.
+- If Redis is temporarily unavailable, the server falls back to process-local live updates and retries the bridge connection in the background. Single-container behavior continues, but multi-container realtime consistency is degraded until Redis reconnects.
+- Browser journals intentionally keep their authenticated SSE handshake on `POST`; that has proven more reliable through the current production proxy path than long-lived `GET` streams.
+- Realtime diagnostics can be enabled with `REALTIME_DEBUG=1` (or `REDIS_REALTIME_DEBUG=1`), which prints Redis bridge subscribe/publish/receive traces to server logs.
+- Authenticated debug endpoints under `/api/sse-debug/*` expose a simple SSE ticker, current local client counts, and a manual debug broadcast trigger for isolating proxy vs application fanout issues.
 
 ## Validation Notes
 

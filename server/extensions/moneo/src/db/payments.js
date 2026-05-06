@@ -1,5 +1,5 @@
 /**
- * Payments received in this ot the previous month for the waybills are synced seperately into the sales.receipts 
+ * Payments received in this or the previous month for the waybills are synced seperately into the sales.receipts 
  * of moneo database.
  * For: sales.receipts
  * Type: PAV (document generated after payment, pēcapmaksa), PR (document generated before payment, priekšapmaksa)

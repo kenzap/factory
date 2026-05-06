@@ -117,6 +117,20 @@ class Home {
                 ],
             },
             {
+                id: 'tasks',
+                title: __html('Tasks'),
+                desc: __html('Track reminders, deadlines, and operational follow-ups across the office and factory.'),
+                visible: this.user?.rights.includes('tasks_journal'),
+                icon: '<i class="bi bi-check2-square me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>',
+                links: [
+                    {
+                        text: __html('Tasks'),
+                        link: link('/tasks/'),
+                        target: '_blank',
+                    }
+                ],
+            },
+            {
                 id: 'finance',
                 title: __html('Finance'),
                 desc: __html('Manage payments and transactions, generate reports.'),

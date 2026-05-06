@@ -1,9 +1,61 @@
 import pkg from 'pg';
 
-const { Client } = pkg;
+const { Pool } = pkg;
 
 export const sid = process.env.SID || 1000000; // Default space ID
 export const locale = process.env.LOCALE || "en"; // Default locale
+const DEFAULT_POOL_MAX = Math.max(1, Number.parseInt(process.env.POSTGRES_POOL_MAX || '10', 10) || 10);
+const DEFAULT_IDLE_TIMEOUT_MS = Math.max(1000, Number.parseInt(process.env.POSTGRES_POOL_IDLE_TIMEOUT_MS || '30000', 10) || 30000);
+const DEFAULT_CONNECTION_TIMEOUT_MS = Math.max(1000, Number.parseInt(process.env.POSTGRES_POOL_CONNECTION_TIMEOUT_MS || '5000', 10) || 5000);
+const DEFAULT_POOL_ALERT_THRESHOLD_PERCENT = Math.min(
+    100,
+    Math.max(1, Number.parseInt(process.env.POSTGRES_POOL_ALERT_THRESHOLD_PERCENT || '85', 10) || 85)
+);
+const DEFAULT_POOL_ALERT_COOLDOWN_MS = Math.max(
+    60 * 1000,
+    Number.parseInt(process.env.POSTGRES_POOL_ALERT_COOLDOWN_MS || '900000', 10) || 900000
+);
+const DEFAULT_POOL_ALERT_ENABLED = !['0', 'false', 'off'].includes(
+    String(process.env.POSTGRES_POOL_ALERTS_ENABLED || 'true').trim().toLowerCase()
+);
+
+let sharedDbPool = null;
+let dbPoolAlertPromise = null;
+let dbPoolAlertLastSentAt = 0;
+
+class PooledDbConnection {
+    constructor(pool) {
+        this.pool = pool;
+        this.client = null;
+    }
+
+    async connect() {
+        if (!this.client) {
+            this.client = await this.pool.connect();
+        }
+
+        return this;
+    }
+
+    async query(text, params) {
+        if (this.client) {
+            return this.client.query(text, params);
+        }
+
+        return this.pool.query(text, params);
+    }
+
+    async end() {
+        if (!this.client) return;
+
+        this.client.release();
+        this.client = null;
+    }
+
+    async close() {
+        await this.end();
+    }
+}
 
 export function __html(locales, key, ...p) {
     // This function should return the HTML for the given key
@@ -40,12 +92,140 @@ export function log_error(...args) {
     console.log(`[${new Date().toISOString()}]`, ...args);
 }
 
+function getDbPoolMetrics(pool) {
+    const max = Math.max(1, Number(pool?.options?.max) || DEFAULT_POOL_MAX);
+    const total = Math.max(0, Number(pool?.totalCount) || 0);
+    const idle = Math.max(0, Number(pool?.idleCount) || 0);
+    const waiting = Math.max(0, Number(pool?.waitingCount) || 0);
+    const active = Math.max(0, total - idle);
+    const utilizationRatio = max > 0 ? active / max : 0;
+
+    return {
+        max,
+        total,
+        idle,
+        waiting,
+        active,
+        utilizationRatio,
+        utilizationPercent: Math.round(utilizationRatio * 100)
+    };
+}
+
+function buildDbPoolAlertHtml(metrics) {
+    const time = new Date().toISOString();
+    const nodeId = process.env.HOSTNAME || `pid-${process.pid}`;
+
+    return `
+        <div style="font-family:Arial,sans-serif;line-height:1.4;color:#222;">
+            <div style="background:#7c2d12;color:#fff;padding:12px 14px;border-radius:8px 8px 0 0;">
+                <strong>Database Pool Warning</strong>
+            </div>
+            <div style="border:1px solid #e5e7eb;border-top:0;padding:14px;border-radius:0 0 8px 8px;background:#fff;">
+                <p style="margin:0 0 12px;">
+                    PostgreSQL pool usage reached <strong>${metrics.utilizationPercent}%</strong> of configured capacity on node
+                    <strong>${nodeId}</strong>.
+                </p>
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr><td style="padding:4px 0;color:#6b7280;width:160px;">Time</td><td style="padding:4px 0;">${time}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Tenant SID</td><td style="padding:4px 0;">${sid}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Pool max</td><td style="padding:4px 0;">${metrics.max}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Active clients</td><td style="padding:4px 0;">${metrics.active}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Idle clients</td><td style="padding:4px 0;">${metrics.idle}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Total clients</td><td style="padding:4px 0;">${metrics.total}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Waiting requests</td><td style="padding:4px 0;">${metrics.waiting}</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Alert threshold</td><td style="padding:4px 0;">${DEFAULT_POOL_ALERT_THRESHOLD_PERCENT}%</td></tr>
+                    <tr><td style="padding:4px 0;color:#6b7280;">Environment</td><td style="padding:4px 0;">${process.env.NODE_ENV || 'development'}</td></tr>
+                </table>
+            </div>
+        </div>
+    `;
+}
+
+async function sendDbPoolCapacityAlert(metrics) {
+    const [{ send_email }, { getCachedSettings }] = await Promise.all([
+        import('./email.js'),
+        import('./settings.js')
+    ]);
+    const settings = getCachedSettings?.() || {};
+    const mailTo = process.env.POSTGRES_POOL_ALERT_EMAIL_TO || settings?.logger_email_to || process.env.ADMIN_EMAIL;
+
+    if (!mailTo) {
+        console.warn('[db-pool] Pool alert skipped because no recipient email is configured.');
+        return;
+    }
+
+    const mailFrom = process.env.POSTGRES_POOL_ALERT_EMAIL_FROM || settings?.logger_email_from || process.env.SMTP_USER || '';
+    const replyTo = process.env.POSTGRES_POOL_ALERT_EMAIL_REPLY_TO || settings?.logger_email_reply_to || '';
+    const subject = process.env.POSTGRES_POOL_ALERT_SUBJECT
+        || `Database pool warning: ${metrics.utilizationPercent}% in use`;
+
+    await send_email(
+        mailTo,
+        mailFrom,
+        'DB Pool Alert',
+        subject,
+        buildDbPoolAlertHtml(metrics),
+        [],
+        { replyTo }
+    );
+}
+
+function scheduleDbPoolCapacityAlert(pool) {
+    if (!DEFAULT_POOL_ALERT_ENABLED) return;
+
+    const metrics = getDbPoolMetrics(pool);
+    if (metrics.utilizationPercent < DEFAULT_POOL_ALERT_THRESHOLD_PERCENT) return;
+
+    const now = Date.now();
+    if (dbPoolAlertPromise) return;
+    if (dbPoolAlertLastSentAt && (now - dbPoolAlertLastSentAt) < DEFAULT_POOL_ALERT_COOLDOWN_MS) return;
+
+    dbPoolAlertLastSentAt = now;
+    console.warn(
+        `[db-pool] Usage reached ${metrics.utilizationPercent}% (${metrics.active}/${metrics.max}, waiting=${metrics.waiting}). Sending warning email.`
+    );
+
+    dbPoolAlertPromise = sendDbPoolCapacityAlert(metrics)
+        .catch((error) => {
+            console.error('[db-pool] Failed to send pool capacity warning email:', error);
+        })
+        .finally(() => {
+            dbPoolAlertPromise = null;
+        });
+}
+
 // Database connection helper
+export function getDbPool() {
+    if (!sharedDbPool) {
+        sharedDbPool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            max: DEFAULT_POOL_MAX,
+            idleTimeoutMillis: DEFAULT_IDLE_TIMEOUT_MS,
+            connectionTimeoutMillis: DEFAULT_CONNECTION_TIMEOUT_MS
+        });
+
+        sharedDbPool.on('error', (error) => {
+            console.error('[db-pool] Unexpected idle client error:', error);
+        });
+
+        sharedDbPool.on('acquire', () => {
+            scheduleDbPoolCapacityAlert(sharedDbPool);
+        });
+    }
+
+    return sharedDbPool;
+}
+
 export function getDbConnection() {
-    return new Client({
-        connectionString: process.env.DATABASE_URL
-        // connectionString: "postgresql://skarda_design:weid84£q213c23Rvd00hjsdaFVDfLSQsvdsfVFDQ@host.docker.internal:5433/skarda_design"
-    });
+    return new PooledDbConnection(getDbPool());
+}
+
+export async function closeDbPool() {
+    if (!sharedDbPool) return;
+
+    const pool = sharedDbPool;
+    sharedDbPool = null;
+    await pool.end();
 }
 
 export const makeId = () => {

@@ -29,6 +29,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     container.style.display = "flex";
     container.style.alignItems = "center";
     container.style.gap = "8px";
+    container.style.zIndex = "2100";
 
     const input = document.createElement("input");
     input.type = "text";
@@ -79,7 +80,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     dropdown.style.borderRadius = "4px";
     dropdown.style.maxHeight = "320px";
     dropdown.style.overflowY = "auto";
-    dropdown.style.zIndex = "1000";
+    dropdown.style.zIndex = "2200";
     dropdown.style.display = "none";
 
     container.appendChild(input);
@@ -89,6 +90,22 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     let searchTimeout;
     let selectedIndex = -1;
     let options = [];
+    const rowElement = cell.getRow()?.getElement?.() || null;
+
+    const setRowDropdownState = (isOpen) => {
+        if (!rowElement) return;
+        rowElement.classList.toggle("editor-open-row", Boolean(isOpen));
+    };
+
+    const cleanupEditorChrome = ({ removePreview = false } = {}) => {
+        dropdown.style.display = "none";
+        largePreview.style.display = "none";
+        setRowDropdownState(false);
+
+        if (removePreview && largePreview.parentNode) {
+            document.body.removeChild(largePreview);
+        }
+    };
 
     const updateSelectedOption = () => {
         options.forEach((option, index) => {
@@ -238,9 +255,10 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
             updateSelectedOption();
             dropdown.style.display = "block";
+            setRowDropdownState(true);
         } else {
             selectedIndex = -1;
-            dropdown.style.display = "none";
+            cleanupEditorChrome();
         }
     };
 
@@ -270,16 +288,10 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
         // Delay hiding dropdown to allow clicks on options
         setTimeout(() => {
             if (!dropdown.contains(e.relatedTarget)) {
-                dropdown.style.display = "none";
-                largePreview.style.display = "none"; // Hide large preview on blur
+                cleanupEditorChrome({ removePreview: true });
                 // productSuggestions = [];
                 clearTimeout(searchTimeout);
                 success(input.value);
-
-                // Clean up large preview from DOM
-                if (largePreview.parentNode) {
-                    document.body.removeChild(largePreview);
-                }
             }
         }, 150);
     });
@@ -335,8 +347,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
                 const selectedSuggestion = suggestion.title;
                 input.value = selectedSuggestion;
-                dropdown.style.display = "none";
-                largePreview.style.display = "none";
+                cleanupEditorChrome({ removePreview: true });
 
                 productSelected(suggestion, cell, editorParams.settings, editorParams.discounts);
                 success(selectedSuggestion);
@@ -350,8 +361,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
             } else {
 
                 // No option selected, just accept current input value
-                dropdown.style.display = "none";
-                largePreview.style.display = "none";
+                cleanupEditorChrome({ removePreview: true });
                 productSuggestions = [];
                 success(input.value);
                 setTimeout(() => {
@@ -366,8 +376,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
             e.preventDefault();
             e.stopPropagation(); // Add this to prevent table navigation
             clearTimeout(searchTimeout);
-            dropdown.style.display = "none";
-            largePreview.style.display = "none";
+            cleanupEditorChrome({ removePreview: true });
             productSuggestions = [];
             cancel();
         }

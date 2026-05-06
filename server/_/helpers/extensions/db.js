@@ -30,14 +30,14 @@ import { makeId, sid } from '../index.js';
  * @throws {Error} When SQL contains DDL statements (CREATE/ALTER/DROP/etc.)
  */
 export const createManagedRawDb = (getConnection) => {
-    let conn = null
+    async function runQuery(sql, params = []) {
+        const db = getConnection()
 
-    async function ensureConnection() {
-        if (!conn) {
-            conn = getConnection()
-            await conn.connect()
+        try {
+            return await db.query(sql, params)
+        } finally {
+            await db.end?.()
         }
-        return conn
     }
 
     const ALLOWED_OPS = /^(SELECT|INSERT|UPDATE|DELETE)\b/i
@@ -88,25 +88,14 @@ export const createManagedRawDb = (getConnection) => {
                 throw new Error('DDL statements are not allowed')
             }
 
-            const db = await ensureConnection()
-            const result = await db.query(sql, params)
+            const result = await runQuery(sql, params)
 
             return result
         },
 
-        async close() {
-            if (conn) {
-                await conn.end()
-                conn = null
-            }
-        },
+        async close() { },
 
-        async end() {
-            if (conn) {
-                await conn.end()
-                conn = null
-            }
-        },
+        async end() { },
 
         makeId() {
             return makeId();
