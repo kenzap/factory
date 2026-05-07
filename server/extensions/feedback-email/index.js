@@ -27,7 +27,7 @@ export function register({ router, cron, db, logger, config }) {
     if (process.env.NODE_ENV === 'production')
         cron.register(
             'request-feedback',
-            '*/1 * * * *',
+            '*/15 * * * *',
             async () => {
                 try {
                     const claimedOrder = await claimOrderForFeedback(db, logger);

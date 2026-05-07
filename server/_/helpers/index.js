@@ -89,7 +89,7 @@ export function log(...args) {
 
 // error logging with reporting
 export function log_error(...args) {
-    console.log(`[${new Date().toISOString()}]`, ...args);
+    console.error(`[${new Date().toISOString()}]`, ...args);
 }
 
 function getDbPoolMetrics(pool) {

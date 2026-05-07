@@ -1,6 +1,7 @@
 import nodemailer from 'nodemailer';
-import { getDbConnection, log_error, sid } from './index.js';
+import { getDbConnection, sid } from './index.js';
 import { broadcastOrderUpdate } from './order-live-update.js';
+import { rawConsole } from './raw-console.js';
 import { getSettings } from './settings.js';
 
 /**
@@ -11,7 +12,7 @@ import { getSettings } from './settings.js';
  * @param 	{String} 	from			from name
  * @param 	{String} 	subject			email subject
  * @param 	{String} 	body			email body
- * @param 	{String} 	attach			attachment files (optional)
+ * @param 	{Array} 		attach			attachment files or nodemailer attachment objects (optional)
  * @param 	{Object} 	options			extra options (optional)
  * @param 	{String} 	options.replyTo	reply-to email (optional)
  * @return 	{Object} 	status			operation success report
@@ -40,7 +41,7 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
             const settings = await getSettings();
             fromName = settings?.brand_name || '';
         } catch (error) {
-            log_error(`Failed to load brand_name setting: ${error.message}`);
+            rawConsole.error(`[error][email] Failed to load brand_name setting: ${error.message}`);
         }
     }
 
@@ -58,11 +59,23 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
 
     // Add attachments if provided
     if (attach && attach.length > 0) {
-        mailOptions.attachments = attach.map(filePath => ({
-            filename: filePath.split('/').pop(), // Extract filename from path
-            path: filePath,
-            contentType: 'application/pdf'
-        }));
+        mailOptions.attachments = attach
+            .map((item) => {
+                if (typeof item === 'string') {
+                    return {
+                        filename: item.split('/').pop(),
+                        path: item,
+                        contentType: 'application/pdf'
+                    };
+                }
+
+                if (item && typeof item === 'object') {
+                    return item;
+                }
+
+                return null;
+            })
+            .filter(Boolean);
     }
 
     try {
@@ -70,8 +83,12 @@ export async function send_email(mail_to, mail_from, from, subject, body, attach
         output.send = true;
         output.messageId = info.messageId;
     } catch (error) {
-
-        log_error(`Error sending email: ${error.message} \nsubject: ${subject} \nmail to: ${mail_to} \nserver time: ${Date.now()}`);
+        output.success = false;
+        output.send = false;
+        output.error = error.message;
+        rawConsole.error(
+            `[error][email] Error sending email: ${error.message} \nsubject: ${subject} \nmail to: ${mail_to} \nserver time: ${Date.now()}`
+        );
     }
 
     return output;

@@ -58,12 +58,13 @@ const normalizeTaskPayload = (input = {}, existingData = {}, user = null) => {
         throw new Error('Task title is required');
     }
 
-    const typeRaw = toTrimmedString(input.type || existingData.type || 'task').toLowerCase();
+    const unifiedDate = normalizeOptionalDate(input.due_date ?? input.remind_at ?? existingData.due_date ?? existingData.remind_at);
+    const typeRaw = toTrimmedString(input.type || existingData.type || 'reminder').toLowerCase();
     const statusRaw = toTrimmedString(input.status || existingData.status || 'open').toLowerCase();
     const priorityRaw = toTrimmedString(input.priority || existingData.priority || 'medium').toLowerCase();
     const linkTypeRaw = toTrimmedString(input.linked_ref_type || existingData.linked_ref_type).toLowerCase();
 
-    const type = ALLOWED_TYPES.has(typeRaw) ? typeRaw : 'task';
+    const type = ALLOWED_TYPES.has(typeRaw) ? typeRaw : 'reminder';
     const status = ALLOWED_STATUSES.has(statusRaw) ? statusRaw : 'open';
     const priority = ALLOWED_PRIORITIES.has(priorityRaw) ? priorityRaw : 'medium';
     const linkedRefType = linkTypeRaw ? (ALLOWED_LINK_TYPES.has(linkTypeRaw) ? linkTypeRaw : 'other') : '';
@@ -82,8 +83,8 @@ const normalizeTaskPayload = (input = {}, existingData = {}, user = null) => {
         status,
         priority,
         category: toTrimmedString(input.category ?? existingData.category),
-        due_date: normalizeOptionalDate(input.due_date ?? existingData.due_date),
-        remind_at: normalizeOptionalDate(input.remind_at ?? existingData.remind_at),
+        due_date: unifiedDate,
+        remind_at: null,
         assigned_users: assignedUsers,
         watchers,
         created_by: createdBy,
@@ -220,7 +221,7 @@ export async function getTasks(db, filters = {}, user = null) {
 
     const type = toTrimmedString(filters.type).toLowerCase();
     if (type && ALLOWED_TYPES.has(type)) {
-        where.push(`COALESCE(js->'data'->>'type', 'task') = $${params.length + 1}`);
+        where.push(`COALESCE(js->'data'->>'type', 'reminder') = $${params.length + 1}`);
         params.push(type);
     }
 
@@ -265,13 +266,13 @@ export async function getTasks(db, filters = {}, user = null) {
 
     const dueFrom = normalizeOptionalDate(filters.due_from);
     if (dueFrom) {
-        where.push(`COALESCE(js->'data'->>'due_date', '') >= $${params.length + 1}`);
+        where.push(`COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''), '') >= $${params.length + 1}`);
         params.push(dueFrom);
     }
 
     const dueTo = normalizeOptionalDate(filters.due_to);
     if (dueTo) {
-        where.push(`COALESCE(js->'data'->>'due_date', '') <= $${params.length + 1}`);
+        where.push(`COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''), '') <= $${params.length + 1}`);
         params.push(dueTo);
     }
 
@@ -312,13 +313,11 @@ export async function getTasks(db, filters = {}, user = null) {
         ORDER BY
             CASE
                 WHEN COALESCE(js->'data'->>'status', 'open') IN ('open', 'in_progress', 'waiting')
-                    AND COALESCE(js->'data'->>'due_date', '') <> ''
-                    AND (js->'data'->>'due_date')::timestamptz < NOW()
+                    AND COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''), '') <> ''
+                    AND COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''))::timestamptz < NOW()
                 THEN 0
-                WHEN COALESCE(js->'data'->>'due_date', '') <> ''
+                WHEN COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''), '') <> ''
                 THEN 1
-                WHEN COALESCE(js->'data'->>'remind_at', '') <> ''
-                THEN 2
                 ELSE 3
             END,
             CASE COALESCE(js->'data'->>'priority', 'medium')
@@ -326,8 +325,7 @@ export async function getTasks(db, filters = {}, user = null) {
                 WHEN 'medium' THEN 1
                 ELSE 2
             END,
-            NULLIF(js->'data'->>'due_date', '')::timestamptz ASC NULLS LAST,
-            NULLIF(js->'data'->>'remind_at', '')::timestamptz ASC NULLS LAST,
+            COALESCE(NULLIF(js->'data'->>'due_date', ''), NULLIF(js->'data'->>'remind_at', ''))::timestamptz ASC NULLS LAST,
             COALESCE(js->'data'->>'updated_at', '') DESC
         LIMIT $${params.length + 1}
     `;
@@ -398,7 +396,8 @@ export async function saveTask(db, input = {}, user = null) {
 
     return {
         _id: result.rows?.[0]?._id || normalized.data._id,
-        id: normalized.data.id
+        id: normalized.data.id,
+        previous_assigned_users: Array.isArray(existing?.assigned_users) ? existing.assigned_users : []
     };
 }
 

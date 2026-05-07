@@ -24,6 +24,9 @@ class TasksJournal {
         this.tasks = [];
         this.modalElement = null;
         this.modalInstance = null;
+        this.modalAssigneeOptions = [];
+        this.modalSelectedAssigneeIds = new Set();
+        this.modalAssigneeSearch = '';
         this.searchDebounce = null;
         this.viewMode = 'journal';
         this.calendarMonthStart = this.startOfMonth(new Date());
@@ -65,11 +68,10 @@ class TasksJournal {
                         <filters-header></filters-header>
                         <div class="card border-0">
                             <div class="card-body p-0">
-                                <div class="summary-grid px-2 pt-2" id="tasksSummary"></div>
-                                <div class="table-shell px-2 pb-2" id="tasksJournalShell">
+                                <div class="table-shell" id="tasksJournalShell">
                                     <div id="tasksTable"></div>
                                 </div>
-                                <div class="calendar-shell px-2 pb-2 d-none" id="tasksCalendarShell">
+                                <div class="calendar-shell d-none" id="tasksCalendarShell">
                                     <div id="tasksCalendar"></div>
                                 </div>
                             </div>
@@ -109,48 +111,54 @@ class TasksJournal {
     }
 
     fetchUsers = () => {
-        getUsers({ limit: 500 }, (response) => {
-            this.users = response?.users?.users || [];
+        getUsers({ limit: 500, portal: 'access' }, (response) => {
+            this.users = this.sortTaskUsers(response?.users?.users || []);
         });
     }
 
     renderHeader = () => {
         document.querySelector('filters-header').innerHTML = /*html*/`
             <div class="toolbar">
-                <div class="toolbar-top">
-                    <div class="toolbar-page-title">
-                        <i class="bi bi-check2-square"></i>
-                        ${__html('Tasks')}
+                <div class="toolbar-row toolbar-identity">
+                    <div class="toolbar-left">
+                        <span class="toolbar-title">
+                            <i class="bi bi-check2-square"></i>${__html('Tasks')}
+                        </span>
+                        <span class="toolbar-rule" aria-hidden="true"></span>
+                        <div class="toolbar-stats" id="tasksSummary"></div>
                     </div>
-                    <div class="toolbar-actions">
-                        <div class="btn-group" role="group">
-                            <button class="btn ${this.viewMode === 'journal' ? 'btn-dark' : 'btn-outline-dark'}" id="viewJournalBtn">
-                                <i class="bi bi-table"></i> ${__html('Journal')}
+                    <div class="toolbar-right">
+                        <div class="view-toggle" role="group">
+                            <button class="view-btn ${this.viewMode === 'journal' ? 'is-active' : ''}" id="viewJournalBtn" title="${attr(__html('Journal'))}">
+                                <i class="bi bi-table"></i>
                             </button>
-                            <button class="btn ${this.viewMode === 'calendar' ? 'btn-dark' : 'btn-outline-dark'}" id="viewCalendarBtn">
-                                <i class="bi bi-calendar3"></i> ${__html('Calendar')}
+                            <button class="view-btn ${this.viewMode === 'calendar' ? 'is-active' : ''}" id="viewCalendarBtn" title="${attr(__html('Calendar'))}">
+                                <i class="bi bi-calendar3"></i>
                             </button>
                         </div>
-                        <div class="btn-group ${this.viewMode === 'calendar' ? '' : 'd-none'}" id="taskCalendarNav">
-                            <button class="btn btn-outline-secondary" id="taskCalendarPrevBtn"><i class="bi bi-chevron-left"></i></button>
-                            <button class="btn btn-outline-secondary calendar-month-label" id="taskCalendarTodayBtn">${attr(this.formatCalendarMonth(this.calendarMonthStart))}</button>
-                            <button class="btn btn-outline-secondary" id="taskCalendarNextBtn"><i class="bi bi-chevron-right"></i></button>
+                        <div class="${this.viewMode === 'calendar' ? '' : 'd-none'}" id="taskCalendarNav" style="display:flex;gap:2px">
+                            <button class="view-btn" id="taskCalendarPrevBtn"><i class="bi bi-chevron-left"></i></button>
+                            <button class="view-btn calendar-month-label" id="taskCalendarTodayBtn">${attr(this.formatCalendarMonth(this.calendarMonthStart))}</button>
+                            <button class="view-btn" id="taskCalendarNextBtn"><i class="bi bi-chevron-right"></i></button>
                         </div>
-                        <button class="btn btn-primary" id="newTaskBtn" ${this.canManageTasks() ? '' : 'disabled'}>
-                            <i class="bi bi-plus-lg"></i> ${__html('New Task')}
-                        </button>
-                        <button class="btn btn-outline-secondary" id="refreshTasksBtn" title="${attr(__html('Refresh'))}">
+                        <span class="toolbar-rule" aria-hidden="true"></span>
+                        <button class="btn-icon-ghost" id="refreshTasksBtn" title="${attr(__html('Refresh'))}">
                             <i class="bi bi-arrow-repeat"></i>
                         </button>
-                        <button class="btn btn-outline-danger" id="deleteTaskBtn" title="${attr(__html('Delete selected'))}" ${this.canManageTasks() ? '' : 'disabled'}>
+                        <button class="btn-icon-ghost btn-icon-danger" id="deleteTaskBtn" title="${attr(__html('Delete selected'))}" ${this.canManageTasks() ? '' : 'disabled'}>
                             <i class="bi bi-trash"></i>
+                        </button>
+                        <button class="btn-new-task" id="newTaskBtn" ${this.canManageTasks() ? '' : 'disabled'}>
+                            <i class="bi bi-plus-lg"></i>${__html('New Task')}
                         </button>
                     </div>
                 </div>
-                <div class="toolbar-filters">
-                    <span class="filter-label"><i class="bi bi-funnel me-1"></i>${__html('Filter')}</span>
-                    <input type="text" class="form-control" id="taskSearch" placeholder="${__html('Search…')}" value="${attr(this.filters.search)}" style="width:200px">
-                    <select class="form-select" id="taskStatusFilter" style="width:140px">
+                <div class="toolbar-row toolbar-filters-row">
+                    <div class="filter-search-wrap">
+                        <i class="bi bi-search filter-search-icon"></i>
+                        <input type="text" class="filter-search" id="taskSearch" placeholder="${__html('Search tasks…')}" value="${attr(this.filters.search)}">
+                    </div>
+                    <select class="filter-chip" id="taskStatusFilter">
                         <option value="active">${__html('Active')}</option>
                         <option value="">${__html('All statuses')}</option>
                         <option value="open">${__html('Open')}</option>
@@ -159,28 +167,22 @@ class TasksJournal {
                         <option value="done">${__html('Done')}</option>
                         <option value="canceled">${__html('Canceled')}</option>
                     </select>
-                    <select class="form-select" id="taskPriorityFilter" style="width:140px">
-                        <option value="">${__html('All priorities')}</option>
+                    <select class="filter-chip" id="taskPriorityFilter">
+                        <option value="">${__html('Any priority')}</option>
                         <option value="high">${__html('High')}</option>
                         <option value="medium">${__html('Medium')}</option>
                         <option value="low">${__html('Low')}</option>
                     </select>
-                    <select class="form-select" id="taskTypeFilter" style="width:130px">
-                        <option value="">${__html('All types')}</option>
-                        <option value="task">${__html('Task')}</option>
-                        <option value="reminder">${__html('Reminder')}</option>
-                    </select>
-                    <div class="form-check mb-0 ms-1">
-                        <input class="form-check-input" type="checkbox" id="taskMineOnly" ${this.filters.mine ? 'checked' : ''}>
-                        <label class="form-check-label" for="taskMineOnly">${__html('Mine only')}</label>
-                    </div>
+                    <label class="filter-mine-toggle" for="taskMineOnly">
+                        <input type="checkbox" id="taskMineOnly" ${this.filters.mine ? 'checked' : ''}>
+                        <span>${__html('Mine')}</span>
+                    </label>
                 </div>
             </div>
         `;
 
         document.getElementById('taskStatusFilter').value = this.filters.status;
         document.getElementById('taskPriorityFilter').value = this.filters.priority;
-        document.getElementById('taskTypeFilter').value = this.filters.type;
     }
 
     bindHeaderListeners = () => {
@@ -199,11 +201,6 @@ class TasksJournal {
 
         document.getElementById('taskPriorityFilter').addEventListener('change', (event) => {
             this.filters.priority = event.currentTarget.value;
-            this.loadTasks();
-        });
-
-        document.getElementById('taskTypeFilter').addEventListener('change', (event) => {
-            this.filters.type = event.currentTarget.value;
             this.loadTasks();
         });
 
@@ -286,21 +283,18 @@ class TasksJournal {
             return acc;
         }, { open: 0, overdue: 0, dueToday: 0, mine: 0 });
 
-        const cards = [
-            { label: __html('Open'), value: summary.open, cls: 'card-open', icon: 'bi-list-task', urgent: false },
-            { label: __html('Overdue'), value: summary.overdue, cls: 'card-overdue', icon: 'bi-exclamation-triangle', urgent: summary.overdue > 0 },
-            { label: __html('Due Today'), value: summary.dueToday, cls: 'card-today', icon: 'bi-calendar-check', urgent: summary.dueToday > 0 },
-            { label: __html('Assigned To Me'), value: summary.mine, cls: 'card-mine', icon: 'bi-person-check', urgent: false }
+        const stats = [
+            { label: __html('open'), value: summary.open, cls: '' },
+            { label: __html('overdue'), value: summary.overdue, cls: summary.overdue > 0 ? 'stat-overdue' : '' },
+            { label: __html('today'), value: summary.dueToday, cls: summary.dueToday > 0 ? 'stat-today' : '' },
+            { label: __html('mine'), value: summary.mine, cls: '' }
         ];
 
-        summaryNode.innerHTML = cards.map((card) => `
-            <div class="summary-card ${card.cls} ${card.urgent ? 'has-items' : ''}">
-                <div class="summary-card-icon"><i class="bi ${card.icon}"></i></div>
-                <div class="summary-card-body">
-                    <div class="label">${card.label}</div>
-                    <div class="value">${card.value}</div>
-                </div>
-            </div>
+        summaryNode.innerHTML = stats.map((stat, i) => `
+            ${i > 0 ? '<span class="stat-sep" aria-hidden="true">·</span>' : ''}
+            <span class="stat-item ${stat.cls}">
+                <strong>${stat.value}</strong> ${stat.label}
+            </span>
         `).join('');
     }
 
@@ -445,16 +439,12 @@ class TasksJournal {
                 event.stopPropagation();
                 const dateKey = node.dataset.date;
                 this.openTaskModal({
-                    type: 'task',
+                    type: 'reminder',
                     status: 'open',
                     priority: 'medium',
                     category: '',
                     due_date: dateKey ? new Date(`${dateKey}T09:00:00`).toISOString() : '',
-                    remind_at: '',
                     assigned_users: [],
-                    linked_ref_type: '',
-                    linked_ref_id: '',
-                    linked_ref_label: '',
                     description: '',
                     notes: ''
                 });
@@ -488,6 +478,10 @@ class TasksJournal {
     }
 
     renderCalendarSidebarItem = (task = {}, showDate = true) => {
+        const secondaryLabel = showDate
+            ? this.formatCalendarSidebarDate(task)
+            : (task.category || __html('No due date'));
+
         return `
             <button class="tasks-calendar-list-item" data-task-id="${attr(task._id || '')}">
                 <div class="title-row">
@@ -495,7 +489,7 @@ class TasksJournal {
                     <span class="priority ${attr(String(task.priority || 'medium').toLowerCase())}">${attr(this.prettyPriority(task.priority))}</span>
                 </div>
                 <div class="meta-row">
-                    ${showDate ? `<span>${attr(this.formatCalendarSidebarDate(task))}</span>` : `<span>${attr(this.prettyType(task.type))}</span>`}
+                    <span>${attr(secondaryLabel)}</span>
                     <span>${attr(this.prettyStatus(task.status))}</span>
                 </div>
             </button>
@@ -531,32 +525,23 @@ class TasksJournal {
                     <div class="task-cell-title">
                         <div class="task-title">${attr(task.title || '')}</div>
                         <div class="task-meta">
-                            <span class="type-badge">${attr(this.prettyType(task.type))}</span>
-                            ${task.description ? ` ${attr(task.description)}` : ''}
+                            ${task.category ? `<span class="category-badge">${attr(task.category)}</span>` : ''}
+                            ${task.description ? `<span class="task-description-snippet">${attr(task.description)}</span>` : ''}
                         </div>
                     </div>
                 `;
             }
         },
         {
-            title: __html('Due'),
+            title: __html('Date'),
             field: 'due_date',
             width: 160,
             formatter: (cell) => {
                 const task = cell.getRow().getData();
-                if (!task.due_date) return `<span class="task-date muted">${__html('No date')}</span>`;
+                const taskDate = this.getTaskDateValue(task);
+                if (!taskDate) return `<span class="task-date muted">${__html('No date')}</span>`;
                 const overdue = this.isTaskOverdue(task);
-                return `<span class="task-date ${overdue ? 'overdue' : ''}">${attr(this.formatDateTime(task.due_date))}</span>`;
-            }
-        },
-        {
-            title: __html('Reminder'),
-            field: 'remind_at',
-            width: 160,
-            formatter: (cell) => {
-                const value = cell.getValue();
-                if (!value) return `<span class="task-date muted">—</span>`;
-                return `<span class="task-date">${attr(this.formatDateTime(value))}</span>`;
+                return `<span class="task-date ${overdue ? 'overdue' : ''}">${attr(this.formatDateTime(taskDate))}</span>`;
             }
         },
         {
@@ -574,18 +559,6 @@ class TasksJournal {
             field: 'category',
             width: 150,
             formatter: (cell) => attr(cell.getValue() || '—')
-        },
-        {
-            title: __html('Linked'),
-            field: 'linked_ref_label',
-            minWidth: 180,
-            formatter: (cell) => {
-                const task = cell.getRow().getData();
-                const label = task.linked_ref_label || '';
-                if (!label) return `<span class="task-empty-note">—</span>`;
-                const type = task.linked_ref_type ? `${this.prettyLinkType(task.linked_ref_type)}: ` : '';
-                return `<span class="task-link-label">${attr(type + label)}</span>`;
-            }
         },
         {
             title: '',
@@ -617,22 +590,6 @@ class TasksJournal {
         }
     }
 
-    prettyType = (type = '') => type === 'reminder' ? __html('Reminder') : __html('Task');
-
-    prettyLinkType = (type = '') => {
-        switch (type) {
-            case 'order': return __html('Order');
-            case 'client': return __html('Client');
-            case 'supplier': return __html('Supplier');
-            case 'product': return __html('Product');
-            case 'stock_item': return __html('Stock');
-            case 'vehicle': return __html('Vehicle');
-            case 'employee': return __html('Employee');
-            case 'supply_record': return __html('Supply');
-            default: return __html('Linked');
-        }
-    }
-
     userLabel = (user = {}) => {
         const first = String(user?.fname || '').trim();
         const last = String(user?.lname || '').trim();
@@ -641,18 +598,36 @@ class TasksJournal {
         return name || email || __html('User');
     }
 
+    sortTaskUsers = (users = []) => {
+        const currentUserId = String(this.user?.id || this.user?._id || '');
+
+        return [...users].sort((left, right) => {
+            const leftId = String(left?._id || left?.id || '');
+            const rightId = String(right?._id || right?.id || '');
+
+            if (leftId === currentUserId && rightId !== currentUserId) return -1;
+            if (rightId === currentUserId && leftId !== currentUserId) return 1;
+
+            const leftName = this.userLabel(left);
+            const rightName = this.userLabel(right);
+            return leftName.localeCompare(rightName);
+        });
+    }
+
     isTaskOverdue = (task = {}) => {
         const status = String(task.status || '').toLowerCase();
         if (!['open', 'in_progress', 'waiting'].includes(status)) return false;
-        if (!task.due_date) return false;
+        const taskDate = this.getTaskDateValue(task);
+        if (!taskDate) return false;
 
-        const due = new Date(task.due_date);
+        const due = new Date(taskDate);
         return !Number.isNaN(due.getTime()) && due.getTime() < Date.now();
     }
 
     isDueToday = (task = {}) => {
-        if (!task.due_date) return false;
-        const due = new Date(task.due_date);
+        const taskDate = this.getTaskDateValue(task);
+        if (!taskDate) return false;
+        const due = new Date(taskDate);
         if (Number.isNaN(due.getTime())) return false;
 
         const now = new Date();
@@ -715,25 +690,24 @@ class TasksJournal {
             return;
         }
 
-        getUsers({ limit: 500 }, (response) => {
-            this.users = response?.users?.users || [];
+        getUsers({ limit: 500, portal: 'access' }, (response) => {
+            this.users = this.sortTaskUsers(response?.users?.users || []);
             cb();
         });
     }
 
     openTaskModal = (task = null) => {
         this.ensureUsersLoaded(() => {
-            const currentTask = task ? structuredClone(task) : {
-                type: 'task',
+            const currentTask = task ? {
+                ...structuredClone(task),
+                type: 'reminder'
+            } : {
+                type: 'reminder',
                 status: 'open',
                 priority: 'medium',
                 category: '',
                 due_date: '',
-                remind_at: '',
                 assigned_users: [],
-                linked_ref_type: '',
-                linked_ref_id: '',
-                linked_ref_label: '',
                 description: '',
                 notes: ''
             };
@@ -752,98 +726,75 @@ class TasksJournal {
     }
 
     modalBody = (task) => {
-        const selectedAssigneeIds = new Set((task.assigned_users || []).map((user) => String(user.id)));
-
         return /*html*/`
-            <div class="task-form-grid">
-                <div class="full">
-                    <label for="taskTitle">${__html('Title')}</label>
-                    <input type="text" id="taskTitle" class="form-control" value="${attr(task.title || '')}" placeholder="${__html('What needs to be done?')}">
-                </div>
-                <div class="full">
-                    <label for="taskDescription">${__html('Description')}</label>
-                    <textarea id="taskDescription" class="form-control" placeholder="${__html('Optional context or follow-up notes')}">${attr(task.description || '')}</textarea>
-                </div>
-                <div>
-                    <label for="taskType">${__html('Type')}</label>
-                    <select id="taskType" class="form-select">
-                        <option value="task" ${task.type === 'task' ? 'selected' : ''}>${__html('Task')}</option>
-                        <option value="reminder" ${task.type === 'reminder' ? 'selected' : ''}>${__html('Reminder')}</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="taskStatus">${__html('Status')}</label>
-                    <select id="taskStatus" class="form-select">
-                        <option value="open" ${task.status === 'open' ? 'selected' : ''}>${__html('Open')}</option>
-                        <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>${__html('In Progress')}</option>
-                        <option value="waiting" ${task.status === 'waiting' ? 'selected' : ''}>${__html('Waiting')}</option>
-                        <option value="done" ${task.status === 'done' ? 'selected' : ''}>${__html('Done')}</option>
-                        <option value="canceled" ${task.status === 'canceled' ? 'selected' : ''}>${__html('Canceled')}</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="taskPriority">${__html('Priority')}</label>
-                    <select id="taskPriority" class="form-select">
-                        <option value="high" ${task.priority === 'high' ? 'selected' : ''}>${__html('High')}</option>
-                        <option value="medium" ${task.priority === 'medium' ? 'selected' : ''}>${__html('Medium')}</option>
-                        <option value="low" ${task.priority === 'low' ? 'selected' : ''}>${__html('Low')}</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="taskCategory">${__html('Category')}</label>
-                    <input list="taskCategoryOptions" id="taskCategory" class="form-control" value="${attr(task.category || '')}" placeholder="${__html('Choose or type category')}">
-                    <datalist id="taskCategoryOptions">
-                        ${this.categoryOptions.map((option) => `<option value="${attr(option)}"></option>`).join('')}
-                    </datalist>
-                </div>
-                <div>
-                    <label for="taskDueDate">${__html('Due date')}</label>
-                    <input type="datetime-local" id="taskDueDate" class="form-control" value="${attr(this.toDateTimeInputValue(task.due_date))}">
-                </div>
-                <div>
-                    <label for="taskReminderDate">${__html('Reminder')}</label>
-                    <input type="datetime-local" id="taskReminderDate" class="form-control" value="${attr(this.toDateTimeInputValue(task.remind_at))}">
-                </div>
-                <div>
-                    <label for="taskLinkedType">${__html('Linked record type')}</label>
-                    <select id="taskLinkedType" class="form-select">
-                        <option value="">${__html('None')}</option>
-                        <option value="order" ${task.linked_ref_type === 'order' ? 'selected' : ''}>${__html('Order')}</option>
-                        <option value="client" ${task.linked_ref_type === 'client' ? 'selected' : ''}>${__html('Client')}</option>
-                        <option value="supplier" ${task.linked_ref_type === 'supplier' ? 'selected' : ''}>${__html('Supplier')}</option>
-                        <option value="product" ${task.linked_ref_type === 'product' ? 'selected' : ''}>${__html('Product')}</option>
-                        <option value="stock_item" ${task.linked_ref_type === 'stock_item' ? 'selected' : ''}>${__html('Stock')}</option>
-                        <option value="vehicle" ${task.linked_ref_type === 'vehicle' ? 'selected' : ''}>${__html('Vehicle')}</option>
-                        <option value="employee" ${task.linked_ref_type === 'employee' ? 'selected' : ''}>${__html('Employee')}</option>
-                        <option value="supply_record" ${task.linked_ref_type === 'supply_record' ? 'selected' : ''}>${__html('Supply')}</option>
-                        <option value="other" ${task.linked_ref_type === 'other' ? 'selected' : ''}>${__html('Other')}</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="taskLinkedId">${__html('Linked record ID')}</label>
-                    <input type="text" id="taskLinkedId" class="form-control" value="${attr(task.linked_ref_id || '')}" placeholder="${__html('Optional internal record id')}">
-                </div>
-                <div class="full">
-                    <label for="taskLinkedLabel">${__html('Linked record label')}</label>
-                    <input type="text" id="taskLinkedLabel" class="form-control" value="${attr(task.linked_ref_label || '')}" placeholder="${__html('Example: Order #43006 or Truck VW Crafter')}">
-                </div>
-                <div class="full">
-                    <label>${__html('Assign users')}</label>
-                    <div class="task-users-grid">
-                        ${this.users.map((person) => `
-                            <label class="task-user-option">
-                                <div>
-                                    <div class="fw-semibold">${attr(this.userLabel(person))}</div>
-                                    <div class="meta">${attr(person.email || '')}</div>
-                                </div>
-                                <input class="form-check-input task-assignee-check" type="checkbox" value="${attr(person._id)}" ${selectedAssigneeIds.has(String(person._id)) ? 'checked' : ''}>
-                            </label>
-                        `).join('')}
+            <div class="task-modal-layout">
+                <div class="task-modal-main">
+                    <input type="hidden" id="taskType" value="${attr(task.type || 'reminder')}">
+                    <input type="text" id="taskTitle" class="task-title-input"
+                        value="${attr(task.title || '')}"
+                        placeholder="${__html('What needs to be done?')}">
+                    <div class="task-modal-field">
+                        <label class="task-modal-label" for="taskDescription">${__html('Description')}</label>
+                        <textarea id="taskDescription" class="form-control form-control-sm"
+                            placeholder="${__html('Optional context or follow-up notes')}">${attr(task.description || '')}</textarea>
+                    </div>
+                    <div class="task-modal-field">
+                        <label class="task-modal-label" for="taskNotes">${__html('Notes')}</label>
+                        <textarea id="taskNotes" class="form-control form-control-sm"
+                            placeholder="${__html('Internal notes')}">${attr(task.notes || '')}</textarea>
                     </div>
                 </div>
-                <div class="full">
-                    <label for="taskNotes">${__html('Notes')}</label>
-                    <textarea id="taskNotes" class="form-control" placeholder="${__html('Internal notes')}">${attr(task.notes || '')}</textarea>
+                <div class="task-modal-sidebar">
+                    <div class="task-sidebar-row">
+                        <div class="task-sidebar-label">${__html('Status')}</div>
+                        <select id="taskStatus" class="form-select form-select-sm">
+                            <option value="open" ${task.status === 'open' ? 'selected' : ''}>${__html('Open')}</option>
+                            <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>${__html('In Progress')}</option>
+                            <option value="waiting" ${task.status === 'waiting' ? 'selected' : ''}>${__html('Waiting')}</option>
+                            <option value="done" ${task.status === 'done' ? 'selected' : ''}>${__html('Done')}</option>
+                            <option value="canceled" ${task.status === 'canceled' ? 'selected' : ''}>${__html('Canceled')}</option>
+                        </select>
+                    </div>
+                    <div class="task-sidebar-row">
+                        <div class="task-sidebar-label">${__html('Priority')}</div>
+                        <input type="hidden" id="taskPriority" value="${attr(task.priority || 'medium')}">
+                        <div class="task-priority-pills" id="taskPriorityPicker">
+                            <button type="button" class="task-priority-pill high" data-priority="high">
+                                <span class="pill-dot"></span>${__html('High')}
+                            </button>
+                            <button type="button" class="task-priority-pill medium" data-priority="medium">
+                                <span class="pill-dot"></span>${__html('Medium')}
+                            </button>
+                            <button type="button" class="task-priority-pill low" data-priority="low">
+                                <span class="pill-dot"></span>${__html('Low')}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="task-sidebar-row">
+                        <div class="task-sidebar-label">${__html('Category')}</div>
+                        <input list="taskCategoryOptions" id="taskCategory" class="form-control form-control-sm"
+                            value="${attr(task.category || '')}"
+                            placeholder="${__html('Category…')}">
+                        <datalist id="taskCategoryOptions">
+                            ${this.categoryOptions.map((option) => `<option value="${attr(option)}"></option>`).join('')}
+                        </datalist>
+                    </div>
+                    <div class="task-sidebar-row">
+                        <div class="task-sidebar-label">${__html('Due date')}</div>
+                        <input type="datetime-local" id="taskDueDate" class="form-control form-control-sm"
+                            value="${attr(this.toDateTimeInputValue(this.getTaskDateValue(task)))}">
+                    </div>
+                    <div class="task-sidebar-row">
+                        <div class="task-sidebar-label">${__html('Assignees')}</div>
+                        <div class="task-assignee-widget">
+                            <div class="task-avatar-selected" id="taskAssigneeSelected"></div>
+                            <input type="search" id="taskAssigneeSearch"
+                                class="form-control form-control-sm task-assignee-search"
+                                placeholder="${__html('Search people…')}" autocomplete="off">
+                            <div class="task-avatar-grid" id="taskAssigneeOptions"></div>
+                            <div class="task-assignee-hint" id="taskAssigneeSummary"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -866,6 +817,12 @@ class TasksJournal {
                 element.disabled = true;
             });
         }
+
+        this.modalAssigneeOptions = this.buildModalAssigneeOptions(task);
+        this.modalSelectedAssigneeIds = new Set((task.assigned_users || []).map((user) => String(user.id || user._id || '')));
+        this.modalAssigneeSearch = '';
+        this.bindPriorityPicker();
+        this.bindAssigneePicker();
 
         const saveButton = document.getElementById('taskSaveBtn');
         const deleteButton = document.getElementById('taskDeleteBtnModal');
@@ -895,21 +852,165 @@ class TasksJournal {
         });
     }
 
-    collectTaskPayload = (task = {}) => {
-        const selectedIds = Array.from(document.querySelectorAll('.task-assignee-check:checked'))
-            .map((node) => String(node.value));
+    bindPriorityPicker = () => {
+        const input = document.getElementById('taskPriority');
+        if (!input) return;
 
-        const assignedUsers = this.users
-            .filter((person) => selectedIds.includes(String(person._id)))
+        const sync = () => {
+            document.querySelectorAll('.task-priority-pill[data-priority]').forEach((button) => {
+                const isSelected = button.dataset.priority === input.value;
+                button.classList.toggle('is-selected', isSelected);
+                button.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            });
+        };
+
+        document.querySelectorAll('.task-priority-pill[data-priority]').forEach((button) => {
+            button.addEventListener('click', () => {
+                if (!this.canManageTasks()) return;
+                input.value = button.dataset.priority || 'medium';
+                sync();
+            });
+        });
+
+        sync();
+    }
+
+    buildModalAssigneeOptions = (task = {}) => {
+        const byId = new Map();
+
+        [...(Array.isArray(this.users) ? this.users : []), ...(Array.isArray(task.assigned_users) ? task.assigned_users : [])].forEach((person) => {
+            const id = String(person?._id || person?.id || '').trim();
+            if (!id) return;
+
+            const existing = byId.get(id) || {};
+            byId.set(id, {
+                ...existing,
+                ...person,
+                _id: id,
+                id
+            });
+        });
+
+        return this.sortTaskUsers(Array.from(byId.values()));
+    }
+
+    bindAssigneePicker = () => {
+        const searchInput = document.getElementById('taskAssigneeSearch');
+        searchInput?.addEventListener('input', (event) => {
+            this.modalAssigneeSearch = String(event.currentTarget.value || '').trim().toLowerCase();
+            this.renderAssigneePicker();
+        });
+
+        this.renderAssigneePicker();
+    }
+
+    renderAssigneePicker = () => {
+        const selectedNode = document.getElementById('taskAssigneeSelected');
+        const optionsNode = document.getElementById('taskAssigneeOptions');
+        const summaryNode = document.getElementById('taskAssigneeSummary');
+        if (!selectedNode || !optionsNode || !summaryNode) return;
+
+        const selectedUsers = this.modalAssigneeOptions.filter((person) => this.modalSelectedAssigneeIds.has(String(person._id || person.id || '')));
+        const query = this.modalAssigneeSearch;
+        const availableUsers = this.modalAssigneeOptions.filter((person) => {
+            const id = String(person._id || person.id || '');
+            if (this.modalSelectedAssigneeIds.has(id)) return false;
+            if (!query) return true;
+
+            const haystack = `${this.userLabel(person)} ${person.email || ''}`.toLowerCase();
+            return haystack.includes(query);
+        });
+
+        selectedNode.innerHTML = selectedUsers.length
+            ? selectedUsers.map((person) => this.renderAssigneeChip(person, true)).join('')
+            : `<div class="task-assignee-empty">${__html('No one selected yet')}</div>`;
+
+        optionsNode.innerHTML = availableUsers.length
+            ? availableUsers.map((person) => this.renderAssigneeChip(person, false)).join('')
+            : `<div class="task-assignee-empty">${query ? __html('No portal users match your search') : __html('No portal users available')}</div>`;
+
+        const count = selectedUsers.length;
+        summaryNode.textContent = count
+            ? __html(`Selected people: %1$s`, count)
+            : __html('Choose portal users who should see this reminder.');
+
+        this.bindAssigneeChipListeners();
+    }
+
+    avatarInitials = (person = {}) => {
+        const first = String(person?.fname || '').trim();
+        const last = String(person?.lname || '').trim();
+        if (first && last) return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
+        if (first) return first.slice(0, 2).toUpperCase();
+        const email = String(person?.email || '').trim();
+        return email ? email.charAt(0).toUpperCase() : '?';
+    }
+
+    avatarColor = (userId = '') => {
+        const palette = ['#364fc7', '#2b8a3e', '#d9480f', '#6741d9', '#0c8599', '#862e9c', '#c92a2a', '#1971c2'];
+        const hash = String(userId).split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
+        return palette[hash % palette.length];
+    }
+
+    renderAssigneeChip = (person = {}, selected = false) => {
+        const userId = String(person._id || person.id || '');
+        const initials = this.avatarInitials(person);
+        const color = this.avatarColor(userId);
+        const name = this.userLabel(person);
+
+        if (selected) {
+            return `
+                <button type="button" class="task-sel-pill"
+                    data-user-id="${attr(userId)}" aria-pressed="true"
+                    title="${attr(__html('Click to remove'))}">
+                    <span class="task-sel-pill-avatar" style="background:${attr(color)}">${attr(initials)}</span>
+                    <span class="task-sel-pill-name">${attr(name)}</span>
+                    <span class="task-sel-pill-x" aria-hidden="true">×</span>
+                </button>
+            `;
+        }
+
+        return `
+            <button type="button" class="task-avatar-circle"
+                data-user-id="${attr(userId)}" aria-pressed="false"
+                title="${attr(name)}"
+                style="--av-color:${attr(color)}">
+                ${attr(initials)}
+            </button>
+        `;
+    }
+
+    bindAssigneeChipListeners = () => {
+        document.querySelectorAll('.task-sel-pill[data-user-id], .task-avatar-circle[data-user-id]').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                if (!this.canManageTasks()) return;
+
+                const userId = String(chip.dataset.userId || '');
+                if (!userId) return;
+
+                if (this.modalSelectedAssigneeIds.has(userId)) {
+                    this.modalSelectedAssigneeIds.delete(userId);
+                } else {
+                    this.modalSelectedAssigneeIds.add(userId);
+                }
+
+                this.renderAssigneePicker();
+            });
+        });
+    }
+
+    collectTaskPayload = (task = {}) => {
+        const selectedIds = Array.from(this.modalSelectedAssigneeIds);
+        const assignedUsers = this.modalAssigneeOptions
+            .filter((person) => selectedIds.includes(String(person._id || person.id || '')))
             .map((person) => ({
-                id: person._id,
+                id: person._id || person.id,
                 fname: person.fname || '',
                 lname: person.lname || '',
                 email: person.email || ''
             }));
 
         const dueValue = document.getElementById('taskDueDate').value;
-        const reminderValue = document.getElementById('taskReminderDate').value;
 
         return {
             _id: task?._id,
@@ -921,11 +1022,8 @@ class TasksJournal {
             priority: document.getElementById('taskPriority').value,
             category: document.getElementById('taskCategory').value.trim(),
             due_date: dueValue ? new Date(dueValue).toISOString() : null,
-            remind_at: reminderValue ? new Date(reminderValue).toISOString() : null,
+            remind_at: null,
             assigned_users: assignedUsers,
-            linked_ref_type: document.getElementById('taskLinkedType').value,
-            linked_ref_id: document.getElementById('taskLinkedId').value.trim(),
-            linked_ref_label: document.getElementById('taskLinkedLabel').value.trim(),
             notes: document.getElementById('taskNotes').value.trim()
         };
     }
@@ -961,8 +1059,10 @@ class TasksJournal {
         });
     }
 
+    getTaskDateValue = (task = {}) => task?.due_date || task?.remind_at || '';
+
     getTaskEventDate = (task = {}) => {
-        const raw = task?.due_date || task?.remind_at || '';
+        const raw = this.getTaskDateValue(task);
         if (!raw) return null;
 
         const date = new Date(raw);

@@ -12,7 +12,7 @@ import { fileURLToPath } from 'url';
 import { eventBus } from './_/helpers/extensions/events.js';
 import { checkFileExists } from './_/helpers/extensions/file.js';
 import { loadExtensions } from './_/helpers/extensions/loader.js';
-import createLogger from './_/helpers/logger.js';
+import createLogger, { installGlobalErrorCapture } from './_/helpers/logger.js';
 import { sseManager } from './_/helpers/sse.js';
 import { createStorageProvider } from './_/helpers/storage/index.js';
 
@@ -31,6 +31,10 @@ const OVERRIDE_API_DIR = path.join(__dirname, '../overrides/server/api');
 const OVERRIDE_DOCUMENT_DIR = path.join(__dirname, '../overrides/server/document');
 const EXTENSIONS_DIR = path.join(__dirname, 'extensions');
 const logger = createLogger('server');
+installGlobalErrorCapture({
+    consoleLogger: createLogger('console'),
+    processLogger: createLogger('runtime')
+});
 const storageClient = createStorageProvider();
 const DEFAULT_SPACE_ID = process.env.SID || 1000000;
 

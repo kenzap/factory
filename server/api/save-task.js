@@ -1,9 +1,10 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection } from '../_/helpers/index.js';
+import { sendTaskAssignmentEmails } from '../_/helpers/task-assignment-email.js';
 import { broadcastTaskUpdate } from '../_/helpers/task-live-update.js';
 import { saveTask } from '../_/helpers/task.js';
 
-function saveTaskApi(app) {
+function saveTaskApi(app, logger) {
     app.post('/api/save-task/', authenticateToken, async (_req, res) => {
         const user = _req.user;
 
@@ -19,6 +20,12 @@ function saveTaskApi(app) {
 
             const saved = await saveTask(db, _req.body || {}, user);
             const task = await broadcastTaskUpdate(db, saved._id, user);
+
+            try {
+                await sendTaskAssignmentEmails(task, saved.previous_assigned_users || [], user, logger);
+            } catch (mailError) {
+                logger.error(`task-assignment-email: failed while processing task #${task?.id || task?._id}: ${mailError.stack || mailError.message}`);
+            }
 
             res.json({
                 success: true,

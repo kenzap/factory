@@ -18,3 +18,10 @@
 - In degraded mode, writes still persist correctly because PostgreSQL remains authoritative.
 - The main limitation in degraded mode is that live updates emitted by one container will not reach SSE clients or extension listeners attached to another container until Redis connectivity is restored.
 - The realtime bridge retries Redis connection attempts in the background, so multi-container fanout recovers automatically after Redis comes back.
+
+## Runtime Error Capture
+
+- Production server startup installs a global runtime error bridge so `console.error(...)`, uncaught exceptions, and unhandled promise rejections flow through the shared logger pipeline instead of only ephemeral container stdout.
+- Logged runtime errors still print to the original process stderr/stdout stream, but they also use the existing logger email notification path when configured.
+- Fatal uncaught exceptions wait briefly for the logger pipeline to flush before the process exits, which improves the chance of preserving crash context before Kubernetes restarts the container.
+- Error-reporting internals use raw console output to avoid recursive "error while reporting an error" loops when SMTP or settings loading fails.

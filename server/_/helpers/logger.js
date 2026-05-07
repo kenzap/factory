@@ -1,7 +1,21 @@
 import { send_email } from "./email.js";
+import { rawConsole } from "./raw-console.js";
 import { getSettings } from "./settings.js";
 
 const MAX_STACK_PREVIEW_LINES = 8;
+const DEFAULT_FATAL_FLUSH_TIMEOUT_MS = Math.max(
+    250,
+    Number.parseInt(process.env.LOGGER_FATAL_FLUSH_TIMEOUT_MS || '2000', 10) || 2000
+);
+const DEFAULT_CAPTURE_CONSOLE_ERRORS = !['0', 'false', 'off'].includes(
+    String(process.env.LOGGER_CAPTURE_CONSOLE_ERRORS || 'true').trim().toLowerCase()
+);
+const DEFAULT_CAPTURE_PROCESS_ERRORS = !['0', 'false', 'off'].includes(
+    String(process.env.LOGGER_CAPTURE_PROCESS_ERRORS || 'true').trim().toLowerCase()
+);
+
+let globalErrorCaptureInstalled = false;
+let fatalShutdownInProgress = false;
 
 const escapeHtml = (value = '') => String(value || '')
     .replaceAll('&', '&amp;')
@@ -88,6 +102,39 @@ const buildErrorReportHtml = ({ scope, message, stack, fullStack, time }) => `
     </div>
 `;
 
+const normalizeErrorLike = (input) => {
+    if (input instanceof Error) return input;
+
+    if (input && typeof input === 'object' && typeof input.message === 'string') {
+        return input;
+    }
+
+    return new Error(formatArg(input));
+};
+
+const waitForPromise = async (promise, timeoutMs = DEFAULT_FATAL_FLUSH_TIMEOUT_MS) => {
+    await Promise.race([
+        Promise.resolve(promise).catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, timeoutMs))
+    ]);
+};
+
+const handleFatalProcessError = async (logger, label, error) => {
+    if (fatalShutdownInProgress) {
+        rawConsole.error(`[fatal][runtime] Additional ${label.toLowerCase()} while shutting down:`, error);
+        return;
+    }
+
+    fatalShutdownInProgress = true;
+
+    try {
+        await waitForPromise(logger.error(`${label}:`, normalizeErrorLike(error)));
+    } finally {
+        rawConsole.error(`[fatal][runtime] Exiting process after ${label.toLowerCase()}.`);
+        process.exit(1);
+    }
+};
+
 /**
  * Creates a logger instance with predefined log levels and scope formatting.
  * 
@@ -105,10 +152,10 @@ const buildErrorReportHtml = ({ scope, message, stack, fullStack, time }) => `
  */
 export const createLogger = (scope = 'erp') => {
     return {
-        info: (...args) => console.log(`[info][${scope}]`, ...args),
-        warn: (...args) => console.warn(`[warn][${scope}]`, ...args),
+        info: (...args) => rawConsole.log(`[info][${scope}]`, ...args),
+        warn: (...args) => rawConsole.warn(`[warn][${scope}]`, ...args),
         error: (...args) => {
-            console.error(`[error][${scope}]`, ...args);
+            rawConsole.error(`[error][${scope}]`, ...args);
 
             // Send email notification to admin for errors
             try {
@@ -117,7 +164,7 @@ export const createLogger = (scope = 'erp') => {
                 const fullStack = stacks.join('\n\n---\n\n');
                 const compactStack = stackPreview(stacks[0] || '');
                 const time = new Date().toISOString();
-                (async () => {
+                return (async () => {
                     const settings = await getSettings();
                     const mailTo = settings?.logger_email_to || process.env.ADMIN_EMAIL;
                     if (!mailTo) return;
@@ -142,18 +189,49 @@ export const createLogger = (scope = 'erp') => {
                         { replyTo }
                     );
                 })().catch((emailError) => {
-                    console.error(`[error][${scope}] Failed to send error notification email:`, emailError);
+                    rawConsole.error(`[error][${scope}] Failed to send error notification email:`, emailError);
                 });
             } catch (emailError) {
-                console.error(`[error][${scope}] Failed to send error notification email:`, emailError);
+                rawConsole.error(`[error][${scope}] Failed to send error notification email:`, emailError);
+                return Promise.resolve();
             }
         },
         debug: (...args) => {
             if (process.env.NODE_ENV !== 'production') {
-                console.debug(`[debug][${scope}]`, ...args)
+                rawConsole.debug(`[debug][${scope}]`, ...args)
             }
         }
     }
 }
+
+export const installGlobalErrorCapture = ({
+    consoleLogger = createLogger('console'),
+    processLogger = createLogger('runtime'),
+    captureConsoleErrors = DEFAULT_CAPTURE_CONSOLE_ERRORS,
+    captureProcessErrors = DEFAULT_CAPTURE_PROCESS_ERRORS
+} = {}) => {
+    if (globalErrorCaptureInstalled) return;
+    globalErrorCaptureInstalled = true;
+
+    if (captureConsoleErrors) {
+        console.error = (...args) => {
+            void consoleLogger.error(...args);
+        };
+    }
+
+    if (!captureProcessErrors) return;
+
+    process.on('warning', (warning) => {
+        processLogger.warn('Process warning:', warning?.stack || warning?.message || warning);
+    });
+
+    process.on('unhandledRejection', (reason) => {
+        void processLogger.error('Unhandled promise rejection:', normalizeErrorLike(reason));
+    });
+
+    process.on('uncaughtException', (error) => {
+        void handleFatalProcessError(processLogger, 'Uncaught exception', error);
+    });
+};
 
 export default createLogger;
