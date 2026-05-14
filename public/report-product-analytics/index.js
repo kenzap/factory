@@ -17,7 +17,12 @@ class ProductAnalyticsReport {
         };
         this.summary = {};
         this.products = [];
+        this.visibleProducts = [];
         this.filterOptions = { groups: [], categories: [] };
+        this.sort = {
+            field: '',
+            direction: 'asc'
+        };
         this.init();
     }
 
@@ -186,7 +191,9 @@ class ProductAnalyticsReport {
         const container = document.getElementById('productAnalyticsTable');
         if (!container) return;
 
-        const rows = this.products.map((item, index) => {
+        this.visibleProducts = this.getSortedProducts();
+
+        const rows = this.visibleProducts.map((item, index) => {
             const coverage = Number(item.cost_coverage_pct || 0);
             const coverageClass = coverage < 99.9 ? 'table-coverage-warn' : '';
             return `
@@ -211,12 +218,12 @@ class ProductAnalyticsReport {
             <table class="work-summary-table">
                 <thead>
                     <tr>
-                        <th>${__html('Product')}</th>
+                        <th>${this.renderSortableHeader('product_name', __html('Product'))}</th>
                         <th>${__html('Group')}</th>
                         <th>${__html('Categories')}</th>
                         <th>${__html('Orders')}</th>
-                        <th>${__html('Qty')}</th>
-                        <th>${__html('Revenue')}</th>
+                        <th>${this.renderSortableHeader('qty', __html('Qty'))}</th>
+                        <th>${this.renderSortableHeader('revenue_total', __html('Revenue'))}</th>
                         <th>${__html('Gross Profit')}</th>
                         <th>${__html('Margin')}</th>
                         <th>${__html('Cost Coverage')}</th>
@@ -230,8 +237,66 @@ class ProductAnalyticsReport {
         `;
     }
 
+    renderSortableHeader(field, label) {
+        const isActive = this.sort.field === field;
+        const direction = isActive ? this.sort.direction : '';
+        const arrow = direction === 'asc' ? '↑' : direction === 'desc' ? '↓' : '↕';
+        const activeClass = isActive ? 'is-active' : '';
+
+        return `
+            <button
+                class="table-sort-button ${activeClass}"
+                type="button"
+                onclick="productAnalyticsReport.setSort('${field}')"
+            >
+                <span>${label}</span>
+                <span class="sort-arrow" aria-hidden="true">${arrow}</span>
+            </button>
+        `;
+    }
+
+    getSortedProducts() {
+        const products = [...this.products];
+        const { field, direction } = this.sort;
+
+        if (!field) return products;
+
+        const multiplier = direction === 'desc' ? -1 : 1;
+
+        return products.sort((a, b) => {
+            if (field === 'product_name') {
+                const left = String(a.product_name || '').toLocaleLowerCase();
+                const right = String(b.product_name || '').toLocaleLowerCase();
+                return left.localeCompare(right, undefined, { numeric: true, sensitivity: 'base' }) * multiplier;
+            }
+
+            const left = Number(a[field] || 0);
+            const right = Number(b[field] || 0);
+
+            if (left === right) {
+                return String(a.product_name || '').localeCompare(String(b.product_name || ''), undefined, {
+                    numeric: true,
+                    sensitivity: 'base'
+                });
+            }
+
+            return (left - right) * multiplier;
+        });
+    }
+
+    setSort(field) {
+        if (this.sort.field === field) {
+            this.sort.direction = this.sort.direction === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sort.field = field;
+            this.sort.direction = field === 'product_name' ? 'asc' : 'desc';
+        }
+
+        this.renderTable();
+    }
+
     openDetails(index) {
-        const product = this.products[index];
+        const product = this.visibleProducts[index];
         if (!product) return;
 
         const modal = document.querySelector('.modal-item');

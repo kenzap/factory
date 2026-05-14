@@ -75,8 +75,6 @@ function getOrdersForCuttingApi(app, logger) {
     app.post('/api/get-orders-cutting-summary/', authenticateToken, async (req, res) => {
         try {
 
-            logger.info('/api/get-orders-cutting-summary/', req.body.filters);
-
             const locale = await getLocale(req.headers.locale);
             const filters = req.body.filters || {};
             const summary = await getOrderItemsCountByColorCoating(filters);

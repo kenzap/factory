@@ -94,7 +94,7 @@ export const notifyOrderReady = async (query, config, db, logger) => {
             }
         };
 
-        logger.info('Sending WhatsApp order ready notification:', payload, apiKey, process.env.WHATSAPP_NAMESPACE);
+        // logger.info('Sending WhatsApp order ready notification:', payload, apiKey, process.env.WHATSAPP_NAMESPACE);
 
         const response = await fetch(url, {
             method: 'POST',
@@ -113,7 +113,7 @@ export const notifyOrderReady = async (query, config, db, logger) => {
 
         const result = await response.json();
 
-        logger.info(`WhatsApp order ready notification sent to ${normalizedPhone}:`, result);
+        // logger.info(`WhatsApp order ready notification sent to ${normalizedPhone}:`, result);
 
         return { success: true, message: 'WhatsApp message sent successfully', data: result };
 

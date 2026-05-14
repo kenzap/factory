@@ -10,8 +10,6 @@ export class EditPostSettings {
         this.settings = settings || {};
         this.cb = cb;
 
-        console.log('EdEditPostSettingsitPost', this.post);
-
         this.blogService = new BlogService();
 
         this.init();

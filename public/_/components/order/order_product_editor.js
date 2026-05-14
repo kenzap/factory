@@ -134,9 +134,6 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
 
                 const product = new Product(suggestion);
 
-                console.log('Suggestion:', suggestion);
-                console.log('Product image URL:', product.imageUrl);
-
                 const option = document.createElement("div");
                 option.style.padding = "8px 12px";
                 option.style.cursor = "pointer";
@@ -455,8 +452,6 @@ const calcWidthLength = (settings, updatedData) => {
     updatedData.formula_length_calc = calculate(updatedData.formula_length_calc);
     updatedData.width = isNaN(updatedData.formula_width_calc) ? "" : updatedData.formula_width_calc;
     updatedData.length = isNaN(updatedData.formula_length_calc) ? "" : updatedData.formula_length_calc;
-
-    console.log('Calculating width/length for:', updatedData);
 
     return updatedData;
 }

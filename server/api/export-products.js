@@ -156,7 +156,7 @@ async function exportProductsXML(lang) {
 
 // API route for product export
 function exportProductsApi(app) {
-    console.log('Export Products API initialized');
+    // console.log('Export Products API initialized');
 
     app.get('/api/export-products/', async (req, res) => {
         try {

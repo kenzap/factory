@@ -78,8 +78,6 @@ export const filterByGroup = (orderId, groupId) => {
     const anyVisible = Array.from(rows).some(row => !row.classList.contains("d-none"));
     const emptyRow = document.querySelector(`.order-item-row-empty`);
 
-    console.log('Any visible rows:', anyVisible, emptyRow);
-
     if (emptyRow) {
         if (anyVisible) {
             emptyRow.classList.add('d-none');

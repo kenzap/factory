@@ -61,7 +61,7 @@ export class SketchControls {
 
     view(texture) {
 
-        console.log("textures", this.product.sketch.textures);
+        // console.log("textures", this.product.sketch.textures);
 
         if (texture == "") texture = document.querySelector('#sketch_texture') ? document.querySelector('#sketch_texture').value : "";
 
@@ -260,7 +260,7 @@ export class SketchControls {
         self.product.sketch.textures.forEach((el, i) => { if (el.texture == texture.texture) { self.product.sketch.textures[i] = texture; updated = true; } });
         if (!updated) self.product.sketch.textures.push(texture);
 
-        console.log("sync", self.product.sketch.textures);
+        // console.log("sync", self.product.sketch.textures);
     }
 
     listeneres() {

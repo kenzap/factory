@@ -44,8 +44,6 @@ function deletePostApi(app) {
 
     app.post('/api/delete-post/', authenticateToken, async (_req, res) => {
 
-        console.log('delete ', _req.body);
-
         const response = await deletePost(_req.body.id);
 
         res.json({ success: true, response });

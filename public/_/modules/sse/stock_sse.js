@@ -78,7 +78,7 @@ class StockSSEService {
         });
 
         this.eventSource.onopen = () => {
-            console.log('SSE connection opened');
+            // console.log('SSE connection opened');
             this.isConnected = true;
             this.reconnectAttempts = 0;
         };
@@ -105,7 +105,7 @@ class StockSSEService {
         const readStream = () => {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    console.log('Stream closed');
+                    // console.log('Stream closed');
                     this.isConnected = false;
                     this.reader = null;
                     if (this.shouldReconnect) this.attemptReconnect(token);
@@ -148,7 +148,7 @@ class StockSSEService {
             const parsed = JSON.parse(data);
 
             if (parsed.type === 'connected') {
-                console.log('Stock updates connected:', parsed.message);
+                // console.log('Stock updates connected:', parsed.message);
                 return;
             }
 
@@ -194,7 +194,7 @@ class StockSSEService {
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-        console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+        // console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
         clearTimeout(this.reconnectTimeout);
         this.reconnectTimeout = setTimeout(() => {

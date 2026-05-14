@@ -104,8 +104,6 @@ export class BlogPostRow extends Component {
     async handleEdit(e) {
         e.preventDefault();
 
-        console.log('Edit post clicked', e.currentTarget.dataset.id);
-
         getPost(e.currentTarget.dataset.id, async (response) => {
             if (response.error) {
                 toast({ type: 'error', text: response.error });
@@ -120,8 +118,6 @@ export class BlogPostRow extends Component {
 
     async handleSettings(e) {
         e.preventDefault();
-
-        console.log('Settings post clicked', e.currentTarget.dataset.id);
 
         getPost(e.currentTarget.dataset.id, async (response) => {
             if (response.error) {

@@ -91,7 +91,6 @@ class MetalLog {
         // Product search
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
             this.product = product;
-            console.log('Product search selected:', product);
         });
 
         this.setupFormEnterNavigation();
@@ -118,7 +117,6 @@ class MetalLog {
             suggestions: this.colorSuggestions,
             maxItems: 25
         }, (suggestion) => {
-            console.log('Suggestion selected:', suggestion);
             this.productColorValidator?.validate();
         });
 
@@ -128,13 +126,12 @@ class MetalLog {
             suggestions: this.coatingSuggestions,
             maxItems: 25
         }, (suggestion) => {
-            console.log('Suggestion selected:', suggestion);
             this.productCoatingValidator?.validate();
         });
 
         // supplier suggestion
         new SupplierSuggestion({ records: self.records }, (suggestion) => {
-            console.log('Supplier selected:', suggestion);
+            // console.log('Supplier selected:', suggestion);
         });
 
         // Add work log record
@@ -328,14 +325,14 @@ class MetalLog {
                 const coil = self.records.find(c => c._id === coilId);
                 if (coil) {
                     coil[field] = newValue;
-                    console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
+                    // console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
 
                     // Create update object with the specific field
                     const updateData = { _id: coilId, [field]: newValue };
 
                     saveSupplylogValue(updateData, (response) => {
                         if (response.success) {
-                            console.log(`${field} saved successfully for coil:`, coilId);
+                            // console.log(`${field} saved successfully for coil:`, coilId);
                         } else {
                             console.error(`Error saving ${field} for coil:`, coilId);
                         }
@@ -366,7 +363,7 @@ class MetalLog {
                     // Save to backend
                     saveSupplylogValue({ _id: coilId, sofftness: selectedType }, (response) => {
                         if (response.success) {
-                            console.log('Coil type saved successfully:', coilId);
+                            // console.log('Coil type saved successfully:', coilId);
                         } else {
                             console.error('Error saving coil type:', coilId);
                         }
@@ -441,7 +438,7 @@ class MetalLog {
         // get products
         getMetalLog(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -988,7 +985,7 @@ class MetalLog {
             const coil = this.records.find(c => c._id === coilId);
             if (coil) {
                 coil[field] = newValue;
-                console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
+                // console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
 
                 // Create update object with the specific field
                 const updateData = { _id: coilId, [field]: newValue };

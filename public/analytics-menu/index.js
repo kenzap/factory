@@ -37,8 +37,6 @@ class AnalyticsMenu {
             this.settings = response.settings;
             this.user = response.user;
 
-            console.log(this.user.rights);
-
             // locale
             new Locale(response);
 
@@ -119,12 +117,6 @@ class AnalyticsMenu {
                     {
                         title: __html('Sales'),
                         links: [
-                            {
-                                text: __html('Sales Reports'),
-                                link: link('/sales-reports/'),
-                                target: '_blank',
-                                rights: ['product_sales_report'],
-                            },
                             {
                                 text: __html('Top Clients Revenue Report'),
                                 link: link('/report-client-revenue/'),

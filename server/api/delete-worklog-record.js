@@ -67,7 +67,7 @@ const revertCuttingAction = async (db, data, user) => {
 
         const result = await db.query(query, params);
 
-        console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width, result.rows[0] || {});
+        // console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width, result.rows[0] || {});
     });
 
     // clear order item statuses
@@ -97,7 +97,7 @@ const revertCuttingAction = async (db, data, user) => {
 
             let order = result.rows[0] || null;
 
-            console.log('Updating order items for order_id:', orderId, 'order found:', order?._id);
+            // console.log('Updating order items for order_id:', orderId, 'order found:', order?._id);
 
             // stop here if order not found
             if (!order) continue;
@@ -146,7 +146,7 @@ const revertCuttingAction = async (db, data, user) => {
                     timestamp: new Date().toISOString()
                 });
 
-                console.log('Reverted order item statuses for order_id:', orderId, 'items:', orderItems.map(i => i.id));
+                // console.log('Reverted order item statuses for order_id:', orderId, 'items:', orderItems.map(i => i.id));
             }
         }
     }

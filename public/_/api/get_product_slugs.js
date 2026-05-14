@@ -19,8 +19,6 @@ export const getProductSlugs = (state) => {
         .then(response => response.json())
         .then(response => {
 
-            console.log("getProductSlugs", response);
-
             // hide UI loader
             hideLoader();
 

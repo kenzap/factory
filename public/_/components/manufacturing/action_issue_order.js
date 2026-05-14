@@ -43,8 +43,6 @@ export const actionIssueOrder = async (orderId, isIssue, orders, cb, isu_date) =
                 });
             }
 
-            console.log('Processing item for issue/cancel:', item, isIssue);
-
             // mark as issued if not already
             if (isIssue && item.inventory && item.inventory.rdy_date && (!item.inventory.isu_date || item.inventory.isu_date != new Date().toISOString())) {
 
@@ -59,8 +57,6 @@ export const actionIssueOrder = async (orderId, isIssue, orders, cb, isu_date) =
                     item_id: item.id,
                     product_id: item._id
                 });
-
-                console.log('Prepared issue action for item:', item.id, 'with isu_date:', item.inventory.isu_date);
             }
         });
 

@@ -22,7 +22,7 @@ function saveTaskApi(app, logger) {
             const task = await broadcastTaskUpdate(db, saved._id, user);
 
             try {
-                await sendTaskAssignmentEmails(task, saved.previous_assigned_users || [], user, logger);
+                await sendTaskAssignmentEmails(task, saved.previous_task || null, user, logger);
             } catch (mailError) {
                 logger.error(`task-assignment-email: failed while processing task #${task?.id || task?._id}: ${mailError.stack || mailError.message}`);
             }

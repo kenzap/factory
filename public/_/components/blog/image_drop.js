@@ -1,4 +1,113 @@
-import { randomString, spaceID } from "../../../_/helpers/global.js";
+import { uploadFile } from "../../api/upload_file.js";
+import { hideLoader, randomString, showLoader, toast } from "../../helpers/global.js";
+import { getStorage } from "../../helpers/index.js";
+
+const BLOG_IMAGE_SIZES = '1200|720|100';
+
+const getFileExtensionFromMime = (mime = '') => {
+    const extByMime = {
+        'image/jpeg': 'jpg',
+        'image/jpg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'image/webp': 'webp',
+        'image/svg+xml': 'svg',
+        'image/bmp': 'bmp',
+        'image/x-icon': 'ico',
+        'image/vnd.microsoft.icon': 'ico'
+    };
+
+    return extByMime[mime] || 'png';
+};
+
+const ensureUploadName = (file) => {
+    const originalName = String(file?.name || '').trim();
+    if (originalName) return originalName;
+
+    const safeName = randomString(24);
+    return `${safeName}.${getFileExtensionFromMime(file?.type || '')}`;
+};
+
+const resolveStorageRoot = (uploadUrl = '') => {
+    const configuredStorage = String(getStorage() || '').replace(/\/+$/, '');
+    if (configuredStorage && configuredStorage !== '/files') {
+        return configuredStorage.replace(/\/files$/, '');
+    }
+
+    if (/^https?:\/\//i.test(uploadUrl)) {
+        try {
+            const parsed = new URL(uploadUrl);
+            return `${parsed.origin}${parsed.pathname.replace(/\/files\/[^/]+$/, '')}`.replace(/\/+$/, '');
+        } catch (_err) {
+            // Fall through to empty storage root.
+        }
+    }
+
+    return '';
+};
+
+export const resolveBlogUploadedImageUrl = (response = {}) => {
+    const upload = response?.upload || {};
+    const variantName = upload?._id ? `blog-image-${upload._id}-1-720.webp` : '';
+    const uploadUrl = typeof upload.url === 'string' ? upload.url.trim() : '';
+    const storageBase = resolveStorageRoot(uploadUrl);
+    const hasAbsoluteStorageBase = /^https?:\/\//i.test(storageBase);
+    const hasAbsoluteUploadUrl = /^https?:\/\//i.test(uploadUrl);
+
+    if (variantName && storageBase && hasAbsoluteStorageBase) {
+        return `${storageBase}/${encodeURIComponent(variantName)}`;
+    }
+
+    if (hasAbsoluteUploadUrl) {
+        return uploadUrl;
+    }
+
+    if (variantName && storageBase) {
+        return `${storageBase}/${encodeURIComponent(variantName)}`;
+    }
+
+    if (uploadUrl) {
+        return uploadUrl;
+    }
+
+    return '';
+};
+
+export const uploadBlogImageFile = (file, { onSuccess, onError } = {}) => {
+    if (!file) {
+        toast('Upload failed: no image file selected', 'error');
+        return;
+    }
+
+    const fd = new FormData();
+
+    fd.append('name', ensureUploadName(file));
+    fd.append('sizes', BLOG_IMAGE_SIZES);
+    fd.append('source', 'blog-image');
+    fd.append('file', file);
+
+    showLoader();
+
+    uploadFile(fd, (response) => {
+        hideLoader();
+
+        const uploadedUrl = resolveBlogUploadedImageUrl(response);
+        if (!uploadedUrl) {
+            toast('Upload failed: missing uploaded image URL', 'error');
+            if (typeof onError === 'function') onError(new Error('Missing uploaded image URL'));
+            return;
+        }
+
+        if (typeof onSuccess === 'function') {
+            onSuccess(uploadedUrl, response);
+        }
+    }, (error) => {
+        hideLoader();
+        console.error('Blog image upload failed:', error);
+        toast(`Upload failed: ${error.message || 'Unknown error'}`, 'error');
+        if (typeof onError === 'function') onError(error);
+    });
+};
 
 /**
  * Custom module for quilljs to allow user to drag images from their file system into the editor
@@ -15,6 +124,7 @@ export class ImageDrop {
     constructor(quill, options = {}) {
         // save the quill reference
         this.quill = quill;
+        this.options = options || {};
 
         // TODO copy from https://github.com/NoelOConnell/quill-image-uploader/blob/master/src/quill.imageUploader.js
         // var toolbar = this.quill.getModule("toolbar");
@@ -37,8 +147,6 @@ export class ImageDrop {
         evt.preventDefault();
         if (evt.dataTransfer && evt.dataTransfer.files && evt.dataTransfer.files.length) {
 
-            console.log('handleDrop');
-
             if (document.caretRangeFromPoint) {
                 const selection = document.getSelection();
                 const range = document.caretRangeFromPoint(evt.clientX, evt.clientY);
@@ -59,8 +167,6 @@ export class ImageDrop {
             this.readFiles(evt.clipboardData.items, dataUrl => {
                 const selection = this.quill.getSelection();
 
-                console.log('handlePaste');
-
                 if (selection) {
                     // we must be in a browser that supports pasting (like Firefox)
                     // so it has already been placed into the editor
@@ -78,68 +184,29 @@ export class ImageDrop {
      * @param {String} dataUrl  The base64-encoded image URI
      */
     insert(dataUrl) {
+        const id = randomString(24);
+        const file = this.dataURLtoFile(dataUrl, id);
+        uploadBlogImageFile(file, {
+            onSuccess: (uploadedUrl) => {
+            if (!uploadedUrl) {
+                toast('Upload failed: missing uploaded image URL', 'error');
+                return;
+            }
 
-        // showLoader();
+            const index = (this.quill.getSelection() || {}).index || this.quill.getLength();
+            this.quill.insertEmbed(index, 'image', uploadedUrl, 'user');
+            this.quill.setSelection(index + 1, 0, 'silent');
+            this.notifyUploadComplete();
+            }
+        });
+    }
 
-        console.log("insert");
-        console.log(dataUrl);
-
-        // handle file upload
-        let id = randomString(24);
-        let sid = spaceID();
-
-        // console.log(file);
-        // let file = fileEl.files[0];
-        // if(typeof(file) === "undefined") continue;
-
-        let file = this.dataURLtoFile(dataUrl, id);
-
-        // TODO add global sizes setting 
-        let fd = new FormData();
-        // let sizes = document.querySelector("body").dataset.sizes;
-        let sizes = '1200|720|100';
-
-        fd.append('id', id);
-        fd.append('sid', sid);
-        fd.append('pid', 0);
-        fd.append('key', 'image');
-        fd.append('sizes', sizes);
-        // fd.append('field', file);
-        fd.append('file', file);
-        fd.append('slug', 'post-' + id);
-        // fd.append('token', getCookie('kenzap_token'));
-
-        // clear input file so that its not updated again
-        // file.value = '';
-        // _this.state.ajaxQueue+=1;
-
-        fetch("https://api-v1.kenzap.cloud/upload/", {
-            body: fd,
-            method: "post"
-        })
-            .then(response => response.json())
-            .then(response => {
-
-                hideLoader();
-
-                //  _this.state.ajaxQueue -= 1;
-                if (response.success) {
-
-                    let img = CDN + '/S' + sid + '/post-' + id + '-720.webp';
-
-                    // dataUrl = 'https://cdn4.buysellads.net/uu/1/41334/1550855401-cc_light.png';
-                    const index = (this.quill.getSelection() || {}).index || this.quill.getLength();
-                    this.quill.insertEmbed(index, 'image', img, 'user');
-
-
-                    // let toast = new bootstrap.Toast(document.querySelector('.toast'));
-                    // document.querySelector('.toast .toast-body').innerHTML = __('Order updated');  
-                    // toast.show();
-
-                    // // hide UI loader
-                    // hideLoader();
-                }
-            });
+    notifyUploadComplete() {
+        if (typeof this.options?.onUploadComplete === 'function') {
+            setTimeout(() => {
+                this.options.onUploadComplete(this.quill.root.innerHTML);
+            }, 0);
+        }
     }
 
     dataURLtoFile(dataurl, filename) {
@@ -150,11 +217,14 @@ export class ImageDrop {
             n = bstr.length,
             u8arr = new Uint8Array(n);
 
+        const extension = getFileExtensionFromMime(mime);
+        const safeName = String(filename || randomString(16)).replace(/\.[a-z0-9]+$/i, '');
+
         while (n--) {
             u8arr[n] = bstr.charCodeAt(n);
         }
 
-        return new File([u8arr], filename, { type: mime });
+        return new File([u8arr], `${safeName}.${extension}`, { type: mime });
     }
 
     /**
@@ -175,8 +245,6 @@ export class ImageDrop {
             const reader = new FileReader();
             reader.onload = (evt) => {
 
-                console.log("readFiles");
-                console.log(evt.target.result);
                 callback(evt.target.result);
             };
             // read the clipboard item or file

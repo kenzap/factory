@@ -119,8 +119,6 @@ export class ClientNotifications {
             this.client.notifications[notificationType] = {};
         }
         this.client.notifications[notificationType][channel] = enabled;
-
-        console.log(`Updated notification: ${notificationType}.${channel} = ${enabled}`);
     }
 
     enableAllNotifications = () => {

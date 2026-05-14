@@ -1,6 +1,7 @@
 import { send_email } from './email.js';
 import { getSettings } from './settings.js';
 import { TASK_ACTIVE_STATUSES } from './task.js';
+import { normalizeTimezoneOrUtc } from './timezone.js';
 
 const DEFAULT_SUBJECT = 'New task assigned: {{task_title}}';
 const DEFAULT_TEMPLATE = [
@@ -45,17 +46,30 @@ const formatUtcIcsDate = (value) => {
         .replace(/\.\d{3}Z$/, 'Z');
 };
 
-const formatTaskDateLabel = (value = '') => {
-    const date = new Date(value);
+const formatIcsDateOnly = (value) => {
+    const date = value instanceof Date ? value : new Date(value);
     if (Number.isNaN(date.getTime())) return '';
 
-    return date.toLocaleString([], {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}${month}${day}`;
+};
+
+const taskHasExplicitTime = (task = {}) => {
+    if (typeof task?.date_has_time === 'boolean') return task.date_has_time;
+    if (typeof task?.date_has_time === 'string') {
+        if (task.date_has_time === 'true') return true;
+        if (task.date_has_time === 'false') return false;
+    }
+
+    const raw = String(task?.due_date || '').trim();
+    if (!raw || !raw.includes('T')) return false;
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return false;
+
+    return date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0 || date.getMilliseconds() !== 0;
 };
 
 const formatTaskPriority = (priority = '') => {
@@ -87,12 +101,55 @@ const buildTasksLink = (settings = {}) => {
     return domain ? `https://${domain}/tasks/` : '';
 };
 
+const resolveTaskLocale = (settings = {}) => String(settings?.system_language || 'en').trim() || 'en';
+
+const resolveTaskTimezone = (settings = {}) => normalizeTimezoneOrUtc(settings?.default_timezone);
+
+const formatTaskDateLabel = (task = {}, settings = {}) => {
+    const value = task?.due_date || '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const locale = resolveTaskLocale(settings);
+    const timeZone = resolveTaskTimezone(settings);
+
+    if (!taskHasExplicitTime(task)) {
+        return new Intl.DateTimeFormat(locale, {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        }).format(date);
+    }
+
+    return new Intl.DateTimeFormat(locale, {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZoneName: 'short'
+    }).format(date);
+};
+
+const hasTaskScheduleChanged = (task = {}, previousTask = null) => {
+    if (!previousTask) return false;
+
+    const previousDueDate = String(previousTask?.due_date || previousTask?.remind_at || '').trim();
+    const currentDueDate = String(task?.due_date || task?.remind_at || '').trim();
+
+    return previousDueDate !== currentDueDate
+        || taskHasExplicitTime(previousTask) !== taskHasExplicitTime(task);
+};
+
 const buildIcsAttachment = (task = {}, recipient = {}, settings = {}) => {
     if (!task?.due_date) return null;
 
     const start = new Date(task.due_date);
     if (Number.isNaN(start.getTime())) return null;
 
+    const hasTime = taskHasExplicitTime(task);
     const end = new Date(start.getTime() + DEFAULT_EVENT_DURATION_MINUTES * 60 * 1000);
     const uid = `task-${task._id || task.id || Date.now()}@${String(settings?.domain_name || 'skarda.design').replace(/^https?:\/\//, '')}`;
     const organizerEmail = String(settings?.task_assignment_email_from || settings?.documents_email_from || process.env.SMTP_USER || process.env.ADMIN_EMAIL || '').trim();
@@ -115,13 +172,25 @@ const buildIcsAttachment = (task = {}, recipient = {}, settings = {}) => {
         'BEGIN:VEVENT',
         `UID:${uid}`,
         `DTSTAMP:${formatUtcIcsDate(new Date())}`,
-        `DTSTART:${formatUtcIcsDate(start)}`,
-        `DTEND:${formatUtcIcsDate(end)}`,
         `SUMMARY:${escapeIcsText(task?.title || 'Task')}`,
         `DESCRIPTION:${escapeIcsText(descriptionParts.join('\n'))}`,
         'STATUS:CONFIRMED',
-        'SEQUENCE:0'
+        `SEQUENCE:${Math.max(0, Math.floor(new Date(task?.updated_at || task?.created_at || Date.now()).getTime() / 1000) || 0)}`
     ];
+
+    if (hasTime) {
+        lines.splice(8, 0,
+            `DTSTART:${formatUtcIcsDate(start)}`,
+            `DTEND:${formatUtcIcsDate(end)}`
+        );
+    } else {
+        const endDate = new Date(start);
+        endDate.setDate(endDate.getDate() + 1);
+        lines.splice(8, 0,
+            `DTSTART;VALUE=DATE:${formatIcsDateOnly(start)}`,
+            `DTEND;VALUE=DATE:${formatIcsDateOnly(endDate)}`
+        );
+    }
 
     if (organizerEmail) {
         lines.push(`ORGANIZER;CN=${escapeIcsText(organizerName)}:MAILTO:${organizerEmail}`);
@@ -140,7 +209,7 @@ const buildIcsAttachment = (task = {}, recipient = {}, settings = {}) => {
     };
 };
 
-export async function sendTaskAssignmentEmails(task = {}, previousAssignedUsers = [], actor = null, logger = console) {
+export async function sendTaskAssignmentEmails(task = {}, previousTask = null, actor = null, logger = console) {
     const assignedUsers = Array.isArray(task?.assigned_users) ? task.assigned_users : [];
     if (!assignedUsers.length) return { sent: 0, skipped: 0 };
 
@@ -148,11 +217,15 @@ export async function sendTaskAssignmentEmails(task = {}, previousAssignedUsers 
         return { sent: 0, skipped: assignedUsers.length };
     }
 
-    const previousIds = new Set((Array.isArray(previousAssignedUsers) ? previousAssignedUsers : []).map((user) => String(user?.id || user?._id || '').trim()).filter(Boolean));
+    const previousAssignedUsers = Array.isArray(previousTask?.assigned_users) ? previousTask.assigned_users : [];
+    const previousIds = new Set(previousAssignedUsers.map((user) => String(user?.id || user?._id || '').trim()).filter(Boolean));
+    const scheduleChanged = hasTaskScheduleChanged(task, previousTask);
     const recipients = assignedUsers.filter((user) => {
         const id = String(user?.id || user?._id || '').trim();
         const email = String(user?.email || '').trim();
-        return id && !previousIds.has(id) && email;
+        if (!id || !email) return false;
+        if (!previousIds.has(id)) return true;
+        return Boolean(task?.due_date) && scheduleChanged;
     });
 
     if (!recipients.length) return { sent: 0, skipped: 0 };
@@ -165,7 +238,7 @@ export async function sendTaskAssignmentEmails(task = {}, previousAssignedUsers 
     const fromName = String(settings?.brand_name || 'Skarda Design').trim();
     const replyTo = String(settings?.task_assignment_email_reply_to || settings?.documents_email_reply_to || '').trim();
     const actorName = actor?.fname ? `${actor.fname}${actor?.lname ? ` ${actor.lname}` : ''}`.trim() : '';
-    const taskDate = formatTaskDateLabel(task?.due_date);
+    const taskDate = formatTaskDateLabel(task, settings);
 
     if (!fromEmail) {
         logger.warn?.('task-assignment-email: no from email configured, skipping task assignment emails');

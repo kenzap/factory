@@ -89,14 +89,14 @@ class Stock {
     handleStockUpdate(data) {
         if (data.type !== 'stock-update') return;
 
-        console.log('Received stock update:', data);
+        // console.log('Received stock update:', data);
 
         // Find and update the cell
         const cell = document.querySelector(
             `td.editable-cell[data-product_id="${data.product_id}"][data-coating="${data.coating}"][data-color="${data.color}"]`
         );
 
-        console.log('Updating cell:', cell?.textContent, 'to', data.amount);
+        // console.log('Updating cell:', cell?.textContent, 'to', data.amount);
 
         if (cell) {
             // Update cell value
@@ -362,7 +362,7 @@ class Stock {
             this.products = response.products;
             this.user = response.user;
 
-            console.log('Products:', this.products);
+            // console.log('Products:', this.products);
 
             // session
             new Session();

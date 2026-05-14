@@ -13,12 +13,7 @@ end
 return 0
 `;
 
-const logInfo = (...args) => console.log('[info][redis-realtime]', ...args);
 const logWarn = (...args) => console.warn('[warn][redis-realtime]', ...args);
-const logDebug = (...args) => {
-    if (!REALTIME_DEBUG_ENABLED) return;
-    console.log('[debug][redis-realtime]', ...args);
-};
 
 const describePayload = (payload) => {
     if (payload === null) return 'null';
@@ -134,7 +129,7 @@ const dispatchChannelMessage = (channel, rawMessage) => {
 
     handlers.forEach((handler) => {
         try {
-            logDebug(`received channel=${channel} origin=${envelope?.origin || 'unknown'} ${describePayload(envelope?.payload)}`);
+            // logDebug(`received channel=${channel} origin=${envelope?.origin || 'unknown'} ${describePayload(envelope?.payload)}`);
             handler(envelope?.payload, envelope);
         } catch (error) {
             logWarn(`Realtime handler failed for ${channel}: ${error?.message || error}`);
@@ -150,7 +145,6 @@ const ensureChannelSubscription = async (channel) => {
     });
 
     activeSubscriptions.add(channel);
-    logDebug(`subscribed channel=${channel}`);
 };
 
 const connectRealtimeClients = async () => {
@@ -188,11 +182,8 @@ const connectRealtimeClients = async () => {
     subscriberClient = subClient;
 
     if (!readinessLogged) {
-        logInfo(`Redis realtime bridge connected on ${getRealtimeChannelPrefix()}`);
         readinessLogged = true;
     }
-
-    logDebug(`bridge-ready node=${REALTIME_NODE_ID}`);
 
     return true;
 };
@@ -263,7 +254,6 @@ export const publishRealtimeMessage = async (channel, payload) => {
     if (!ready || !publisherClient?.isReady) return false;
 
     try {
-        logDebug(`publishing channel=${channel} ${describePayload(payload)}`);
         await publisherClient.publish(channel, JSON.stringify({
             origin: REALTIME_NODE_ID,
             payload,

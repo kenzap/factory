@@ -119,26 +119,24 @@ export class AddBundle {
         this.coatingSuggestions = getCoatings(this.settings);
         this.colorSuggestions = getColors(this.settings);
 
-        console.log('Colors', this.colorSuggestions);
+        // console.log('Colors', this.colorSuggestions);
 
         // Product search
         new ProductSearch({ name: `#productName`, coating: `#productCoating`, color: `#productColor` }, (product) => {
 
             this.product_bundle = product;
-
-            console.log('Product search selected:', product);
         });
 
         // Color suggestion
         new DropdownSuggestion({ input: '#productColor', suggestions: this.colorSuggestions }, (suggestion) => {
 
-            console.log('Suggestion selected:', suggestion);
+            // console.log('Suggestion selected:', suggestion);
         });
 
         // Color suggestion
         new DropdownSuggestion({ input: '#productCoating', suggestions: this.coatingSuggestions }, (suggestion) => {
 
-            console.log('Suggestion selected:', suggestion);
+            // console.log('Suggestion selected:', suggestion);
         });
 
         this.data();
@@ -195,7 +193,6 @@ export class AddBundle {
 
         tbody.innerHTML = entriesToShow.map(entry => {
 
-            console.log('Bundle entry:', entry);
             return `
             <tr>
                 <td style="width:320px;" class="align-middle">

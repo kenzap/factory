@@ -141,7 +141,7 @@ export class Auth {
 
         let self = this;
 
-        console.log('Requesting OTP...');
+        // console.log('Requesting OTP...');
 
         // ui is blocked
         if (self.modal.querySelector('.btn-get-otp').dataset.loading === "true") return false;
@@ -188,7 +188,7 @@ export class Auth {
             // reset previous validation
             self.modal.querySelector('#otp-email').setCustomValidity(''); self.modal.querySelector('.otp-email-notice').innerHTML = '';
 
-            console.log('OTP request response:', response);
+            // console.log('OTP request response:', response);
 
             if (!response.success && response.error) {
 

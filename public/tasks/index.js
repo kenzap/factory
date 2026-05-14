@@ -443,7 +443,8 @@ class TasksJournal {
                     status: 'open',
                     priority: 'medium',
                     category: '',
-                    due_date: dateKey ? new Date(`${dateKey}T09:00:00`).toISOString() : '',
+                    due_date: dateKey ? this.buildDateOnlyIso(dateKey) : '',
+                    date_has_time: false,
                     assigned_users: [],
                     description: '',
                     notes: ''
@@ -541,7 +542,7 @@ class TasksJournal {
                 const taskDate = this.getTaskDateValue(task);
                 if (!taskDate) return `<span class="task-date muted">${__html('No date')}</span>`;
                 const overdue = this.isTaskOverdue(task);
-                return `<span class="task-date ${overdue ? 'overdue' : ''}">${attr(this.formatDateTime(taskDate))}</span>`;
+                return `<span class="task-date ${overdue ? 'overdue' : ''}">${attr(this.formatTaskDateLabel(task))}</span>`;
             }
         },
         {
@@ -617,17 +618,13 @@ class TasksJournal {
     isTaskOverdue = (task = {}) => {
         const status = String(task.status || '').toLowerCase();
         if (!['open', 'in_progress', 'waiting'].includes(status)) return false;
-        const taskDate = this.getTaskDateValue(task);
-        if (!taskDate) return false;
-
-        const due = new Date(taskDate);
-        return !Number.isNaN(due.getTime()) && due.getTime() < Date.now();
+        const due = this.getTaskDueBoundary(task);
+        return due ? due.getTime() < Date.now() : false;
     }
 
     isDueToday = (task = {}) => {
-        const taskDate = this.getTaskDateValue(task);
-        if (!taskDate) return false;
-        const due = new Date(taskDate);
+        const due = this.getTaskEventDate(task);
+        if (!due) return false;
         if (Number.isNaN(due.getTime())) return false;
 
         const now = new Date();
@@ -637,8 +634,7 @@ class TasksJournal {
     }
 
     formatDateTime = (value = '') => {
-        if (!value) return '';
-        const date = new Date(value);
+        const date = value instanceof Date ? value : new Date(value);
         if (Number.isNaN(date.getTime())) return '';
 
         return date.toLocaleString([], {
@@ -655,9 +651,28 @@ class TasksJournal {
         month: 'long'
     });
 
+    formatTaskDateLabel = (task = {}) => {
+        const eventDate = this.getTaskEventDate(task);
+        if (!eventDate) return '';
+
+        if (!this.taskHasExplicitTime(task)) {
+            return eventDate.toLocaleDateString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+        }
+
+        return this.formatDateTime(eventDate);
+    }
+
     formatCalendarItemTime = (task = {}) => {
         const eventDate = this.getTaskEventDate(task);
         if (!eventDate) return __html('No time');
+
+        if (!this.taskHasExplicitTime(task)) {
+            return __html('All day');
+        }
 
         return eventDate.toLocaleTimeString([], {
             hour: '2-digit',
@@ -670,18 +685,76 @@ class TasksJournal {
         const eventDate = this.getTaskEventDate(task);
         if (!eventDate) return __html('No date');
 
+        if (this.taskHasExplicitTime(task)) {
+            return `${eventDate.toLocaleDateString([], {
+                month: 'short',
+                day: 'numeric'
+            })} · ${eventDate.toLocaleTimeString([], {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            })}`;
+        }
+
         return eventDate.toLocaleDateString([], {
             month: 'short',
             day: 'numeric'
         });
     }
 
-    toDateTimeInputValue = (value = '') => {
+    toDateInputValue = (value = '') => {
         if (!value) return '';
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) return '';
         const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-        return localDate.toISOString().slice(0, 16);
+        return localDate.toISOString().slice(0, 10);
+    }
+
+    toTimeInputValue = (task = {}) => {
+        if (!this.taskHasExplicitTime(task)) return '';
+
+        const date = this.getTaskEventDate(task);
+        if (!date) return '';
+
+        const localDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+        return localDate.toISOString().slice(11, 16);
+    }
+
+    buildDateOnlyIso = (dateValue = '') => {
+        if (!dateValue) return '';
+        const date = new Date(`${dateValue}T12:00:00`);
+        return Number.isNaN(date.getTime()) ? '' : date.toISOString();
+    }
+
+    buildTaskDueDate = (dateValue = '', timeValue = '') => {
+        const datePart = String(dateValue || '').trim();
+        const timePart = String(timeValue || '').trim();
+        if (!datePart) {
+            return {
+                due_date: null,
+                date_has_time: false
+            };
+        }
+
+        if (timePart) {
+            const date = new Date(`${datePart}T${timePart}`);
+            if (Number.isNaN(date.getTime())) {
+                return {
+                    due_date: null,
+                    date_has_time: false
+                };
+            }
+
+            return {
+                due_date: date.toISOString(),
+                date_has_time: true
+            };
+        }
+
+        return {
+            due_date: this.buildDateOnlyIso(datePart),
+            date_has_time: false
+        };
     }
 
     ensureUsersLoaded = (cb) => {
@@ -707,6 +780,7 @@ class TasksJournal {
                 priority: 'medium',
                 category: '',
                 due_date: '',
+                date_has_time: false,
                 assigned_users: [],
                 description: '',
                 notes: ''
@@ -781,8 +855,13 @@ class TasksJournal {
                     </div>
                     <div class="task-sidebar-row">
                         <div class="task-sidebar-label">${__html('Due date')}</div>
-                        <input type="datetime-local" id="taskDueDate" class="form-control form-control-sm"
-                            value="${attr(this.toDateTimeInputValue(this.getTaskDateValue(task)))}">
+                        <div class="task-date-inputs">
+                            <input type="date" id="taskDueDate" class="form-control form-control-sm"
+                                value="${attr(this.toDateInputValue(this.getTaskDateValue(task)))}">
+                            <input type="time" id="taskDueTime" class="form-control form-control-sm"
+                                value="${attr(this.toTimeInputValue(task))}">
+                        </div>
+                        <div class="task-inline-hint">${__html('Time is optional')}</div>
                     </div>
                     <div class="task-sidebar-row">
                         <div class="task-sidebar-label">${__html('Assignees')}</div>
@@ -1011,6 +1090,8 @@ class TasksJournal {
             }));
 
         const dueValue = document.getElementById('taskDueDate').value;
+        const dueTimeValue = document.getElementById('taskDueTime').value;
+        const dueDatePayload = this.buildTaskDueDate(dueValue, dueTimeValue);
 
         return {
             _id: task?._id,
@@ -1021,7 +1102,8 @@ class TasksJournal {
             status: document.getElementById('taskStatus').value,
             priority: document.getElementById('taskPriority').value,
             category: document.getElementById('taskCategory').value.trim(),
-            due_date: dueValue ? new Date(dueValue).toISOString() : null,
+            due_date: dueDatePayload.due_date,
+            date_has_time: dueDatePayload.date_has_time,
             remind_at: null,
             assigned_users: assignedUsers,
             notes: document.getElementById('taskNotes').value.trim()
@@ -1061,12 +1143,42 @@ class TasksJournal {
 
     getTaskDateValue = (task = {}) => task?.due_date || task?.remind_at || '';
 
+    taskHasExplicitTime = (task = {}) => {
+        if (typeof task?.date_has_time === 'boolean') return task.date_has_time;
+        if (typeof task?.date_has_time === 'string') {
+            if (task.date_has_time === 'true') return true;
+            if (task.date_has_time === 'false') return false;
+        }
+
+        const raw = this.getTaskDateValue(task);
+        if (!raw || !String(raw).includes('T')) return false;
+
+        const date = new Date(raw);
+        if (Number.isNaN(date.getTime())) return false;
+
+        return date.getHours() !== 0 || date.getMinutes() !== 0 || date.getSeconds() !== 0 || date.getMilliseconds() !== 0;
+    }
+
     getTaskEventDate = (task = {}) => {
         const raw = this.getTaskDateValue(task);
         if (!raw) return null;
 
         const date = new Date(raw);
         return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    getTaskDueBoundary = (task = {}) => {
+        const eventDate = this.getTaskEventDate(task);
+        if (!eventDate) return null;
+
+        if (this.taskHasExplicitTime(task)) return eventDate;
+
+        return new Date(
+            eventDate.getFullYear(),
+            eventDate.getMonth(),
+            eventDate.getDate(),
+            23, 59, 59, 999
+        );
     }
 
     groupTasksByCalendarDate = () => {
@@ -1091,6 +1203,12 @@ class TasksJournal {
 
         if (leftDate && rightDate && leftDate.getTime() !== rightDate.getTime()) {
             return leftDate.getTime() - rightDate.getTime();
+        }
+
+        if (leftDate && rightDate) {
+            const leftTimed = this.taskHasExplicitTime(left);
+            const rightTimed = this.taskHasExplicitTime(right);
+            if (leftTimed !== rightTimed) return leftTimed ? 1 : -1;
         }
 
         const priorityWeight = { high: 0, medium: 1, low: 2 };

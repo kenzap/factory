@@ -67,7 +67,6 @@ export const navigateToNextCell = (currentCell) => {
         } else {
 
             // Add new row and move to first cell
-            console.log('At end of table, adding new row.');
             addRow();
         }
     }

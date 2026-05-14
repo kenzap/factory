@@ -83,7 +83,7 @@ export function register({ router, cron, config, events, db, logger }) {
             const orders = await getOrdersReady(db, logger);
 
             for (const order of orders) {
-                logger.info('cron: order ready for notification:', order?.id, order?.phone);
+                // logger.info('cron: order ready for notification:', order?.id, order?.phone);
 
                 await withRealtimeLock(
                     `dialog360:order-ready:${order.id}`,

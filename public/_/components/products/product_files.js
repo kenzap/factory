@@ -59,8 +59,6 @@ export class ProductFiles {
 
         bus.on('file:uploaded', (data) => {
 
-            console.log("file:uploaded received", data);
-
             // add new file to the product
             if (data.source == 'cad-files') self.product.cad_files.push({ id: data._id, ext: data.ext, name: data.name });
 
@@ -96,8 +94,6 @@ export class ProductFiles {
         }).join('');
 
         onClick(".cad_files_cont .remove", e => {
-
-            console.log("remove file", e.currentTarget.dataset.id);
 
             self.product.cad_files = self.product.cad_files.filter(cad => cad.id != e.currentTarget.dataset.id);
 

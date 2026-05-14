@@ -54,12 +54,8 @@ function createProductApi(app) {
 
     app.post('/api/create-product/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/create-product/ _req.body', _req.body);
-
         const data = _req.body;
         const response = await createProduct(data);
-
-        console.log('/api/create-product/ response', response);
 
         res.json({ success: true, product: response, message: 'client saved' });
     });

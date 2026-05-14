@@ -110,8 +110,6 @@ export class StockCategoriesControl {
 
     syncStockCategoriesInput = () => {
 
-        console.log(this.settings.stock_categories);
-
         const input = document.querySelector("#stock-categories");
         if (input) {
             input.value = JSON.stringify(this.settings.stock_categories);

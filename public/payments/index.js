@@ -428,7 +428,7 @@ class Transactions {
                     input.addEventListener('change', () => {
                         const currentPayment = cell.getValue() || {};
                         const newDate = input.value ? new Date(input.value + 'T' + new Date().toTimeString().slice(0, 8)).toISOString() : '';
-                        console.log('New date value:', newDate);
+                        // console.log('New date value:', newDate);
                         cell.setValue({ ...currentPayment, date: newDate });
                         document.body.removeChild(input);
                     });
@@ -447,7 +447,7 @@ class Transactions {
                         if (e.key === 'Enter') {
                             const currentPayment = cell.getValue() || {};
                             const newDate = input.value ? new Date(input.value + 'T' + new Date().toTimeString().slice(0, 8)).toISOString() : '';
-                            console.log('New date value:', newDate);
+                            // console.log('New date value:', newDate);
                             cell.setValue({ ...currentPayment, date: newDate });
                             document.body.removeChild(input);
                         }
@@ -480,7 +480,6 @@ class Transactions {
                     // If payment date is cleared, also clear the amount
                     if (!payment.date && payment.amount) {
 
-                        console.log('Resetting amount:', payment.date);
                         const updatedPayment = { ...payment, amount: '' };
                         cell.setValue(updatedPayment);
                     }

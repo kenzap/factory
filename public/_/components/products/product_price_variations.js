@@ -78,8 +78,6 @@ export class ProductPriceVariations {
             this.product.var_price = [];
         }
 
-        console.log("this.var_parent", this.var_parent);
-
         this.var_parent.split('\n').forEach(el => {
 
             parent_options += '<option value="' + el + '">' + el + '</option>';
@@ -195,8 +193,6 @@ export class ProductPriceVariations {
         const requiresDim2 = this.getDimensionCount() >= 2;
         if ((requiresDim2 && obj.title.length < 1) || obj.price.length < 1) return false;
 
-        console.log("Adding price variation", obj);
-
         // Update this.product.var_price instead of DOM
         if (!Array.isArray(this.product.var_price)) {
             this.product.var_price = [];
@@ -260,8 +256,6 @@ export class ProductPriceVariations {
         this.product.var_price.forEach((obj, i) => {
             if (obj.id == e.currentTarget.dataset.id) {
                 this.product.var_price[i][field] = value;
-
-                console.log('Updated field:', field, 'Value:', value);
             }
         });
     }
@@ -364,8 +358,6 @@ export class ProductPriceVariations {
      */
     structCoatingRow(obj, i) {
         const showDim2 = this.getDimensionCount() >= 2;
-
-        console.log("structCoatingRow", obj.id, obj.title, obj.parent);
 
         return `
             <tr class="new-item-row ${obj.parent ? "pr-parent" : ""}" data-parent="${obj.parent ? obj.parent : ""}" data-title="${obj.title}" data-hash="${escape(obj.id + obj.title + obj.parent)}">

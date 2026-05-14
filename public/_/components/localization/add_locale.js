@@ -77,8 +77,6 @@ export const addLocaleModal = (cb) => {
 			toast(__html('Locale added'));
 
 			cb(response);
-
-			console.log('Success:', response);
 		});
 	});
 

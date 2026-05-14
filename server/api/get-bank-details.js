@@ -48,8 +48,6 @@ function getBankDetailsApi(app) {
         try {
             const data = await getBankDetails(req.body.code);
 
-            console.log('getBankDetails req.body.code', req.body.code);
-
             res.send({ success: true, data });
         } catch (err) {
 

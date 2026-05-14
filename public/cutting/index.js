@@ -50,8 +50,6 @@ class Cutting {
 
         getCoatings((response) => {
 
-            console.log(response);
-
             // show UI loader
             if (!response.success) return;
 

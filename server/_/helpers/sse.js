@@ -55,7 +55,7 @@ class SSEManager {
             scope
         });
 
-        console.log(`SSE client connected (${scope}). Total: ${this.clients.size}. Scope total: ${this.getClientCount(scope)}`);
+        // console.log(`SSE client connected (${scope}). Total: ${this.clients.size}. Scope total: ${this.getClientCount(scope)}`);
     }
 
     removeClient(client) {
@@ -63,7 +63,7 @@ class SSEManager {
         const scope = metadata?.scope || 'default';
 
         this.clients.delete(client);
-        console.log(`SSE client disconnected (${scope}). Total: ${this.clients.size}. Scope total: ${this.getClientCount(scope)}`);
+        // console.log(`SSE client disconnected (${scope}). Total: ${this.clients.size}. Scope total: ${this.getClientCount(scope)}`);
     }
 
     bindClientLifecycle(req, res, onDisconnect) {

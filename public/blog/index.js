@@ -201,7 +201,7 @@ class Blog extends Component {
     handleAddPost(e) {
         e.preventDefault();
 
-        console.log('Add new post clicked', this.state);
+        // console.log('Add new post clicked', this.state);
 
         new EditPost({ _id: null, text: '' }, this.state.settings, this.refresh.bind(this));
     }

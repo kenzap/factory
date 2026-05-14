@@ -102,8 +102,6 @@ export const sendOtpEmail = async (email, otp) => {
         const replyTo = settings?.otp_email_reply_to || "";
         const subject = settings?.otp_email_subject || "One Time Password";
 
-        // console.log(`Sending OTP email to ${email} with OTP: ${otp}, from: ${fromEmail}, subject: ${subject}`);
-
         // Use the send_email function to send the OTP email
         await send_email(email, fromEmail, "", subject, body, [], { replyTo });
 
@@ -245,9 +243,6 @@ export const getUserByPhone = async (phone) => {
             LIMIT 1
             `;
 
-        console.log(`Executing getUserByPhone with phone: ${phone}, sid: ${sid} `);
-
-
         const userResult = await client.query(userQuery, ['user', sid, phone]);
         if (userResult.rows.length > 0) {
             const row = userResult.rows[0];
@@ -364,8 +359,6 @@ export const clearUserSession = async (id) => {
 
         const key = `user:${id} `;
 
-        console.log(`Clearing user session for user ID: ${id} `);
-
         // Store user session in Redis with a TTL of 1 hour
         await redisClient.del(key);
 
@@ -399,8 +392,6 @@ export const getUserSessionById = async (id) => {
         user = await redisClient.get(key) || "";
 
         if (user) { user = JSON.parse(user); }
-
-        // console.log(`Retrieved user session for user ID: ${ id } `, user);
 
         return user;
 

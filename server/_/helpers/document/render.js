@@ -338,7 +338,7 @@ export function getProductionItemsTable(settings, order, locales) {
 
     groups.forEach(group => {
 
-        console.log("getProductionItemsTable group", order.items);
+        // console.log("getProductionItemsTable group", order.items);
 
         // Filter order items that belong to this group
         const groupItems = order.items.filter(item =>

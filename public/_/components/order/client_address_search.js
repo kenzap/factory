@@ -104,11 +104,7 @@ export class ClientAddressSearch {
 
             const i = e.target.dataset.i;
 
-            // console.log('Input contact search value:', i, this.addresses[i]);
-
             const address = this.addresses.find(address => address.id === e.target.dataset.id);
-
-            console.log('Suggestion clicked:', e.target.dataset.id, address);
 
             document.getElementById('address').value = address.address;
 
@@ -119,7 +115,6 @@ export class ClientAddressSearch {
         document.addEventListener('click', (e) => {
 
             if (!addressInput.contains(e.target) && !suggestions.contains(e.target)) {
-                // console.log('Suggestion clicked:', e.target);
                 suggestions.classList.add('d-none');
             }
         });

@@ -27,7 +27,7 @@ export class Session {
 
                 if (response.accessToken) localStorage.setItem('token', response.accessToken);
 
-                console.log("Session refreshed:", response.accessToken);
+                // console.log("Session refreshed:", response.accessToken);
             });
 
         }, 1000 * 60 * 1); // every 10 minutes

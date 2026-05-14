@@ -78,9 +78,6 @@ export class ProductSearch {
 
                     const product = new Product(suggestion);
 
-                    console.log('Suggestion:', suggestion);
-                    console.log('Product image URL:', product.imageUrl);
-
                     const option = document.createElement("div");
                     option.style.padding = "8px 12px";
                     option.style.cursor = "pointer";

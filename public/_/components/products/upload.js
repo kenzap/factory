@@ -134,8 +134,6 @@ export class FileUpload {
         // Call upload function with error handling
         uploadFile(fd, (response) => {
 
-            console.log('Upload successful:', response);
-
             clearInterval(self.state.interval);
 
             hideLoader();

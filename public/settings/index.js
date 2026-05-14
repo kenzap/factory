@@ -39,8 +39,6 @@ class Settings {
 
         getSettings(response => {
 
-            console.log(response);
-
             this.settings = response.settings;
             this.extensions = response.extensions;
 
@@ -279,8 +277,6 @@ class Settings {
         prices[i].price = e.currentTarget.value;
 
         document.querySelector('#price').value = JSON.stringify(prices);
-
-        console.log(prices);
     }
 
     publicPrice(el, e) {

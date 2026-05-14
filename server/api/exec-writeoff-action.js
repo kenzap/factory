@@ -129,7 +129,7 @@ async function execWriteoffAction(data, user) {
             if (!record.coil_id) { console.log("empty coil record"); continue; }
 
             // TODO: Implement write-off logic for each group
-            console.log(`Group ${group}: Total length to write-off: ${totalLength}`);
+            // console.log(`Group ${group}: Total length to write-off: ${totalLength}`);
 
             // Here you would typically update the coil record in the database to reduce its length by totalLength.
             let query = `
@@ -140,7 +140,7 @@ async function execWriteoffAction(data, user) {
 
             let params = ['supplylog', sid, record.coil_id, totalLength];
 
-            console.log('Updating coil:', record.coil_id, 'by length:', totalLength);
+            // console.log('Updating coil:', record.coil_id, 'by length:', totalLength);
 
             let res = await db.query(query, params);
 

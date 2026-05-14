@@ -24,8 +24,6 @@ export class StockSSEService {
                 credentials: 'include'
             });
 
-            console.log('SSE connection response:', response);
-
             if (!response.ok) {
                 throw new Error('Failed to connect to manufacturing updates');
             }
@@ -50,7 +48,7 @@ export class StockSSEService {
         const readStream = () => {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    console.log('Stream closed');
+                    // console.log('Stream closed');
                     this.isConnected = false;
                     return;
                 }
@@ -84,7 +82,7 @@ export class StockSSEService {
             const parsed = JSON.parse(data);
 
             if (parsed.type === 'connected') {
-                console.log('Manufacturing updates connected:', parsed.message);
+                // console.log('Manufacturing updates connected:', parsed.message);
                 return;
             }
 
@@ -129,7 +127,7 @@ export class StockSSEService {
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
 
-        console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
+        // console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
         setTimeout(() => {
             this.connectWithPost(token);

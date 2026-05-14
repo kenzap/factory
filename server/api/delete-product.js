@@ -46,11 +46,7 @@ function deleteProductApi(app) {
 
     app.post('/api/delete-product/', authenticateToken, async (_req, res) => {
 
-        console.log('delete ', _req.body);
-
         const response = await deleteProduct(_req.body.id);
-
-        console.log('delete response', response);
 
         res.json({ success: true, response, message: 'product removed' });
     });

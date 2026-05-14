@@ -332,14 +332,14 @@ function getOrderEltEstimateApi(app) {
     app.post('/api/get-order-elt-estimate/', authenticateToken, async (req, res) => {
         try {
             const report = await getOrderEltEstimate(req.body?.filters || {});
-            const locale = await getLocale(req.headers);
-            const locales = await getLocales();
+            // const locale = await getLocale(req.headers);
+            // const locales = await getLocales();
 
             res.send({
                 success: true,
                 user: req?.user,
-                locale,
-                locales,
+                // locale,
+                // locales,
                 ...report
             });
         } catch (err) {

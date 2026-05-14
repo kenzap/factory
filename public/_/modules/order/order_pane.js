@@ -41,7 +41,7 @@ export class OrderPane {
 
     constructor() {
 
-        console.log('Initializing OrderPane with order:', state.order, state.settings);
+        // console.log('Initializing OrderPane with order:', state.order, state.settings);
 
         // check if header is already present
         this.init();
@@ -183,7 +183,7 @@ export class OrderPane {
                 this.refreshTable();
                 bus.emit('order:table:refreshed', state.order);
                 this.markOrderAsDirty();
-                console.log('Updated sketch from editor:', data);
+                // console.log('Updated sketch from editor:', data);
             });
         }
     }
@@ -460,7 +460,7 @@ export class OrderPane {
 
                         // row.sketch_attached = true;
 
-                        console.log('sketch_attached:', row.sketch_attached);
+                        // console.log('sketch_attached:', row.sketch_attached);
 
                         return /*html*/`
                             <div class="d-flex align-items-center">
@@ -476,7 +476,7 @@ export class OrderPane {
                         if (e.target.classList.contains('product-edit-icon')) {
                             e.preventDefault();
 
-                            console.log('Edit sketch icon clicked for row:', cell.getRow().getData());
+                            // console.log('Edit sketch icon clicked for row:', cell.getRow().getData());
                             // cell.edit();
                             sketchEditor(cell, state.settings, state.order, (data) => {
 
@@ -490,7 +490,7 @@ export class OrderPane {
                                 bus.emit('order:table:refreshed', state.order);
                                 self.markOrderAsDirty();
                                 // {"cmd":"confirm","inputs":{},"note":"","inputs_label":{},"input_fields":[{"id":"VusmaG","max":"6000","min":300,"type":"polyline","label":"L","params":[],"points":"352 426 82 269","default":"1000","label_pos":"left","ext":"","note":""}],"input_fields_values":{"inputL":"3000"},"formula_width":"300","formula_length":"L","viewpoint":null,"id":"42519-","_id":"f9f720eda2b5e4ea03d8b4cc5f947534bb5ea3bd","qty":"25","price":"11.78","total":"294.5","color":"RR32","coating":"Polyester","discounts":[{"note":"","type":"manager","percent":"20","availability":"always"}]}
-                                console.log('Updated sketch from editor:', data);
+                                // console.log('Updated sketch from editor:', data);
                             });
                         }
                     }
@@ -679,7 +679,7 @@ export class OrderPane {
                 addRow();
             }
 
-            console.log('Cell edited:', cell.getField(), cell.getValue());
+            // console.log('Cell edited:', cell.getField(), cell.getValue());
 
             // You can perform specific actions based on the field or value
             refreshRowCalculations(cell, state.settings);
@@ -787,15 +787,11 @@ export class OrderPane {
 
         bus.on('order:table:sync:items', (id) => {
 
-            console.log('Syncing items from bus event:', id);
-
             this.syncItems();
             this.refreshTable();
         });
 
         bus.on('client:updated', (client) => {
-
-            console.log('Order pane client updated:', client);
 
             this.refreshTable();
         });

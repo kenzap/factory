@@ -222,8 +222,6 @@ export class ClientPane {
 
                 if (!state.client._id) {
 
-                    console.log('Setting individual default names');
-
                     if (!state.client.fname && !state.client.lname && (state.client.legal_name || state.client.name)) {
                         const nameParts = (state.client.legal_name || state.client.name).trim().split(' ');
                         state.client.lname = nameParts[0] || '';
@@ -256,8 +254,6 @@ export class ClientPane {
         // From the client side
         bus.clear('client:search:refresh');
         bus.on('client:search:refresh', (data) => {
-
-            console.log('client:search:refresh received:', data);
 
             if (!data) return;
 
@@ -324,7 +320,7 @@ export class ClientPane {
             getBankDetails({ code }, (response) => {
                 if (response && response.success && response.data) {
 
-                    console.log('Bank details fetched:', response.data);
+                    // console.log('Bank details fetched:', response.data);
                     document.getElementById('bank_name').value = response.data.name || '';
                 }
             });
@@ -337,8 +333,6 @@ export class ClientPane {
                 if (event.key === 'Enter') {
 
                     event.preventDefault();
-
-                    console.log('Enter key pressed, moving to next input', element.value, state.order.id);
 
                     // Find all focusable elements with tabindex consideration
                     const focusableElements = Array.from(document.querySelectorAll('.right-pane input, .right-pane textarea'))
@@ -404,8 +398,6 @@ export class ClientPane {
 
         verifyClient({ reg_number: document.getElementById('reg_number').value.trim(), tax_region: document.getElementById('tax_region').value }, (response) => {
             if (response && response.success && response.client.success) {
-
-                console.log('Client verification response:', response);
 
                 // clear previous alert
                 document.querySelector('alert-notification').innerHTML = '';
@@ -580,7 +572,7 @@ export class ClientPane {
                     firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     firstInvalidField.focus();
                 }
-                console.log('Validation errors found in client data.');
+                // console.log('Validation errors found in client data.');
                 firstInvalidField.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstInvalidField.focus();
             }

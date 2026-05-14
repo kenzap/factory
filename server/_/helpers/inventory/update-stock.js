@@ -66,7 +66,7 @@ export const updateStock = async (db, actions, user) => {
             // apply new stock change if amount is not zero
             if (new_amount !== 0) {
 
-                console.log('Setting new stock amount:', new_amount, actions);
+                // console.log('Setting new stock amount:', new_amount, actions);
 
                 // apply stock change
                 await updateProductStock(db, {

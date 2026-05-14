@@ -114,8 +114,6 @@ class Supplies {
         new ProductSearch({ name: '#productName', coating: '#productCoating', color: '#productColor' }, (product) => {
 
             this.product = product;
-
-            console.log('Product search selected:', product);
         });
 
         // Color suggestion
@@ -124,7 +122,6 @@ class Supplies {
             suggestions: this.colorSuggestions
         }, (suggestion) => {
 
-            console.log('Suggestion selected:', suggestion);
             this.productColorValidator?.validate();
         });
 
@@ -134,7 +131,6 @@ class Supplies {
             suggestions: this.coatingSuggestions
         }, (suggestion) => {
 
-            console.log('Suggestion selected:', suggestion);
             this.productCoatingValidator?.validate();
         });
 
@@ -218,7 +214,6 @@ class Supplies {
 
                 if (response.success) {
 
-                    console.log('Record created:', response);
                     this.data(); // Refresh data
                 } else {
                     console.error('Error:', response.error);
@@ -328,7 +323,7 @@ class Supplies {
         // get products
         getSupplyLog(this.filters, (response) => {
 
-            console.log(response);
+            // console.log(response);
 
             // show UI loader
             if (!response.success) return;
@@ -579,8 +574,6 @@ class Supplies {
             const coil = this.records.find(c => c._id === coilId);
             if (coil) {
                 coil[field] = newValue;
-                console.log(`${field} updated for coil:`, coilId, `New ${field}:`, newValue);
-
                 // Create update object with the specific field
                 const updateData = { _id: coilId, [field]: newValue };
 

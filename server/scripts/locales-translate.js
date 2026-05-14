@@ -236,10 +236,6 @@ async function run() {
     const currentContent = localeRecord.content || {};
     const missingKeys = getMissingKeys(sourceKeys, currentContent);
 
-    console.log(`Source keys: ${sourceKeys.length}`);
-    console.log(`Existing translated keys: ${sourceKeys.length - missingKeys.length}`);
-    console.log(`Missing/empty keys to translate: ${missingKeys.length}`);
-
     if (!missingKeys.length) {
         console.log('No missing translations. Nothing to update.');
         return;
@@ -253,7 +249,7 @@ async function run() {
         const keys = chunks[i];
         const payloadObj = Object.fromEntries(keys.map(key => [key, key]));
 
-        console.log(`Translating batch ${i + 1}/${chunks.length} (${keys.length} keys)...`);
+        // console.log(`Translating batch ${i + 1}/${chunks.length} (${keys.length} keys)...`);
         const translated = await translateWithClaude(JSON.stringify(payloadObj, null, 2), locale);
 
         if (!translated || typeof translated !== 'object' || Array.isArray(translated)) {
@@ -276,7 +272,6 @@ async function run() {
 
     await updateLocaleContent(localeRecord.id, nextContent);
 
-    console.log(`Done. Added ${insertedCount} missing translations to locale=${locale}, ext=${ext}.`);
 }
 
 run().catch((error) => {

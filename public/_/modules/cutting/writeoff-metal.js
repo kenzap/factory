@@ -237,8 +237,6 @@ export class WriteoffMetal {
                 items: this.items
             }
 
-            console.log('Write-off record:', record);
-
             // block ui button
             e.currentTarget.disabled = true;
             e.currentTarget.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
@@ -290,9 +288,7 @@ export class WriteoffMetal {
                     notes: notes
                 });
             }
-
-            console.log('Sheets after addition:', this.sheets);
-
+            
             this.renderSheets();
         });
 

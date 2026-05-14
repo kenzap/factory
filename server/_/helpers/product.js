@@ -33,8 +33,6 @@ import { sid } from './index.js';
  */
 export const setProductStock = async (db, inventory, user) => {
 
-    // console.log('setProductStock', inventory);
-
     // validate inventory data
     if (!inventory || !inventory._id || !inventory.coating || !inventory.color) {
         return { success: false, error: 'invalid inventory data' };

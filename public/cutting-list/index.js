@@ -54,8 +54,6 @@ class CuttingList {
 
         getOrdersForCutting(this.filters, (response) => {
 
-            console.log(response);
-
             // show UI loader
             if (!response.success) return;
 
@@ -231,8 +229,21 @@ class CuttingList {
     restoreSelectedCuttingItems = (selectedItems = []) => {
         selectedItems.forEach((itemKey) => {
             const checkbox = document.querySelector(`.order-item input[type="checkbox"][data-type="cutting"][data-item="${itemKey}"]`);
-            if (checkbox) checkbox.checked = true;
+            if (!checkbox) return;
+
+            const orderItem = checkbox.closest('.order-item');
+            const isComplete = orderItem?.classList?.contains('complete-item');
+            if (isComplete) return;
+
+            checkbox.checked = true;
         });
+    }
+
+    clearSelectedCuttingItems = () => {
+        document.querySelectorAll('.order-item input[type="checkbox"][data-type="cutting"]:checked')
+            .forEach((checkbox) => {
+                checkbox.checked = false;
+            });
     }
 
     captureUiState = () => {
@@ -562,6 +573,7 @@ class CuttingList {
 
         new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
             if (updated) {
+                this.clearSelectedCuttingItems();
                 this.scheduleLiveRefresh({ orders: true, stock: true });
             }
         });
@@ -572,6 +584,7 @@ class CuttingList {
 
         new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
             if (updated) {
+                this.clearSelectedCuttingItems();
                 this.scheduleLiveRefresh({ orders: true, stock: true });
             }
         });
@@ -649,11 +662,10 @@ class CuttingList {
                 if (coil) {
                     coil.notes = newNotes;
                     // Here you could add an API call to save the notes to the backend
-                    console.log('Notes updated for coil:', coilId, 'New notes:', newNotes);
-
+           
                     saveSupplylogValue({ _id: coilId, notes: newNotes }, (response) => {
                         if (response.success) {
-                            console.log('Notes saved successfully for coil:', coilId);
+                            // console.log('Notes saved successfully for coil:', coilId);
                         } else {
                             console.error('Error saving notes for coil:', coilId);
                         }
@@ -674,7 +686,7 @@ class CuttingList {
                 const coilId = e.target.name.replace('type_', '');
                 const selectedType = e.target.value;
 
-                console.log('Coil type changed:', coilId, 'New type:', selectedType);
+                // console.log('Coil type changed:', coilId, 'New type:', selectedType);
 
                 // Find the coil and update its type
                 const coil = this.stock.find(c => c._id === coilId);
@@ -684,7 +696,7 @@ class CuttingList {
                     // Save to backend
                     saveSupplylogValue({ _id: coilId, sofftness: selectedType }, (response) => {
                         if (response.success) {
-                            console.log('Coil type saved successfully:', coilId);
+                            // console.log('Coil type saved successfully:', coilId);
                         } else {
                             console.error('Error saving coil type:', coilId);
                         }
@@ -698,8 +710,6 @@ class CuttingList {
 
         e.preventDefault();
 
-        console.log('Manufactured checkbox changed:', e.target);
-
         const checkbox = e.target;
         const itemId = checkbox.dataset.item;
         const [orderId, index] = itemId.split('-');
@@ -712,8 +722,6 @@ class CuttingList {
         }
 
         const isComplete = checkbox.checked;
-
-        console.log('isComplete:', isComplete);
 
         if (!item.inventory) item.inventory = {};
 
@@ -734,7 +742,7 @@ class CuttingList {
             }
         };
 
-        console.log('Prepared update actions:', actions);
+        // console.log('Prepared update actions:', actions);
 
         // Execute the action
         execOrderItemAction(actions, (response) => {

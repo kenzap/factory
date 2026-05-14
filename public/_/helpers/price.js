@@ -309,8 +309,6 @@ export const calculate = (expression) => {
         return new Function(`return (${sanitizedExpression});`)();
     } catch (error) {
 
-        console.log("Expression:" + expression);
-        console.log("Sanitized:" + sanitizedExpression);
         console.error('Error evaluating expression:', error);
         return "";
     }

@@ -43,8 +43,6 @@ class OrderEdit {
 
         getOrder(state.order.id, (response) => {
 
-            console.log(response);
-
             // show UI loader
             if (!response.success) return;
 
@@ -171,7 +169,7 @@ class OrderEdit {
 
         bus.on('order:updated', (id) => {
 
-            console.log('Order updated listener triggered with id:', id);
+            // console.log('Order updated listener triggered with id:', id);
 
             state.order.id = id;
 

@@ -110,7 +110,7 @@ class TaskUpdatesSSEService {
             const parsed = JSON.parse(data);
 
             if (parsed.type === 'connected') {
-                console.log('Task updates connected:', parsed.message, parsed.clientCount);
+                // console.log('Task updates connected:', parsed.message, parsed.clientCount);
                 return;
             }
 

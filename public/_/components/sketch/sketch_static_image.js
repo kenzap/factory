@@ -36,8 +36,6 @@ export class SketchStaticImage {
 
         e.preventDefault();
 
-        console.log(".aif-" + e.currentTarget.dataset.index);
-
         simulateClick(document.querySelector(".aif-" + e.currentTarget.dataset.index));
     }
 

@@ -109,7 +109,7 @@ export async function getDocumentData(client, type, _id, user, locale) {
 
 export async function updateWaybillNumber(db, order, user) {
 
-    console.log(`updateWaybillNumber: ${order.id}, waybill_number: ${order.waybill.number}`);
+    // console.log(`updateWaybillNumber: ${order.id}, waybill_number: ${order.waybill.number}`);
 
     let waybill = order.waybill || {};
 
@@ -220,7 +220,7 @@ export async function getWaybillNextNumber(db, order, settings, user) {
         // Update amount in case it has changed before printing
         order.waybill.amount = order.price ? order.price.grand_total : null;
 
-        console.log('Waybill number already exists:', order.waybill.number, 'Updating amount to:', order.waybill.amount);
+        // console.log('Waybill number already exists:', order.waybill.number, 'Updating amount to:', order.waybill.amount);
 
         await updateWaybillNumber(db, { id: order.id, waybill: order.waybill }, user);
 

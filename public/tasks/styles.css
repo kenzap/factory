@@ -712,7 +712,11 @@ body {
 /* ── Row states ────────────────────────────────────────────── */
 
 .task-row-overdue .tabulator-cell {
-    background: linear-gradient(90deg, rgba(255, 220, 220, 0.55) 0%, rgba(255, 255, 255, 0) 60%) !important;
+    background: rgba(255, 245, 245, 0.95) !important;
+}
+
+.task-row-overdue .tabulator-cell:first-child {
+    box-shadow: inset 3px 0 0 #e03131;
 }
 
 .task-row-done .tabulator-cell {
@@ -799,6 +803,18 @@ body {
     display: flex;
     flex-direction: column;
     gap: 7px;
+}
+
+.task-date-inputs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 108px;
+    gap: 8px;
+}
+
+.task-inline-hint {
+    font-size: 0.74rem;
+    color: #adb5bd;
+    line-height: 1.35;
 }
 
 .task-sidebar-label {
@@ -1339,5 +1355,9 @@ body {
         width: 100%;
         padding-left: 0;
         padding-top: 16px;
+    }
+
+    .task-date-inputs {
+        grid-template-columns: 1fr;
     }
 }

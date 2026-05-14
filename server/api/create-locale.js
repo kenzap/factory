@@ -53,7 +53,7 @@ function createLocaleApi(app) {
 
     app.post('/api/create-locale/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/create-locale/ _req.body', _req.body);
+        // console.log('/api/create-locale/ _req.body', _req.body);
 
         const data = _req.body;
         const response = await createLocale(data);

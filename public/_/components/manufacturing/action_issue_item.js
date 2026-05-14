@@ -10,8 +10,6 @@ export const actionIssueItem = async (order_id, item_id, isIssue, orders, cb) =>
 
     try {
 
-        console.log('Issuing item B', order_id, item_id, isIssue);
-
         const order = orders.find(o => o._id === order_id);
 
         const targetItem = order.items.find(item => item.id === item_id);

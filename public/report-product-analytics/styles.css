@@ -50,6 +50,35 @@
     font-weight: 600;
 }
 
+.table-sort-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.table-sort-button .sort-arrow {
+    color: #98a2b3;
+    font-size: 0.8rem;
+    line-height: 1;
+}
+
+.table-sort-button.is-active,
+.table-sort-button:hover {
+    color: #0f4c81;
+}
+
+.table-sort-button.is-active .sort-arrow,
+.table-sort-button:hover .sort-arrow {
+    color: #0f4c81;
+}
+
 @media (max-width: 1200px) {
     .product-analytics .filters {
         grid-template-columns: repeat(3, minmax(0, 1fr));

@@ -46,11 +46,7 @@ function deleteClientApi(app) {
 
     app.post('/api/delete-client/', authenticateToken, async (_req, res) => {
 
-        console.log('deleteClientApi _req.body', _req.body.id);
-
         const response = await deleteClient(_req.body.id);
-
-        console.log('deleteClient response', response);
 
         res.json({ success: true, response, message: 'client saved' });
     });

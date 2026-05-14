@@ -66,15 +66,13 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
             e.preventDefault();
             return false;
         }
-
-        console.log('Key pressed in suggestion editor:', lastKeyPressed);
     });
 
     // Detect when user selects from datalist
     input.addEventListener("input", (e) => {
         const selectedValue = e.target.value;
         if (editorParams.suggestions.includes(selectedValue) && lastKeyPressed !== 'Backspace' && lastKeyPressed !== 'Delete') {
-            console.log('User selected from datalist:', selectedValue);
+            // console.log('User selected from datalist:', selectedValue);
             datalistOpen = false;
             // Handle the selection here
             success(selectedValue);

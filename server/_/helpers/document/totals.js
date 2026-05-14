@@ -24,7 +24,7 @@ export const amountToWords = (amount, settings) => {
     const amount_cents = Math.round((amount - amount_int) * 100);
     const countryCode = String(settings.system_language || "EN").toUpperCase();
 
-    console.log(`System language: ${countryCode}, Amount: ${amount}, Settings: ${JSON.stringify(settings)}`);
+    // console.log(`System language: ${countryCode}, Amount: ${amount}, Settings: ${JSON.stringify(settings)}`);
 
     // Localization data for each country
     const localizations = {

@@ -25,8 +25,6 @@ export const renderProduction = (product) => {
 
 export const renderPreview = (product, e, type) => {
 
-    console.log("renderPreview", product);
-
     let d = document;
 
     // map parameters

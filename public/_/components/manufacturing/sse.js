@@ -54,8 +54,6 @@ export class SSEService {
                     signal: this.abortController.signal
                 });
 
-                console.log('SSE connection response:', response);
-
                 if (!response.ok) {
                     throw new Error('Failed to connect to manufacturing updates');
                 }
@@ -91,7 +89,7 @@ export class SSEService {
         const readStream = () => {
             reader.read().then(({ done, value }) => {
                 if (done) {
-                    console.log('Stream closed');
+                    // console.log('Stream closed');
                     this.isConnected = false;
                     this.reader = null;
                     if (this.shouldReconnect) this.attemptReconnect(token);
@@ -134,7 +132,7 @@ export class SSEService {
             const parsed = JSON.parse(data);
 
             if (parsed.type === 'connected') {
-                console.log('Manufacturing updates connected:', parsed.message);
+                // console.log('Manufacturing updates connected:', parsed.message);
                 return;
             }
 
@@ -195,8 +193,6 @@ export class SSEService {
 
         this.reconnectAttempts++;
         const delay = this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1);
-
-        console.log(`Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts})`);
 
         clearTimeout(this.reconnectTimeout);
         this.reconnectTimeout = setTimeout(() => {

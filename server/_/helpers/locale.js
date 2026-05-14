@@ -38,8 +38,6 @@ export const getLocale = async (headers) => {
 
     let checksum_cached = await redisClient.get(checksumKey);
 
-    // console.log('Locale checksums (client/server):', checksum_cached, checksum);
-
     // return empty if checksums match
     if (checksum_cached && checksum_cached === checksum) {
 

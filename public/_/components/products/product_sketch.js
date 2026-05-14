@@ -250,8 +250,6 @@ export class ProductSketch {
         // update sketch data
         bus.on('file:uploaded', (data) => {
 
-            console.log("file:uploaded received", data);
-
             // add new file to the product
             self.product.sketch.img = [];
             if (data.source == 'sketch') self.product.sketch.img.push({ id: data._id, sizes: data.sizes, ext: data.ext, name: data.name });
@@ -283,8 +281,6 @@ export class ProductSketch {
                 image_url.push(`${sketchMeta.id}.${sketchMeta.ext}`, this.product.updated);
             }
         }
-
-        console.log("checking sketch images", image_url);
 
         // if 3d files provided try to load auto generated render instead 'https://render.factory.app.kenzap.cloud/'+id+'-polyester-rr20-1500.webp', 
         if (hasRenderFiles(this.product)) image_url = [`https://render.factory.app.kenzap.cloud/${id}-polyester-2h3-1500.webp`];

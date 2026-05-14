@@ -1,7 +1,7 @@
 import { API, H, hideLoader, parseApiError } from "../helpers/global.js";
 
 export const getOrderEltEstimate = (filters, cb) => {
-    fetch(API() + '/api/get-order-elt-estimate/', {
+    const request = fetch(API() + '/api/get-order-elt-estimate/', {
         method: 'post',
         headers: H(),
         body: JSON.stringify({ filters })
@@ -9,8 +9,18 @@ export const getOrderEltEstimate = (filters, cb) => {
         .then(response => response.json())
         .then(response => {
             hideLoader();
-            if (response.success) cb(response);
-            if (!response.success) parseApiError(response);
+            if (!response.success) {
+                parseApiError(response);
+                return response;
+            }
+
+            if (typeof cb === 'function') cb(response);
+            return response;
         })
-        .catch(error => { parseApiError(error); });
+        .catch(error => {
+            parseApiError(error);
+            throw error;
+        });
+
+    return request;
 };

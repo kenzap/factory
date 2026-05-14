@@ -110,8 +110,6 @@ export class WorkCategoriesControl {
 
     syncWorkCategoriesInput = () => {
 
-        console.log(this.settings.work_categories);
-
         const input = document.querySelector("#work-categories");
         if (input) {
             input.value = JSON.stringify(this.settings.work_categories);

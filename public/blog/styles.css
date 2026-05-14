@@ -1,5 +1,4 @@
 @import url("../assets/css/global.css");
-@import url("../assets/css/quill.css");
 @import url("../assets/css/blog.css");
 
 /* product list */
@@ -8,6 +7,296 @@
 .table-p-list .bi-search{cursor:pointer;}
 .timgc{width: 32px;height: 32px;max-width:50px;overflow:hidden; white-space: nowrap;overflow: hidden;text-overflow: ellipsis;}
 .timgc img{position:relative;min-height:28px;}
+
+/* ── Modal header: two-row layout ─────────────────────────── */
+
+.blog-modal-header {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.blog-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    min-height: 52px;
+}
+
+.blog-header-top .modal-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #212529;
+    margin: 0;
+}
+
+.blog-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.blog-header-controls .btn-close {
+    width: 24px;
+    height: 24px;
+    font-size: 0.7rem;
+    padding: 0;
+    opacity: 0.5;
+    flex-shrink: 0;
+}
+
+/* HTML toggle — ghost icon button */
+.blog-html-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 30px;
+    padding: 0 10px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    background: transparent;
+    color: #6c757d;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+
+.blog-html-toggle:hover {
+    background: #f1f3f5;
+    color: #212529;
+    border-color: #ced4da;
+}
+
+.blog-html-toggle.enabled {
+    background: #212529;
+    border-color: #212529;
+    color: #fff;
+}
+
+/* ── Toolbar (now lives in the header) ────────────────────── */
+
+.blog-editor-toolbar {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 4px;
+    align-items: center;
+    padding: 6px 16px;
+    border-top: 1px solid #f1f3f5;
+    background: #fafafa;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.blog-editor-toolbar::-webkit-scrollbar {
+    display: none;
+}
+
+.blog-toolbar-group {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 2px;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.blog-toolbar-group + .blog-toolbar-group {
+    padding-left: 8px;
+    margin-left: 4px;
+    border-left: 1px solid #e9ecef;
+}
+
+/* ── Toolbar button ───────────────────────────────────────── */
+
+.blog-tb-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+    min-width: 28px;
+    padding: 0 6px;
+    border: 0;
+    border-radius: 5px;
+    background: transparent;
+    color: #495057;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background 0.1s ease, color 0.1s ease;
+}
+
+.blog-tb-btn:hover {
+    background: #e9ecef;
+    color: #212529;
+}
+
+.blog-tb-btn.active {
+    background: #212529;
+    color: #fff;
+}
+
+.blog-tb-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.blog-tb-btn-danger {
+    color: #c92a2a;
+}
+
+.blog-tb-btn-danger:hover {
+    background: #fff5f5;
+    color: #c92a2a;
+}
+
+/* ── Table tools group ────────────────────────────────────── */
+
+.blog-table-tools {
+    flex-shrink: 0;
+}
+
+.blog-table-tools[hidden] {
+    display: none !important;
+}
+
+.blog-table-tools:not(.blog-table-tools-active) .blog-tb-btn {
+    opacity: 0.45;
+}
+
+/* ── Editor layout & surface ──────────────────────────────── */
+
+.blog-editor-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.blog-editor-surface-wrapper {
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    overflow: hidden;
+}
+
+/* ── HTML (Ace) editor area ───────────────────────────────── */
+
+.form-editor {
+    display: flex;
+    flex-direction: column;
+}
+
+.html-editor {
+    flex: 1;
+    min-height: calc(100vh - 170px);
+}
+
+.blog-editor-surface .tiptap-content{
+    min-height:600px;
+    padding:20px 22px;
+    outline:none;
+}
+
+.blog-editor-surface .tiptap-content:focus{
+    outline:none;
+}
+
+.blog-editor-surface .tiptap-content > :first-child{
+    margin-top:0;
+}
+
+.blog-editor-surface .tiptap-content p.is-editor-empty:first-child::before{
+    float:left;
+    height:0;
+    pointer-events:none;
+    color:#94a3b8;
+    content:attr(data-placeholder);
+}
+
+.blog-editor-surface .tiptap-content .tableWrapper,
+.blog-editor-surface .tiptap-content table{
+    width:100%;
+}
+
+.blog-editor-surface .tiptap-content .tableWrapper{
+    margin:1.25rem 0;
+    overflow-x:auto;
+}
+
+.blog-editor-surface .tiptap-content table{
+    border-collapse:collapse;
+    table-layout:fixed;
+}
+
+.blog-editor-surface .tiptap-content th,
+.blog-editor-surface .tiptap-content td{
+    min-width:110px;
+    padding:10px 12px;
+    border:1px solid #cbd5e1;
+    vertical-align:top;
+}
+
+.blog-editor-surface .tiptap-content th{
+    background:#f8fafc;
+    font-weight:600;
+}
+
+.blog-editor-surface .tiptap-content .selectedCell{
+    background:rgba(13,110,253,.1);
+}
+
+.blog-editor-surface .tiptap-content .column-resize-handle{
+    position:absolute;
+    top:0;
+    right:-2px;
+    bottom:0;
+    width:4px;
+    background:#0d6efd;
+    pointer-events:none;
+}
+
+.blog-editor-surface .tiptap-content blockquote{
+    margin:1.25rem 0;
+    padding-left:1rem;
+    border-left:4px solid #cbd5e1;
+    color:#475569;
+}
+
+.blog-editor-surface .tiptap-content pre{
+    margin:1.25rem 0;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#0f172a;
+    color:#e2e8f0;
+    overflow:auto;
+}
+
+.blog-editor-surface .tiptap-content img.blog-inline-image{
+    max-width:100%;
+    height:auto;
+    margin:1rem 0;
+    border-radius:12px;
+}
+
+@media (max-width: 991px) {
+    .blog-editor-layout {
+        max-width: none;
+    }
+
+    .blog-header-top {
+        padding: 8px 12px;
+        min-height: 46px;
+    }
+
+    .blog-editor-toolbar {
+        padding: 5px 12px;
+    }
+}
 
 /* dependency simple tags */
 .simple-tags{background-color:#fff;border:0px solid var(--primary-color);-webkit-border-radius:3px;border-radius:3px;-webkit-box-sizing:border-box;box-sizing:border-box;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap;font-size:14px}.simple-tags>ul{list-style:none;padding:0;margin:0;display:-webkit-box;display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-flex-wrap:wrap;-ms-flex-wrap:wrap;flex-wrap:wrap}.simple-tags ul li{margin:0.5em 0.2em;padding:0.5em;color:#fff;background-color:var(--primary-color);-webkit-border-radius:3px;border-radius:3px}.simple-tags ul li a{margin:0.5em 0.2em;text-decoration:none;color:inherit;cursor:pointer}.simple-tags input{padding:0.9em 0.5em;-webkit-box-sizing:border-box;box-sizing:border-box;-webkit-box-flex:1;-webkit-flex-grow:1;-ms-flex-positive:1;flex-grow:1;border:none;outline:none;font-size:inherit;font-family:inherit;color:inherit}

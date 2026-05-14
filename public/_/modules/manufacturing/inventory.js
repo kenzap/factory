@@ -43,8 +43,6 @@ export class Inventory {
         const index = parseInt(orderItemRow.dataset.i);
         const item = order.items[index];
 
-        console.log('getItemData', item);
-
         return {
             item,
             index
@@ -69,7 +67,7 @@ export class Inventory {
         let isBundle = e.target.dataset.source === "bundle";
         let { item, index } = this.getItemData(e, order);
 
-        console.log('syncInventoryState itemData', item);
+        // console.log('syncInventoryState itemData', item);
 
         // Update writeoff amount based on source (item or bundle)
         if (isBundle && item.bundle_items && Array.isArray(item.bundle_items)) {
@@ -109,7 +107,7 @@ export class Inventory {
         // Add stock update action if there are any changes for bundled products
         if (actions.update_item && isBundle && item.bundle_items && Array.isArray(item.bundle_items)) {
 
-            console.log('syncInventoryState bundle item', item.bundle_items);
+            // console.log('syncInventoryState bundle item', item.bundle_items);
             const bundleItem = item.bundle_items.find(b => b.inventory && b.inventory._id === e.target.dataset.id);
             if (bundleItem) {
                 actions.update_stock = {
@@ -150,8 +148,6 @@ export class Inventory {
         const type = e.target.dataset.type;
         const index = parseInt(e.target.dataset.i);
         const item_id = e.target.dataset.item_id;
-
-        console.log('syncCheckboxState source', source);
 
         if (source === "item") {
 
@@ -211,8 +207,6 @@ export class Inventory {
 
                 // Find or create the bundle item
                 let bundleItem = parentItem.bundle_items.find(b => b.inventory && b.inventory._id === bundleId);
-
-                console.log('syncCheckboxState bundleItem', bundleItem);
 
                 if (!bundleItem) {
                     // Create new bundle item entry

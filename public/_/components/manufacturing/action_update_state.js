@@ -10,8 +10,6 @@ import { updateWriteoffInputUI } from "./render_writeoff_input.js";
 
 export const actionUpdateState = (data) => {
 
-    console.log('Received SSE update:', data);
-
     // Handle different types of updates
     switch (data.type) {
         case 'items-update':

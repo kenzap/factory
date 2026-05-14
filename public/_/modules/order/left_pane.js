@@ -16,9 +16,122 @@ import { ClientPane } from "../../modules/order/client_pane.js";
 import { OrderPane } from "../../modules/order/order_pane.js";
 import { state } from "../../modules/order/state.js";
 
+const ELT_CACHE_TTL_MS = 30 * 1000;
+const ELT_DEBOUNCE_MS = 250;
+const ELT_SESSION_STORAGE_PREFIX = 'order-elt-estimate:';
+const eltEstimateCache = new Map();
+const eltEstimateInFlight = new Map();
+
+const normalizeEltItems = (items = []) => (Array.isArray(items) ? items : [])
+    .map((item) => ({
+        _id: String(item?._id || '').trim(),
+        title: String(item?.title || '').trim(),
+        group: String(item?.group || '').trim(),
+        qty: Number(item?.qty || 0)
+    }))
+    .sort((left, right) => {
+        const leftKey = `${left._id}::${left.title}::${left.group}::${left.qty}`;
+        const rightKey = `${right._id}::${right.title}::${right.group}::${right.qty}`;
+        return leftKey.localeCompare(rightKey);
+    });
+
+const hashEltItems = (normalizedItems = []) => {
+    const value = JSON.stringify(normalizedItems);
+    let hash = 5381;
+
+    for (let i = 0; i < value.length; i++) {
+        hash = ((hash << 5) + hash) + value.charCodeAt(i);
+        hash >>>= 0;
+    }
+
+    return hash.toString(36);
+};
+
+const buildEltEstimateKey = (orderId = '', items = []) => {
+    const normalizedItems = normalizeEltItems(items);
+    const checksum = hashEltItems(normalizedItems);
+    return `${String(orderId || '').trim()}::${checksum}`;
+};
+
+const getSessionStorageKey = (cacheKey = '') => `${ELT_SESSION_STORAGE_PREFIX}${cacheKey}`;
+
+const readPersistedEltEstimate = (cacheKey = '') => {
+    try {
+        const rawValue = window.sessionStorage.getItem(getSessionStorageKey(cacheKey));
+        if (!rawValue) return null;
+
+        const parsed = JSON.parse(rawValue);
+        if (!parsed?.response || !parsed?.expiresAt) {
+            window.sessionStorage.removeItem(getSessionStorageKey(cacheKey));
+            return null;
+        }
+
+        if (parsed.expiresAt <= Date.now()) {
+            window.sessionStorage.removeItem(getSessionStorageKey(cacheKey));
+            return null;
+        }
+
+        return parsed;
+    } catch (error) {
+        window.sessionStorage.removeItem(getSessionStorageKey(cacheKey));
+        return null;
+    }
+};
+
+const persistEltEstimate = (cacheKey = '', payload = null) => {
+    if (!payload) return;
+
+    try {
+        window.sessionStorage.setItem(getSessionStorageKey(cacheKey), JSON.stringify(payload));
+    } catch (error) {
+        // Ignore quota/private-mode storage failures and keep the in-memory cache working.
+    }
+};
+
+const getCachedEltEstimate = async (filters = {}, cacheKey = '') => {
+    const cached = eltEstimateCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+        return cached.response;
+    }
+
+    const persisted = readPersistedEltEstimate(cacheKey);
+    if (persisted) {
+        eltEstimateCache.set(cacheKey, persisted);
+        return persisted.response;
+    }
+
+    if (eltEstimateInFlight.has(cacheKey)) {
+        return eltEstimateInFlight.get(cacheKey);
+    }
+
+    const request = getOrderEltEstimate(filters)
+        .then((response) => {
+            if (response?.success) {
+                const payload = {
+                    response,
+                    expiresAt: Date.now() + ELT_CACHE_TTL_MS
+                };
+
+                eltEstimateCache.set(cacheKey, payload);
+                persistEltEstimate(cacheKey, payload);
+            }
+
+            return response;
+        })
+        .finally(() => {
+            eltEstimateInFlight.delete(cacheKey);
+        });
+
+    eltEstimateInFlight.set(cacheKey, request);
+    return request;
+};
+
 export class LeftPane {
 
     constructor() {
+        this.eltEstimateTimer = null;
+        this.latestEltEstimateKey = '';
+        this.latestEltEstimateSeq = 0;
 
         // check if header is already present
         this.init();
@@ -197,12 +310,31 @@ export class LeftPane {
         });
 
         this.updateDocumentButtonsState();
-        this.updateEltEstimate();
+        this.scheduleEltEstimateUpdate(0);
+    }
+
+    scheduleEltEstimateUpdate = (delay = ELT_DEBOUNCE_MS) => {
+        clearTimeout(this.eltEstimateTimer);
+        this.eltEstimateTimer = setTimeout(() => {
+            this.updateEltEstimate();
+        }, Math.max(0, delay));
+    }
+
+    setEltEstimateMessage = (message) => {
+        const el = document.getElementById('eltEstimate');
+        if (!el) return;
+        el.textContent = message;
     }
 
     updateEltEstimate = () => {
         const el = document.getElementById('eltEstimate');
         if (!el) return;
+
+        if (state.orderTableDirty) {
+            this.latestEltEstimateKey = '';
+            this.setEltEstimateMessage(__html('ELT: save order to refresh estimate'));
+            return;
+        }
 
         const items = (state.order?.items || [])
             .filter(item => !isExcludedFromInvoice(item))
@@ -215,21 +347,44 @@ export class LeftPane {
             }));
 
         if (items.length === 0) {
-            // el.textContent = __html('ELT: add products to estimate manufacturing time');
+            this.latestEltEstimateKey = '';
+            this.setEltEstimateMessage(__html('ELT: add products to estimate manufacturing time'));
             return;
         }
 
-        getOrderEltEstimate({ items, order_id: state.order?.id || '' }, (response) => {
+        const orderId = state.order?.id || '';
+        const cacheKey = buildEltEstimateKey(orderId, items);
+        const seq = ++this.latestEltEstimateSeq;
+        this.latestEltEstimateKey = cacheKey;
+
+        const cached = eltEstimateCache.get(cacheKey);
+        if (!cached || cached.expiresAt <= Date.now()) {
+            this.setEltEstimateMessage(__html('ELT: calculating...'));
+        }
+
+        getCachedEltEstimate({ items, order_id: orderId }, cacheKey).then((response) => {
+            if (seq !== this.latestEltEstimateSeq || cacheKey !== this.latestEltEstimateKey) return;
+
+            const currentEl = document.getElementById('eltEstimate');
+            if (!currentEl) return;
+
             const days = Number(response?.estimate_days || 0);
             const bestCaseDays = Number(response?.estimate_days_best_case || 0);
 
             if (!days || response?.reason === 'no_history') {
-                el.textContent = __html('ELT: insufficient history for estimate');
+                currentEl.textContent = __html('ELT: insufficient history for estimate');
                 return;
             }
 
             const roundedBestCaseDays = bestCaseDays > 0 ? Math.round(bestCaseDays) : Math.round(days);
-            el.textContent = __html('ELT: about %1$ day(s)', roundedBestCaseDays);
+            currentEl.textContent = __html('ELT: about %1$ day(s)', roundedBestCaseDays);
+        }).catch(() => {
+            if (seq !== this.latestEltEstimateSeq || cacheKey !== this.latestEltEstimateKey) return;
+
+            const currentEl = document.getElementById('eltEstimate');
+            if (!currentEl) return;
+
+            currentEl.textContent = __html('ELT: unavailable');
         });
     }
 
@@ -323,9 +478,6 @@ export class LeftPane {
 
             e.preventDefault();
 
-            // Handle save order logic here
-            console.log('Save Order button clicked');
-
             // Show loading state
             const saveBtn = document.getElementById('saveOrderBtn');
             this.originalButtonHTML = saveBtn.innerHTML;
@@ -340,7 +492,6 @@ export class LeftPane {
         onClick('#deleteOrderBtn', () => {
 
             // Handle save order logic here
-            console.log('deleteOrderBtn', state.order._id);
 
             if (!confirm(__html('Delete record?'))) return;
 
@@ -459,8 +610,6 @@ export class LeftPane {
 
                 document.getElementById('due_date').value = '';
 
-                console.log('Draft mode enabled, clearing due date and resetting flatpickr');
-
                 // Clear flatpickr selected value
                 state.order.due_date = null;
                 if (this.flatpickrInstance) {
@@ -526,18 +675,16 @@ export class LeftPane {
         bus.on('order:table:refreshed', (data) => {
 
             this.summary();
-            this.updateEltEstimate();
         });
 
         bus.on('order:table:changed', () => {
             state.orderTableDirty = true;
             this.updateDocumentButtonsState();
+            this.setEltEstimateMessage(__html('ELT: save order to refresh estimate'));
         });
 
         // Update order summary when client is updated
         bus.on('client:updated', (client) => {
-
-            console.log('Left pane client updated:', client);
 
             // state.clientOrderSearch.data();
             state.clientAddressSearch.data();
@@ -555,13 +702,11 @@ export class LeftPane {
             }
 
             this.summary();
-            this.updateEltEstimate();
         });
 
         bus.on('order:client:data_loaded', () => {
 
             this.summary();
-            this.updateEltEstimate();
         });
 
         // bus.clear('client:removed');
@@ -587,7 +732,6 @@ export class LeftPane {
             state.clientContactSearch.data();
 
             this.summary();
-            this.updateEltEstimate();
         });
 
         // Summary

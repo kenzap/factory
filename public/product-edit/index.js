@@ -60,8 +60,6 @@ class ProductEdit {
         getProduct(this.id, (response) => {
             hideLoader();
 
-            console.log(response);
-
             if (!response.success) {
                 toast({ type: 'error', text: parseApiError(response.error) });
                 return;
@@ -225,8 +223,6 @@ class ProductEdit {
         onClick('.btn-save', e => { e.preventDefault(); self.save() });
 
         bus.on('file:uploaded', (data) => {
-
-            console.log("file:uploaded received", data);
 
             self.ProductSketch.init();
 

@@ -7,7 +7,7 @@ function sseStockUpdateApi(app, logger) {
 
     const handleConnect = (req, res) => {
 
-        logger.info(`Client connected to stock updates: ${req.user.fname} (${req.user.id})`);
+        // logger.info(`Client connected to stock updates: ${req.user.fname} (${req.user.id})`);
 
         prepareSseResponse(res);
 

@@ -36,8 +36,6 @@ export const sketchEditor = (cell, settings, order, cb) => {
 
         let data = JSON.parse(event.data);
 
-        console.log(data);
-
         switch (data.cmd) {
 
             case 'confirm':

@@ -147,7 +147,7 @@ export class AddToken {
                     return;
                 }
 
-                console.log('Token created:', response);
+                // console.log('Token created:', response);
 
                 // show success message with token
                 this.showTokenCreated(response);

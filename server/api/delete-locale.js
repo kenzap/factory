@@ -44,8 +44,6 @@ function deleteLocaleApi(app) {
 
     app.post('/api/delete-locale/', authenticateToken, async (_req, res) => {
 
-        console.log('/api/delete-locale/ ', _req.body);
-
         const response = await deleteLocale(_req.body.id);
 
         res.json({ success: true, response });

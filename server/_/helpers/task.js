@@ -12,6 +12,15 @@ const ALLOWED_LINK_TYPES = new Set(['order', 'client', 'supplier', 'product', 's
 
 const toTrimmedString = (value = '') => String(value || '').trim();
 
+const parseOptionalBoolean = (value) => {
+    if (typeof value === 'boolean') return value;
+
+    const normalized = toTrimmedString(value).toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+    return null;
+};
+
 const normalizeOptionalDate = (value) => {
     const raw = toTrimmedString(value);
     if (!raw) return null;
@@ -59,6 +68,11 @@ const normalizeTaskPayload = (input = {}, existingData = {}, user = null) => {
     }
 
     const unifiedDate = normalizeOptionalDate(input.due_date ?? input.remind_at ?? existingData.due_date ?? existingData.remind_at);
+    const requestedHasTime = parseOptionalBoolean(input.date_has_time);
+    const existingHasTime = parseOptionalBoolean(existingData.date_has_time);
+    const dateHasTime = unifiedDate
+        ? (requestedHasTime ?? existingHasTime ?? true)
+        : false;
     const typeRaw = toTrimmedString(input.type || existingData.type || 'reminder').toLowerCase();
     const statusRaw = toTrimmedString(input.status || existingData.status || 'open').toLowerCase();
     const priorityRaw = toTrimmedString(input.priority || existingData.priority || 'medium').toLowerCase();
@@ -84,6 +98,7 @@ const normalizeTaskPayload = (input = {}, existingData = {}, user = null) => {
         priority,
         category: toTrimmedString(input.category ?? existingData.category),
         due_date: unifiedDate,
+        date_has_time: dateHasTime,
         remind_at: null,
         assigned_users: assignedUsers,
         watchers,
@@ -132,6 +147,7 @@ export const formatTaskRow = (row = {}) => ({
     priority: row.priority,
     category: row.category,
     due_date: row.due_date,
+    date_has_time: parseOptionalBoolean(row.date_has_time),
     remind_at: row.remind_at,
     assigned_users: row.assigned_users || [],
     watchers: row.watchers || [],
@@ -165,6 +181,7 @@ export async function getTaskByRecordId(db, recordId) {
             js->'data'->>'priority' as priority,
             js->'data'->>'category' as category,
             js->'data'->>'due_date' as due_date,
+            js->'data'->>'date_has_time' as date_has_time,
             js->'data'->>'remind_at' as remind_at,
             js->'data'->'assigned_users' as assigned_users,
             js->'data'->'watchers' as watchers,
@@ -292,6 +309,7 @@ export async function getTasks(db, filters = {}, user = null) {
             js->'data'->>'priority' as priority,
             js->'data'->>'category' as category,
             js->'data'->>'due_date' as due_date,
+            js->'data'->>'date_has_time' as date_has_time,
             js->'data'->>'remind_at' as remind_at,
             js->'data'->'assigned_users' as assigned_users,
             js->'data'->'watchers' as watchers,
@@ -397,7 +415,7 @@ export async function saveTask(db, input = {}, user = null) {
     return {
         _id: result.rows?.[0]?._id || normalized.data._id,
         id: normalized.data.id,
-        previous_assigned_users: Array.isArray(existing?.assigned_users) ? existing.assigned_users : []
+        previous_task: existing ? formatTaskRow(existing) : null
     };
 }
 

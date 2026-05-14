@@ -5,7 +5,7 @@ import { showLoader, toast } from "../../helpers/global.js";
 // has render files
 export const hasRenderFiles = (product) => {
 
-    console.log('hasRenderFiles', product.cad_files);
+   // console.log('hasRenderFiles', product.cad_files);
 
     const hasObjFile = product.cad_files.some(file => file?.name?.endsWith('.obj') || file?.name?.endsWith('.obj'));
     const hasMtlFile = product.cad_files.some(file => file?.name?.endsWith('.mtl'));
@@ -53,8 +53,6 @@ export const saveSketchDefaults = (product, settings) => {
     };
 
     settings.textures.push(obj);
-
-    console.log('settings.textures', settings.textures);
 
     toast('New defaults applied');
 
