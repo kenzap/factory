@@ -55,6 +55,15 @@ export class ProductSearch {
         let selectedIndex = -1;
         let options = [];
 
+        const selectSuggestion = (suggestion) => {
+            if (!suggestion) return;
+
+            clearTimeout(searchTimeout);
+            input.value = suggestion.title + " " + suggestion.sdesc;
+            dropdown.style.display = "none";
+            this.productSelected(suggestion);
+        };
+
         const updateSelectedOption = () => {
             options.forEach((option, index) => {
                 if (index === selectedIndex) {
@@ -129,11 +138,22 @@ export class ProductSearch {
                         updateSelectedOption();
                     });
 
-                    option.addEventListener("click", () => {
-                        // console.log('Suggestion clicked:', suggestion);
-                        this.productSelected(suggestion);
+                    option.addEventListener("pointerdown", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectSuggestion(suggestion);
+                    });
 
-                        input.value = suggestion.title + " " + suggestion.sdesc;
+                    option.addEventListener("mousedown", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectSuggestion(suggestion);
+                    });
+
+                    option.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        selectSuggestion(suggestion);
                     });
 
                     dropdown.appendChild(option);
@@ -200,12 +220,8 @@ export class ProductSearch {
 
                 if (selectedIndex >= 0 && selectedIndex < options.length) {
                     // Select the highlighted option
-                    const selectedSuggestion = options[selectedIndex].textContent;
-                    input.value = selectedSuggestion;
-                    dropdown.style.display = "none";
                     const suggestion = this.productSuggestions[selectedIndex];
-                    this.productSelected(suggestion);
-                    // success(selectedSuggestion);
+                    selectSuggestion(suggestion);
 
                 } else {
                     // No option selected, just accept current input value

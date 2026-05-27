@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, sid } from '../_/helpers/index.js';
+import { withLockedOrderItems } from '../_/helpers/order-items.js';
 import { updateProductStock } from '../_/helpers/product.js';
 import { sseManager } from '../_/helpers/sse.js';
 
@@ -83,70 +84,40 @@ const revertCuttingAction = async (db, data, user) => {
         // Process each order once
         for (const [orderId, orderItems] of Object.entries(itemsByOrderId)) {
 
-            // Query 
-            let query = `
-                SELECT _id, js->'data'->'id' as "id", js->'data'->'items' as "items"
-                FROM data
-                WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
-                LIMIT 1
-            `;
+            const lockedOrder = await withLockedOrderItems(db, { orderId }, ({ items }) => {
+                const nextItems = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
+                let updated = false;
+                let itemId = null;
 
-            let params = ['order', sid, orderId];
+                nextItems.forEach((itm) => {
+                    const matchingItem = orderItems.find(item => item.id === itm.id);
+                    if (!matchingItem) return;
 
-            const result = await db.query(query, params);
-
-            let order = result.rows[0] || null;
-
-            // console.log('Updating order items for order_id:', orderId, 'order found:', order?._id);
-
-            // stop here if order not found
-            if (!order) continue;
-
-            let items_db = order.items || [];
-            let updated = false, item_id = null;
-
-            // console.log('Comparing:', items_db, 'order to:', orderItems);
-
-            // update items for this order
-            items_db.forEach(itm => {
-                const matchingItem = orderItems.find(item => item.id === itm.id && order.id === item.order_id);
-                if (matchingItem) {
-                    if(itm.inventory?.wrt_date) delete itm.inventory.wrt_date;
-                    if(itm.inventory?.wrt_user) delete itm.inventory.wrt_user;
-                    if(itm.inventory?.writeoff_length) delete itm.inventory.writeoff_length;
-                    if(itm.inventory?.coil_id) delete itm.inventory.coil_id;
+                    if (itm.inventory?.wrt_date) delete itm.inventory.wrt_date;
+                    if (itm.inventory?.wrt_user) delete itm.inventory.wrt_user;
+                    if (itm.inventory?.writeoff_length) delete itm.inventory.writeoff_length;
+                    if (itm.inventory?.coil_id) delete itm.inventory.coil_id;
                     itm.length_writeoff = 0;
                     itm.width_writeoff = 0;
-                    item_id = itm.id;
+                    itemId = itm.id;
                     updated = true;
-                }
+                });
+
+                return updated
+                    ? { items: nextItems, itemId }
+                    : { skipUpdate: true };
             });
 
-            if (updated) {
-                // update order in DB
-                let updateQuery = `
-                    UPDATE data
-                    SET js = jsonb_set(js, '{data,items}', $4::jsonb)
-                    WHERE ref = $1 AND sid = $2 AND _id = $3
-                    RETURNING _id
-                `;
-
-                let updateParams = ['order', sid, order._id, JSON.stringify(items_db)];
-
-                const updateResult = await db.query(updateQuery, updateParams);
-
-                // Notify frontend about items update via SSE
+            if (lockedOrder?.updated) {
                 sseManager.broadcast({
                     type: 'items-update',
                     message: 'Revert item status after cutting action 2',
-                    items: items_db,
-                    item_id: item_id,
-                    order_id: order._id,
+                    items: lockedOrder.items,
+                    item_id: lockedOrder.mutation?.itemId,
+                    order_id: lockedOrder.orderRecord._id,
                     updated_by: { user_id: user?.id, name: user?.fname },
                     timestamp: new Date().toISOString()
                 });
-
-                // console.log('Reverted order item statuses for order_id:', orderId, 'items:', orderItems.map(i => i.id));
             }
         }
     }
@@ -226,52 +197,29 @@ const revertWorklogFromOrderItem = async (db, data, user) => {
 
     // console.log('Reverting worklog from order item:', data);
 
-    // Query to get the order record
-    let query = `SELECT _id, js FROM data WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1`;
+    const lockedOrder = await withLockedOrderItems(db, { orderRecordId: data.order_id }, ({ items }) => {
+        const nextItems = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
 
-    const itemParams = ['order', sid, data.order_id];
+        nextItems.forEach((item) => {
+            if (item.id !== data.item_id) return;
 
-    const itemResult = await db.query(query, itemParams);
+            if (item.worklog && item.worklog[data.type]) {
+                delete item.worklog[data.type];
 
-    const orderRecord = itemResult.rows[0];
-
-    if (orderRecord) {
-        const orderData = orderRecord.js;
-
-        let items = orderData.data.items || [];
-
-        items = items.map(item => {
-            if (item.id === data.item_id) {
-                // Remove the worklog entry for this type
-                if (item.worklog && item.worklog[data.type]) {
-                    delete item.worklog[data.type];
-
-                    // If worklog is empty, remove it entirely
-                    if (Object.keys(item.worklog).length === 0) {
-                        delete item.worklog;
-                    }
+                if (Object.keys(item.worklog).length === 0) {
+                    delete item.worklog;
                 }
             }
-            return item;
         });
 
-        orderData.data.items = items;
+        return { items: nextItems };
+    });
 
-        const updateQuery = `
-            UPDATE data 
-            SET js = $1
-            WHERE _id = $2
-        `;
-
-        const updateParams = [JSON.stringify(orderData), orderRecord._id];
-
-        await db.query(updateQuery, updateParams);
-
-        // Notify frontend about items update via SSE
+    if (lockedOrder?.updated) {
         sseManager.broadcast({
             type: 'items-update',
             message: 'Revert item status after cutting action 1',
-            items: items,
+            items: lockedOrder.items,
             item_id: data.item_id,
             order_id: data.order_id,
             updated_by: { user_id: user?.id, name: user?.fname },

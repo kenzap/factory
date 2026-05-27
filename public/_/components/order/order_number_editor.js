@@ -1,5 +1,6 @@
 import { toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
+import { focusEditorField } from "./editor_focus.js";
 
 /**
  * Creates a number input editor for table cells with validation and navigation features.
@@ -18,6 +19,13 @@ import { isAllowedToEdit } from "../../helpers/order.js";
  * 
  */
 export const numberEditor = (cell, onRendered, success, cancel, editorParams) => {
+    const parseEditorNumber = (value) => {
+        const normalized = String(value ?? "").trim().replace(",", ".");
+        if (!normalized) return "";
+
+        const parsed = parseFloat(normalized);
+        return Number.isFinite(parsed) ? parsed : "";
+    };
 
     // Check if editing is allowed for this row
     const rowData = cell.getRow().getData();
@@ -32,17 +40,20 @@ export const numberEditor = (cell, onRendered, success, cancel, editorParams) =>
     }
 
     const input = document.createElement("input");
-    input.type = "number";
+    input.type = "text";
     input.value = cell.getValue() ? parseFloat(cell.getValue()) : "";
     input.className = "form-control form-control-sm";
+    input.inputMode = Number(editorParams.step) === 1 ? "numeric" : "decimal";
+    input.autocomplete = "off";
+    input.setAttribute("spellcheck", "false");
 
     // Apply editor params
-    if (editorParams.min !== undefined) input.min = editorParams.min;
-    if (editorParams.max !== undefined) input.max = editorParams.max;
-    if (editorParams.step !== undefined) input.step = editorParams.step;
+    if (editorParams.min !== undefined) input.dataset.min = editorParams.min;
+    if (editorParams.max !== undefined) input.dataset.max = editorParams.max;
+    if (editorParams.step !== undefined) input.dataset.step = editorParams.step;
 
     input.addEventListener("blur", () => {
-        success(input.value ? parseFloat(input.value) : "");
+        success(parseEditorNumber(input.value));
     });
 
     input.addEventListener("keydown", (e) => {
@@ -50,7 +61,7 @@ export const numberEditor = (cell, onRendered, success, cancel, editorParams) =>
 
             e.preventDefault();
 
-            success(input.value ? parseFloat(input.value) : "");
+            success(parseEditorNumber(input.value));
 
             // Navigate to next or previous cell based on shift key
             if (e.shiftKey) {
@@ -62,13 +73,12 @@ export const numberEditor = (cell, onRendered, success, cancel, editorParams) =>
         } else if (e.key === "Escape") {
             cancel();
         } else if (e.key === "Tab") {
-            success(input.value ? parseFloat(input.value) : "");
+            success(parseEditorNumber(input.value));
         }
     });
 
     onRendered(() => {
-        input.focus();
-        input.select();
+        focusEditorField(input, { selectAll: true });
     });
 
     return input;

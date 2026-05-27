@@ -48,6 +48,8 @@ const aggregateProducts = (items = []) => {
                 revenue_total: 0,
                 revenue_with_cost: 0,
                 cost_total: 0,
+                manufacturing_lead_days_total: 0,
+                manufacturing_lead_count: 0,
                 products_with_cost_lines: 0,
                 products_without_cost_lines: 0
             });
@@ -58,6 +60,10 @@ const aggregateProducts = (items = []) => {
         row.lines_count += 1;
         row.qty += item.qty;
         row.revenue_total += item.revenue;
+        if (Number.isFinite(item.manufacturingLeadDays)) {
+            row.manufacturing_lead_days_total += item.manufacturingLeadDays;
+            row.manufacturing_lead_count += 1;
+        }
 
         if (item.hasCost) {
             row.products_with_cost_lines += 1;
@@ -91,6 +97,10 @@ const aggregateProducts = (items = []) => {
             gross_profit: grossProfit,
             margin_pct: marginPct,
             cost_coverage_pct: costCoveragePct,
+            avg_manufacturing_days: row.manufacturing_lead_count > 0
+                ? row.manufacturing_lead_days_total / row.manufacturing_lead_count
+                : null,
+            manufacturing_completed_lines: row.manufacturing_lead_count,
             avg_unit_price: row.qty > 0 ? row.revenue_total / row.qty : 0,
             avg_unit_cost: row.qty > 0 ? row.cost_total / row.qty : null
         };
@@ -129,8 +139,8 @@ const summarizeProducts = (records = []) => {
 };
 
 async function getProductAnalyticsReport(filters = {}) {
-    const { ordersRows, productMap } = await loadOrderRowsWithProducts(filters);
-    const items = extractOrderItems(ordersRows, productMap);
+    const { ordersRows, productMap, costSettings, coilPriceMap } = await loadOrderRowsWithProducts(filters);
+    const items = extractOrderItems(ordersRows, productMap, costSettings, coilPriceMap);
     const filteredItems = applyItemFilters(items, filters);
     const products = aggregateProducts(filteredItems);
 
@@ -150,8 +160,8 @@ async function getProductAnalyticsDetail(filters = {}) {
     const targetKey = targetId ? `id:${targetId}` : (targetName ? `name:${targetName}` : '');
     if (!targetKey) return { summary: null, lines: [] };
 
-    const { ordersRows, productMap } = await loadOrderRowsWithProducts(filters);
-    const items = extractOrderItems(ordersRows, productMap);
+    const { ordersRows, productMap, costSettings, coilPriceMap } = await loadOrderRowsWithProducts(filters);
+    const items = extractOrderItems(ordersRows, productMap, costSettings, coilPriceMap);
     const filteredItems = applyItemFilters(items, filters).filter((item) => item.key === targetKey);
 
     const lines = filteredItems
@@ -170,7 +180,8 @@ async function getProductAnalyticsDetail(filters = {}) {
                 revenue: item.revenue,
                 cost_total: item.hasCost ? item.costTotal : null,
                 gross_profit: grossProfit,
-                margin_pct: marginPct
+                margin_pct: marginPct,
+                manufacturing_days: Number.isFinite(item.manufacturingLeadDays) ? item.manufacturingLeadDays : null
             };
         })
         .sort((a, b) => String(b.order_date || '').localeCompare(String(a.order_date || '')));

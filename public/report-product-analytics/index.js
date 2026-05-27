@@ -144,6 +144,35 @@ class ProductAnalyticsReport {
         return `${Number(value).toFixed(1)}%`;
     }
 
+    formatQty(value = 0) {
+        const numericValue = Number(value);
+        if (!Number.isFinite(numericValue)) return '0';
+
+        if (Number.isInteger(numericValue)) {
+            return numericValue.toLocaleString(undefined, { maximumFractionDigits: 0 });
+        }
+
+        return numericValue.toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2
+        });
+    }
+
+    formatLeadTime(value) {
+        if (value === null || value === undefined || Number.isNaN(Number(value))) return 'N/A';
+
+        const numericValue = Number(value);
+        if (numericValue < (1 / 24)) {
+            return `${(numericValue * 24 * 60).toFixed(0)} ${__html('minutes')}`;
+        }
+
+        if (numericValue < 1) {
+            return `${(numericValue * 24).toFixed(1)} ${__html('hours')}`;
+        }
+
+        return `${numericValue.toFixed(1)} ${__html('days')}`;
+    }
+
     populateFilters() {
         const groupSelect = document.getElementById('filterGroup');
         const categorySelect = document.getElementById('filterCategory');
@@ -171,18 +200,21 @@ class ProductAnalyticsReport {
         const summaryGrid = document.getElementById('summaryGrid');
         if (!summaryGrid) return;
 
+        const grossProfit = Number(this.summary.gross_profit || 0);
+        const grossProfitClass = grossProfit >= 0 ? 'val-positive' : 'val-negative';
         const summaryCards = [
-            { label: __html('Products'), value: this.summary.products || 0 },
-            { label: __html('Quantity'), value: Number(this.summary.qty || 0).toFixed(2) },
-            { label: __html('Revenue'), value: this.formatMoney(this.summary.revenue_total || 0) },
-            { label: __html('Gross Profit'), value: this.formatMoney(this.summary.gross_profit || 0) },
-            { label: __html('Cost Coverage'), value: this.formatPercent(this.summary.cost_coverage_pct) }
+            { label: __html('Revenue'), value: this.formatMoney(this.summary.revenue_total || 0), icon: 'bi-graph-up-arrow', primary: true },
+            { label: __html('Products'), value: this.summary.products || 0, icon: 'bi-box' },
+            { label: __html('Quantity'), value: this.formatQty(this.summary.qty || 0), icon: 'bi-hash' },
+            { label: __html('Gross Profit'), value: this.formatMoney(grossProfit), icon: 'bi-cash-stack', valueClass: grossProfitClass },
+            { label: __html('Cost Coverage'), value: this.formatPercent(this.summary.cost_coverage_pct), icon: 'bi-shield-check' }
         ];
 
         summaryGrid.innerHTML = summaryCards.map((card) => `
-            <div class="summary-card">
-                <div class="label">${card.label}</div>
-                <div class="value">${card.value}</div>
+            <div class="pga-kpi ${card.primary ? 'kpi-primary' : ''}">
+                <div class="pga-kpi-icon"><i class="bi ${card.icon || 'bi-circle'}"></i></div>
+                <div class="pga-kpi-label">${card.label}</div>
+                <div class="pga-kpi-value ${card.valueClass || ''}">${card.value}</div>
             </div>
         `).join('');
     }
@@ -192,21 +224,37 @@ class ProductAnalyticsReport {
         if (!container) return;
 
         this.visibleProducts = this.getSortedProducts();
+        const totalRevenue = Number(this.summary.revenue_total || 0);
 
         const rows = this.visibleProducts.map((item, index) => {
             const coverage = Number(item.cost_coverage_pct || 0);
-            const coverageClass = coverage < 99.9 ? 'table-coverage-warn' : '';
+            const share = totalRevenue > 0 ? Math.min(100, Math.max(0, (Number(item.revenue_total || 0) / totalRevenue) * 100)) : 0;
+            const grossProfit = Number(item.gross_profit || 0);
+            const profitClass = grossProfit >= 0 ? 'profit-pos' : 'profit-neg';
+            const margin = item.margin_pct === null || item.margin_pct === undefined || Number.isNaN(Number(item.margin_pct))
+                ? null
+                : Number(item.margin_pct);
+            const marginPillClass = this.getMarginPillClass(margin);
+            const coveragePillClass = this.getCoveragePillClass(coverage);
+
             return `
                 <tr>
-                    <td>${item.product_name || '-'}</td>
+                    <td class="col-group">${item.product_name || '-'}</td>
                     <td>${item.group || '-'}</td>
                     <td>${item.category || '-'}</td>
                     <td>${item.orders_count || 0}</td>
-                    <td>${Number(item.qty || 0).toFixed(2)}</td>
+                    <td>${this.formatQty(item.qty || 0)}</td>
                     <td>${this.formatMoney(item.revenue_total || 0)}</td>
-                    <td>${this.formatMoney(item.gross_profit || 0)}</td>
-                    <td>${this.formatPercent(item.margin_pct)}</td>
-                    <td class="${coverageClass}">${this.formatPercent(item.cost_coverage_pct)}</td>
+                    <td class="share-cell">
+                        <div class="share-wrap">
+                            <div class="share-track"><div class="share-fill" style="width:${share}%"></div></div>
+                            <span class="share-pct">${this.formatPercent(share)}</span>
+                        </div>
+                    </td>
+                    <td>${this.formatLeadTime(item.avg_manufacturing_days)}</td>
+                    <td class="${profitClass}">${this.formatMoney(grossProfit)}</td>
+                    <td><span class="mpill ${marginPillClass}">${margin === null ? 'N/A' : this.formatPercent(margin)}</span></td>
+                    <td><span class="mpill ${coveragePillClass}">${this.formatPercent(item.cost_coverage_pct)}</span></td>
                     <td>
                         <button class="btn btn-sm btn-outline-secondary" type="button" onclick="productAnalyticsReport.openDetails(${index})">${__html('View')}</button>
                     </td>
@@ -215,7 +263,12 @@ class ProductAnalyticsReport {
         }).join('');
 
         container.innerHTML = `
-            <table class="work-summary-table">
+            <div class="pga-card pga-table-card">
+                <div class="pga-card-header">
+                    <span class="pga-card-title">${__html('Products breakdown')}</span>
+                </div>
+                <div class="pga-table-wrapper">
+                    <table class="pga-table">
                 <thead>
                     <tr>
                         <th>${this.renderSortableHeader('product_name', __html('Product'))}</th>
@@ -223,21 +276,100 @@ class ProductAnalyticsReport {
                         <th>${__html('Categories')}</th>
                         <th>${__html('Orders')}</th>
                         <th>${this.renderSortableHeader('qty', __html('Qty'))}</th>
-                        <th>${this.renderSortableHeader('revenue_total', __html('Revenue'))}</th>
-                        <th>${__html('Gross Profit')}</th>
-                        <th>${__html('Margin')}</th>
-                        <th>${__html('Cost Coverage')}</th>
+                        <th>${this.renderSortableHeader('revenue_total', __html('Revenue'), this.getHeaderHelp('revenue_total'))}</th>
+                        <th>${this.renderHeaderLabel(__html('Share'), this.getHeaderHelp('revenue_share_pct'))}</th>
+                        <th>${this.renderSortableHeader('avg_manufacturing_days', __html('Avg Manufacturing'), this.getHeaderHelp('avg_manufacturing_days'))}</th>
+                        <th>${this.renderHeaderLabel(__html('Gross Profit'), this.getHeaderHelp('gross_profit'))}</th>
+                        <th>${this.renderHeaderLabel(__html('Margin'), this.getHeaderHelp('margin_pct'))}</th>
+                        <th>${this.renderHeaderLabel(__html('Cost Coverage'), this.getHeaderHelp('cost_coverage_pct'))}</th>
                         <th>${__html('Details')}</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${rows || `<tr><td colspan="10">${__html('No products found')}</td></tr>`}
+                    ${rows || `<tr><td colspan="12"><div class="pga-empty">${__html('No products found')}</div></td></tr>`}
                 </tbody>
-            </table>
+                    </table>
+                </div>
+            </div>
+        `;
+
+        this.initTooltips(container);
+    }
+
+    getHeaderHelp(field) {
+        const descriptions = {
+            revenue_total: __html('Total revenue from all sales lines for this product in the selected period.'),
+            revenue_share_pct: __html('Product revenue share inside the current filtered report result.'),
+            avg_manufacturing_days: __html('Average elapsed time from release to production to manufactured state across completed lines. Uses order rtp_date and item inventory.rdy_date, with order date as fallback when rtp_date is missing. Values under one day are shown in hours, and values under one hour are shown in minutes.'),
+            gross_profit: __html('Revenue with cost data minus calculated cost. Lines without usable cost data are excluded.'),
+            margin_pct: __html('Gross profit divided by revenue with cost data. This shows profit percentage only on covered lines.'),
+            cost_coverage_pct: __html('Share of total revenue that had enough cost data to calculate profit. Low coverage means margin is incomplete.')
+        };
+
+        return descriptions[field] || '';
+    }
+
+    getMarginPillClass(margin = null) {
+        if (margin === null || margin === undefined || Number.isNaN(Number(margin))) return 'mpill-na';
+        if (Number(margin) >= 15) return 'mpill-good';
+        if (Number(margin) >= 5) return 'mpill-ok';
+        return 'mpill-bad';
+    }
+
+    getCoveragePillClass(coverage = null) {
+        if (coverage === null || coverage === undefined || Number.isNaN(Number(coverage))) return 'mpill-na';
+        if (Number(coverage) >= 99.9) return 'mpill-good';
+        if (Number(coverage) >= 80) return 'mpill-ok';
+        return 'mpill-bad';
+    }
+
+    initTooltips(scope = document) {
+        if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return;
+
+        scope.querySelectorAll('[data-bs-toggle="tooltip"]').forEach((element) => {
+            bootstrap.Tooltip.getOrCreateInstance(element, {
+                trigger: 'hover focus',
+                container: 'body'
+            });
+        });
+    }
+
+    escapeHtmlAttr(value = '') {
+        return String(value || '')
+            .replaceAll('&', '&amp;')
+            .replaceAll('"', '&quot;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;');
+    }
+
+    renderHeaderHelp(helpText = '') {
+        if (!helpText) return '';
+        const safeHelpText = this.escapeHtmlAttr(helpText);
+
+        return `
+            <span
+                class="table-header-help"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                data-bs-title="${safeHelpText}"
+                aria-label="${safeHelpText}"
+                tabindex="0"
+            >
+                <i class="bi bi-question-circle"></i>
+            </span>
         `;
     }
 
-    renderSortableHeader(field, label) {
+    renderHeaderLabel(label, helpText = '') {
+        return `
+            <span class="table-header-label">
+                <span>${label}</span>
+                ${this.renderHeaderHelp(helpText)}
+            </span>
+        `;
+    }
+
+    renderSortableHeader(field, label, helpText = '') {
         const isActive = this.sort.field === field;
         const direction = isActive ? this.sort.direction : '';
         const arrow = direction === 'asc' ? '↑' : direction === 'desc' ? '↓' : '↕';
@@ -249,7 +381,10 @@ class ProductAnalyticsReport {
                 type="button"
                 onclick="productAnalyticsReport.setSort('${field}')"
             >
-                <span>${label}</span>
+                <span class="table-header-label">
+                    <span>${label}</span>
+                    ${this.renderHeaderHelp(helpText)}
+                </span>
                 <span class="sort-arrow" aria-hidden="true">${arrow}</span>
             </button>
         `;
@@ -322,46 +457,67 @@ class ProductAnalyticsReport {
             const detail = response?.summary || {};
             const lines = response?.lines || [];
 
-            const linesHtml = lines.map((line) => `
-                <tr>
-                    <td>${line.order_id || '-'}</td>
-                    <td>${line.order_date ? new Date(line.order_date).toLocaleDateString() : '-'}</td>
-                    <td>${line.client_name || '-'}</td>
-                    <td>${Number(line.qty || 0).toFixed(2)}</td>
-                    <td>${this.formatMoney(line.revenue || 0)}</td>
-                    <td>${line.cost_total === null ? 'N/A' : this.formatMoney(line.cost_total)}</td>
-                    <td>${line.gross_profit === null ? 'N/A' : this.formatMoney(line.gross_profit)}</td>
-                    <td>${this.formatPercent(line.margin_pct)}</td>
-                </tr>
-            `).join('');
+            const linesHtml = lines.map((line) => {
+                const grossProfit = line.gross_profit === null || line.gross_profit === undefined
+                    ? null
+                    : Number(line.gross_profit);
+                const profitClass = grossProfit !== null && grossProfit >= 0 ? 'profit-pos' : 'profit-neg';
+                const margin = line.margin_pct === null || line.margin_pct === undefined || Number.isNaN(Number(line.margin_pct))
+                    ? null
+                    : Number(line.margin_pct);
+                const marginPillClass = this.getMarginPillClass(margin);
+
+                return `
+                    <tr>
+                        <td class="col-group">${line.order_id || '-'}</td>
+                        <td>${line.order_date ? new Date(line.order_date).toLocaleDateString() : '-'}</td>
+                        <td>${line.client_name || '-'}</td>
+                        <td>${this.formatQty(line.qty || 0)}</td>
+                        <td>${this.formatMoney(line.revenue || 0)}</td>
+                        <td>${this.formatLeadTime(line.manufacturing_days)}</td>
+                        <td>${line.cost_total === null ? '<span class="mpill mpill-na">N/A</span>' : this.formatMoney(line.cost_total)}</td>
+                        <td class="${grossProfit === null ? '' : profitClass}">${grossProfit === null ? 'N/A' : this.formatMoney(grossProfit)}</td>
+                        <td><span class="mpill ${marginPillClass}">${margin === null ? 'N/A' : this.formatPercent(margin)}</span></td>
+                    </tr>
+                `;
+            }).join('');
 
             modal.querySelector('.modal-body').innerHTML = `
-                <div class="row mb-3">
-                    <div class="col-md-3"><strong>${__html('Revenue')}:</strong> ${this.formatMoney(detail.revenue_total || 0)}</div>
-                    <div class="col-md-3"><strong>${__html('Gross Profit')}:</strong> ${this.formatMoney(detail.gross_profit || 0)}</div>
-                    <div class="col-md-3"><strong>${__html('Margin')}:</strong> ${this.formatPercent(detail.margin_pct)}</div>
-                    <div class="col-md-3"><strong>${__html('Cost Coverage')}:</strong> ${this.formatPercent(detail.cost_coverage_pct)}</div>
+                <div class="pa-detail-summary row g-2 mb-3">
+                    <div class="col-sm-6 col-xl"><strong>${__html('Revenue')}:</strong> ${this.formatMoney(detail.revenue_total || 0)}</div>
+                    <div class="col-sm-6 col-xl"><strong>${__html('Avg Manufacturing')}:</strong> ${this.formatLeadTime(detail.avg_manufacturing_days)}</div>
+                    <div class="col-sm-6 col-xl"><strong>${__html('Gross Profit')}:</strong> <span class="${Number(detail.gross_profit || 0) >= 0 ? 'profit-pos' : 'profit-neg'}">${this.formatMoney(detail.gross_profit || 0)}</span></div>
+                    <div class="col-sm-6 col-xl"><strong>${__html('Margin')}:</strong> <span class="mpill ${this.getMarginPillClass(detail.margin_pct)}">${this.formatPercent(detail.margin_pct)}</span></div>
+                    <div class="col-sm-6 col-xl"><strong>${__html('Cost Coverage')}:</strong> <span class="mpill ${this.getCoveragePillClass(detail.cost_coverage_pct)}">${this.formatPercent(detail.cost_coverage_pct)}</span></div>
                 </div>
-                <div class="table-responsive">
-                    <table class="table table-sm table-striped align-middle">
+                <div class="pga-card pga-table-card pga-modal-table-card">
+                    <div class="pga-card-header">
+                        <span class="pga-card-title">${__html('Order lines')}</span>
+                    </div>
+                    <div class="pga-table-wrapper">
+                        <table class="pga-table">
                         <thead>
                             <tr>
                                 <th>${__html('Order')}</th>
                                 <th>${__html('Date')}</th>
                                 <th>${__html('Client')}</th>
                                 <th>${__html('Qty')}</th>
-                                <th>${__html('Revenue')}</th>
-                                <th>${__html('Cost')}</th>
-                                <th>${__html('Gross Profit')}</th>
-                                <th>${__html('Margin')}</th>
+                                <th>${this.renderHeaderLabel(__html('Revenue'), this.getHeaderHelp('revenue_total'))}</th>
+                                <th>${this.renderHeaderLabel(__html('Manufacturing Time'), this.getHeaderHelp('avg_manufacturing_days'))}</th>
+                                <th>${this.renderHeaderLabel(__html('Cost'), __html('Calculated line cost. If unavailable, the line is excluded from gross profit and margin.'))}</th>
+                                <th>${this.renderHeaderLabel(__html('Gross Profit'), this.getHeaderHelp('gross_profit'))}</th>
+                                <th>${this.renderHeaderLabel(__html('Margin'), this.getHeaderHelp('margin_pct'))}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${linesHtml || `<tr><td colspan="8">${__html('No records to display')}</td></tr>`}
+                            ${linesHtml || `<tr><td colspan="9"><div class="pga-empty">${__html('No records to display')}</div></td></tr>`}
                         </tbody>
-                    </table>
+                        </table>
+                    </div>
                 </div>
             `;
+
+            this.initTooltips(modal.querySelector('.modal-body'));
         });
     }
 

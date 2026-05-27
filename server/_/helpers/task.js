@@ -354,10 +354,8 @@ export async function getTasks(db, filters = {}, user = null) {
         WHERE ${where.join(' AND ')}
     `;
 
-    const [result, countResult] = await Promise.all([
-        db.query(query, [...params, limit]),
-        db.query(countQuery, params)
-    ]);
+    const result = await db.query(query, [...params, limit]);
+    const countResult = await db.query(countQuery, params);
 
     return {
         records: result.rows.map(formatTaskRow),

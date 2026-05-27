@@ -1,5 +1,6 @@
 import { toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
+import { focusEditorField } from "./editor_focus.js";
 
 /**
  * Custom text editor for Tabulator cells with navigation and validation
@@ -58,8 +59,7 @@ export const textEditor = (cell, onRendered, success, cancel, editorParams) => {
     });
 
     onRendered(() => {
-        input.focus();
-        input.select();
+        focusEditorField(input, { selectAll: true });
     });
 
     return input;

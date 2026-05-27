@@ -94,7 +94,11 @@ async function saveOrder(logger, data, user) {
                     const existingItem = existingItemsById.get(String(item.id));
                     return {
                         ...item,
-                        inventory: existingItem?.inventory || item.inventory
+                        inventory: existingItem?.inventory || item.inventory,
+                        worklog: existingItem?.worklog || item.worklog,
+                        bundle_items: existingItem?.bundle_items || item.bundle_items,
+                        width_writeoff: existingItem?.width_writeoff ?? item.width_writeoff,
+                        length_writeoff: existingItem?.length_writeoff ?? item.length_writeoff
                     };
                 });
             }

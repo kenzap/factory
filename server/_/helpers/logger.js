@@ -64,6 +64,11 @@ const collectStacks = (args = []) => {
     return stacks;
 };
 
+const getRuntimeContext = () => ({
+    environment: process.env.NODE_ENV || 'development',
+    nodeId: process.env.HOSTNAME || `pid-${process.pid}`
+});
+
 const stackPreview = (stack = '') =>
     String(stack || '')
         .split('\n')
@@ -71,32 +76,37 @@ const stackPreview = (stack = '') =>
         .join('\n')
         .trim();
 
-const buildErrorReportHtml = ({ scope, message, stack, fullStack, time }) => `
-    <div style="font-family:Arial,sans-serif;line-height:1.4;color:#222;">
-        <div style="background:#111;color:#fff;padding:12px 14px;border-radius:8px 8px 0 0;">
-            <strong>Error Report</strong>
-        </div>
-        <div style="border:1px solid #e5e7eb;border-top:0;padding:14px;border-radius:0 0 8px 8px;background:#fff;">
-            <table style="width:100%;border-collapse:collapse;margin-bottom:12px;">
-                <tr>
-                    <td style="padding:4px 0;color:#6b7280;width:90px;">Scope</td>
-                    <td style="padding:4px 0;"><strong>${escapeHtml(scope)}</strong></td>
-                </tr>
-                <tr>
-                    <td style="padding:4px 0;color:#6b7280;">Time</td>
-                    <td style="padding:4px 0;">${escapeHtml(time)}</td>
-                </tr>
-            </table>
+const buildErrorReportHtml = ({ scope, message, stack, fullStack, time, environment, nodeId }) => `
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:620px;line-height:1.5;color:#212529;">
+        <div style="height:4px;background:#dc3545;border-radius:6px 6px 0 0;"></div>
+        <table style="width:100%;background:#212529;border-collapse:collapse;">
+            <tr>
+                <td style="padding:14px 18px;color:#f8f9fa;">
+                    <span style="color:#f1aeb5;font-size:15px;margin-right:8px;">&#9888;</span>
+                    <strong style="font-size:14px;vertical-align:middle;">Error Report</strong>
+                </td>
+                <td style="padding:14px 18px;text-align:right;color:#6c757d;font-size:11px;font-family:'Courier New',Courier,monospace;vertical-align:middle;">
+                    ${escapeHtml(time)}
+                </td>
+            </tr>
+        </table>
+        <div style="border:1px solid #dee2e6;border-top:0;padding:18px 20px;background:#fff;border-radius:0 0 6px 6px;">
 
-            <div style="margin:0 0 8px;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;">Message</div>
-            <pre style="margin:0 0 12px;padding:10px;background:#f9fafb;border:1px solid #eceff3;border-radius:6px;white-space:pre-wrap;font-size:13px;">${escapeHtml(message)}</pre>
+            <div style="margin-bottom:16px;">
+                <span style="display:inline-block;background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;padding:3px 9px;font-size:11px;font-family:'Courier New',Courier,monospace;color:#212529;margin-right:6px;margin-bottom:4px;"><span style="color:#6c757d;">scope:</span> ${escapeHtml(scope)}</span>
+                <span style="display:inline-block;background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;padding:3px 9px;font-size:11px;font-family:'Courier New',Courier,monospace;color:#212529;margin-right:6px;margin-bottom:4px;"><span style="color:#6c757d;">env:</span> ${escapeHtml(environment)}</span>
+                <span style="display:inline-block;background:#f8f9fa;border:1px solid #dee2e6;border-radius:4px;padding:3px 9px;font-size:11px;font-family:'Courier New',Courier,monospace;color:#212529;margin-bottom:4px;"><span style="color:#6c757d;">node:</span> ${escapeHtml(nodeId)}</span>
+            </div>
 
-            <div style="margin:0 0 8px;color:#6b7280;font-size:12px;text-transform:uppercase;letter-spacing:0.04em;">Stack (preview)</div>
-            <pre style="margin:0;padding:8px;background:#f8fafc;border:1px solid #eceff3;border-radius:6px;white-space:pre-wrap;font-size:11px;line-height:1.35;">${escapeHtml(stack)}</pre>
+            <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Message</div>
+            <pre style="margin:0 0 16px;padding:12px 14px;background:#fcf0ef;border:1px solid #f1aeb5;border-left:3px solid #dc3545;border-radius:0 4px 4px 0;font-family:'Courier New',Courier,monospace;font-size:13px;white-space:pre-wrap;word-break:break-word;color:#212529;line-height:1.5;">${escapeHtml(message)}</pre>
 
-            <details style="padding-top:10px;">
-                <summary style="cursor:pointer;color:#374151;font-size:12px;">Full stack</summary>
-                <pre style="margin-top:8px;padding:8px;background:#f8fafc;border:1px solid #eceff3;border-radius:6px;white-space:pre-wrap;font-size:10px;line-height:1.3;">${escapeHtml(fullStack)}</pre>
+            <div style="font-size:10px;color:#6c757d;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:5px;">Stack trace</div>
+            <pre style="margin:0;padding:12px 14px;background:#212529;color:#adb5bd;border-radius:6px;font-family:'Courier New',Courier,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;line-height:1.6;">${escapeHtml(stack)}</pre>
+
+            <details style="margin-top:10px;">
+                <summary style="cursor:pointer;color:#6c757d;font-size:12px;">Full stack trace</summary>
+                <pre style="margin-top:8px;padding:12px 14px;background:#212529;color:#adb5bd;border-radius:6px;font-family:'Courier New',Courier,monospace;font-size:11px;white-space:pre-wrap;word-break:break-word;line-height:1.6;">${escapeHtml(fullStack)}</pre>
             </details>
         </div>
     </div>
@@ -164,6 +174,7 @@ export const createLogger = (scope = 'erp') => {
                 const fullStack = stacks.join('\n\n---\n\n');
                 const compactStack = stackPreview(stacks[0] || '');
                 const time = new Date().toISOString();
+                const runtimeContext = getRuntimeContext();
                 return (async () => {
                     const settings = await getSettings();
                     const mailTo = settings?.logger_email_to || process.env.ADMIN_EMAIL;
@@ -171,7 +182,7 @@ export const createLogger = (scope = 'erp') => {
 
                     const mailFrom = settings?.logger_email_from || "";
                     const replyTo = settings?.logger_email_reply_to || "";
-                    const subject = settings?.logger_email_subject || `Error in ${scope}`;
+                    const subject = settings?.logger_email_subject || `Error in ${scope} (${runtimeContext.environment})`;
 
                     await send_email(
                         mailTo,
@@ -183,7 +194,9 @@ export const createLogger = (scope = 'erp') => {
                             message: errorMessage || 'No message provided',
                             stack: compactStack || 'Stack not available',
                             fullStack: fullStack || 'Stack not available',
-                            time
+                            time,
+                            environment: runtimeContext.environment,
+                            nodeId: runtimeContext.nodeId
                         }),
                         [],
                         { replyTo }

@@ -4,6 +4,126 @@ import { __html, parseApiError, toast } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 import { uploadBlogImageFile } from "./image_drop.js";
 
+const renderOptionalAttribute = (key, value) => {
+    return value !== null && value !== undefined && value !== ""
+        ? { [key]: value }
+        : {};
+};
+
+const BlogLink = Link.extend({
+    addAttributes() {
+        const parentAttributes = typeof this.parent === 'function'
+            ? this.parent()
+            : {};
+
+        return {
+            ...parentAttributes,
+            role: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('role'),
+                renderHTML: (attributes) => renderOptionalAttribute('role', attributes.role)
+            },
+            class: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('class'),
+                renderHTML: (attributes) => renderOptionalAttribute('class', attributes.class)
+            },
+            dataI: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-i'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-i', attributes.dataI)
+            },
+            dataId: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-id'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-id', attributes.dataId)
+            },
+            dataPreview: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-preview'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-preview', attributes.dataPreview)
+            }
+        };
+    }
+});
+
+const BlogImage = Image.extend({
+    addAttributes() {
+        const parentAttributes = typeof this.parent === 'function'
+            ? this.parent()
+            : {};
+
+        return {
+            ...parentAttributes,
+            id: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('id'),
+                renderHTML: (attributes) => renderOptionalAttribute('id', attributes.id)
+            },
+            class: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('class'),
+                renderHTML: (attributes) => renderOptionalAttribute('class', attributes.class)
+            },
+            width: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('width'),
+                renderHTML: (attributes) => renderOptionalAttribute('width', attributes.width)
+            },
+            height: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('height'),
+                renderHTML: (attributes) => renderOptionalAttribute('height', attributes.height)
+            },
+            loading: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('loading'),
+                renderHTML: (attributes) => renderOptionalAttribute('loading', attributes.loading)
+            },
+            style: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('style'),
+                renderHTML: (attributes) => renderOptionalAttribute('style', attributes.style)
+            },
+            srcset: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('srcset'),
+                renderHTML: (attributes) => renderOptionalAttribute('srcset', attributes.srcset)
+            },
+            sizes: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('sizes'),
+                renderHTML: (attributes) => renderOptionalAttribute('sizes', attributes.sizes)
+            },
+            dataI: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-i'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-i', attributes.dataI)
+            },
+            dataId: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-id'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-id', attributes.dataId)
+            },
+            dataPreview: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-preview'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-preview', attributes.dataPreview)
+            },
+            dataSrc: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-src'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-src', attributes.dataSrc)
+            },
+            dataSrcset: {
+                default: null,
+                parseHTML: (element) => element.getAttribute('data-srcset'),
+                renderHTML: (attributes) => renderOptionalAttribute('data-srcset', attributes.dataSrcset)
+            }
+        };
+    }
+});
+
 export class EditPost {
 
     constructor(post, settings, cb) {
@@ -139,14 +259,14 @@ export class EditPost {
                         levels: [1, 2, 3]
                     }
                 }),
-                Link.configure({
+                BlogLink.configure({
                     openOnClick: false,
                     HTMLAttributes: {
                         rel: 'noopener noreferrer',
                         target: '_blank'
                     }
                 }),
-                Image.configure({
+                BlogImage.configure({
                     inline: true,
                     HTMLAttributes: {
                         class: 'blog-inline-image'

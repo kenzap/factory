@@ -38,6 +38,76 @@
  *   console.log("Notification sent successfully");
  * }
  */
+export const normalizeOrderReadyPhone = (phone = '') => {
+    let normalizedPhone = String(phone || '').trim();
+
+    if (normalizedPhone.startsWith("+")) {
+        normalizedPhone = normalizedPhone.substring(1);
+    }
+
+    if (!normalizedPhone.startsWith("371") && normalizedPhone.length < 10) {
+        normalizedPhone = "371" + normalizedPhone;
+    }
+
+    return normalizedPhone;
+};
+
+export const buildOrderReadyPayload = (query = {}, config = null) => {
+    const orderId = query.orderId || query.pasutid;
+    const phone = query.phone || query.to;
+
+    if (!orderId || !phone) {
+        return {
+            error: 'Missing required parameters: orderId and phone are required'
+        };
+    }
+
+    const normalizedPhone = normalizeOrderReadyPhone(phone);
+    const payload = {
+        to: normalizedPhone,
+        type: "template",
+        messaging_product: "whatsapp",
+        template: {
+            namespace: config?.get?.('WHATSAPP_NAMESPACE') || process.env.WHATSAPP_NAMESPACE,
+            language: {
+                policy: "deterministic",
+                code: "lv"
+            },
+            name: "order_ready_v6",
+            components: [
+                {
+                    type: "body",
+                    parameters: [
+                        {
+                            type: "text",
+                            text: orderId.toString()
+                        },
+                        {
+                            type: "text",
+                            text: query?.notes ? query?.notes : '-'
+                        }
+                    ]
+                },
+                // {
+                //     type: "footer",
+                //     parameters: [
+                //         {
+                //             type: "text",
+                //             text: query?.notes ? query?.notes : '-'
+                //         }
+                //     ]
+                // }
+            ]
+        }
+    };
+
+    return {
+        orderId: orderId.toString(),
+        phone: normalizedPhone,
+        payload
+    };
+};
+
 export const notifyOrderReady = async (query, config, db, logger) => {
     try {
         // 360dialog API configuration production
@@ -48,51 +118,14 @@ export const notifyOrderReady = async (query, config, db, logger) => {
         // const url = "https://waba-sandbox.360dialog.io/v1/messages";
         // const apiKey = "UXENI6_sandbox";
 
-        // Extract order ID from query parameters
-        const orderId = query.orderId || query.pasutid;
-        const phone = query.phone || query.to;
+        const built = buildOrderReadyPayload(query, config);
 
-        if (!orderId || !phone) {
-
-            logger.warn('Missing required parameters: orderId and phone are required', query);
-            return { success: false, reason: 'Missing required parameters: orderId and phone are required' };
+        if (built?.error) {
+            logger.warn(built.error, query);
+            return { success: false, reason: built.error };
         }
 
-        // Normalize phone number
-        let normalizedPhone = phone;
-        if (normalizedPhone.startsWith("+")) {
-            normalizedPhone = normalizedPhone.substring(1);
-        }
-
-        // By default, add country code "371" if not present and length is less than 10
-        if (!normalizedPhone.startsWith("371") && normalizedPhone.length < 10) {
-            normalizedPhone = "371" + normalizedPhone;
-        }
-
-        const payload = {
-            to: normalizedPhone,
-            type: "template",
-            messaging_product: "whatsapp",
-            template: {
-                namespace: process.env.WHATSAPP_NAMESPACE,
-                language: {
-                    policy: "deterministic",
-                    code: "lv"
-                },
-                name: "order_ready_v4",
-                components: [
-                    {
-                        type: "body",
-                        parameters: [
-                            {
-                                type: "text",
-                                text: orderId.toString()
-                            }
-                        ]
-                    }
-                ]
-            }
-        };
+        const { phone: normalizedPhone, payload } = built;
 
         // logger.info('Sending WhatsApp order ready notification:', payload, apiKey, process.env.WHATSAPP_NAMESPACE);
 

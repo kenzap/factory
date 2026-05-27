@@ -1,4 +1,4 @@
-FROM node:24-slim
+FROM node:26-slim
 
 # Install system dependencies for Playwright
 RUN apt-get update && apt-get install -y \
@@ -30,8 +30,7 @@ COPY packages ./packages
 
 # Install dependencies
 RUN npm install
-RUN npx playwright install
-RUN npx playwright install chromium
+RUN npx playwright install --with-deps chromium
 
 # Copy application code
 COPY . .

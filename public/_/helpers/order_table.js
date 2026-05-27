@@ -1,6 +1,28 @@
 import { randomString } from "../helpers/global.js";
 import { state } from "../modules/order/state.js";
 
+const scheduleCellEdit = (resolveCell, field) => {
+    const openEditor = () => {
+        const cell = typeof resolveCell === "function" ? resolveCell() : null;
+        if (!cell) return;
+
+        try {
+            cell.edit();
+        } catch (error) {
+            console.warn('Cannot edit cell:', field, error);
+        }
+    };
+
+    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(openEditor);
+        });
+        return;
+    }
+
+    setTimeout(openEditor, 0);
+};
+
 /**
  * Navigates to the next editable cell in a table, moving horizontally through columns
  * and vertically to the next row when reaching the end of editable columns.
@@ -32,19 +54,11 @@ export const navigateToNextCell = (currentCell) => {
     if (currentColumnIndex < editableColumns.length - 1) {
         // Move to next editable column in same row
         const nextColumn = editableColumns[currentColumnIndex + 1];
-        // Refresh row reference to avoid stale references
-        const freshRows = state.table.getRows();
-        const freshRow = freshRows[currentRowIndex];
-        if (freshRow) {
-            const nextCell = freshRow.getCell(nextColumn.getField());
-            if (nextCell) {
-                try {
-                    nextCell.edit();
-                } catch (error) {
-                    console.warn('Cannot edit cell:', nextColumn.getField(), error);
-                }
-            }
-        }
+        scheduleCellEdit(() => {
+            const freshRows = state.table.getRows();
+            const freshRow = freshRows[currentRowIndex];
+            return freshRow ? freshRow.getCell(nextColumn.getField()) : null;
+        }, nextColumn.getField());
     } else {
         // Move to first editable column of next row, or create new row if at end
         const rows = state.table.getRows();
@@ -55,14 +69,11 @@ export const navigateToNextCell = (currentCell) => {
             const nextRow = rows[currentRowIndex + 1];
             const firstEditableColumn = editableColumns[1];
             if (firstEditableColumn && nextRow) {
-                const nextCell = nextRow.getCell(firstEditableColumn.getField());
-                if (nextCell) {
-                    try {
-                        nextCell.edit();
-                    } catch (error) {
-                        console.warn('Cannot edit cell:', firstEditableColumn.getField(), error);
-                    }
-                }
+                scheduleCellEdit(() => {
+                    const freshRows = state.table.getRows();
+                    const freshRow = freshRows[currentRowIndex + 1];
+                    return freshRow ? freshRow.getCell(firstEditableColumn.getField()) : null;
+                }, firstEditableColumn.getField());
             }
         } else {
 
@@ -88,33 +99,22 @@ export const navigateToPreviousCell = (currentCell) => {
     if (currentColumnIndex > 0) {
         // Move to previous editable column in same row
         const prevColumn = editableColumns[currentColumnIndex - 1];
-        // Refresh row reference to avoid stale references
-        const freshRows = state.table.getRows();
-        const freshRow = freshRows[currentRowIndex];
-        if (freshRow) {
-            const prevCell = freshRow.getCell(prevColumn.getField());
-            if (prevCell) {
-                try {
-                    prevCell.edit();
-                } catch (error) {
-                    console.warn('Cannot edit cell:', prevColumn.getField(), error);
-                }
-            }
-        }
+        scheduleCellEdit(() => {
+            const freshRows = state.table.getRows();
+            const freshRow = freshRows[currentRowIndex];
+            return freshRow ? freshRow.getCell(prevColumn.getField()) : null;
+        }, prevColumn.getField());
     } else if (currentRowIndex > 0) {
         // Move to last editable column of previous row
         const rows = state.table.getRows();
         const prevRow = rows[currentRowIndex - 1];
         const lastEditableColumn = editableColumns[editableColumns.length - 1];
         if (lastEditableColumn && prevRow) {
-            const prevCell = prevRow.getCell(lastEditableColumn.getField());
-            if (prevCell) {
-                try {
-                    prevCell.edit();
-                } catch (error) {
-                    console.warn('Cannot edit cell:', lastEditableColumn.getField(), error);
-                }
-            }
+            scheduleCellEdit(() => {
+                const freshRows = state.table.getRows();
+                const freshRow = freshRows[currentRowIndex - 1];
+                return freshRow ? freshRow.getCell(lastEditableColumn.getField()) : null;
+            }, lastEditableColumn.getField());
         }
     }
 }
@@ -148,10 +148,9 @@ export const addRow = () => {
     });
 
     // start editing color cell of the new row
-    setTimeout(() => {
+    scheduleCellEdit(() => {
         const newRow = state.table.getRows()[state.table.getRows().length - 1];
         const firstColumn = state.table.getColumns()[1];
-        const firstCell = newRow.getCell(firstColumn.getField());
-        firstCell.edit();
-    }, 50);
+        return newRow?.getCell(firstColumn.getField()) || null;
+    }, state.table.getColumns()[1]?.getField?.() || "color");
 }

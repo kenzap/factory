@@ -1,6 +1,6 @@
 
 import { sseManager } from '../../helpers/sse.js';
-import { sid } from './../index.js';
+import { withLockedOrderItems } from '../../helpers/order-items.js';
 
 export const updateItem = async (db, actions, user) => {
 
@@ -37,67 +37,41 @@ export const updateItem = async (db, actions, user) => {
             item.inventory.rdy_user = user?.id || null;
         }
 
-        // find the order item by id
-        const itemQuery = `
-                    SELECT js->'data'->'items' as items
-                    FROM data 
-                    WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
-                    `;
+        const lockedOrder = await withLockedOrderItems(db, { orderRecordId: actions.order_id }, ({ items }) => {
+            const nextItems = Array.isArray(items) ? items.map((entry) => ({ ...entry })) : [];
+            const resolvedIndex = nextItems.findIndex(existingItem => existingItem?.id === itemId);
+            const targetIndex = resolvedIndex !== -1 ? resolvedIndex : fallbackIndex;
+            const targetItem = Number.isInteger(targetIndex) ? nextItems[targetIndex] : null;
 
-        const itemResult = await db.query(itemQuery, [actions.order_id, 'order', sid]);
+            if (!targetItem) {
+                return { skipUpdate: true, itemMissing: true };
+            }
 
-        let items = itemResult.rows[0]?.items || [];
-        const resolvedIndex = items.findIndex(existingItem => existingItem?.id === itemId);
-        const targetIndex = resolvedIndex !== -1 ? resolvedIndex : fallbackIndex;
-        const targetItem = Number.isInteger(targetIndex) ? items[targetIndex] : null;
+            if (item.inventory) {
+                nextItems[targetIndex].inventory = {
+                    ...targetItem.inventory,
+                    ...item.inventory
+                };
+            }
 
-        // check if main item exists
-        if (!targetItem) {
+            if (item.bundle_items) {
+                nextItems[targetIndex].bundle_items = item.bundle_items;
+            }
+
+            return { items: nextItems };
+        });
+
+        if (!lockedOrder || lockedOrder.mutation?.itemMissing) {
             return { success: false, error: 'item not found' };
         }
-
-        // update only inventory and bundle_items keys
-        if (item.inventory) {
-            items[targetIndex].inventory = {
-                ...targetItem.inventory,
-                ...item.inventory
-            };
-        }
-
-        if (item.bundle_items) {
-            items[targetIndex].bundle_items = item.bundle_items;
-        }
-
-        // console.log('Updated main item:', items[targetIndex]);
-
-        const updateQuery = `
-                    UPDATE data
-                    SET js = jsonb_set(
-                        js,
-                        '{data,items}',
-                        $4::jsonb,
-                        true
-                    )
-                    WHERE _id = $1 AND ref = $2 AND sid = $3
-                    RETURNING _id
-                    `;
-
-        const updateParams = [
-            actions.order_id,
-            'order',
-            sid,
-            JSON.stringify(items)
-        ];
-
-        const updateResult = await db.query(updateQuery, updateParams);
-        response = updateResult.rows[0] || {};
+        response = { _id: lockedOrder.orderRecord._id };
 
         // Notify frontend about items update via SSE
         sseManager.broadcast({
             type: 'items-update',
             message: 'Inventory updated for order item',
-            items: items,
-            item_id: actions.item.id,
+            items: lockedOrder.items,
+            item_id: itemId,
             order_id: actions.order_id,
             updated_by: { user_id: user?.id, name: user?.fname },
             timestamp: new Date().toISOString()

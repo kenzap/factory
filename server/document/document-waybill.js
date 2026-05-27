@@ -2,6 +2,7 @@ import { InvoiceCalculator } from '@factory/tax-core/calculator';
 import { extractCountryFromVAT } from '@factory/tax-core/index';
 import { chromium } from 'playwright';
 import { authenticateToken } from '../_/helpers/auth.js';
+import { getLatvianComplianceDocumentHtml } from '../_/helpers/document/compliance.js';
 import { getDocumentData, getIssuingDate, getManufacturingDate, getWaybillNextNumber, parseDocument } from '../_/helpers/document/index.js';
 import { getPaginatedPdfOptions } from '../_/helpers/document/pdf.js';
 import { generatePeppolXML, getInvoiceItemsTable, getInvoiceTotals, isExcludedFromInvoice } from '../_/helpers/document/render.js';
@@ -85,6 +86,7 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
             locale,
             totals
         );
+        data.extension_latvian_compliance = await getLatvianComplianceDocumentHtml(db, data);
 
         // Store totals for PEPPOL export if needed
         data.calculated_totals = totals;
@@ -116,8 +118,8 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 // API route for waybill generation
 function viewWaybillApi(app, logger) {
 
-    app.get('/document/waybill/', authenticateToken, async (req, res) => {
-        // app.get('/document/waybill/', async (req, res) => {
+    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
+        app.get('/document/waybill/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;

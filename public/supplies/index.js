@@ -1,3 +1,4 @@
+import { priceFormat } from "../../packages/helpers/src/index.js";
 import { createSupplyRecord } from "../_/api/create_supply_record.js";
 import { deleteSupplyRecord } from "../_/api/delete_supply_record.js";
 import { getSupplyLog } from "../_/api/get_supply_log.js";
@@ -22,6 +23,7 @@ import { isAuthorized } from "../_/modules/unauthorized.js";
 class Supplies {
 
     constructor() {
+        this.supplyEntryDraftKey = 'supplyEntryFormDraft';
         this.records = [];
         this.filteredEntries = [];
         this.autoUpdateInterval = null;
@@ -93,6 +95,8 @@ class Supplies {
             document.querySelector('.btn-add-worklog-record')?.click();
         });
 
+        this.restoreSupplyEntryDraft();
+        this.bindSupplyEntryDraftPersistence();
         this.setupFormEnterNavigation();
         this.productColorValidator = new ProductColorValidator({
             input: '#productColor',
@@ -213,7 +217,7 @@ class Supplies {
             createSupplyRecord(record, (response) => {
 
                 if (response.success) {
-
+                    this.persistSupplyEntryDraft();
                     this.data(); // Refresh data
                 } else {
                     console.error('Error:', response.error);
@@ -318,6 +322,64 @@ class Supplies {
         return true;
     }
 
+    getSupplyEntryDraftFields() {
+        return ['document_id', 'document_date', 'supplier', 'notes'];
+    }
+
+    readSupplyEntryDraft() {
+        try {
+            const raw = sessionStorage.getItem(this.supplyEntryDraftKey);
+            if (!raw) return {};
+
+            const draft = JSON.parse(raw);
+            return draft && typeof draft === 'object' ? draft : {};
+        } catch (error) {
+            console.warn('Failed to read supply entry form draft', error);
+            return {};
+        }
+    }
+
+    persistSupplyEntryDraft() {
+        const draft = {};
+
+        this.getSupplyEntryDraftFields().forEach((fieldId) => {
+            const input = document.getElementById(fieldId);
+            draft[fieldId] = input ? String(input.value || '').trim() : '';
+        });
+
+        try {
+            sessionStorage.setItem(this.supplyEntryDraftKey, JSON.stringify(draft));
+        } catch (error) {
+            console.warn('Failed to persist supply entry form draft', error);
+        }
+    }
+
+    restoreSupplyEntryDraft() {
+        const draft = this.readSupplyEntryDraft();
+
+        this.getSupplyEntryDraftFields().forEach((fieldId) => {
+            const input = document.getElementById(fieldId);
+            if (!input) return;
+
+            const value = draft[fieldId];
+            if (value === undefined || value === null || value === '') return;
+
+            input.value = value;
+        });
+    }
+
+    bindSupplyEntryDraftPersistence() {
+        this.getSupplyEntryDraftFields().forEach((fieldId) => {
+            const input = document.getElementById(fieldId);
+            if (!input || input.dataset.supplyDraftBound === '1') return;
+
+            const persist = () => this.persistSupplyEntryDraft();
+            input.addEventListener('input', persist);
+            input.addEventListener('change', persist);
+            input.dataset.supplyDraftBound = '1';
+        });
+    }
+
     async data() {
 
         // get products
@@ -376,7 +438,7 @@ class Supplies {
         if (entriesToShow.length === 0) {
             tbody.innerHTML = `
                         <tr>
-                            <td colspan="7" class="text-center text-muted py-4">
+                            <td colspan="10" class="text-center text-muted py-4">
                                 <i class="bi bi-inbox fs-3 mb-3 d-block"></i>
                                 ${__html('No supply entries found')}
                             </td>
@@ -398,6 +460,7 @@ class Supplies {
                         </div>
                     </th>
                     <th>${__html('Qty')}</th>
+                    <th>${__html('Price')}</th>
                     <th>${__html('Supplier')}</th>
                     <th>${__html('Document')}</th>
                     <th></th>
@@ -425,7 +488,7 @@ class Supplies {
 
                 dateHeader = `
                 <tr>
-                    <td colspan="9" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
+                    <td colspan="10" class="bg-light fw-bold py-2 text-secondary border-0 form-text">
                         ${dateLabel}
                     </td>
                 </tr>
@@ -449,6 +512,9 @@ class Supplies {
                 </td>
                 <td style="width:500px;" ><span style="max-width:450px;">${this.renderProductName(entry)}</span></td>
                 <td><strong>${entry.qty}</strong></td>
+                <td style="width:120px;">
+                    ${this.renderEntryPrice(entry)}
+                </td>
                 <td style="width:80px;" class="text-truncate">
                     ${entry.supplier || ''}
                 </td>
@@ -499,6 +565,12 @@ class Supplies {
         }
 
         return `<span class="product-name">${entry.product_name}</span>`;
+    }
+
+    renderEntryPrice(entry) {
+        const amount = parseFloat(entry?.price);
+        if (!Number.isFinite(amount) || amount <= 0) return '';
+        return `<span class="text-nowrap">${priceFormat(this.settings, amount)}</span>`;
     }
 
     applyFilters() {

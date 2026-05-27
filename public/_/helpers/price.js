@@ -121,10 +121,6 @@ const calculateFormulaPrice = (settings, item, obj) => {
     // Get coating price per m2
     let coatingPrice = getCoatingPrice(settings, item.coating, item.color, item.cm);
 
-    // console.log('getCoating settings:', settings);
-    console.log('calculateFormulaPrice for item:', item);
-    // console.log('getCoating price:', coatingPrice);
-
     // m2 calculation
     obj.formula = item.formula;
     obj.formula = replaceFormulaVariables(obj.formula, settings, item, coatingPrice);

@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { withLockedOrderItems } from '../_/helpers/order-items.js';
 import { sseManager } from '../_/helpers/sse.js';
 
 /**
@@ -152,83 +153,47 @@ async function execWriteoffAction(data, user) {
         // update order items status if needed
         for (let order_id of record.order_ids) {
 
-            // Querry 
-            let query = `
-                SELECT _id, js->'data'->'items' as "items"
-                FROM data
-                WHERE ref = $1 AND sid = $2 AND js->'data'->>'id' = $3 
-                LIMIT 1
-            `;
+            const lockedOrder = await withLockedOrderItems(db, { orderId: order_id }, ({ items: existingItems }) => {
+                const nextItems = Array.isArray(existingItems) ? existingItems.map((item) => ({ ...item })) : [];
+                let updated = false;
+                let updatedItemId = null;
 
-            let params = ['order', sid, order_id];
+                nextItems.forEach((item, index) => {
+                    const itemUpdated = items.find(itm => item.id === itm.id);
+                    if (!itemUpdated) return;
 
-            const result = await db.query(query, params);
+                    if (!nextItems[index].inventory) { nextItems[index].inventory = {}; }
 
-            let order = result.rows[0] || null;
-
-            console.log('Updating order items for order_id:', order_id, 'order found:', order._id);
-
-            // stop here if order not found
-            if (!order) continue;
-
-            let items_db = order.items || [];
-            let updated = false;
-
-            // update items
-            await items_db.forEach((item, index) => {
-
-                // Find the corresponding item in the order by order_id and index
-                // console.log('Checking item: ', item, 'index:', index);
-
-                let itemUpdated = items.find(itm =>
-                    // itm.order_id === order_id && itm.index === index
-                    item.id === itm.id
-                );
-
-                if (itemUpdated) {
-
-                    if (!items_db[index].inventory) { items_db[index].inventory = {}; }
-
-                    items_db[index].inventory.wrt_date = new Date().toISOString();
-                    items_db[index].inventory.wrt_user = user?.id;
-                    items_db[index].inventory.coil_id = record.coil_id;
-                    items_db[index].inventory.writeoff_length = lastWriteoffLength;
-                    items_db[index].width_writeoff = itemUpdated.formula_width_calc
-                    items_db[index].length_writeoff = itemUpdated.formula_length_calc;
+                    nextItems[index].inventory.wrt_date = new Date().toISOString();
+                    nextItems[index].inventory.wrt_user = user?.id;
+                    nextItems[index].inventory.coil_id = record.coil_id;
+                    nextItems[index].inventory.writeoff_length = lastWriteoffLength;
+                    nextItems[index].width_writeoff = itemUpdated.formula_width_calc;
+                    nextItems[index].length_writeoff = itemUpdated.formula_length_calc;
 
                     updated = true;
+                    updatedItemId = item.id;
 
-                    console.log('Item updated with write-off:', items_db[index], 'at index:', index);
+                    console.log('Item updated with write-off:', nextItems[index], 'at index:', index);
+                });
 
-                    // Notify frontend about items update via SSE
-                    sseManager.broadcast({
-                        type: 'items-update',
-                        message: 'Writeoff state updated for order item',
-                        items: items_db,
-                        item_id: item.id,
-                        order_id: order._id,
-                        updated_by: { user_id: user?.id, name: user?.fname },
-                        timestamp: new Date().toISOString()
-                    });
-                }
+                return updated
+                    ? { items: nextItems, updatedItemId }
+                    : { skipUpdate: true };
             });
 
-            // console.log('Updated items:', items_db, 'was updated:', updated, 'id:', order._id);
+            if (lockedOrder?.updated) {
+                response.push({ _id: lockedOrder.orderRecord._id });
 
-            if (updated) {
-
-                // console.log('updating:', items_db);
-
-                // update order items
-                query = `UPDATE data SET js = jsonb_set(js, '{data,items}', $1::jsonb, true) WHERE _id = $2 AND ref = $3 AND sid = $4 RETURNING _id`;
-
-                params = [JSON.stringify(items_db), order._id, 'order', sid];
-
-                const updateResult = await db.query(query, params);
-
-                response.push(updateResult.rows[0] || {});
-
-                // console.log('UPDATE data:', updateResult.rows[0]);
+                sseManager.broadcast({
+                    type: 'items-update',
+                    message: 'Writeoff state updated for order item',
+                    items: lockedOrder.items,
+                    item_id: lockedOrder.mutation?.updatedItemId,
+                    order_id: lockedOrder.orderRecord._id,
+                    updated_by: { user_id: user?.id, name: user?.fname },
+                    timestamp: new Date().toISOString()
+                });
             }
         }
 

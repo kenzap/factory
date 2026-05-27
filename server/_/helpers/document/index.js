@@ -446,6 +446,17 @@ export const parseDocument = (document, data) => {
         ? document.replace(/\{\{waybill_totals\}\}/g, data.waybill_totals)
         : removeField(document, 'waybill_totals');
 
+    if (data?.extension_latvian_compliance) {
+        document = document
+            .replace(/\{\{extension_latvian_compliance\}\}/g, data.extension_latvian_compliance)
+            .replace(/\{extension_latvian_compliance\}/g, data.extension_latvian_compliance);
+    } else {
+        document = document
+            .replace(/\{\{extension_latvian_compliance\}\}/g, '')
+            .replace(/\{extension_latvian_compliance\}/g, '');
+        document = removeField(document, 'extension_latvian_compliance');
+    }
+
     document = data.user?.fname
         ? document.replace(/\{\{operator_name\}\}/g, (data.user?.fname || '') + ' ' + (data.user?.lname || ''))
         : removeField(document, 'operator_name');

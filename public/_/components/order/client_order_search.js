@@ -210,8 +210,6 @@ export class ClientOrderSearch {
         // Listen for external updates to the filter value
         bus.on('client:search:update_filter', (filter) => {
 
-            console.log('client:search:update_filter received:', filter);
-
             if (filter?.value && filter.value !== clientInput.value) clientInput.value = filter.value;
             if (filter?._id) clientInput.dataset._id = filter._id;
         });

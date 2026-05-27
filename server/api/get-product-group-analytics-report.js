@@ -179,8 +179,8 @@ const buildCharts = (groups = [], items = []) => {
 };
 
 async function getProductGroupAnalyticsReport(filters = {}) {
-    const { ordersRows, productMap } = await loadOrderRowsWithProducts(filters);
-    const items = extractOrderItems(ordersRows, productMap);
+    const { ordersRows, productMap, costSettings, coilPriceMap } = await loadOrderRowsWithProducts(filters);
+    const items = extractOrderItems(ordersRows, productMap, costSettings, coilPriceMap);
     const filteredItems = applyItemFilters(items, filters);
     const { groups, monthlyTrend } = aggregateGroups(filteredItems);
 

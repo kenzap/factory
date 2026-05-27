@@ -30,6 +30,7 @@ export const getOrdersReady = async (db, logger) => {
             "order".js->'data'->>'eid' as eid,
             "order".js->'data'->>'name' as name,
             "order".js->'data'->>'phone' as phone,
+            "order".js->'data'->>'notes' as notes,
             "order".js->'data'->'notifications'->>'order_ready_sent_at' as order_ready_sent_at,
             "entity".notifications as notifications
             FROM data "order"

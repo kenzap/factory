@@ -23,5 +23,6 @@
 
 - Production server startup installs a global runtime error bridge so `console.error(...)`, uncaught exceptions, and unhandled promise rejections flow through the shared logger pipeline instead of only ephemeral container stdout.
 - Logged runtime errors still print to the original process stderr/stdout stream, but they also use the existing logger email notification path when configured.
+- Error report emails include runtime environment (`development` / `production`) and node identity (`HOSTNAME` or process id) so container-specific faults can be traced more quickly.
 - Fatal uncaught exceptions wait briefly for the logger pipeline to flush before the process exits, which improves the chance of preserving crash context before Kubernetes restarts the container.
 - Error-reporting internals use raw console output to avoid recursive "error while reporting an error" loops when SMTP or settings loading fails.

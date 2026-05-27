@@ -1,5 +1,6 @@
 import { randomString, toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
+import { focusEditorField } from "./editor_focus.js";
 
 /**
  * Creates a custom cell editor for Tabulator.js with autocomplete suggestions functionality.
@@ -121,8 +122,7 @@ export const suggestionEditor = (cell, onRendered, success, cancel, editorParams
     });
 
     onRendered(() => {
-        input.focus();
-        if (editorParams.field === 'discount') input.select();
+        focusEditorField(input, { selectAll: true });
     });
 
     return input;

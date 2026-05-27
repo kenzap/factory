@@ -211,13 +211,10 @@ async function getOrders(filters = { for: "", client: { name: "", eid: "" }, sea
     try {
         await db.connect();
 
-        // Run queries in parallel when possible
-        const [result, countResult] = await Promise.all([
-            db.query(query, params),
-            (filters.for === 'orders' || filters.for === 'transactions')
-                ? db.query(query_summary, params.slice(0, -2))
-                : Promise.resolve(null)
-        ]);
+        const result = await db.query(query, params);
+        const countResult = (filters.for === 'orders' || filters.for === 'transactions')
+            ? await db.query(query_summary, params.slice(0, -2))
+            : null;
 
         orders.records = result.rows;
 

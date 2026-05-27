@@ -1,5 +1,6 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, makeId, sid } from '../_/helpers/index.js';
+import { withLockedOrderItems } from '../_/helpers/order-items.js';
 import { updateProductStock } from '../_/helpers/product.js';
 import { sseManager } from '../_/helpers/sse.js';
 
@@ -74,41 +75,20 @@ async function createWorkLog(logger, data, user) {
         // if data.item_id is set, update worklog_id in order item
         if (data.item_id && data.item_id !== '') {
 
-            query = `SELECT _id, js FROM data WHERE ref = $1 AND sid = $2 AND _id = $3 LIMIT 1`;
+            const lockedOrder = await withLockedOrderItems(db, { orderRecordId: data.order_id }, ({ items }) => {
+                const nextItems = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
 
-            const itemParams = ['order', sid, data.order_id];
+                nextItems.forEach((item) => {
+                    if (item.id !== data.item_id) return;
 
-            const itemResult = await db.query(query, itemParams);
-
-            const orderRecord = itemResult.rows[0];
-
-            if (orderRecord) {
-
-                const orderData = orderRecord.js;
-
-                let items = orderData.data.items || [];
-
-                items = items.map(item => {
-                    if (item.id === data.item_id) {
-
-                        if (!item.worklog) item.worklog = {};
-
-                        item.worklog[data.type] = { qty: data.qty, time: data.time, worklog_id: data._id };
-                    }
-                    return item;
+                    if (!item.worklog) item.worklog = {};
+                    item.worklog[data.type] = { qty: data.qty, time: data.time, worklog_id: data._id };
                 });
 
-                orderData.data.items = items;
+                return { items: nextItems };
+            });
 
-                const updateQuery = `
-                    UPDATE data 
-                    SET js = $1
-                    WHERE _id = $2
-                `;
-
-                const updateParams = [JSON.stringify(orderData), orderRecord._id];
-
-                await db.query(updateQuery, updateParams);
+            if (lockedOrder) {
 
                 logger.info('Updated order item with worklog_id:', data.item_id, data._id);
 
@@ -116,7 +96,7 @@ async function createWorkLog(logger, data, user) {
                 sseManager.broadcast({
                     type: 'items-update',
                     message: 'Worklog updated for order item',
-                    items: items,
+                    items: lockedOrder.items,
                     item_id: data.item_id,
                     order_id: data.order_id,
                     updated_by: { user_id: user?.id, name: user?.fname },

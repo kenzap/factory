@@ -75,9 +75,11 @@ Live system logs and crytical errors can be observed from `docker compose up` te
 
 - Backend request handlers use a shared per-process PostgreSQL `pg.Pool` through `getDbConnection()` instead of creating standalone clients for every request.
 - The compatibility wrapper preserves the existing `connect() / query() / end()` call pattern while pinning a pooled client only when a code path explicitly calls `connect()` for multi-query or transactional work.
+- Once a code path has called `connect()`, queries on that checked-out client must be awaited serially; parallel `Promise.all([...db.query(...)])` is reserved for pool-level queries that do not share the same pinned client.
 - Extension helper queries borrow pooled connections per query rather than holding a dedicated PostgreSQL session for the lifetime of the extension context.
 - The shared pool emits an operational warning email once usage reaches the configured threshold (70% by default) on a pod. Alerts are cooldown-limited so one saturation burst does not spam the inbox. Recipients default to `POSTGRES_POOL_ALERT_EMAIL_TO`, then cached logger email settings, then `ADMIN_EMAIL`.
 - Operations tasks are stored in the shared `data` table under `ref = 'task'`, which keeps the first release compatible with existing tenant scoping, backup, and audit conventions.
+- Sales analytics profitability calculations read coil-specific material cost from `supplylog.price` when an order item carries `items[].inventory.coil_id`; if no usable coil price is available, `COIL_PRICE_M2` in `formula_cost` falls back to the item coating price from settings so older orders without coil linkage can still participate in coverage.
 
 ## Realtime Coordination
 
@@ -90,8 +92,10 @@ Live system logs and crytical errors can be observed from `docker compose up` te
 - Each container keeps its own in-memory SSE client list and extension listeners, subscribes to the shared Redis channels, and rebroadcasts inbound messages locally.
 - PostgreSQL remains the source of truth for persisted business state; Redis only transports ephemeral realtime notifications between containers.
 - Order-item mutation APIs must resolve items by stable `item.id` rather than client-visible array index, because journals can filter or reorder rows before dispatching actions.
+- Order-item mutation APIs that touch `data.items` must serialize writes with a row-level lock on the parent order record; otherwise narrow updates like `isu_date`, `wrt_date`, or `worklog` can be lost when another endpoint rewrites the full items array from a stale snapshot.
 - Extension side effects that must happen only once per tenant request or schedule tick (for example OTP delivery and scheduled WhatsApp notifications) use Redis-backed cluster locks, because the same extension listeners and cron jobs are loaded in every container.
 - Extension cron jobs can opt into singleton execution through the shared cron manager, which acquires a Redis lock per job key so only one pod runs that scheduled tick in production.
+- The `dialog360` extension exposes a dry-run order-ready test route at `/extension/dialog360/order-ready-test/:id`; by default it returns the exact WhatsApp `order_ready_v5` payload built from mock query data, and only sends a real message when `?send=1` is provided.
 - If Redis is temporarily unavailable, the server falls back to process-local live updates and retries the bridge connection in the background. Single-container behavior continues, but multi-container realtime consistency is degraded until Redis reconnects.
 - Browser journals intentionally keep their authenticated SSE handshake on `POST`; that has proven more reliable through the current production proxy path than long-lived `GET` streams.
 - Realtime diagnostics can be enabled with `REALTIME_DEBUG=1` (or `REDIS_REALTIME_DEBUG=1`), which prints Redis bridge subscribe/publish/receive traces to server logs.

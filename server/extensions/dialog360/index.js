@@ -1,7 +1,7 @@
 import { getOrdersReady } from './src/get-orders-ready.js';
 import { markOrderReady } from './src/mark-order-ready.js';
 // import { notifyOrderNewAdmin } from './src/notify-order-new-admin.js';
-import { notifyOrderReady } from './src/notify-order-ready.js';
+import { buildOrderReadyPayload, notifyOrderReady } from './src/notify-order-ready.js';
 import { sendOtp } from './src/send-otp.js';
 import { withRealtimeLock } from '../../_/helpers/redis.js';
 
@@ -67,12 +67,41 @@ export function register({ router, cron, config, events, db, logger }) {
         });
     });
 
-    // Test route for order ready notification, ex: http://localhost:3000/extension/dialog360/order-ready-test/43006
+    // Test route for order ready notification, ex:
+    // http://localhost:3000/extension/dialog360/order-ready-test/43006?phone=26123456&notes=Pickup%20desk
     router.get('/order-ready-test/:id', async (req, res) => {
 
-        events.emit("email.send", { email: "pavel@kenzap.com", subject: `Order #${req.params.id} is ready`, body: `Order ${req.params.id} ready notification sent.` });
+        const query = {
+            orderId: req.params.id,
+            phone: req.query.phone || '26123456',
+            notes: req.query.notes || 'Pasutijums gaida klientu centra'
+        };
 
-        res.json({ status: 'ok' });
+        const built = buildOrderReadyPayload(query, config);
+
+        if (built?.error) {
+            return res.status(400).json({
+                status: 'error',
+                reason: built.error
+            });
+        }
+
+        if (req.query.send === '1') {
+            const result = await notifyOrderReady(query, config, db, logger);
+
+            return res.status(result.success ? 200 : 500).json({
+                status: result.success ? 'sent' : 'error',
+                query,
+                payload: built.payload,
+                result
+            });
+        }
+
+        res.json({
+            status: 'dry-run',
+            query,
+            payload: built.payload
+        });
     });
 
     // Register cron
@@ -90,12 +119,12 @@ export function register({ router, cron, config, events, db, logger }) {
                     5 * 60 * 1000,
                     async () => {
                         if (process.env.NODE_ENV !== 'production') {
-                            await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
+                            await notifyOrderReady({ orderId: order.id, phone: "6581500872", notes: order.notes }, config, db, logger);
                             return;
                         }
 
-                        await notifyOrderReady({ orderId: order.id, phone: "6581500872" }, config, db, logger);
-                        await notifyOrderReady({ orderId: order.id, phone: order.phone }, config, db, logger);
+                        await notifyOrderReady({ orderId: order.id, phone: "6581500872", notes: order.notes }, config, db, logger);
+                        await notifyOrderReady({ orderId: order.id, phone: order.phone, notes: order.notes }, config, db, logger);
                         await markOrderReady(order.id, db, logger);
                     },
                     {

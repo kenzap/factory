@@ -4,6 +4,7 @@ import { toast } from "../../helpers/global.js";
 import { isAllowedToEdit } from "../../helpers/order.js";
 import { calculate } from "../../helpers/price.js";
 import { Product } from "../products/product.js";
+import { focusEditorField } from "./editor_focus.js";
 
 let productSuggestions = [];
 
@@ -380,7 +381,7 @@ export const productEditor = (cell, onRendered, success, cancel, editorParams) =
     });
 
     onRendered(() => {
-        input.focus();
+        focusEditorField(input, { selectAll: true });
     });
 
     return container;

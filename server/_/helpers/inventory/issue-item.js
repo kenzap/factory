@@ -1,5 +1,5 @@
 import { sseManager } from '../../helpers/sse.js';
-import { sid } from './../index.js';
+import { withLockedOrderItems } from '../../helpers/order-items.js';
 
 export const issueItem = async (db, actions, user) => {
 
@@ -20,47 +20,35 @@ export const issueItem = async (db, actions, user) => {
             isu_user: actions.user_id || null
         };
 
-        // find the order item by id
-        const itemQuery = `
-                    SELECT js->'data'->'items' as items
-                    FROM data 
-                    WHERE _id = $1 AND ref = $2 AND sid = $3 LIMIT 1
-                `;
+        const lockedOrder = await withLockedOrderItems(db, { orderRecordId: issueAction.order_id }, ({ items }) => {
+            const nextItems = Array.isArray(items) ? items.map((item) => ({ ...item })) : [];
+            const index = nextItems.findIndex(item => item.id === issueAction.item_id);
 
-        const itemResult = await db.query(itemQuery, [issueAction.order_id, 'order', sid]);
+            if (index === -1) {
+                return { skipUpdate: true, itemMissing: true };
+            }
 
-        let items = itemResult.rows[0]?.items || [];
-        const i = items.findIndex(item => item.id === issueAction.item_id);
+            if (!nextItems[index].inventory) {
+                nextItems[index].inventory = {};
+            }
 
-        // check if item exists
-        if (items.length === 0 || !items[i]) {
+            nextItems[index].inventory.isu_date = inventory.isu_date;
+            nextItems[index].inventory.isu_user = inventory.isu_user;
+
+            return { items: nextItems };
+        });
+
+        if (!lockedOrder || lockedOrder.mutation?.itemMissing) {
             return { success: false, error: 'item not found' };
         }
 
-        if (!items[i].inventory) {
-            items[i].inventory = {};
-        }
-
-        items[i].inventory.isu_date = inventory.isu_date;
-        items[i].inventory.isu_user = inventory.isu_user;
-
-        const updateQuery = `UPDATE data SET js = jsonb_set(js, '{data,items}', $4::jsonb, true) WHERE _id = $1 AND ref = $2 AND sid = $3 RETURNING _id`;
-
-        const updateParams = [
-            issueAction.order_id,
-            'order',
-            sid,
-            JSON.stringify(items)
-        ];
-
-        const updateResult = await db.query(updateQuery, updateParams);
-        if (updateResult.rows.length) response.push(updateResult.rows[0]);
+        response.push({ _id: lockedOrder.orderRecord._id });
 
         // Notify frontend about items update via SSE
         sseManager.broadcast({
             type: 'items-update',
             message: 'Dispatch state updated for order item',
-            items: items,
+            items: lockedOrder.items,
             item_id: issueAction.item_id,
             order_id: issueAction.order_id,
             updated_by: { user_id: user?.id, name: user?.fname },
