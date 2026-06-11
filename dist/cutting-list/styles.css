@@ -1,5 +1,6 @@
 @import url("../assets/css/global.css");
-  
+@import url("../assets/css/nesting-modal.css");
+
 #app{
     font-size: 18px;
 }
@@ -71,12 +72,22 @@
     background: transparent;
     padding: 8px 8px 12px 8px;
     z-index: 1000;
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
 }
-    
+
 .writeoff-btn {
-    width: 100%;
+    flex: 1;
     height: 45px;
     font-weight: 600;
+}
+
+.nesting-btn {
+    flex: 0 0 auto;
+    height: 45px;
+    width: 45px;
+    padding: 0;
 }
 
 .stock-header {
@@ -93,7 +104,7 @@
     flex: 1;
     overflow-y: auto;
     padding: 0.5rem;
-    padding-bottom: 70px; /* Space for button */
+    padding-bottom: 122px; /* Space for stacked buttons */
 }
 
 .stock-item {
@@ -374,8 +385,63 @@
     box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25); 
 }
 
+.coworker-chips {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.15rem 0 0.25rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.coworker-chips::-webkit-scrollbar {
+    height: 6px;
+}
+
+.coworker-chip {
+    border: 1px solid #d0d7de;
+    border-radius: 999px;
+    background: #fff;
+    color: #334155;
+    min-height: 42px;
+    padding: 0.35rem 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    white-space: nowrap;
+    transition: all 0.15s ease;
+}
+
+.coworker-chip small {
+    font-size: 0.7rem;
+    color: #64748b;
+}
+
+.coworker-chip.is-selected {
+    border-color: #1d4ed8;
+    background: #e8f0ff;
+    color: #1e3a8a;
+}
+
+.coworker-chip:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 1px;
+}
+
 /* .modal.writeoff .modal-content{
     border-radius: 8px;
     position: relative;
     border-left: 20px solid var(--base-color-4);
 } */
+
+@media (pointer: coarse) {
+    .coworker-chip {
+        min-height: 48px;
+        padding: 0.45rem 0.95rem;
+        font-size: 0.88rem;
+    }
+}
+
+.writeoff .modal-dialog {
+    max-width: min(1280px, 96vw);
+}

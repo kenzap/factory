@@ -5,6 +5,7 @@ import { getAuthToken } from "../_/helpers/auth.js";
 import { __html, attr, formatDate, getDimUnit, hideLoader, toast } from "../_/helpers/global.js";
 import { formatClientName, getFullClientName } from "../_/helpers/order.js";
 // import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
+import { NestingModal } from "../_/modules/cutting/nesting-modal.js";
 import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
@@ -16,7 +17,7 @@ import { isAuthorized } from "../_/modules/unauthorized.js";
 /**
  * This page displays a list of orders for cutting based on selected color and coating.
  * It allow factory workers to write off materials from stock after cutting from coil.
- * 
+ *
  * @version 1.0
  */
 class CuttingList {
@@ -70,6 +71,8 @@ class CuttingList {
             this.settings = response.settings;
             this.orders = response.orders;
             this.stock = response.stock;
+            this.activityScores = response.activity_scores || {};
+            this.users = this.sortUsersByActivity(response.users || []);
 
             // session
             new Session();
@@ -135,6 +138,9 @@ class CuttingList {
 
                 </div>
                 <div class="writeoff-button-container">
+                    <button class="btn btn-outline-dark nesting-btn" id="nestingBtn" title="${__html('Nest Selected')}">
+                        <i class="bi bi-bounding-box"></i>
+                    </button>
                     <button class="btn btn-primary writeoff-btn" id="writeoffBtn">
                     <i class="bi bi-eye-slash"></i> ${__html('Write Off Selected')}
                     </button>
@@ -556,6 +562,9 @@ class CuttingList {
                         order_id: order.id,
                         product_id: item._id,
                         title: item.title,
+                        sdesc: item.sdesc || '',
+                        sketch_attached: !!item.sketch_attached,
+                        input_fields_values: item.input_fields_values || {},
                         formula_width_calc,
                         formula_length_calc,
                         qty: item.qty
@@ -567,11 +576,38 @@ class CuttingList {
         return items;
     }
 
+    getDefaultNestingSheetHeight = () => {
+        const stockWidth = this.stock
+            .map((coil) => Number(coil.width))
+            .find((width) => Number.isFinite(width) && width > 0);
+
+        return stockWidth || 1250;
+    }
+
+    openNestingModal = () => {
+        const selectedItems = this.collectSelectedItems();
+        if (!selectedItems.length) {
+            toast(__html('Select at least one item before nesting'));
+            return;
+        }
+
+        const orderIds = [...new Set(selectedItems.map((item) => String(item.order_id || '').trim()).filter(Boolean))];
+
+        new NestingModal({
+            items: selectedItems,
+            orderId: orderIds[0] || '',
+            orderIds,
+            settings: this.settings,
+            defaultSheetHeight: this.getDefaultNestingSheetHeight(),
+            material: `${this.color || ''} ${this.coating || ''}`.trim()
+        });
+    }
+
     openCoilWriteoff = (coilId) => {
         const coil = this.stock.find(c => c._id === coilId);
         const items = this.collectSelectedItems();
 
-        new WriteoffMetal(coil, items, this.settings, this.user, (updated) => {
+        new WriteoffMetal(coil, items, this.settings, this.user, this.users, (updated) => {
             if (updated) {
                 this.clearSelectedCuttingItems();
                 this.scheduleLiveRefresh({ orders: true, stock: true });
@@ -582,11 +618,40 @@ class CuttingList {
     openWriteoffModal = () => {
         const items = this.collectSelectedItems();
 
-        new WriteoffMetal(null, items, this.settings, this.user, (updated) => {
+        new WriteoffMetal(null, items, this.settings, this.user, this.users, (updated) => {
             if (updated) {
                 this.clearSelectedCuttingItems();
                 this.scheduleLiveRefresh({ orders: true, stock: true });
             }
+        });
+    }
+
+    sortUsersByActivity = (users = []) => {
+        const currentUserId = this.user?.id || this.user?._id || '';
+        const scores = this.activityScores || {};
+
+        return [...users].sort((a, b) => {
+            const aId = a?._id || '';
+            const bId = b?._id || '';
+
+            if (aId === currentUserId && bId !== currentUserId) return -1;
+            if (bId === currentUserId && aId !== currentUserId) return 1;
+
+            const aScore = scores[aId]?.score || 0;
+            const bScore = scores[bId]?.score || 0;
+            if (aScore !== bScore) return bScore - aScore;
+
+            const aWeek = scores[aId]?.week || 0;
+            const bWeek = scores[bId]?.week || 0;
+            if (aWeek !== bWeek) return bWeek - aWeek;
+
+            const aLast = scores[aId]?.last_activity || '';
+            const bLast = scores[bId]?.last_activity || '';
+            if (aLast !== bLast) return bLast.localeCompare(aLast);
+
+            const aName = `${a?.fname || ''} ${a?.lname || ''}`.trim();
+            const bName = `${b?.fname || ''} ${b?.lname || ''}`.trim();
+            return aName.localeCompare(bName);
         });
     }
 
@@ -614,6 +679,13 @@ class CuttingList {
         if (writeoffButton) {
             e.preventDefault();
             this.openWriteoffModal();
+            return;
+        }
+
+        const nestingButton = e.target.closest('.nesting-btn');
+        if (nestingButton) {
+            e.preventDefault();
+            this.openNestingModal();
             return;
         }
 

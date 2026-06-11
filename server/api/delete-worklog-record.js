@@ -54,22 +54,24 @@ const revertCuttingAction = async (db, data, user) => {
     // console.log('Updating coil:', data.coil_id, 'by length:', data.qty);
 
     // remove stock sheets added during cutting
-    if (data.coil_id && data.sheets) data.sheets.forEach(async (sheet) => {
+    if (data.coil_id && data.sheets) {
+        for (const sheet of data.sheets) {
 
-        if (sheet.type != "stock") return;
+            if (sheet.type != "stock") continue;
 
-        // Delete supply log record
-        let query = `
-            DELETE FROM data 
-            WHERE ref = $1 AND sid = $2 AND js->'data'->>'parent_coil_id' = $3 AND js->'data'->>'length' = $4 AND js->'data'->>'width' = $5
-            RETURNING _id`;
+            // Delete supply log record
+            let query = `
+                DELETE FROM data 
+                WHERE ref = $1 AND sid = $2 AND js->'data'->>'parent_coil_id' = $3 AND js->'data'->>'length' = $4 AND js->'data'->>'width' = $5
+                RETURNING _id`;
 
-        const params = ['supplylog', sid, data.coil_id, sheet.length, sheet.width];
+            const params = ['supplylog', sid, data.coil_id, sheet.length, sheet.width];
 
-        const result = await db.query(query, params);
+            await db.query(query, params);
 
-        // console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width, result.rows[0] || {});
-    });
+            // console.log('Removing sheet from stock:', data.coil_id, sheet.length, sheet.width);
+        }
+    }
 
     // clear order item statuses
     if (data.items) {
@@ -124,6 +126,25 @@ const revertCuttingAction = async (db, data, user) => {
 
     if (res) response.push(res.rows[0] || {});
 }
+
+const isLastSiblingActionRecord = async (db, worklogRecord = {}) => {
+    const actionId = String(worklogRecord?.js?.data?.action_id || '').trim();
+    if (!actionId) return true;
+
+    const query = `
+        SELECT _id
+        FROM data
+        WHERE ref = $1
+          AND sid = $2
+          AND js->'data'->>'action_id' = $3
+        FOR UPDATE
+    `;
+
+    const params = ['worklog', sid, actionId];
+    const result = await db.query(query, params);
+
+    return (result.rows?.length || 0) <= 1;
+};
 
 /**
  * Reverts a stock replenishment action by reducing the product stock by the replenished amount.
@@ -250,28 +271,32 @@ async function deleteWorklogRecord(id, user, logger) {
 
     try {
         await db.connect();
+        await db.query('BEGIN');
 
         // First, check if the worklog record exists
         let selectQuery = `
             SELECT _id, js FROM data 
-            WHERE ref = $1 AND sid = $2 AND _id = $3`;
+            WHERE ref = $1 AND sid = $2 AND _id = $3
+            FOR UPDATE`;
 
         const checkParams = ['worklog', sid, id];
 
         const checkResult = await db.query(selectQuery, checkParams);
 
         if (checkResult.rows.length === 0) {
+            await db.query('ROLLBACK');
             return { success: false, error: 'worklog record not found' };
         }
 
         let worklogRecord = checkResult.rows[0];
+        const shouldRevertAction = await isLastSiblingActionRecord(db, worklogRecord);
 
         worklogRecord.js.data.user_id = user.id;
 
-        if (worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data, user);
-        if (worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data, user);
-        if (worklogRecord.js.data.type === 'stock-write-off') await revertStockWriteOffAction(db, worklogRecord.js.data, user);
-        if (worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data, user);
+        if (shouldRevertAction && worklogRecord.js.data.type === 'cutting') await revertCuttingAction(db, worklogRecord.js.data, user);
+        if (shouldRevertAction && worklogRecord.js.data.type === 'stock-replenishment') await revertStockReplenishmentAction(db, worklogRecord.js.data, user);
+        if (shouldRevertAction && worklogRecord.js.data.type === 'stock-write-off') await revertStockWriteOffAction(db, worklogRecord.js.data, user);
+        if (shouldRevertAction && worklogRecord.js.data.item_id && worklogRecord.js.data.item_id !== '') await revertWorklogFromOrderItem(db, worklogRecord.js.data, user);
 
         // Delete worklog record
         let query = `
@@ -284,13 +309,18 @@ async function deleteWorklogRecord(id, user, logger) {
         const result = await db.query(query, params);
 
         response = result.rows;
+        await db.query('COMMIT');
 
     } catch (error) {
-        await db.end();
+        try {
+            await db.query('ROLLBACK');
+        } catch (_) {}
 
         logger.error(`Error deleting worklog record ${id}: `, error);
         
         return { success: false, error: 'failed to check worklog record ' + error.message };
+    } finally {
+        await db.end();
     }
 
     return response;

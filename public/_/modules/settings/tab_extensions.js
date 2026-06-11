@@ -125,6 +125,8 @@ export class TabExtensions {
                 return `<input type="password" ${baseAttrs} data-type="text" value="${value}" ${config.secret ? 'autocomplete="new-password"' : ''}>`;
             case 'textarea':
                 return `<textarea ${baseAttrs} data-type="textarea" rows="3">${value}</textarea>`;
+            case 'number':
+                return `<input type="number" ${baseAttrs} data-type="text" value="${value}" min="0">`;
             case 'text':
             default:
                 return `<input type="text" ${baseAttrs} data-type="text" value="${value}">`;

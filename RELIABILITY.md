@@ -6,6 +6,11 @@
 - Node.js app containers should stay stateless apart from short-lived in-memory request/session helpers and currently connected SSE clients.
 - Redis is the shared coordination layer for cacheable or ephemeral cross-container state, especially realtime fanout.
 
+## Database Pooling
+
+- The shared PostgreSQL pool enables TCP keepalive by default so long-idle sockets are less likely to be silently dropped by intermediate network devices before the app notices.
+- Idle-client pool errors are logged with tenant id, environment, node identity, keepalive settings, timeout settings, and current pool metrics to make it easier to distinguish idle socket resets from broader database incidents.
+
 ## Realtime Delivery
 
 - Live UI updates and extension event propagation are coordinated through Redis pub/sub instead of process-local memory alone.

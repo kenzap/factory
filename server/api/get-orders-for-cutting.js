@@ -1,6 +1,7 @@
 import { authenticateToken } from '../_/helpers/auth.js';
 import { getDbConnection, getSettings, log, sid } from '../_/helpers/index.js';
 import { getLocale } from '../_/helpers/locale.js';
+import { getPortalUsers, getWorkLogActivityScores } from '../_/helpers/worklog-users.js';
 
 /**
  * Retrieves metal stock data from the database based on provided filters.
@@ -234,9 +235,11 @@ function getOrdersForCuttingApi(app) {
             const filters = req.body.filters || {};
             const orders = await getOrdersForCutting(filters);
             const stock = await getMetalStock(filters);
-            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units"]);
+            const settings = await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "nesting:NESTING_API_URL", "nesting:NESTING_API_BEARER_TOKEN", "nesting:SKETCH_ORDERS_PATH", "nesting:timeLimit"]);
+            const users = await getPortalUsers();
+            const activityScores = await getWorkLogActivityScores();
 
-            res.send({ success: true, settings, orders, stock, locale, user: req?.user });
+            res.send({ success: true, settings, orders, stock, locale, user: req?.user, users, activity_scores: activityScores });
         } catch (err) {
 
             res.status(500).json({ error: 'failed to get orders' });

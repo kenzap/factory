@@ -4,7 +4,7 @@ import { Visualization } from "./cutting-visualization.js";
 
 export class WriteoffMetal {
 
-    constructor(coil, items, settings, user, cb) {
+    constructor(coil, items, settings, user, users, cb) {
 
         this.coil = coil || { _id: "", id: 0, supplier: "", thickness: 0, width: 1250, length: 1000000, color: "-", coating: "-" }; // default coil dimensions if not provided
 
@@ -14,7 +14,11 @@ export class WriteoffMetal {
 
         this.user = user || {};
 
+        this.users = users || [];
+
         this.sheets = [];
+
+        this.selectedUserIds = new Set();
 
         this.cb = cb;
 
@@ -67,6 +71,13 @@ export class WriteoffMetal {
                             <button class="btn btn-dark border-0 btn-add-sheet w-100">
                                 <i class="bi bi-plus-circle me-1"></i>
                             </button>
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label class="form-label mb-1 small text-muted">${__html('Team')}</label>
+                            <div id="cuttingCoworkerChips" class="coworker-chips" role="group" aria-label="${__html('Team')}"></div>
+                            <small id="cuttingCoworkerSummary" class="text-muted d-block mt-1"></small>
                         </div>
                     </div>
     
@@ -167,8 +178,94 @@ export class WriteoffMetal {
     init = () => {
 
         this.Visualization = new Visualization(this.coil, this.items, this.settings);
+        this.initializeSelectedUsers();
+        this.renderCoworkerChips();
 
         this.listeners();
+    }
+
+    initializeSelectedUsers = () => {
+        const currentUserId = this.user?.id || this.user?._id || '';
+        const validIds = new Set((this.users || []).map(user => user._id));
+
+        this.selectedUserIds = new Set(
+            Array.from(this.selectedUserIds).filter(userId => validIds.has(userId))
+        );
+
+        if (!this.selectedUserIds.size && currentUserId && validIds.has(currentUserId)) {
+            this.selectedUserIds.add(currentUserId);
+        }
+
+        if (!this.selectedUserIds.size && this.users?.length) {
+            this.selectedUserIds.add(this.users[0]._id);
+        }
+    }
+
+    renderCoworkerChips = () => {
+        const container = document.getElementById('cuttingCoworkerChips');
+        const summary = document.getElementById('cuttingCoworkerSummary');
+        if (!container || !summary) return;
+
+        if (!this.users?.length) {
+            container.innerHTML = '';
+            summary.textContent = '';
+            return;
+        }
+
+        const currentUserId = this.user?.id || this.user?._id || '';
+
+        container.innerHTML = this.users.map((user) => {
+            const userId = user._id;
+            const isSelected = this.selectedUserIds.has(userId);
+            const isCurrentUser = userId === currentUserId;
+            const shortName = `${user.fname || ''} ${user?.lname?.charAt(0) || ''}`.trim();
+
+            return `
+                <button
+                    type="button"
+                    class="coworker-chip ${isSelected ? 'is-selected' : ''}"
+                    data-user-id="${userId}"
+                    aria-pressed="${isSelected ? 'true' : 'false'}"
+                    title="${shortName}"
+                >
+                    <span>${shortName || __html('Employee')}</span>
+                    ${isCurrentUser ? `<small>${__html('You')}</small>` : ''}
+                </button>
+            `;
+        }).join('');
+
+        container.querySelectorAll('.coworker-chip').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                const userId = chip.dataset.userId;
+                if (!userId) return;
+
+                if (this.selectedUserIds.has(userId)) {
+                    if (this.selectedUserIds.size === 1) {
+                        toast(__html('Select at least one employee'));
+                        return;
+                    }
+                    this.selectedUserIds.delete(userId);
+                } else {
+                    this.selectedUserIds.add(userId);
+                }
+
+                this.renderCoworkerChips();
+            });
+        });
+
+        const selectedCount = this.selectedUserIds.size;
+        summary.textContent = selectedCount > 1
+            ? __html('Selected people: %1$s. One record will be created for each person.', selectedCount)
+            : __html('Selected person: 1.');
+    }
+
+    getSelectedUserIds = () => {
+        if (!this.selectedUserIds.size) {
+            const fallbackId = this.user?.id || this.user?._id;
+            return fallbackId ? [fallbackId] : [];
+        }
+
+        return Array.from(this.selectedUserIds);
     }
 
     listeners = () => {
@@ -233,6 +330,7 @@ export class WriteoffMetal {
                 type: "cutting",
                 sheets: this.sheets,
                 user_id: this.user.id,
+                employee_ids: this.getSelectedUserIds(),
                 order_ids: orderIds,
                 items: this.items
             }

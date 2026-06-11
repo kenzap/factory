@@ -60,7 +60,7 @@ class MediaJournal {
             new Footer(response);
             this.html();
             this.render();
-            this.listeners();
+            this.bindSearchListener();
 
             document.title = __html('Files');
             this.firstLoad = false;
@@ -123,6 +123,7 @@ class MediaJournal {
 
         if (!this.files.length) {
             tbody.innerHTML = `<tr><td colspan="5" class="empty-files">${__html('No files uploaded yet')}</td></tr>`;
+            this.bindDeleteListeners();
             return;
         }
 
@@ -163,6 +164,8 @@ class MediaJournal {
                 </tr>
             `;
         }).join('');
+
+        this.bindDeleteListeners();
     }
 
     getFileIcon = (file) => {
@@ -213,33 +216,39 @@ class MediaJournal {
         return `${s.toFixed(i === 0 ? 0 : 2)} ${units[i]}`;
     }
 
-    listeners = () => {
-        onKeyUp('#fileSearch', (e) => {
-            this.filters.s = e.currentTarget.value.trim();
-            this.filters.offset = 0;
-            this.init();
-        });
+    bindSearchListener = () => {
+        onKeyUp('#fileSearch', this.handleSearchKeyUp);
+    }
 
-        onClick('.btn-delete-file', (e) => {
-            e.preventDefault();
+    bindDeleteListeners = () => {
+        onClick('.btn-delete-file', this.handleDeleteClick);
+    }
 
-            const id = e.currentTarget.dataset.id;
-            if (!id) return;
+    handleSearchKeyUp = (e) => {
+        this.filters.s = e.currentTarget.value.trim();
+        this.filters.offset = 0;
+        this.init();
+    }
 
-            const confirmed = window.confirm(__html('Delete this file?'));
-            if (!confirmed) return;
+    handleDeleteClick = (e) => {
+        e.preventDefault();
 
-            showLoader();
-            deleteFile(id, () => {
-                const file = this.files.find((f) => f.id === id);
-                const fileSize = file?.size || 0;
-                this.files = this.files.filter((f) => f.id !== id);
-                this.totals.files = Math.max((this.totals.files || 1) - 1, 0);
-                this.totals.size = Math.max((this.totals.size || 0) - fileSize, 0);
+        const id = e.currentTarget.dataset.id;
+        if (!id) return;
 
-                hideLoader();
-                this.render();
-            });
+        const confirmed = window.confirm(__html('Delete this file?'));
+        if (!confirmed) return;
+
+        showLoader();
+        deleteFile(id, () => {
+            const file = this.files.find((f) => f.id === id);
+            const fileSize = file?.size || 0;
+            this.files = this.files.filter((f) => f.id !== id);
+            this.totals.files = Math.max((this.totals.files || 1) - 1, 0);
+            this.totals.size = Math.max((this.totals.size || 0) - fileSize, 0);
+
+            hideLoader();
+            this.render();
         });
     }
 }

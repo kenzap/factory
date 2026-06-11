@@ -21,7 +21,7 @@ export const delay = (ms = 0) =>
  */
 export const makeMoneoRequest = async (endpoint, config, payload) => {
 
-    await delay(250)
+    await delay(400)
 
     if (!config.get("MONEO_API_BASE") || !config.get("MONEO_AUTH_TOKEN") || !config.get("COMPANY_UID")) {
         throw new Error('Missing Moneo config. Ensure MONEO_API_BASE, MONEO_AUTH_TOKEN and COMPANY_UID are set.');

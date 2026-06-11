@@ -283,6 +283,8 @@ The script targets the current tenant `SID` (from `.env`) and uses `DATABASE_URL
 
 Use these scripts to keep locale keys and translations up to date.
 
+Important! Open docker and run from inside the container.
+
 1. Export locale keys from source (`__html`, `__attr`) into `server/assets/texts.json`:
 
 ```bash

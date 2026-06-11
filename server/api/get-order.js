@@ -77,7 +77,7 @@ function getOrderApi(app) {
         let order = _req.body.id ? await getOrderDetails(_req.body.id) : {};
         order.discounts = await getClientDiscounts(order.eid);
 
-        res.json({ success: true, order, settings: await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "groups", "price", "tax_auto_rate", "tax_calc", "tax_display", "tax_percent", "tax_rate", "tax_region", "vat_number", "variation_dims_count", "variation_dim_1_name", "variation_dim_2_name", "variation_dim_3_name"]), locale });
+        res.json({ success: true, order, settings: await getSettings(["currency", "currency_symb", "currency_symb_loc", "system_of_units", "groups", "price", "tax_auto_rate", "tax_calc", "tax_display", "tax_percent", "tax_rate", "tax_region", "vat_number", "variation_dims_count", "variation_dim_1_name", "variation_dim_2_name", "variation_dim_3_name", "nesting:NESTING_API_URL", "nesting:NESTING_API_BEARER_TOKEN", "nesting:SKETCH_ORDERS_PATH", "nesting:timeLimit"]), locale });
     });
 }
 

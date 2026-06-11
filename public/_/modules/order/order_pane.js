@@ -6,6 +6,7 @@ import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { suggestionEditor } from "../../components/order/order_suggestion_editor.js";
 import { textEditor } from "../../components/order/order_text_editor.js";
 import { __html, onClick, toast } from "../../helpers/global.js";
+import { NestingModal } from "../cutting/nesting-modal.js";
 import { getCoatings, getColors, isAllowedToEdit, isExcludedFromInvoice } from "../../helpers/order.js";
 import { addRow, navigateToNextCell, navigateToPreviousCell } from "../../helpers/order_table.js";
 import { TabulatorFull } from '../../libs/tabulator_esm.min.mjs';
@@ -260,7 +261,9 @@ export class OrderPane {
                         <i class="bi bi-box-arrow-up-right me-2"></i>
                         ${__html('Manufacturing')}
                     </a>
-                    
+                    <button id="open-nesting-modal" class="btn btn-outline-primary btn-sm" title="${__html('Nesting Preview')}">
+                        <i class="bi bi-bounding-box"></i>
+                    </button>
                 </div>
                 <div id="order-table"></div>
             </div>`;
@@ -783,6 +786,29 @@ export class OrderPane {
             }
             addRow();
             this.markOrderAsDirty();
+        });
+
+        onClick('#open-nesting-modal', () => {
+            const allItems = state.table?.getData?.() || [];
+            const items = allItems.filter(item =>
+                (Number(item.formula_width_calc) > 0 || Number(item.formula_length_calc) > 0) &&
+                Number(item.qty) > 0
+            );
+
+            if (!items.length) {
+                toast(__html('No items with dimensions available for nesting'));
+                return;
+            }
+
+            const firstItem = items[0];
+            const material = `${firstItem.color || ''} ${firstItem.coating || ''}`.trim();
+
+            new NestingModal({
+                items,
+                orderId: state.order.id || '',
+                settings: state.settings,
+                material
+            });
         });
 
         bus.on('order:table:sync:items', (id) => {

@@ -7,6 +7,13 @@ export const locale = process.env.LOCALE || "en"; // Default locale
 const DEFAULT_POOL_MAX = Math.max(1, Number.parseInt(process.env.POSTGRES_POOL_MAX || '10', 10) || 10);
 const DEFAULT_IDLE_TIMEOUT_MS = Math.max(1000, Number.parseInt(process.env.POSTGRES_POOL_IDLE_TIMEOUT_MS || '30000', 10) || 30000);
 const DEFAULT_CONNECTION_TIMEOUT_MS = Math.max(1000, Number.parseInt(process.env.POSTGRES_POOL_CONNECTION_TIMEOUT_MS || '5000', 10) || 5000);
+const DEFAULT_KEEPALIVE_ENABLED = !['0', 'false', 'off'].includes(
+    String(process.env.POSTGRES_KEEPALIVE_ENABLED || 'true').trim().toLowerCase()
+);
+const DEFAULT_KEEPALIVE_INITIAL_DELAY_MS = Math.max(
+    0,
+    Number.parseInt(process.env.POSTGRES_KEEPALIVE_INITIAL_DELAY_MS || '10000', 10) || 10000
+);
 const DEFAULT_POOL_ALERT_THRESHOLD_PERCENT = Math.min(
     100,
     Math.max(1, Number.parseInt(process.env.POSTGRES_POOL_ALERT_THRESHOLD_PERCENT || '85', 10) || 85)
@@ -111,6 +118,21 @@ function getDbPoolMetrics(pool) {
     };
 }
 
+function getDbPoolRuntimeContext(pool) {
+    const metrics = getDbPoolMetrics(pool);
+
+    return {
+        sid,
+        environment: process.env.NODE_ENV || 'development',
+        nodeId: process.env.HOSTNAME || `pid-${process.pid}`,
+        keepAlive: DEFAULT_KEEPALIVE_ENABLED,
+        keepAliveInitialDelayMs: DEFAULT_KEEPALIVE_INITIAL_DELAY_MS,
+        idleTimeoutMs: DEFAULT_IDLE_TIMEOUT_MS,
+        connectionTimeoutMs: DEFAULT_CONNECTION_TIMEOUT_MS,
+        pool: metrics
+    };
+}
+
 function buildDbPoolAlertHtml(metrics) {
     const time = new Date().toISOString();
     const nodeId = process.env.HOSTNAME || `pid-${process.pid}`;
@@ -201,11 +223,17 @@ export function getDbPool() {
             connectionString: process.env.DATABASE_URL,
             max: DEFAULT_POOL_MAX,
             idleTimeoutMillis: DEFAULT_IDLE_TIMEOUT_MS,
-            connectionTimeoutMillis: DEFAULT_CONNECTION_TIMEOUT_MS
+            connectionTimeoutMillis: DEFAULT_CONNECTION_TIMEOUT_MS,
+            keepAlive: DEFAULT_KEEPALIVE_ENABLED,
+            keepAliveInitialDelayMillis: DEFAULT_KEEPALIVE_INITIAL_DELAY_MS
         });
 
         sharedDbPool.on('error', (error) => {
-            console.error('[db-pool] Unexpected idle client error:', error);
+            console.error(
+                '[db-pool] Unexpected idle client error:',
+                error,
+                getDbPoolRuntimeContext(sharedDbPool)
+            );
         });
 
         sharedDbPool.on('acquire', () => {
@@ -287,7 +315,11 @@ export const getSettings = async (fields) => {
         // Get settings by specified fields
         let query;
         if (fields && fields.length > 0) {
-            const fieldSelections = fields.map(field => `js->'data'->'${field}' as ${field}`).join(', ');
+            const fieldSelections = fields.map((field, index) => {
+                const safeField = String(field).replace(/'/g, "''");
+                const alias = `field_${index}`;
+                return `js->'data'->'${safeField}' as "${alias}"`;
+            }).join(', ');
             query = `
             SELECT ${fieldSelections}
             FROM data 
@@ -321,8 +353,8 @@ export const getSettings = async (fields) => {
             if (fields && fields.length > 0) {
 
                 // Only include the requested fields
-                fields.forEach(field => {
-                    settings[field] = row[field];
+                fields.forEach((field, index) => {
+                    settings[field] = row[`field_${index}`];
                 });
 
             } else {

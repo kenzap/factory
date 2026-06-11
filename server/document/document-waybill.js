@@ -118,8 +118,8 @@ async function viewWaybill(_id, user, locale, lang, options = {}, logger) {
 // API route for waybill generation
 function viewWaybillApi(app, logger) {
 
-    // app.get('/document/waybill/', authenticateToken, async (req, res) => {
-        app.get('/document/waybill/', async (req, res) => {
+    app.get('/document/waybill/', authenticateToken, async (req, res) => {
+        // app.get('/document/waybill/', async (req, res) => {
         try {
             const lang = req.query.lang || process.env.LOCALE;
             const id = req.query.id;

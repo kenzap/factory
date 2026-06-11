@@ -5,7 +5,7 @@ import { SketchControls } from "../../components/sketch/controls.js";
 import { degToRad, hasRenderFiles } from "../../components/sketch/helpers.js";
 import { renderPreview } from "../../components/sketch/rendering.js";
 import { SketchStaticImage } from "../../components/sketch/sketch_static_image.js";
-import { __html, fileUrl, getProductId, log, onChange, onClick, onlyNumbers, unescape } from "../../helpers/global.js";
+import { __html, fileUrl, getProductId, log, normalizeStorageImageUrl, onChange, onClick, onlyNumbers, unescape } from "../../helpers/global.js";
 import { bus } from "../../modules/bus.js";
 
 export class ProductSketch {
@@ -250,11 +250,29 @@ export class ProductSketch {
         // update sketch data
         bus.on('file:uploaded', (data) => {
 
-            // add new file to the product
-            self.product.sketch.img = [];
-            if (data.source == 'sketch') self.product.sketch.img.push({ id: data._id, sizes: data.sizes, ext: data.ext, name: data.name });
+            if (data.source == 'sketch') {
 
-            self.loadSketch();
+                // add new file to the product
+                self.product.sketch.img = [];
+                self.product.sketch.img.push({ id: data._id, sizes: data.sizes, ext: data.ext, name: data.name });
+                self.loadSketch();
+                return;
+            }
+
+            if (data.source == 'info-img' && data.fieldId) {
+                const uploadedImage = data.filename || data.url || data.name || '';
+
+                self.product.input_fields = (self.product.input_fields || []).map((obj) => obj.id == data.fieldId
+                    ? { ...obj, img: uploadedImage }
+                    : obj
+                );
+
+                const hiddenField = document.querySelector(`#img-${data.fieldId}`);
+                if (hiddenField) hiddenField.value = uploadedImage;
+
+                const preview = document.querySelector(`.field-info-img-preview[data-id="${data.fieldId}"]`);
+                if (preview) preview.outerHTML = self.renderInfoImagePreview(uploadedImage, data.fieldId);
+            }
         });
     }
 
@@ -652,6 +670,66 @@ export class ProductSketch {
         return this.product.sketch;
     }
 
+    getInfoImageUrls(img) {
+
+        const rawValue = String(img || '').trim();
+        if (!rawValue) return { originalUrl: '', previewUrl: '' };
+
+        const normalized = normalizeStorageImageUrl(rawValue);
+        const buildUrl = (value) => {
+            if (
+                value.startsWith('http://')
+                || value.startsWith('https://')
+                || value.startsWith('/files/')
+                || value.startsWith('files/')
+            ) {
+                return value;
+            }
+
+            return fileUrl(value, this.product.updated);
+        };
+
+        let originalFileName = normalized;
+        if (normalized.startsWith('http://') || normalized.startsWith('https://')) {
+            try {
+                const parsed = new URL(normalized);
+                originalFileName = decodeURIComponent(parsed.pathname.split('/').pop() || '');
+            } catch (_err) {
+                originalFileName = normalized;
+            }
+        } else if (normalized.startsWith('/files/') || normalized.startsWith('files/')) {
+            originalFileName = decodeURIComponent(normalized.split('/').pop() || '');
+        }
+
+        const originalUrl = buildUrl(normalized);
+        const fileIdMatch = String(originalFileName || '').match(/^([a-z0-9]+)\.[a-z0-9]+$/i);
+        const previewUrl = fileIdMatch
+            ? fileUrl(`${originalFileName}-100x100.webp`, this.product.updated)
+            : originalUrl;
+
+        return { originalUrl, previewUrl };
+    }
+
+    renderInfoImagePreview(img, id) {
+
+        const { originalUrl, previewUrl } = this.getInfoImageUrls(img);
+        const safePreviewUrl = String(previewUrl || '').replaceAll('"', '&quot;');
+        const safeOriginalUrl = String(originalUrl || '').replaceAll('"', '&quot;');
+
+        return `
+            <a
+                href="${safeOriginalUrl || '#'}"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="field-info-img-preview${previewUrl ? '' : ' d-none'}"
+                data-id="${id}"
+                title="${__html('Open uploaded image')}"
+                style="display:inline-flex;width:28px;height:28px;min-width:28px;border-radius:50%;overflow:hidden;border:1px solid #ced4da;align-items:center;justify-content:center;background:#f8f9fa;text-decoration:none;">
+                ${previewUrl ? `<img src="${safePreviewUrl}" alt="${__html('Info image')}" style="width:100%;height:100%;object-fit:cover;">` : ''}
+            </a>
+        `;
+    }
+
     structInputRow(obj) {
 
         // available labels
@@ -681,11 +759,14 @@ export class ProductSketch {
                     </div>
                     ${obj.annotation && obj.annotation.includes('arrow-info') ? `
                         <div class="me-3">
-                            <input type="text" class="form-control form-control-sm field-info input-field" placeholder="${__html('Info note goes here')}" value="${obj.note ? obj.note : ""}" data-key="note" data-id="${obj.id}" style="width:398px;"></input>
+                            <div class="d-flex align-items-center gap-2">
+                                <input type="text" class="form-control form-control-sm field-info input-field" placeholder="${__html('Info note goes here')}" value="${obj.note ? obj.note : ""}" data-key="note" data-id="${obj.id}" style="width:398px;"></input>
+                                ${this.renderInfoImagePreview(obj.img, obj.id)}
+                            </div>
                             <p class="form-text">${__html('default value')}</p>
                         </div>
                         <div class="me-3 d-none">
-                            <input id="${obj.id}" type="file" data-id="${obj.id}" data-key="file" data-source="info-img" class="form-control form-control-sm field-file input-field file-upload" name="info_file_upload" accept="image/*" data-sizes="250" data-key="file" style="width:185px;">
+                            <input id="${obj.id}" type="file" data-id="${obj.id}" data-key="file" data-source="info-img" class="form-control form-control-sm field-file input-field file-upload" name="info_file_upload" accept="image/*" data-sizes="100x100" data-key="file" style="width:185px;">
                             <input id="img-${obj.id}" type="text" data-id="${obj.id}" data-key="img" class="form-control form-control-sm field-img input-field" value="${obj.img ? obj.img : ""}"></input>
                             <p class="form-text">${__html('attach file')}</p>
                         </div>

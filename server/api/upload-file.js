@@ -153,9 +153,18 @@ const createSizeVariations = async (logger, file, metadata, fileId) => {
                 .webp({ quality: 80 })
                 .toBuffer();
 
-            const sizeKey = `${metadata.folder}/${metadata.source ? metadata.source + '-' : ''}${fileId}-1-${size.width}${size.height ? 'x' + size.height : ''}.webp`;
-            logger.info(`Uploading size variation ${size.width}x${size.height || 'auto'} to ${storageClient.provider} as ${sizeKey}`);
-            return storageClient.putObject(sizeKey, resizedBuffer, {
+            const sizeSuffix = `${size.width}${size.height ? 'x' + size.height : ''}`;
+            const sizeKeys = [
+                `${metadata.folder}/${metadata.source ? metadata.source + '-' : ''}${fileId}-1-${sizeSuffix}.webp`
+            ];
+
+            if (metadata.source === 'info-img' && metadata.filename) {
+                sizeKeys.push(`${metadata.folder}/${metadata.filename}-${sizeSuffix}.webp`);
+            }
+
+            logger.info(`Uploading size variation ${size.width}x${size.height || 'auto'} to ${storageClient.provider} as ${sizeKeys.join(', ')}`);
+
+            return Promise.all(sizeKeys.map((sizeKey) => storageClient.putObject(sizeKey, resizedBuffer, {
                 contentType: 'image/webp',
                 metadata: {
                     'original-name': metadata.originalName || file.originalname,
@@ -163,7 +172,7 @@ const createSizeVariations = async (logger, file, metadata, fileId) => {
                     'upload-time': new Date().toISOString(),
                 },
                 acl: 'private',
-            });
+            })));
         } catch (error) {
             logger.error(`Failed to create size variation ${size.width}x${size.height || 'auto'}: ${error.message}`);
             throw error;

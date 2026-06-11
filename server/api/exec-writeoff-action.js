@@ -257,16 +257,45 @@ async function createWorkLog(data) {
     return response;
 }
 
+function normalizeSelectedEmployeeIds(data = {}, requestUser = {}) {
+    const selected = Array.isArray(data.employee_ids) ? data.employee_ids : [];
+    const cleaned = [...new Set(
+        selected
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
+    )];
+
+    if (cleaned.length) return cleaned;
+
+    const fallbackId = String(requestUser?.id || requestUser?._id || data.user_id || '').trim();
+    return fallbackId ? [fallbackId] : [];
+}
+
+function normalizeActionId(data = {}) {
+    const existing = String(data.action_id || '').trim();
+    return existing || makeId();
+}
+
 // Simple API route
 function execWriteoffActionApi(app) {
 
     app.post('/api/exec-writeoff-action/', authenticateToken, async (_req, res) => {
 
         const data = _req.body;
+        const employeeIds = normalizeSelectedEmployeeIds(data, _req.user);
+        const actionId = normalizeActionId(data);
         data.user_id = _req.user.id;
+        data.employee_ids = employeeIds;
+        data.action_id = actionId;
 
-        // add record to worklog
-        const worklog = await createWorkLog(data);
+        // add one worklog record per selected employee
+        for (const employeeId of employeeIds) {
+            await createWorkLog({
+                ...data,
+                action_id: actionId,
+                user_id: employeeId
+            });
+        }
 
         const writeoffAction = await execWriteoffAction(data, _req.user);
 

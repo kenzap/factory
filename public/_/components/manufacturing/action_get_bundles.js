@@ -82,9 +82,9 @@ export const actionGetBundles = (orderId) => {
                             </td>
                             <td class="py-0" >
                                 <div class="product-name ${attr(state.mode)}">
-                                    <small class="text-dark me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
-                                    <small class="text-dark me-2">${bundleItem?.coating}</small>
                                     <small class="text-dark me-2">${bundleItem?.color}</small>
+                                    <small class="text-dark me-2">${bundleItem?.coating}</small>
+                                    <small class="text-dark me-2"><i class="bi bi-box me-1"></i> ${bundleItem?.title}</small>
                                 </div>
                             </td>
                             <td class="py-0"><small class="text-dark">${bundleItem?.unit || "gab"}</small></td>

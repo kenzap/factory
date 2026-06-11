@@ -62,7 +62,7 @@ export class FileUpload {
 
                             // upload image
                             // console.log("upload image")
-                            self.iu(fl.dataset.sizes, fl.dataset.source, fl.files[0], fl.files[0].name);
+                            self.iu(fl.dataset.sizes, fl.dataset.source, fl.files[0], fl.files[0].name, fl.dataset.id);
                         }
                         reader.readAsDataURL(fl.files[0]);
                     }
@@ -72,7 +72,7 @@ export class FileUpload {
     }
 
     // Updated image upload callback with better error handling
-    iu = (sizes, source, file, name) => {
+    iu = (sizes, source, file, name, fieldId = '') => {
 
         // console.log(iid, file, name);
 
@@ -144,7 +144,16 @@ export class FileUpload {
 
             toast(__html("File uploaded successfully"));
 
-            bus.emit('file:uploaded', { source: source, _id: response.upload._id, ext: ext, sizes: sizes, name: response.upload.name });
+            bus.emit('file:uploaded', {
+                source: source,
+                fieldId: fieldId || '',
+                _id: response.upload._id,
+                ext: ext,
+                sizes: sizes,
+                name: response.upload.name,
+                filename: response.upload.filename,
+                url: response.upload.url
+            });
 
         }, (error) => {
 
