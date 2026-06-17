@@ -208,12 +208,28 @@ class Launcher {
                     <div class="product-info">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="product-name">${p.name}</div>
-                            <button type="button"
-                                class="btn btn-sm p-0 border-0 bg-transparent text-muted opacity-75"
-                                title="${__html('Edit')}"
-                                onclick="event.stopPropagation(); launcher.openBlockBuilderModal('${attr(p.id)}')">
-                                <i class="bi bi-pencil-square"></i>
-                            </button>
+                            <div class="dropdown">
+                                <button type="button"
+                                    class="btn btn-sm p-0 border-0 bg-transparent text-muted opacity-75"
+                                    title="${__html('Options')}"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                    onclick="event.stopPropagation();">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end" onclick="event.stopPropagation();">
+                                    <button type="button"
+                                        class="dropdown-item"
+                                        onclick="event.stopPropagation(); launcher.openBlockBuilderModal('${attr(p.id)}')">
+                                        ${__html('Edit')}
+                                    </button>
+                                    <button type="button"
+                                        class="dropdown-item text-danger"
+                                        onclick="event.stopPropagation(); launcher.deleteBlock('${attr(p.id)}')">
+                                        ${__html('Remove')}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="product-tags">${tagsHtml}</div>
                     </div>
@@ -519,6 +535,7 @@ class Launcher {
         `;
 
         modal.querySelector('.modal-footer').innerHTML = /*html*/`
+            ${selectedBlock ? `<button type="button" class="btn btn-outline-danger me-auto" id="block_builder_delete">${__html('Remove')}</button>` : ''}
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">${__html('Close')}</button>
             <button type="button" class="btn btn-primary" id="block_builder_save">${__html('Save')}</button>
         `;
@@ -527,6 +544,7 @@ class Launcher {
         const actionsTable = modal.querySelector('#block_builder_actions');
         const addBtn = modal.querySelector('#block_builder_add_action');
         const saveBtn = modal.querySelector('#block_builder_save');
+        const deleteBtn = modal.querySelector('#block_builder_delete');
         const productSearchInput = modal.querySelector('#block_builder_product_search');
         const productIdInput = modal.querySelector('#block_builder_id');
         const productNameInput = modal.querySelector('#block_builder_name');
@@ -588,6 +606,11 @@ class Launcher {
             });
         });
 
+        deleteBtn?.addEventListener('click', () => {
+            if (!selectedBlock?.id) return;
+            this.deleteBlock(selectedBlock.id, modal);
+        });
+
         // Reuse existing product picker behavior from bundle/worklog flows.
         new ProductSearch({
             name: '#block_builder_product_search',
@@ -636,8 +659,44 @@ class Launcher {
             this.html();
             this.render();
 
-            bootstrap.Modal.getOrCreateInstance(modal).hide();
+            if (modal) bootstrap.Modal.getOrCreateInstance(modal).hide();
             toast(__html('Saved'));
+        });
+    }
+
+    deleteBlock = (blockId, modal = null) => {
+        const normalizedId = String(blockId || '').trim();
+        if (!normalizedId) return;
+
+        const confirmed = confirm(__html('Remove product?'));
+        if (!confirmed) return;
+
+        const current = Array.isArray(this.settings?.worklog_launcher_blocks)
+            ? this.settings.worklog_launcher_blocks
+            : [];
+
+        const next = current.filter((item) => String(item?.id || '').trim() !== normalizedId);
+
+        saveSettings({ worklog_launcher_blocks: next }, (response) => {
+            if (!response?.success) {
+                toast(__html('Failed to remove'));
+                return;
+            }
+
+            getHome((freshResponse) => {
+                if (freshResponse?.success) {
+                    this.settings = freshResponse.settings || this.settings;
+                } else {
+                    this.settings.worklog_launcher_blocks = next;
+                }
+
+                this.initBlocks();
+                this.html();
+                this.render();
+
+                if (modal) bootstrap.Modal.getOrCreateInstance(modal).hide();
+                toast(__html('Removed'));
+            });
         });
     }
 

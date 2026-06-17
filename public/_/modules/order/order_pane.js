@@ -6,6 +6,7 @@ import { sketchEditor } from "../../components/order/order_sketch_editor.js";
 import { suggestionEditor } from "../../components/order/order_suggestion_editor.js";
 import { textEditor } from "../../components/order/order_text_editor.js";
 import { __html, onClick, toast } from "../../helpers/global.js";
+import { ensureUniqueOrderItems } from "../../helpers/order_item_ids.js";
 import { NestingModal } from "../cutting/nesting-modal.js";
 import { getCoatings, getColors, isAllowedToEdit, isExcludedFromInvoice } from "../../helpers/order.js";
 import { addRow, navigateToNextCell, navigateToPreviousCell } from "../../helpers/order_table.js";
@@ -313,7 +314,12 @@ export class OrderPane {
     syncServerState = () => {
         if (!state.table) return;
 
-        const items = Array.isArray(state.order.items) ? state.order.items : [];
+        const normalized = ensureUniqueOrderItems(state.order.items || [], state.order.id);
+        if (normalized.changed) {
+            state.order.items = normalized.items;
+        }
+
+        const items = normalized.items;
         const update = typeof state.table.replaceData === 'function'
             ? state.table.replaceData(items)
             : state.table.setData(items);
@@ -328,6 +334,10 @@ export class OrderPane {
     table = () => {
 
         let self = this;
+        const normalizedInitialItems = ensureUniqueOrderItems(state.order.items || [], state.order.id);
+        if (normalizedInitialItems.changed) {
+            state.order.items = normalizedInitialItems.items;
+        }
         const variationDimsCount = Number(state.settings?.variation_dims_count || 2);
         const hasSecondDimension = variationDimsCount >= 2;
         const dimension1Label = this.getVariationDimensionLabel(1, "Coating");
@@ -341,7 +351,7 @@ export class OrderPane {
             movableColumns: true,
             sortable: false,
             sorter: false,
-            data: state.order.items || [],
+            data: normalizedInitialItems.items,
             rowFormatter: (row) => {
                 const el = row.getElement();
                 const excluded = isExcludedFromInvoice(row.getData());
@@ -752,14 +762,27 @@ export class OrderPane {
         //     "input_fields_values": []
         // },
 
-        // Sync the order items with the table data
-        state.order.items = state.table.getData().map(item => {
+        const normalized = ensureUniqueOrderItems(state.table.getData().map(item => {
             return {
                 ...item,
                 // area: (parseFloat(item.width) * parseFloat(item.length) / 1000000).toFixed(3),
                 // total: getPrice(state.settings, item).total.toFixed(2)
             };
-        });
+        }), state.order.id);
+
+        state.order.items = normalized.items;
+
+        if (normalized.changed && state.table && !this.syncingNormalizedItemIds) {
+            this.syncingNormalizedItemIds = true;
+            const update = typeof state.table.replaceData === 'function'
+                ? state.table.replaceData(normalized.items)
+                : state.table.setData(normalized.items);
+
+            Promise.resolve(update).finally(() => {
+                this.syncingNormalizedItemIds = false;
+                this.refreshRowActionMenus();
+            });
+        }
     }
 
     refreshTable = () => {
@@ -790,10 +813,17 @@ export class OrderPane {
 
         onClick('#open-nesting-modal', () => {
             const allItems = state.table?.getData?.() || [];
-            const items = allItems.filter(item =>
-                (Number(item.formula_width_calc) > 0 || Number(item.formula_length_calc) > 0) &&
-                Number(item.qty) > 0
-            );
+            const orderId = String(state.order.id || '').trim();
+            const items = allItems
+                .filter(item =>
+                    (Number(item.formula_width_calc) > 0 || Number(item.formula_length_calc) > 0) &&
+                    Number(item.qty) > 0
+                )
+                .map(item => ({
+                    ...item,
+                    order_id: item.order_id || orderId,
+                    product_id: item.product_id || item._id || ''
+                }));
 
             if (!items.length) {
                 toast(__html('No items with dimensions available for nesting'));
@@ -805,7 +835,8 @@ export class OrderPane {
 
             new NestingModal({
                 items,
-                orderId: state.order.id || '',
+                orderId,
+                orderIds: orderId ? [orderId] : [],
                 settings: state.settings,
                 material
             });

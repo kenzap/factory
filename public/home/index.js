@@ -36,6 +36,7 @@ class Home {
 
             this.settings = response.settings;
             this.user = response.user;
+            this.extensionRegistry = response.extensionRegistry || { homeBlocks: [] };
 
             // console.log(this.user.rights);
 
@@ -280,7 +281,22 @@ class Home {
                     }
                 ],
             }
-        ]
+        ];
+
+        const extensionBlocks = (this.extensionRegistry?.homeBlocks || []).map((block) => ({
+            id: block.id,
+            title: block.title,
+            desc: block.desc,
+            visible: true,
+            icon: `<i class="${attr(block.icon || 'bi bi-puzzle')} me-3 mr-md-0 mr-lg-4 text-primary" style="max-width: 32px;font-size:32px;"></i>`,
+            links: (block.links || []).map((item) => ({
+                text: item.text,
+                link: item.link,
+                target: item.target || '_self',
+            })),
+        }));
+
+        this.blocks = [...this.blocks, ...extensionBlocks];
     }
 
     // load page

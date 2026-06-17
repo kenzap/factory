@@ -1,0 +1,35 @@
+@import url("../assets/css/global.css");
+
+.extension-page-shell .page-title {
+    font-size: 1.9rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.extension-page-shell .page-copy {
+    color: #5f6b7a;
+    max-width: 720px;
+}
+
+.extension-page-shell .surface-card {
+    background: #fff;
+    border: 1px solid rgba(17, 24, 39, 0.08);
+    border-radius: 18px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.06);
+}
+
+.extension-page-shell .extension-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: #eef3ff;
+    color: #274690;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.extension-page-shell .shell-error {
+    border-left: 4px solid #dc3545;
+}

@@ -8,6 +8,8 @@ import { focusEditorField } from "./editor_focus.js";
 
 let productSuggestions = [];
 
+const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj || {}, key);
+
 /**
  * A client search component that provides autocomplete functionality for searching clients.
  * Example, in the orders journal.
@@ -420,19 +422,117 @@ const getStockAmount = (cell, suggestion) => {
     return stock !== undefined ? stock : 0;
 }
 
+export const buildUpdatedProductRowData = (
+    rowData = {},
+    suggestion = {},
+    settings = {},
+    discounts = {},
+    options = {}
+) => {
+
+    const {
+        preserveSameGroupMeasurements = true,
+        preserveExistingDiscount = false
+    } = options;
+
+    let updatedData = { ...rowData, ...suggestion };
+
+    updatedData.title = String(updatedData.title || "").trim();
+    updatedData.formula_width_calc = updatedData.formula_width || "";
+    updatedData.formula_length_calc = updatedData.formula_length || "";
+    const discountGroup = String(updatedData.group || "").trim();
+    const hasRowDiscount = rowData?.discount !== undefined && rowData?.discount !== null && String(rowData.discount).trim() !== "";
+    const nextDiscount = preserveExistingDiscount && hasRowDiscount
+        ? rowData.discount
+        : hasOwn(discounts, discountGroup)
+        ? discounts[discountGroup]
+        : (suggestion?.discount ?? rowData?.discount ?? 0);
+    updatedData.discount = nextDiscount;
+    updatedData.input_fields = Array.isArray(updatedData.input_fields)
+        ? updatedData.input_fields.map((field) => ({ ...field }))
+        : [];
+    updatedData.input_fields_values = { ...(updatedData.input_fields_values || {}) };
+    updatedData.product_id = updatedData.product_id || updatedData._id || rowData.product_id || rowData._id || "";
+    if (preserveSameGroupMeasurements) {
+        updatedData = preserveMeasurementsForSameGroup(rowData, updatedData);
+    }
+    updatedData = calcWidthLength(settings, updatedData);
+    delete updatedData._preserve_formula_dimensions;
+
+    return updatedData;
+}
+
+const getInputFieldValue = (inputFieldValues = {}, field = {}) => {
+
+    const label = String(field?.label || "").trim();
+    const id = String(field?.id || "").trim();
+    const keys = [
+        label,
+        label ? `input${label}` : "",
+        id,
+        id ? `input${id}` : ""
+    ].filter(Boolean);
+
+    for (const key of keys) {
+        if (Object.prototype.hasOwnProperty.call(inputFieldValues, key)) {
+            return inputFieldValues[key];
+        }
+    }
+
+    return field?.default || "";
+}
+
+const getExistingFieldDefault = (existingFields = [], field = {}) => {
+
+    const label = String(field?.label || "").trim();
+    const id = String(field?.id || "").trim();
+    const match = existingFields.find((existingField) => {
+        const existingLabel = String(existingField?.label || "").trim();
+        const existingId = String(existingField?.id || "").trim();
+        return (label && existingLabel === label) || (id && existingId === id);
+    });
+
+    return match?.default || "";
+}
+
+const preserveMeasurementsForSameGroup = (rowData = {}, updatedData = {}) => {
+
+    const previousGroup = String(rowData?.group || "").trim();
+    const nextGroup = String(updatedData?.group || "").trim();
+
+    if (!previousGroup || previousGroup !== nextGroup) {
+        return updatedData;
+    }
+
+    if (rowData?.qty !== undefined && rowData?.qty !== null && String(rowData.qty).trim() !== "") {
+        updatedData.qty = rowData.qty;
+    }
+
+    updatedData.input_fields_values = {
+        ...(updatedData.input_fields_values || {}),
+        ...(rowData.input_fields_values || {})
+    };
+
+    const existingFields = Array.isArray(rowData?.input_fields) ? rowData.input_fields : [];
+    updatedData.input_fields = (updatedData.input_fields || []).map((field) => {
+        const preservedValue = getInputFieldValue(rowData.input_fields_values || {}, field) || getExistingFieldDefault(existingFields, field);
+        if (preservedValue === "") return field;
+        return { ...field, default: preservedValue };
+    });
+
+    updatedData._preserve_formula_dimensions = {
+        width: rowData?.formula_width_calc,
+        length: rowData?.formula_length_calc
+    };
+
+    return updatedData;
+}
+
 const productSelected = (suggestion, cell, settings, discounts) => {
 
     // Map suggestion values to current row
     const rowData = cell.getRow().getData();
-    let updatedData = { ...rowData, ...suggestion };
-
-    updatedData.title = updatedData.title.trim();
-    updatedData.formula_width_calc = updatedData.formula_width || "";
-    updatedData.formula_length_calc = updatedData.formula_length || "";
-    updatedData.discount = discounts[updatedData.group] || 0;
-    updatedData.input_fields = updatedData.input_fields || [];
-    updatedData.input_fields_values = updatedData.input_fields_values || {};
-    updatedData = calcWidthLength(settings, updatedData);
+    const updatedData = buildUpdatedProductRowData(rowData, suggestion, settings, discounts);
 
     // Update the row with all suggestion properties
     cell.getRow().update(updatedData);
@@ -443,11 +543,25 @@ const productSelected = (suggestion, cell, settings, discounts) => {
 
 const calcWidthLength = (settings, updatedData) => {
 
+    const preservedWidth = updatedData?._preserve_formula_dimensions?.width;
+    const preservedLength = updatedData?._preserve_formula_dimensions?.length;
+
     updatedData.input_fields.forEach(field => {
 
-        updatedData.formula_width_calc = updatedData.formula_width_calc.replace(field.label, updatedData.input_fields_values[field.label] || field.default || "");
-        updatedData.formula_length_calc = updatedData.formula_length_calc.replace(field.label, updatedData.input_fields_values[field.label] || field.default || "");
+        const fieldValue = getInputFieldValue(updatedData.input_fields_values, field);
+        updatedData.formula_width_calc = updatedData.formula_width_calc.replace(field.label, fieldValue);
+        updatedData.formula_length_calc = updatedData.formula_length_calc.replace(field.label, fieldValue);
     });
+
+    if (preservedWidth !== undefined && preservedWidth !== null && String(preservedWidth).trim() !== "") {
+        updatedData.formula_width_calc = updatedData.formula_width_calc.replaceAll("W", preservedWidth);
+        updatedData.formula_length_calc = updatedData.formula_length_calc.replaceAll("W", preservedWidth);
+    }
+
+    if (preservedLength !== undefined && preservedLength !== null && String(preservedLength).trim() !== "") {
+        updatedData.formula_width_calc = updatedData.formula_width_calc.replaceAll("L", preservedLength);
+        updatedData.formula_length_calc = updatedData.formula_length_calc.replaceAll("L", preservedLength);
+    }
 
     updatedData.formula_width_calc = calculate(updatedData.formula_width_calc);
     updatedData.formula_length_calc = calculate(updatedData.formula_length_calc);

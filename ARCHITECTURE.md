@@ -101,6 +101,25 @@ Live system logs and crytical errors can be observed from `docker compose up` te
 - Realtime diagnostics can be enabled with `REALTIME_DEBUG=1` (or `REDIS_REALTIME_DEBUG=1`), which prints Redis bridge subscribe/publish/receive traces to server logs.
 - Authenticated debug endpoints under `/api/sse-debug/*` expose a simple SSE ticker, current local client counts, and a manual debug broadcast trigger for isolating proxy vs application fanout issues.
 
+## Extension UI Surfaces
+
+- Extensions can now declare UI contributions in `server/extensions/<slug>/manifest.json` under a `ui` section.
+- The first supported UI surfaces are:
+  - `pages`: full ERP pages rendered through the core shell at `/extension-page/?extension=<slug>&page=<id>`
+  - `homeBlocks`: dashboard cards appended to the ERP home page
+- Extension page frontend assets live inside `server/extensions/<slug>/public/` and are served at `/extension-ui/<slug>/...`.
+- Core routes remain responsible for authentication, chrome, breadcrumbs, and shell layout; extension page modules are responsible only for their own business UI.
+- The extension registry is built server-side from manifests plus the current enabled flags and user rights, then exposed through `/api/get-extension-registry/`.
+- Home page navigation is registry-driven for extension blocks. Core blocks remain hardcoded for now, but extension blocks are not.
+
+## Extension Enablement Model
+
+- Extensions are always loaded at server start so their routes, static assets, and UI metadata are known to the system.
+- The `slug:enabled` setting is now enforced at runtime instead of by skipping extension load entirely.
+- Route handlers under `/extension/<slug>/...` return `503` when the extension is disabled.
+- Extension event handlers and cron jobs are registered once but become inert when the extension is disabled, because the extension context checks the live enabled flag before dispatching handlers.
+- This allows enabling or disabling an extension from Settings without requiring a process restart for UI visibility or route availability changes.
+
 ## Validation Notes
 
 - `./build.sh` is required before production deployment.

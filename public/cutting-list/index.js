@@ -6,7 +6,6 @@ import { __html, attr, formatDate, getDimUnit, hideLoader, toast } from "../_/he
 import { formatClientName, getFullClientName } from "../_/helpers/order.js";
 // import { WriteoffMetalWithoutCoil } from "../_/modules/cutting/writeoff-metal-without-coil.js";
 import { NestingModal } from "../_/modules/cutting/nesting-modal.js";
-import { WriteoffMetal } from "../_/modules/cutting/writeoff-metal.js";
 import { Header } from "../_/modules/header.js";
 import { Locale } from "../_/modules/locale.js";
 import { Modal } from "../_/modules/modal.js";
@@ -599,7 +598,10 @@ class CuttingList {
             orderIds,
             settings: this.settings,
             defaultSheetHeight: this.getDefaultNestingSheetHeight(),
-            material: `${this.color || ''} ${this.coating || ''}`.trim()
+            material: `${this.color || ''} ${this.coating || ''}`.trim(),
+            user: this.user,
+            users: this.users,
+            mode: 'nesting'
         });
     }
 
@@ -607,10 +609,20 @@ class CuttingList {
         const coil = this.stock.find(c => c._id === coilId);
         const items = this.collectSelectedItems();
 
-        new WriteoffMetal(coil, items, this.settings, this.user, this.users, (updated) => {
-            if (updated) {
-                this.clearSelectedCuttingItems();
-                this.scheduleLiveRefresh({ orders: true, stock: true });
+        new NestingModal({
+            coil,
+            items,
+            settings: this.settings,
+            user: this.user,
+            users: this.users,
+            defaultSheetHeight: Number(coil?.width) || this.getDefaultNestingSheetHeight(),
+            material: `${coil?.color || this.color || ''} ${coil?.coating || this.coating || ''}`.trim(),
+            mode: 'writeoff',
+            cb: (updated) => {
+                if (updated) {
+                    this.clearSelectedCuttingItems();
+                    this.scheduleLiveRefresh({ orders: true, stock: true });
+                }
             }
         });
     }
@@ -618,10 +630,20 @@ class CuttingList {
     openWriteoffModal = () => {
         const items = this.collectSelectedItems();
 
-        new WriteoffMetal(null, items, this.settings, this.user, this.users, (updated) => {
-            if (updated) {
-                this.clearSelectedCuttingItems();
-                this.scheduleLiveRefresh({ orders: true, stock: true });
+        new NestingModal({
+            coil: null,
+            items,
+            settings: this.settings,
+            user: this.user,
+            users: this.users,
+            defaultSheetHeight: this.getDefaultNestingSheetHeight(),
+            material: `${this.color || ''} ${this.coating || ''}`.trim(),
+            mode: 'writeoff',
+            cb: (updated) => {
+                if (updated) {
+                    this.clearSelectedCuttingItems();
+                    this.scheduleLiveRefresh({ orders: true, stock: true });
+                }
             }
         });
     }

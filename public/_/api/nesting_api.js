@@ -90,6 +90,18 @@ export const stopNestingJob = async (jobId, settings = null) => {
     return parseJsonResponse(response);
 }
 
+export const exportNestingJob = async (jobId, settings = null) => {
+    const baseUrl = getNestingApiBaseUrl(settings);
+    const response = await fetch(`${baseUrl}/jobs/${encodeURIComponent(jobId)}/export`, {
+        method: 'POST',
+        headers: buildNestingApiHeaders(baseUrl, settings, { withJsonBody: true }),
+        body: JSON.stringify({})
+    });
+
+    const data = await parseJsonResponse(response, { allowJobPayload: true });
+    return data.job || null;
+}
+
 export const getNestingJob = async (jobId, settings = null) => {
     const baseUrl = getNestingApiBaseUrl(settings);
     const response = await fetch(`${baseUrl}/jobs/${encodeURIComponent(jobId)}`, {
